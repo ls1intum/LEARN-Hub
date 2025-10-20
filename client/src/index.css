@@ -1,0 +1,270 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --success: 142.1 76.2% 36.3%;
+    --success-foreground: 210 40% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 222.2 84% 4.9%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Base colors - less dark, more comfortable dark theme */
+    --background: 240 10% 15%; /* Lighter dark blue-gray for better comfort */
+    --foreground: 0 0% 90%; /* Slightly softer white for better readability */
+
+    /* Card and surface colors - subtle elevation */
+    --card: 240 10% 18%; /* Slightly lighter than background */
+    --card-foreground: 0 0% 90%;
+    --popover: 240 10% 18%;
+    --popover-foreground: 0 0% 90%;
+
+    /* Primary colors - vibrant blue with excellent contrast */
+    --primary: 213 94% 70%; /* Bright blue with better contrast */
+    --primary-foreground: 240 10% 15%;
+
+    /* Secondary colors - warm gray */
+    --secondary: 240 4% 22%; /* Lighter gray for secondary elements */
+    --secondary-foreground: 0 0% 90%;
+
+    /* Muted colors - balanced gray */
+    --muted: 240 4% 22%;
+    --muted-foreground: 0 0% 75%; /* Better contrast for muted text */
+
+    /* Accent colors */
+    --accent: 240 4% 22%;
+    --accent-foreground: 0 0% 90%;
+
+    /* Status colors - more pleasant and accessible */
+    --destructive: 0 65% 55%; /* More vibrant red */
+    --destructive-foreground: 0 0% 90%;
+    --success: 142 76% 60%; /* More vibrant green */
+    --success-foreground: 0 0% 90%;
+    --warning: 38 92% 65%; /* More vibrant orange */
+    --warning-foreground: 240 10% 15%;
+
+    /* Border and input colors */
+    --border: 240 4% 28%; /* More visible borders */
+    --input: 240 4% 22%;
+    --ring: 213 94% 70%;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  .bg-background {
+    background-color: hsl(var(--background));
+  }
+  .text-foreground {
+    color: hsl(var(--foreground));
+  }
+  .bg-primary {
+    background-color: hsl(var(--primary));
+  }
+  .text-primary {
+    color: hsl(var(--primary));
+  }
+  .text-primary-foreground {
+    color: hsl(var(--primary-foreground));
+  }
+  .bg-secondary {
+    background-color: hsl(var(--secondary));
+  }
+  .text-secondary-foreground {
+    color: hsl(var(--secondary-foreground));
+  }
+  .bg-destructive {
+    background-color: hsl(var(--destructive));
+  }
+  .text-destructive-foreground {
+    color: hsl(var(--destructive-foreground));
+  }
+  .bg-muted {
+    background-color: hsl(var(--muted));
+  }
+  .text-muted-foreground {
+    color: hsl(var(--muted-foreground));
+  }
+  .bg-accent {
+    background-color: hsl(var(--accent));
+  }
+  .text-accent-foreground {
+    color: hsl(var(--accent-foreground));
+  }
+  .bg-popover {
+    background-color: hsl(var(--popover));
+  }
+  .text-popover-foreground {
+    color: hsl(var(--popover-foreground));
+  }
+  .bg-card {
+    background-color: hsl(var(--card));
+  }
+  .text-card-foreground {
+    color: hsl(var(--card-foreground));
+  }
+  .border-input {
+    border-color: hsl(var(--input));
+  }
+  .border-primary {
+    border-color: hsl(var(--primary));
+  }
+  .ring-ring {
+    --tw-ring-color: hsl(var(--ring));
+  }
+  .ring-offset-background {
+    --tw-ring-offset-color: hsl(var(--background));
+  }
+  .bg-success {
+    background-color: hsl(var(--success));
+  }
+  .text-success-foreground {
+    color: hsl(var(--success-foreground));
+  }
+  .bg-warning {
+    background-color: hsl(var(--warning));
+  }
+  .text-warning-foreground {
+    color: hsl(var(--warning-foreground));
+  }
+}
+
+/* Custom styles migrated from old client */
+@layer components {
+  /* Soft background gradient */
+  .app-gradient {
+    background:
+      radial-gradient(1200px 600px at 10% -10%, #e0e7ff 0%, transparent 40%),
+      radial-gradient(1000px 500px at 110% 10%, #cffafe 0%, transparent 35%),
+      linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
+  }
+
+  .dark .app-gradient {
+    background:
+      radial-gradient(
+        1200px 600px at 10% -10%,
+        rgba(59, 130, 246, 0.12) 0%,
+        transparent 40%
+      ),
+      radial-gradient(
+        1000px 500px at 110% 10%,
+        rgba(99, 102, 241, 0.08) 0%,
+        transparent 35%
+      ),
+      linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--card)) 100%);
+  }
+
+  /* Card-like panel with subtle border and depth */
+  .panel {
+    background-color: rgba(255, 255, 255, 0.92);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    box-shadow:
+      0 10px 25px rgba(2, 6, 23, 0.08),
+      0 1px 2px rgba(2, 6, 23, 0.04);
+    border-radius: 0.75rem; /* ~rounded-xl */
+  }
+
+  .dark .panel {
+    background-color: hsl(var(--card) / 0.95);
+    border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow:
+      0 10px 25px rgba(0, 0, 0, 0.25),
+      0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+
+  /* Better focus styles for inputs/selects without altering structure */
+  input[type="text"],
+  input[type="password"],
+  input[type="number"],
+  input[type="email"],
+  input[type="search"],
+  select,
+  textarea {
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease;
+  }
+
+  input[type="text"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  input[type="email"]:focus,
+  input[type="search"]:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: hsl(var(--ring));
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.25);
+    background-color: hsl(var(--background));
+  }
+
+  /* Consistent button focus ring */
+  button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.25);
+  }
+
+  /* Utility: muted helper text */
+  .hint {
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Smooth transitions for interactive elements */
+  .transition-smooth {
+    transition: all 0.3s ease;
+  }
+
+  /* Line clamp utilities */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .line-clamp-3 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+  }
+}

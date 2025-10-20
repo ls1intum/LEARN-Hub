@@ -1,0 +1,105 @@
+[project]
+name = "learn-hub-server"
+version = "0.1.0"
+description = "LEARN-Hub - A recommendation system for Computer Science education activities"
+readme = "README.md"
+requires-python = "==3.13.*"
+
+dependencies = [
+    "alembic>=1.16.4",
+    "flask>=3.1.1",
+    "flask-cors>=5.0.0",
+    "flask-openapi3[swagger]>=4.1.1",
+    "flask-sqlalchemy>=3.1.1",
+    "gunicorn>=23.0.0",
+    "langchain>=0.3.26",
+    "langchain-openai>=0.2.8",
+    "openai>=1.50.0",
+    "pdfminer-six>=20250506",
+    "psycopg2-binary>=2.9.10",
+    "pydantic[email]>=2.11.7",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.1.1",
+    "sqlalchemy>=2.0.41",
+    "pyjwt>=2.8.0",
+    "bcrypt>=4.1.2",
+    "flask-mail>=0.9.1",
+    "reportlab>=4.0.0",
+    "pypdf>=5.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "pytest>=8.4.1",
+    "pytest-coverage>=0.0",
+    "pytest-xdist>=3.6.0",
+    "ruff>=0.12.2",
+]
+
+[tool.black]
+line-length = 120
+target-version = ['py313']
+include = '\.pyi?$'
+
+[tool.ruff]
+# Enable flake8-bugbear rules
+lint.select = ["E", "F", "B", "PYI021", "I", "UP"]
+lint.ignore = ["E402"]
+line-length = 120
+target-version = "py313"
+exclude = [
+    ".git",
+    ".ruff_cache",
+    "__pycache__",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint.isort]
+# treat imports from “app” as first-party
+known-first-party = ["app"]
+
+[tool.pytest.ini_options]
+# Test discovery
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
+# Output options
+addopts = [
+    "--strict-markers",
+    "--strict-config", 
+    "--tb=short",
+    "--color=yes"
+]
+
+# Markers for different test types
+markers = [
+    "unit: Unit tests - fast, isolated tests with mocks",
+    "integration: Integration tests - test multiple components together", 
+    "slow: Slow tests that take more time to run",
+    "api: API endpoint tests",
+    "auth: Authentication related tests",
+    "database: Tests that require database access"
+]
+
+# Parallel execution configuration
+# Use pytest-xdist for parallel test execution
+# Note: Integration tests may need special handling due to database state
+
+# Minimum version
+minversion = "6.0"
+
+# Ignore warnings
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning"
+]
+
+[tool.coverage.run]
+omit = [
+    "*/__init__.py",
+    "*/migrations/*",
+]
