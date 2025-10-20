@@ -63,9 +63,6 @@ services:
     restart: unless-stopped
     ports:
       - "${CLIENT_PORT:-3001}:3001"
-    environment:
-      - PORT=3001
-      - VITE_API_SERVER=http://localhost:5001
     depends_on:
       server:
         condition: service_healthy
