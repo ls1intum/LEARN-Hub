@@ -4,8 +4,13 @@ Demo data population script for Phase 3.1.
 This script populates the database with sample activities and users for demonstration.
 """
 
+import io
 import sys
 from pathlib import Path
+
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
 # Add the server directory to the Python path
 server_dir = Path(__file__).parent.parent
@@ -15,6 +20,7 @@ from app.core.models import EnergyLevel
 from app.db.database import get_db_session
 from app.db.models.activity import Activity
 from app.db.models.user import User, UserRole, PDFDocument
+from app.services.pdf_service import PDFService
 from app.services.user_service import UserService
 
 
@@ -489,16 +495,35 @@ def create_demo_users():
     ]
 
 
-def create_demo_pdf_document():
-    """Create a demo PDF document for activities."""
-    return PDFDocument(
-        filename="demo_activities.pdf",
-        file_path="/demo/path/activities.pdf",
-        file_size=1024,
-        extracted_fields={"demo": "data"},
-        confidence_score="high",
-        extraction_quality="excellent"
+def create_placeholder_pdf() -> bytes:
+    """Create a placeholder PDF for demo activities."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    story = []
+
+    # Add title
+    styles = getSampleStyleSheet()
+    title_style = styles["Heading1"]
+    story.append(Paragraph("Demo Activity Placeholder", title_style))
+    story.append(Spacer(1, 12))
+
+    # Add description
+    body_style = styles["BodyText"]
+    story.append(
+        Paragraph(
+            "This is a placeholder PDF for demo activities in the LEARN-Hub system. "
+            "This PDF is automatically generated and attached to all demo activities for testing purposes.",
+            body_style,
+        )
     )
+    story.append(Spacer(1, 12))
+
+    # Add note
+    story.append(Paragraph("Please replace this with actual activity content as needed.", body_style))
+
+    doc.build(story)
+    buffer.seek(0)
+    return buffer.getvalue()
 
 
 def main():
@@ -514,13 +539,13 @@ def main():
         existing_users = session.query(User).count()
         existing_documents = session.query(PDFDocument).count()
 
-        # Create PDF document first (needed for activities)
+        # Create or use existing PDF document
         if existing_documents == 0:
-            pdf_document = create_demo_pdf_document()
-            session.add(pdf_document)
-            session.flush()  # Flush to get the ID
-            document_id = pdf_document.id
-            print("Created demo PDF document")
+            # Generate placeholder PDF and store it
+            pdf_content = create_placeholder_pdf()
+            pdf_service = PDFService()
+            document_id = pdf_service.store_pdf(pdf_content, "demo_activities_placeholder.pdf")
+            print(f"Created demo placeholder PDF with document ID: {document_id}")
         else:
             # Use existing document
             document_id = session.query(PDFDocument).first().id
