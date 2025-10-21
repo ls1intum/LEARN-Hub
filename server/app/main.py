@@ -47,7 +47,15 @@ def create_app():
         }
     }
 
-    app = OpenAPI(__name__, info=info, servers=servers, doc_ui=True, security_schemes=security_schemes)
+    app = OpenAPI(
+        __name__,
+        info=info,
+        servers=servers,
+        doc_ui=True,
+        security_schemes=security_schemes,
+        doc_url="/openapi.json",
+        doc_prefix="/api/openapi",
+    )
 
     # Initialize configuration
     config = Config.get_instance()
