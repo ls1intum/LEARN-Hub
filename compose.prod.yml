@@ -4,7 +4,7 @@
 services:
   postgres:
     image: postgres:17
-    container_name: lh-postgres
+    container_name: lhub-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-learn_hub_activities}
