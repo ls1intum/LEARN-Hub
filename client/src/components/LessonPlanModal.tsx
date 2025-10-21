@@ -144,7 +144,7 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
             )}
             <Button onClick={handleDownload} disabled={isDownloading}>
               <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? "Generating..." : "Download PDF"}
+              {isDownloading ? "Generating..." : "View PDF"}
             </Button>
           </div>
         </div>

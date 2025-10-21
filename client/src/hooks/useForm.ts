@@ -29,7 +29,7 @@ export function useForm<T>({
 
   const setValue = useCallback(
     <K extends keyof T>(field: K, value: T[K]) => {
-      setValues((prev) => ({ ...(prev as object), [field]: value } as T));
+      setValues((prev) => ({ ...(prev as object), [field]: value }) as T);
       // Clear error when user starts typing
       if (errors[field]) {
         setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -39,7 +39,9 @@ export function useForm<T>({
   );
 
   const setValuesPartial = useCallback((newValues: Partial<T>) => {
-    setValues((prev) => ({ ...(prev as object), ...(newValues as object) } as T));
+    setValues(
+      (prev) => ({ ...(prev as object), ...(newValues as object) }) as T,
+    );
   }, []);
 
   const setError = useCallback((field: keyof T, error: string) => {

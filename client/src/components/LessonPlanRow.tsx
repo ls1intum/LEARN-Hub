@@ -40,7 +40,9 @@ export const LessonPlanRow: React.FC<LessonPlanRowProps> = ({
     }, 0);
 
   const activityCount = activities.length;
-  const breakCount = activities.filter((a, index) => index < activities.length - 1 && a.break_after).length;
+  const breakCount = activities.filter(
+    (a, index) => index < activities.length - 1 && a.break_after,
+  ).length;
 
   // Calculate card widths based on content and available space
   const getCardWidth = (activity: Activity) => {

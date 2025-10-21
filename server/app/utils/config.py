@@ -59,9 +59,7 @@ class Config(BaseSettings):
     llm_model_name: str = Field(default="", alias="LLM_MODEL_NAME")
 
     # Storage
-    pdf_storage_path: str = Field(
-        default="/Users/adrian/code-personal/master-thesis-code/server/data/pdfs/", alias="PDF_STORAGE_PATH"
-    )
+    pdf_storage_path: str = Field(default="/app/data/pdfs/", alias="PDF_SERVER_PATH")
 
     # Environment
     environment: str = Field(default="development", alias="ENVIRONMENT")

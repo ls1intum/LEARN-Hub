@@ -14,7 +14,7 @@ export function useApi<T = unknown>({ onSuccess }: UseApiOptions<T> = {}) {
       successCallback?: (result: R) => void,
     ): Promise<R | null> => {
       return execute(apiCall, (result) => {
-        onSuccess?.((result as unknown) as T);
+        onSuccess?.(result as unknown as T);
         successCallback?.(result);
       });
     },

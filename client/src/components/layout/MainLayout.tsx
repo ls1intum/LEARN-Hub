@@ -23,7 +23,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     navigate("/login");
   };
 
-  const effectiveRole = (user?.role as "ADMIN" | "TEACHER" | "GUEST") || "GUEST";
+  const effectiveRole =
+    (user?.role as "ADMIN" | "TEACHER" | "GUEST") || "GUEST";
   const isAdmin = effectiveRole === "ADMIN";
   const isGuest = effectiveRole === "GUEST";
 
@@ -124,7 +125,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-foreground">
-                  {isAdmin ? "Admin Panel" : isGuest ? "Guest Access" : "Teaching Hub"}
+                  {isAdmin
+                    ? "Admin Panel"
+                    : isGuest
+                      ? "Guest Access"
+                      : "Teaching Hub"}
                 </h1>
                 {user?.email && (
                   <p className="text-xs text-muted-foreground">{user.email}</p>
@@ -149,7 +154,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </div>
 
         <main className="flex-1 p-4 lg:p-6 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-background/50 via-background/30 to-muted/10">
-          <div className="w-full max-w-6xl mx-auto px-2 sm:px-4">{children}</div>
+          <div className="w-full max-w-6xl mx-auto px-2 sm:px-4">
+            {children}
+          </div>
         </main>
       </div>
     </div>

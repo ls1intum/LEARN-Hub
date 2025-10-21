@@ -470,30 +470,43 @@ class RecommendationRequest(BaseModel):
 
     name: str | None = None
     target_age: int | None = Field(None, ge=6, le=15)
-    format: list[str] | str | None = None
-    bloom_levels: list[str] | str | None = None
+    format: list[str] | None = None
+    bloom_levels: list[str] | None = None
     target_duration: int | None = Field(None, ge=1, le=480)
-    available_resources: list[str] | str | None = None
-    preferred_topics: list[str] | str | None = None
-    priority_categories: list[str] | str | None = None
+    available_resources: list[str] | None = None
+    preferred_topics: list[str] | None = None
+    priority_categories: list[str] | None = None
     include_breaks: bool = False
     limit: int = Field(10, ge=1, le=50)
     max_activity_count: int = Field(2, ge=1, le=10)
 
-    @field_validator(
-        "format", "bloom_levels", "available_resources", "preferred_topics", "priority_categories", mode="before"
-    )
     @classmethod
-    def convert_to_list(cls, v):
-        """Convert single strings to lists for consistency, handling comma-separated values."""
-        if v is None:
-            return None
-        if isinstance(v, str):
-            # Handle comma-separated values
-            if "," in v:
-                return [item.strip() for item in v.split(",") if item.strip()]
-            return [v]
-        return v
+    def from_flask_request(cls, request) -> RecommendationRequest:
+        """Create RecommendationRequest from Flask request with elegant parameter parsing."""
+        from flask import request
+
+        # Get all query parameters (preserving multiple values)
+        raw_params = request.args.to_dict(flat=False)
+
+        # Process list-type parameters elegantly
+        list_fields = {"format", "bloom_levels", "available_resources", "preferred_topics", "priority_categories"}
+        processed_params = {}
+
+        for key, value in raw_params.items():
+            if key in list_fields:
+                # Flatten and clean all values (handles both comma-separated and multiple params)
+                all_values = []
+                for item in (value if isinstance(value, list) else [value]):
+                    if item and "," in item:
+                        all_values.extend([v.strip() for v in item.split(",") if v.strip()])
+                    elif item:
+                        all_values.append(item.strip())
+                processed_params[key] = all_values if all_values else None
+            else:
+                # Single values - take first if list
+                processed_params[key] = value[0] if isinstance(value, list) and value else value
+
+        return cls(**processed_params)
 
     @field_validator("format")
     @classmethod

@@ -1,17 +1,11 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { useDataFetch } from "@/hooks/useDataFetch";
 import { useApi } from "@/hooks/useApi";
-import { Brain, Activity as ActivityIcon, FileText, Eye } from "lucide-react";
+import { Brain, Activity as ActivityIcon, FileText } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
 import type { Activity } from "@/types/activity";
@@ -23,9 +17,6 @@ export const ActivityDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-  const [isLoadingPdf] = useState(false);
 
   // Get activity data from navigation state or fetch from API
   const stateActivity = location.state?.activity as Activity | undefined;
@@ -33,7 +24,6 @@ export const ActivityDetails: React.FC = () => {
 
   // API hooks for data fetching
   const downloadApi = useApi();
-  const pdfApi = useApi();
 
   // Data fetching for activity details
   const fetchActivity = useCallback(async () => {
@@ -50,7 +40,12 @@ export const ActivityDetails: React.FC = () => {
     throw new Error("No activity ID provided");
   }, [stateActivity, id]);
 
-  const { data: activity, isLoading, error, refetch } = useDataFetch({
+  const {
+    data: activity,
+    isLoading,
+    error,
+    refetch,
+  } = useDataFetch({
     fetchFn: fetchActivity,
     enabled: !!(stateActivity || id),
     dependencies: [stateActivity, id],
@@ -97,26 +92,6 @@ export const ActivityDetails: React.FC = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     });
-  };
-
-  const handlePreviewPDF = async () => {
-    if (!activity?.id) return;
-
-    setIsPdfModalOpen(true);
-
-    await pdfApi.call(async () => {
-      const pdfBlob = await apiService.getActivityPdf(activity.id as number);
-      const url = URL.createObjectURL(pdfBlob);
-      setPdfUrl(url);
-    });
-  };
-
-  const closePdfModal = () => {
-    setIsPdfModalOpen(false);
-    if (pdfUrl) {
-      URL.revokeObjectURL(pdfUrl);
-      setPdfUrl(null);
-    }
   };
 
   const handleBack = () => {
@@ -189,21 +164,12 @@ export const ActivityDetails: React.FC = () => {
           <div className="flex gap-2 sm:gap-4">
             <FavouriteButton activityId={activity.id} size="default" />
             <Button
-              onClick={handlePreviewPDF}
-              disabled={pdfApi.isLoading}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Eye className="h-4 w-4" />
-              {pdfApi.isLoading ? "Loading..." : "Preview PDF"}
-            </Button>
-            <Button
               onClick={handleDownloadPDF}
               disabled={downloadApi.isLoading}
               className="bg-green-500 hover:bg-green-700 flex items-center gap-2"
             >
               <FileText className="h-4 w-4" />
-              {downloadApi.isLoading ? "Downloading..." : "Download PDF"}
+              {downloadApi.isLoading ? "Loading..." : "View PDF"}
             </Button>
             <Button onClick={handleBack} variant="outline">
               {fromBrowser ? "Back to Library" : "Back to Form"}
@@ -372,60 +338,27 @@ export const ActivityDetails: React.FC = () => {
             {pdfInfo ? (
               <div className="text-foreground text-sm sm:text-base">
                 <p>
-                  <span className="font-medium">Filename:</span> {pdfInfo.filename}
+                  <span className="font-medium">Filename:</span>{" "}
+                  {pdfInfo.filename}
                 </p>
                 <p>
-                  <span className="font-medium">Size:</span> {(pdfInfo.file_size / 1024).toFixed(1)} KB
+                  <span className="font-medium">Size:</span>{" "}
+                  {(pdfInfo.file_size / 1024).toFixed(1)} KB
                 </p>
                 <p>
-                  <span className="font-medium">Uploaded:</span> {new Date(pdfInfo.created_at).toLocaleDateString()}
+                  <span className="font-medium">Uploaded:</span>{" "}
+                  {new Date(pdfInfo.created_at).toLocaleDateString()}
                 </p>
               </div>
             ) : (
               <p className="text-muted-foreground text-sm sm:text-base">
-                A PDF is available for this activity. Details are currently unavailable, but you can preview or download it above.
+                A PDF is available for this activity. Details are currently
+                unavailable, but you can preview or download it above.
               </p>
             )}
           </div>
         </div>
       </div>
-
-      {/* PDF Preview Dialog */}
-      <Dialog
-        open={isPdfModalOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            closePdfModal();
-          } else {
-            setIsPdfModalOpen(true);
-          }
-        }}
-      >
-        <DialogContent className="max-w-4xl max-h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>Preview: {activity.name}</DialogTitle>
-          </DialogHeader>
-          <div className="w-full h-[70vh] flex items-center justify-center">
-            {isLoadingPdf ? (
-              <div className="flex flex-col items-center gap-4">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <p className="text-muted-foreground">Loading PDF...</p>
-              </div>
-            ) : pdfUrl ? (
-              <iframe
-                src={pdfUrl}
-                className="w-full h-full border-0 rounded-lg"
-                title={`PDF Preview: ${activity.name}`}
-              />
-            ) : (
-              <div className="text-center text-muted-foreground">
-                <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Failed to load PDF preview</p>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

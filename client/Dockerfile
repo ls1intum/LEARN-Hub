@@ -11,15 +11,17 @@ RUN apk add --no-cache libc6-compat
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Copy ONLY dependency files first (most stable)
 COPY package.json package-lock.json* ./
 
-# Install all dependencies (including dev dependencies for build)
+# Cache dependencies separately
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --no-audit --no-fund
 
-# Copy source code
-COPY . .
+# Copy source code (changes invalidate cache only from here)
+COPY src ./src
+COPY public ./public
+COPY index.html vite.config.ts tsconfig.json tailwind.config.js postcss.config.js eslint.config.js ./
 
 # Build the application
 RUN npm run build

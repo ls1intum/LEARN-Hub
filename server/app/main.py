@@ -32,8 +32,9 @@ info = {
 def create_app():
     # Initialize Flask-OpenAPI3 app
     servers = [
-        Server(url="http://localhost:5001", description="Development server"),
-        Server(url="https://master-api.dev.amihalcea.com", description="Production server"),
+        Server(url="http://localhost:5001", description="Development local server"),
+        Server(url="https://master-api.dev.amihalcea.com", description="Development homeserver"),
+        Server(url="https://learnhub-test.aet.cit.tum.de", description="Production server"),
     ]
 
     # Define security schemes for JWT authentication
@@ -80,7 +81,7 @@ def create_app():
     register_documents_routes(app)
     register_meta_routes(app)
 
-    @app.route("/hello")
+    @app.route("/api/hello")
     def hello_world():
         return jsonify({"message": "Hello, world!"})
 

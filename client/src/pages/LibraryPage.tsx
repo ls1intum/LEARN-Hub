@@ -696,9 +696,12 @@ export const LibraryPage: React.FC = () => {
                                   variant="outline"
                                   size="sm"
                                   onClick={() =>
-                                    navigate(`/activity-details/${activity.id}`, {
-                                      state: { fromBrowser: true, activity },
-                                    })
+                                    navigate(
+                                      `/activity-details/${activity.id}`,
+                                      {
+                                        state: { fromBrowser: true, activity },
+                                      },
+                                    )
                                   }
                                 >
                                   <Eye className="h-3 w-3 mr-2" />

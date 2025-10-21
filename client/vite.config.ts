@@ -23,7 +23,17 @@ export default defineConfig({
         target: 'http://localhost:5001',
         changeOrigin: true,
         secure: false,
-      }
+      },
+      '/openapi': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/openapi.json': {
+        target: 'http://localhost:5001',
+        changeOrigin: true,
+        secure: false,
+      },
     }
   },
   preview: {

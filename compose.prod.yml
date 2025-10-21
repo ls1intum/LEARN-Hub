@@ -4,6 +4,7 @@
 services:
   postgres:
     image: postgres:17
+    container_name: lh-postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-learn_hub_activities}
@@ -30,7 +31,8 @@ services:
           memory: 256M
 
   server:
-    image: ghcr.io/${GITHUB_REPOSITORY:-your-org/your-repo}/server:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-your-org/your-repo}/server:${IMAGE_TAG:-latest}
+    container_name: lhub-server
     restart: unless-stopped
     ports:
       - "${SERVER_PORT:-5001}:5001"
@@ -38,13 +40,15 @@ services:
       - .env
     environment:
       - SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-learn_hub_activities}
+    volumes:
+      - ${PDF_HOST_PATH:-./data/pdfs}:/app/data/pdfs
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "/app/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/hello', timeout=10)"]
+      test: ["CMD", "/app/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/api/hello', timeout=10)"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -59,7 +63,8 @@ services:
           cpus: '0.5'
 
   client:
-    image: ghcr.io/${GITHUB_REPOSITORY:-your-org/your-repo}/client:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-your-org/your-repo}/client:${IMAGE_TAG:-latest}
+    container_name: lhub-client
     restart: unless-stopped
     ports:
       - "${CLIENT_PORT:-3001}:3001"

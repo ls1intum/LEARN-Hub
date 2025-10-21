@@ -17,6 +17,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 # Copy application code
 COPY app/ ./app/
+COPY scripts/ ./scripts/
 COPY app/db/migrations/versions/ ./migrations/versions/
 
 # Production stage with Python slim image
@@ -47,6 +48,7 @@ COPY --from=builder /app/.venv /app/.venv
 # Copy application code
 COPY --from=builder /app/app ./app
 COPY --from=builder /app/migrations ./migrations
+COPY --from=builder /app/scripts ./scripts
 
 # Expose application port
 EXPOSE 5001

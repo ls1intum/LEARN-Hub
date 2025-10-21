@@ -72,19 +72,24 @@ export const RecommendationsPage: React.FC = () => {
       params.append("include_breaks", String(formData.include_breaks ?? false));
 
       if ((formData.format?.length ?? 0) > 0) {
-        params.append("format", (formData.format as string[]).join(","));
+        (formData.format as string[]).forEach((f) =>
+          params.append("format", f),
+        );
       }
       if ((formData.resources_needed?.length ?? 0) > 0) {
-        params.append(
-          "available_resources",
-          (formData.resources_needed as string[]).join(","),
+        (formData.resources_needed as string[]).forEach((r) =>
+          params.append("available_resources", r),
         );
       }
       if ((formData.bloom_levels?.length ?? 0) > 0) {
-        params.append("bloom_levels", (formData.bloom_levels as string[]).join(","));
+        (formData.bloom_levels as string[]).forEach((b) =>
+          params.append("bloom_levels", b),
+        );
       }
       if ((formData.topics?.length ?? 0) > 0) {
-        params.append("preferred_topics", (formData.topics as string[]).join(","));
+        (formData.topics as string[]).forEach((t) =>
+          params.append("preferred_topics", t),
+        );
       }
 
       (formData.priority_categories ?? []).forEach((category) =>
@@ -122,18 +127,25 @@ export const RecommendationsPage: React.FC = () => {
     params.append("target_age", formData.target_age.toString());
     params.append("target_duration", formData.target_duration.toString());
     params.append("allow_lesson_plans", formData.allow_lesson_plans.toString());
-    const effectiveMaxActivities = formData.allow_lesson_plans ? formData.max_activity_count : 1;
-    const effectiveIncludeBreaks = formData.allow_lesson_plans ? formData.include_breaks : false;
+    const effectiveMaxActivities = formData.allow_lesson_plans
+      ? formData.max_activity_count
+      : 1;
+    const effectiveIncludeBreaks = formData.allow_lesson_plans
+      ? formData.include_breaks
+      : false;
     params.append("max_activity_count", effectiveMaxActivities.toString());
     params.append("include_breaks", effectiveIncludeBreaks.toString());
-    if (formData.format.length > 0) params.append("format", formData.format.join(","));
+    if (formData.format.length > 0)
+      params.append("format", formData.format.join(","));
     if (formData.resources_needed.length > 0)
       params.append("available_resources", formData.resources_needed.join(","));
     if (formData.bloom_levels.length > 0)
       params.append("bloom_levels", formData.bloom_levels.join(","));
     if (formData.topics.length > 0)
       params.append("preferred_topics", formData.topics.join(","));
-    formData.priority_categories.forEach((category) => params.append("priority_categories", category));
+    formData.priority_categories.forEach((category) =>
+      params.append("priority_categories", category),
+    );
     params.set("limit", "5");
     const data = await apiService.getRecommendations(params.toString());
     setResults(data);
@@ -156,8 +168,12 @@ export const RecommendationsPage: React.FC = () => {
       <div className="space-y-8">
         <div className="flex items-start gap-4 sm:gap-6">
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">Activity Recommendations</h1>
-            <p className="text-muted-foreground text-base sm:text-lg">Get personalized activity recommendations for your teaching needs</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+              Activity Recommendations
+            </h1>
+            <p className="text-muted-foreground text-base sm:text-lg">
+              Get personalized activity recommendations for your teaching needs
+            </p>
           </div>
         </div>
 
@@ -177,8 +193,14 @@ export const RecommendationsPage: React.FC = () => {
           </div>
         ) : (
           <div className="mt-8">
-            <ErrorDisplay error={(form.errors as Record<string, string>).general} />
-            <RecommendationForm onSubmit={handleFormSubmit} isLoading={form.isSubmitting} initialValues={form.values as FormData} />
+            <ErrorDisplay
+              error={(form.errors as Record<string, string>).general}
+            />
+            <RecommendationForm
+              onSubmit={handleFormSubmit}
+              isLoading={form.isSubmitting}
+              initialValues={form.values as FormData}
+            />
           </div>
         )}
       </div>

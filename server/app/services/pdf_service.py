@@ -303,8 +303,8 @@ class PDFService:
                 if pdf_content:
                     return True
 
-            # TEMPORARY FALLBACK: Check if fallback PDF (ID 4) exists
-            pdf_content = self.get_pdf_content(4)
+            # TEMPORARY FALLBACK: Check if fallback PDF (ID 999) exists
+            pdf_content = self.get_pdf_content(999)
             return pdf_content is not None
 
         except Exception as e:
@@ -343,11 +343,11 @@ class PDFService:
                     logger.debug(f"Found PDF for activity {activity_id} via document_id {activity.document_id}")
                     return pdf_content
 
-            # TEMPORARY FALLBACK: If no PDF found, use PDF with ID 4 (same as get PDF endpoint)
+            # TEMPORARY FALLBACK: If no PDF found, use PDF with ID 999 (same as get PDF endpoint)
             if pdf_content is None:
-                pdf_content = self.get_pdf_content(4)
+                pdf_content = self.get_pdf_content(999)
                 if pdf_content:
-                    logger.info(f"Using fallback PDF (ID 4) for activity {activity_id}")
+                    logger.info(f"Using fallback PDF (ID 999) for activity {activity_id}")
                     return pdf_content
                 else:
                     logger.warning(f"No fallback PDF available for activity {activity_id}")

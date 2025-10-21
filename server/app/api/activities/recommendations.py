@@ -6,6 +6,7 @@ from datetime import datetime
 
 from flask import request
 from flask_openapi3 import Tag
+from pydantic import ValidationError
 
 from app.auth.decorators import maybe_auth
 from app.core.constants import SCORING_CATEGORIES
@@ -37,9 +38,11 @@ def register_activities_recommendations_routes(api):
         description="Get activity recommendations based on criteria",
     )
     @maybe_auth
-    def get_recommendations(query: RecommendationRequest):
+    def get_recommendations():
         """Get activity recommendations."""
         try:
+            # Create Pydantic model with elegant parameter parsing
+            query = RecommendationRequest.from_flask_request(request)
             include_breaks = query.include_breaks
             limit = query.limit
             max_activity_count = query.max_activity_count
@@ -143,6 +146,8 @@ def register_activities_recommendations_routes(api):
             }
             return success_response(response_data)
 
+        except ValidationError as e:
+            return error_response(f"Validation error: {str(e)}", 422)
         except Exception as e:
             return error_response(f"Failed to get recommendations: {str(e)}", 500)
 

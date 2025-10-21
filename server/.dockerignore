@@ -98,9 +98,6 @@ data/
 *.json
 *.log
 
-# Scripts
-scripts/
-
 # Migrations (keep only the versions directory structure)
 app/db/migrations/env.py
 app/db/migrations/script.py.mako
