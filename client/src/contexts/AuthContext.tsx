@@ -38,6 +38,10 @@ export interface AuthContextType {
   }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateProfile: (
+    data: import("@/types/api").UpdateProfileRequest,
+  ) => Promise<{ success: boolean; message?: string }>;
+  deleteAccount: () => Promise<{ success: boolean; message?: string }>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(
@@ -157,6 +161,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateProfile = async (
+    data: import("@/types/api").UpdateProfileRequest,
+  ) => {
+    try {
+      const { apiService } = await import("@/services/apiService");
+      await apiService.updateProfile(data);
+
+      // Refresh user data to get updated information
+      await refreshUser();
+
+      return { success: true, message: "Profile updated successfully" };
+    } catch (error) {
+      logger.error("Error updating profile", error, "AuthContext");
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to update profile",
+      };
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      const { apiService } = await import("@/services/apiService");
+      await apiService.deleteProfile();
+
+      // Clear tokens and user state
+      authService.clearTokens();
+      setUser(null);
+
+      return { success: true, message: "Account deleted successfully" };
+    } catch (error) {
+      logger.error("Error deleting account", error, "AuthContext");
+      return {
+        success: false,
+        message:
+          error instanceof Error ? error.message : "Failed to delete account",
+      };
+    }
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated,
@@ -170,6 +215,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     guestLogin,
     logout,
     refreshUser,
+    updateProfile,
+    deleteAccount,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

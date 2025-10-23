@@ -90,6 +90,8 @@ export interface FavoriteActivity {
 export interface User {
   id: number;
   email: string;
+  first_name?: string;
+  last_name?: string;
   name?: string;
   role: string;
   is_verified?: boolean;
@@ -100,7 +102,7 @@ export interface UserLoginData {
   user: User;
   access_token: string;
   refresh_token: string;
-  expires_in: number;
+  expires_in?: number;
 }
 
 // Search history types

@@ -32,6 +32,8 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 **Password Reset**: `POST /api/auth/reset-password` (generates password)
 **Token Refresh**: `POST /api/auth/refresh`
 **User Info**: `GET /api/auth/me`
+**Update Profile**: `PUT /api/auth/me` (self-service)
+**Delete Account**: `DELETE /api/auth/me` (self-service)
 **Logout**: `POST /api/auth/logout`
 
 ## Core API Patterns
@@ -99,25 +101,74 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 
 **Teacher Registration** (Public): `POST /api/auth/register-teacher`
 **Password Management** (Public): `POST /api/auth/reset-password`
-**Search History** (Teacher Access): `GET /api/history/search`, `DELETE /api/history/search/{id}`
-**Favourites** (Teacher Access): 
-- Individual Activities: `GET/POST/DELETE /api/history/favourites/activities`
-- Lesson Plans: `GET/POST/DELETE /api/history/favourites/lesson-plans`
-  - POST request body:
-    - `activity_ids: number[]` (required)
-    - `name?: string`
-    - `lesson_plan: object` (required) — snapshot containing:
-      - `activities: Activity[]` with optional `break_after` per activity
-      - `total_duration_minutes: number`
-      - `ordering_strategy?: string`
-      - `title?: string`
-  - GET response entries include `lesson_plan` snapshot for direct rendering and PDF generation
+**Search History** (Teacher Access):
+- Get search history: `GET /api/history/search?limit=50&offset=0`
+  - Pagination: `limit` (default 50), `offset` (default 0)
+  - Returns: Array of search queries with timestamps and search criteria
+  - Response: `{"search_history": [...], "pagination": {limit, offset, count}}`
+- Delete search history entry: `DELETE /api/history/search/{history_id}`
+  - Removes a specific search query from user's history
+  - Returns: Confirmation message
+- **Automatic Tracking**: Search queries are automatically saved when users make recommendations requests with valid authentication
+
+**Favourites** (Teacher Access):
+- **Individual Activities**:
+  - Save favourite: `POST /api/history/favourites/activities` with `{activity_id, name?}`
+  - Get favourites: `GET /api/history/favourites/activities?limit=50&offset=0`
+  - Check status: `GET /api/history/favourites/activities/{activity_id}/status`
+  - Remove favourite: `DELETE /api/history/favourites/activities/{activity_id}`
+- **Lesson Plans**:
+  - Save favourite: `POST /api/history/favourites/lesson-plans` with `{activity_ids, name?, lesson_plan}`
+  - Get favourites: `GET /api/history/favourites/lesson-plans?limit=50&offset=0`
+  - Delete favourite: `DELETE /api/history/favourites/{favourite_id}`
+- **Response Format**:
+  - Each favourite includes: `id, favourite_type ("activity" or "lesson_plan"), name, created_at`
+  - Lesson plan snapshots preserve activities with breaks for accurate replay
+
+### Self-Service Profile Management
+
+**Update Profile**: `PUT /api/auth/me`
+- Request body: `{email?, first_name?, last_name?, password?}` (all optional)
+- Allows users to update their own profile information
+- Email validation: Prevents duplicate emails (409 conflict if taken)
+- Password change: Optional, minimum 8 characters
+- Returns: Updated user object
+- Access: All authenticated users (ADMIN, TEACHER)
+
+**Delete Account**: `DELETE /api/auth/me`
+- Permanently deletes the current user's account
+- Cascades deletion to related data (search history, favourites)
+- Returns: Confirmation message
+- Access: All authenticated users (ADMIN, TEACHER)
+
+### User Management (Admin Only)
+
+**Get Users**: `GET /api/auth/users`
+- Returns: List of all users with role and account information
+- Response: `{"users": [{"id", "email", "first_name", "last_name", "role"}, ...]}`
+
+**Create User**: `POST /api/auth/users`
+- Request body: `{email, first_name, last_name, role, password}`
+- Role options: "TEACHER" or "ADMIN"
+- Password requirements: Minimum 8 characters
+- Returns: Created user object with ID
+- Email notification: Sent to teachers with their credentials
+
+**Update User**: `PUT /api/auth/users/{user_id}`
+- Request body: `{email?, first_name?, last_name?, role?, password?}` (all optional)
+- Allows updating any user field individually
+- Email validation: Prevents duplicate emails
+- Returns: Updated user object
+
+**Delete User**: `DELETE /api/auth/users/{user_id}`
+- Prevents admin from deleting their own account
+- Permanently removes user and associated data
+- Returns: Confirmation message
 
 ### Content Management (Admin Only)
 
 **PDF Upload**: `POST /api/documents/upload_pdf`
 **PDF Retrieval**: `GET /api/documents/{document_id}`
-**User Management**: `GET/POST/PUT/DELETE /api/auth/users/`
 
 ### System Information (Public Access)
 

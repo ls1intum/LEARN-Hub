@@ -85,7 +85,7 @@ def register_history_routes(api):
             user_id = request.user.id
 
             search_history_service = UserSearchHistoryService(db=get_db_session())
-            success = search_history_service.delete_search_history_entry(history_id=history_id, user_id=user_id)
+            success = search_history_service.delete_search_history(history_id=history_id, user_id=user_id)
 
             if not success:
                 return error_response("Search history entry not found", 404)

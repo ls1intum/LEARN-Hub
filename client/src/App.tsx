@@ -16,6 +16,7 @@ import { UserManagementPage } from "@/pages/UserManagementPage";
 import { SearchHistoryPage } from "@/pages/SearchHistoryPage";
 import { FavouritesPage } from "@/pages/FavouritesPage";
 import { UploadTab } from "@/components/UploadTab";
+import { AccountDashboardPage } from "@/pages/AccountDashboardPage";
 
 // Simple wrapper for protected routes with layout
 const ProtectedLayout: React.FC<{
@@ -103,6 +104,16 @@ function App() {
                   element={
                     <ProtectedLayout requiredRole="ADMIN">
                       <UserManagementPage />
+                    </ProtectedLayout>
+                  }
+                />
+                <Route
+                  path="/account"
+                  element={
+                    <ProtectedLayout
+                      allowedRoles={["ADMIN", "TEACHER", "GUEST"]}
+                    >
+                      <AccountDashboardPage />
                     </ProtectedLayout>
                   }
                 />

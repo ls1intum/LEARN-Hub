@@ -9,6 +9,7 @@ import { UserManagementPage } from "@/pages/UserManagementPage";
 import { SearchHistoryPage } from "@/pages/SearchHistoryPage";
 import { FavouritesPage } from "@/pages/FavouritesPage";
 import { UploadTab } from "@/components/UploadTab";
+import { AccountDashboardPage } from "@/pages/AccountDashboardPage";
 
 export type UserRole = "ADMIN" | "TEACHER" | "GUEST";
 
@@ -81,5 +82,11 @@ export const routes: RouteConfig[] = [
     component: UserManagementPage,
     requiredRole: "ADMIN",
     title: "User Management",
+  },
+  {
+    path: "/account",
+    component: AccountDashboardPage,
+    allowedRoles: ["ADMIN", "TEACHER", "GUEST"],
+    title: "Account",
   },
 ];

@@ -20,6 +20,7 @@ from app.utils.pydantic_models import (
     RefreshTokenRequest,
     TeacherRegistrationRequest,
     TokenResponse,
+    UpdateProfileRequest,
     UpdateUserRequest,
     UserIdPath,
     UserResponse,
@@ -415,21 +416,18 @@ def register_auth_routes(api):
             user = user_service.create_user(email, first_name, last_name, role)
 
             # Handle password and email sending based on role
-            if role == UserRole.ADMIN and password:
+            if role == UserRole.ADMIN:
                 # Set password for admin users (no email sent)
                 user_service.set_password(user.id, password)
             elif role == UserRole.TEACHER:
-                # Generate secure password for teachers and send email
-                from app.utils.password_generator import PasswordGenerator
-
-                teacher_password = PasswordGenerator.generate_teacher_password()
-                user_service.set_password(user.id, teacher_password)
+                # Set provided password for teachers and send email
+                user_service.set_password(user.id, password)
 
                 # Send credentials email
                 email_service = EmailService()
                 email_service.init_app(current_app)
 
-                success = email_service.send_teacher_credentials(email, first_name, teacher_password)
+                success = email_service.send_teacher_credentials(email, first_name, password)
                 if not success:
                     current_app.logger.warning(f"Failed to send credentials email to {email}, but user was created")
 
@@ -539,3 +537,92 @@ def register_auth_routes(api):
             return success_response({"message": "User deleted successfully"})
         except Exception as e:
             return error_response(f"Failed to delete user: {str(e)}", 500)
+
+    @api.put(
+        "/api/auth/me",
+        tags=[auth_tag],
+        responses={
+            200: UserResponse,
+            401: ErrorResponse,
+            404: ErrorResponse,
+            409: ErrorResponse,
+            422: ErrorResponse,
+            500: ErrorResponse,
+        },
+        summary="Update profile",
+        description="Update current user's profile information",
+    )
+    @auth_required
+    def update_profile(body: UpdateProfileRequest):
+        """Update current user's profile."""
+        try:
+            from flask import request
+
+            user_id = request.user.id
+            email = body.email
+            first_name = body.first_name
+            last_name = body.last_name
+            password = body.password
+
+            user_service = UserService(get_db_session())
+            user = user_service.get_user_by_id(user_id)
+
+            if not user:
+                return error_response("User not found", 404)
+
+            # Update email if provided
+            if email and email != user.email:
+                # Check if email is already taken by another user
+                existing_user = user_service.get_user_by_email(email)
+                if existing_user and existing_user.id != user_id:
+                    return error_response("Email already exists", 409)
+                user.email = email
+
+            # Update first_name if provided
+            if first_name:
+                user.first_name = first_name
+
+            # Update last_name if provided
+            if last_name:
+                user.last_name = last_name
+
+            # Update password if provided
+            if password:
+                user_service.set_password(user_id, password)
+
+            # Save changes
+            user_service.update_user(user)
+
+            return success_response(_build_user_response(user))
+        except Exception as e:
+            return error_response(f"Failed to update profile: {str(e)}", 500)
+
+    @api.delete(
+        "/api/auth/me",
+        tags=[auth_tag],
+        responses={
+            200: MessageResponse,
+            401: ErrorResponse,
+            404: ErrorResponse,
+            500: ErrorResponse,
+        },
+        summary="Delete account",
+        description="Delete current user's account",
+    )
+    @auth_required
+    def delete_account():
+        """Delete current user's account."""
+        try:
+            from flask import request
+
+            user_id = request.user.id
+
+            user_service = UserService(get_db_session())
+            success = user_service.delete_user(user_id)
+
+            if not success:
+                return error_response("User not found", 404)
+
+            return success_response({"message": "Account deleted successfully"})
+        except Exception as e:
+            return error_response(f"Failed to delete account: {str(e)}", 500)

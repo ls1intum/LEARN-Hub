@@ -31,6 +31,8 @@ ApiService.getFieldValues() -> FieldValues // GET /api/meta/field-values
 ApiService.uploadPdf(file) -> UploadResponse // POST /api/documents/upload_pdf
 ApiService.createActivity(data) -> ActivityResponse // POST /api/activities/create
 ApiService.generateLessonPlan(data) -> Blob // POST /api/activities/lesson-plan (returns application/pdf)
+ApiService.updateProfile(data) -> UserResponse // PUT /api/auth/me
+ApiService.deleteProfile() -> MessageResponse // DELETE /api/auth/me
 ```
 
 ### Type System (`types/api.ts`)
@@ -38,6 +40,7 @@ ApiService.generateLessonPlan(data) -> Blob // POST /api/activities/lesson-plan 
 - **`FormFieldData`** - Form field handling with proper typing
 - **`SearchCriteria`** - Recommendation search criteria
 - **`CreateActivityRequest`** - Activity creation request structure
+- **`UpdateProfileRequest`** - Profile update request structure
 - **`FavoriteActivityRequest`** - Activity favourite request
 - **`LessonPlanRequest`** - Lesson plan generation request
 
@@ -47,6 +50,8 @@ ApiService.generateLessonPlan(data) -> Blob // POST /api/activities/lesson-plan 
 - **`POST /api/auth/login`** - Admin login with email/password
 - **`POST /api/auth/verification-code`** - Teacher verification code login
 - **`GET /api/auth/me`** - Get user info
+- **`PUT /api/auth/me`** - Update user profile (self-service)
+- **`DELETE /api/auth/me`** - Delete user account (self-service)
 
 ### Activities & Recommendations
 - **`GET /api/activities/recommendations`** - Get activity recommendations with priority scoring

@@ -46,6 +46,22 @@ export class ApiService {
       const errorData = response
         ? await response.json().catch(() => ({}) as Record<string, string>)
         : {};
+
+      // Handle Pydantic validation errors (422)
+      if (response?.status === 422 && errorData.detail) {
+        const details = errorData.detail;
+        if (Array.isArray(details)) {
+          const fieldErrors = details
+            .map((err: { loc?: (string | number)[]; msg?: string }) => {
+              const fieldName = err.loc?.[1] || "field";
+              const message = err.msg || "Invalid input";
+              return `${fieldName}: ${message}`;
+            })
+            .join("; ");
+          throw new Error(fieldErrors);
+        }
+      }
+
       throw new Error(
         (errorData.error as string) ||
           `HTTP error! status: ${response?.status || "unknown"}`,
@@ -231,6 +247,26 @@ export class ApiService {
    */
   static async deleteUser(userId: number) {
     return this.request(`/api/auth/users/${userId}`, {
+      method: "DELETE",
+    });
+  }
+
+  /**
+   * Update current user's profile
+   */
+  static async updateProfile(data: import("@/types/api").UpdateProfileRequest) {
+    return this.request("/api/auth/me", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+  }
+
+  /**
+   * Delete current user's account
+   */
+  static async deleteProfile() {
+    return this.request("/api/auth/me", {
       method: "DELETE",
     });
   }

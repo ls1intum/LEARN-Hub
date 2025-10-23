@@ -84,19 +84,15 @@ class CreateUserRequest(BaseModel):
     first_name: str = Field(..., min_length=1, max_length=100)
     last_name: str = Field(..., min_length=1, max_length=100)
     role: str = Field(..., pattern=r"^(TEACHER|ADMIN)$")
-    password: str | None = Field(None, min_length=8, max_length=255)
+    password: str = Field(..., min_length=8, max_length=255)
 
     @field_validator("password")
     @classmethod
-    def validate_password_for_admin(cls, v: str | None, info) -> str | None:
-        """Password is required for ADMIN users. TEACHER users get auto-generated passwords."""
-        role = info.data.get("role")
-
-        if role == "ADMIN" and not v:
-            raise ValueError("Password is required for ADMIN users")
-        if v and not v.strip():
+    def validate_password_for_users(cls, v: str, info) -> str:
+        """Password is required for both ADMIN and TEACHER users."""
+        if not v.strip():
             raise ValueError("Password cannot be empty")
-        return v.strip() if v else None
+        return v.strip()
 
 
 class UpdateUserRequest(BaseModel):
@@ -106,6 +102,23 @@ class UpdateUserRequest(BaseModel):
     first_name: str | None = Field(None, min_length=1, max_length=100)
     last_name: str | None = Field(None, min_length=1, max_length=100)
     role: str | None = Field(None, pattern=r"^(TEACHER|ADMIN)$")
+    password: str | None = Field(None, min_length=8, max_length=255)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str | None, info) -> str | None:
+        """Validate password if provided."""
+        if v and not v.strip():
+            raise ValueError("Password cannot be empty")
+        return v.strip() if v else None
+
+
+class UpdateProfileRequest(BaseModel):
+    """Update profile request validation for self-service account management."""
+
+    email: EmailStr | None = None
+    first_name: str | None = Field(None, min_length=1, max_length=100)
+    last_name: str | None = Field(None, min_length=1, max_length=100)
     password: str | None = Field(None, min_length=8, max_length=255)
 
     @field_validator("password")
@@ -434,7 +447,7 @@ class TokenResponse(BaseModel):
 
     access_token: str
     refresh_token: str
-    expires_in: int
+    expires_in: int | None = Field(None, description="Access token expiration time in seconds")
 
 
 class LoginSuccessData(BaseModel):
@@ -443,7 +456,7 @@ class LoginSuccessData(BaseModel):
     user: UserResponse = Field(..., description="User information")
     access_token: str = Field(..., description="JWT access token for API authentication")
     refresh_token: str = Field(..., description="JWT refresh token for token renewal")
-    expires_in: int = Field(..., description="Access token expiration time in seconds")
+    expires_in: int | None = Field(None, description="Access token expiration time in seconds")
 
 
 class ActivityListData(BaseModel):

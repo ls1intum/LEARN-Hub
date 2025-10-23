@@ -72,7 +72,17 @@ export interface CreateActivityRequest {
 // User creation/update request
 export interface UserRequest {
   email: string;
+  first_name: string;
+  last_name: string;
   role: "TEACHER" | "ADMIN";
+  password?: string;
+}
+
+// Profile update request for self-service account management
+export interface UpdateProfileRequest {
+  email?: string;
+  first_name?: string;
+  last_name?: string;
   password?: string;
 }
 

@@ -5,6 +5,8 @@ import { logger } from "@/services/logger";
 export interface User {
   id: number;
   email: string;
+  first_name?: string;
+  last_name?: string;
   role: "ADMIN" | "TEACHER" | "GUEST";
 }
 

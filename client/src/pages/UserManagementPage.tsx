@@ -17,12 +17,16 @@ import { logger } from "@/services/logger";
 
 interface CreateUserData {
   email: string;
+  first_name: string;
+  last_name: string;
   role: string;
   password: string;
 }
 
 interface EditUserData {
   email: string;
+  first_name: string;
+  last_name: string;
   role: string;
   password: string;
 }
@@ -38,6 +42,8 @@ export const UserManagementPage: React.FC = () => {
   // Create user form state
   const [createForm, setCreateForm] = useState<CreateUserData>({
     email: "",
+    first_name: "",
+    last_name: "",
     role: "TEACHER",
     password: "",
   });
@@ -45,6 +51,8 @@ export const UserManagementPage: React.FC = () => {
   // Edit user form state
   const [editForm, setEditForm] = useState<EditUserData>({
     email: "",
+    first_name: "",
+    last_name: "",
     role: "TEACHER",
     password: "",
   });
@@ -76,17 +84,24 @@ export const UserManagementPage: React.FC = () => {
     setError(null);
 
     try {
-      // Clear password for teachers since they don't use passwords
+      // Include all required fields for user creation
       const submitData = {
         email: createForm.email,
+        first_name: createForm.first_name,
+        last_name: createForm.last_name,
         role: createForm.role as "ADMIN" | "TEACHER",
-        password:
-          createForm.role === "TEACHER" ? undefined : createForm.password,
+        password: createForm.password,
       };
 
       await apiService.createUser(submitData);
       setMessage("User created successfully");
-      setCreateForm({ email: "", role: "TEACHER", password: "" });
+      setCreateForm({
+        email: "",
+        first_name: "",
+        last_name: "",
+        role: "TEACHER",
+        password: "",
+      });
       fetchUsers(); // Refresh the list
     } catch (err) {
       logger.error("Error creating user", err, "UserManagementPage");
@@ -102,18 +117,31 @@ export const UserManagementPage: React.FC = () => {
     setError(null);
 
     try {
-      const updateData = {
+      const updateData: Partial<typeof editForm> = {
         email: editForm.email,
+        first_name: editForm.first_name,
+        last_name: editForm.last_name,
         role: editForm.role as "ADMIN" | "TEACHER",
-        // Only include password if it's provided and user is not a teacher
-        ...(editForm.password &&
-          editForm.role !== "TEACHER" && { password: editForm.password }),
       };
 
-      await apiService.updateUser(userId, updateData);
+      // Include password only if provided
+      if (editForm.password) {
+        updateData.password = editForm.password;
+      }
+
+      await apiService.updateUser(
+        userId,
+        updateData as import("@/types/api").UserRequest,
+      );
       setMessage("User updated successfully");
       setIsEditing(null);
-      setEditForm({ email: "", role: "TEACHER", password: "" });
+      setEditForm({
+        email: "",
+        first_name: "",
+        last_name: "",
+        role: "TEACHER",
+        password: "",
+      });
       fetchUsers(); // Refresh the list
     } catch (err) {
       logger.error("Error updating user", err, "UserManagementPage");
@@ -142,6 +170,8 @@ export const UserManagementPage: React.FC = () => {
   const startEdit = (user: UserType) => {
     setEditForm({
       email: user.email,
+      first_name: user.first_name || "",
+      last_name: user.last_name || "",
       role: user.role,
       password: "",
     });
@@ -150,7 +180,13 @@ export const UserManagementPage: React.FC = () => {
 
   const cancelEdit = () => {
     setIsEditing(null);
-    setEditForm({ email: "", role: "TEACHER", password: "" });
+    setEditForm({
+      email: "",
+      first_name: "",
+      last_name: "",
+      role: "TEACHER",
+      password: "",
+    });
   };
 
   if (isLoading) {
@@ -201,7 +237,7 @@ export const UserManagementPage: React.FC = () => {
         <div className="mb-8 p-4 bg-muted/10 rounded-lg">
           <h2 className="text-lg font-semibold mb-4">Create New User</h2>
           <form onSubmit={handleCreateUser} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="create-email">Email *</Label>
                 <Input
@@ -215,6 +251,40 @@ export const UserManagementPage: React.FC = () => {
                     }))
                   }
                   placeholder="user@example.com"
+                  required
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="create-first-name">First Name *</Label>
+                <Input
+                  id="create-first-name"
+                  type="text"
+                  value={createForm.first_name}
+                  onChange={(e) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      first_name: e.target.value,
+                    }))
+                  }
+                  placeholder="John"
+                  required
+                  className="mt-1"
+                />
+              </div>
+              <div>
+                <Label htmlFor="create-last-name">Last Name *</Label>
+                <Input
+                  id="create-last-name"
+                  type="text"
+                  value={createForm.last_name}
+                  onChange={(e) =>
+                    setCreateForm((prev) => ({
+                      ...prev,
+                      last_name: e.target.value,
+                    }))
+                  }
+                  placeholder="Doe"
                   required
                   className="mt-1"
                 />
@@ -236,10 +306,8 @@ export const UserManagementPage: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div>
-                <Label htmlFor="create-password">
-                  Password {createForm.role === "ADMIN" && "*"}
-                </Label>
+              <div className="lg:col-span-2">
+                <Label htmlFor="create-password">Password *</Label>
                 <Input
                   id="create-password"
                   type="password"
@@ -250,20 +318,21 @@ export const UserManagementPage: React.FC = () => {
                       password: e.target.value,
                     }))
                   }
-                  placeholder={
-                    createForm.role === "ADMIN"
-                      ? "Required for admin"
-                      : "Not available for teachers"
-                  }
-                  required={createForm.role === "ADMIN"}
-                  disabled={createForm.role === "TEACHER"}
+                  placeholder="Enter password for user"
+                  required={true}
                   className="mt-1"
                 />
-                {createForm.role === "TEACHER" && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Teachers use email verification instead of passwords
-                  </p>
-                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {createForm.role === "ADMIN"
+                    ? "Admin users will use this password to login"
+                    : "Teacher users will receive this password via email and can use it to login"}
+                </p>
+                <p
+                  className={`text-xs mt-1 ${createForm.password.length < 8 ? "text-orange-600" : "text-green-600"}`}
+                >
+                  Password length: {createForm.password.length}/8 characters
+                  minimum
+                </p>
               </div>
             </div>
             <Button
@@ -288,6 +357,12 @@ export const UserManagementPage: React.FC = () => {
                   </th>
                   <th className="border border-border px-4 py-2 text-left">
                     Email
+                  </th>
+                  <th className="border border-border px-4 py-2 text-left">
+                    First Name
+                  </th>
+                  <th className="border border-border px-4 py-2 text-left">
+                    Last Name
                   </th>
                   <th className="border border-border px-4 py-2 text-left">
                     Role
@@ -318,6 +393,38 @@ export const UserManagementPage: React.FC = () => {
                           />
                         ) : (
                           user.email
+                        )}
+                      </td>
+                      <td className="border border-border px-4 py-2">
+                        {isEditing === user.id ? (
+                          <Input
+                            value={editForm.first_name}
+                            onChange={(e) =>
+                              setEditForm((prev) => ({
+                                ...prev,
+                                first_name: e.target.value,
+                              }))
+                            }
+                            className="w-full"
+                          />
+                        ) : (
+                          user.first_name || "-"
+                        )}
+                      </td>
+                      <td className="border border-border px-4 py-2">
+                        {isEditing === user.id ? (
+                          <Input
+                            value={editForm.last_name}
+                            onChange={(e) =>
+                              setEditForm((prev) => ({
+                                ...prev,
+                                last_name: e.target.value,
+                              }))
+                            }
+                            className="w-full"
+                          />
+                        ) : (
+                          user.last_name || "-"
                         )}
                       </td>
                       <td className="border border-border px-4 py-2">
@@ -393,7 +500,7 @@ export const UserManagementPage: React.FC = () => {
                 ) : (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={6}
                       className="border border-border px-4 py-8 text-center text-muted-foreground"
                     >
                       No users found

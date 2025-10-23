@@ -160,6 +160,7 @@ class TestTeacherAuthentication:
             "first_name": "New",
             "last_name": "Teacher",
             "role": "TEACHER",
+            "password": "teacherpassword123",
         }
 
         response = auth_client.post("/api/auth/users", json=teacher_data)
@@ -177,5 +178,5 @@ class TestTeacherAuthentication:
         assert user is not None
         assert user.password_hash is not None  # Password should be set
 
-        # Verify email was called
-        mock_send_email.assert_called_once()
+        # Verify email was called with the provided password
+        mock_send_email.assert_called_once_with("newteacher@example.com", "New", "teacherpassword123")
