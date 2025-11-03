@@ -94,6 +94,39 @@ export const AccountDashboardPage: React.FC = () => {
     }
   };
 
+  const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) {
+      const message = error.message.toLowerCase();
+
+      // Handle specific error cases
+      if (message.includes("cannot delete your own account")) {
+        return "You cannot delete your own account.";
+      }
+      if (message.includes("not found")) {
+        return "Account not found. It may have already been deleted.";
+      }
+      if (message.includes("foreign key") || message.includes("constraint")) {
+        return "Unable to delete account due to database constraints. Please contact support if this persists.";
+      }
+      if (message.includes("network") || message.includes("fetch")) {
+        return "Network error. Please check your connection and try again.";
+      }
+      if (message.includes("401") || message.includes("unauthorized")) {
+        return "You don't have permission to delete this account. Please contact an administrator.";
+      }
+      if (message.includes("403") || message.includes("forbidden")) {
+        return "You don't have permission to delete this account.";
+      }
+      if (message.includes("500") || message.includes("server")) {
+        return "Server error occurred. Please try again later or contact support.";
+      }
+
+      // Return the original message if it's meaningful
+      return error.message;
+    }
+    return "An unexpected error occurred. Please try again.";
+  };
+
   const handleDeleteAccount = async () => {
     if (deleteConfirmText !== "DELETE") {
       setMessage({ type: "error", text: "Please type 'DELETE' to confirm" });
@@ -112,16 +145,18 @@ export const AccountDashboardPage: React.FC = () => {
           state: { message: "Account deleted successfully" },
         });
       } else {
+        const errorMessage = result.message || "Failed to delete account";
         setMessage({
           type: "error",
-          text: result.message || "Failed to delete account",
+          text: errorMessage,
         });
         setShowDeleteConfirm(false);
         setDeleteConfirmText("");
       }
     } catch (error) {
       logger.error("Error deleting account", error, "AccountDashboardPage");
-      setMessage({ type: "error", text: "An unexpected error occurred" });
+      const errorMessage = getErrorMessage(error);
+      setMessage({ type: "error", text: errorMessage });
       setShowDeleteConfirm(false);
       setDeleteConfirmText("");
     } finally {

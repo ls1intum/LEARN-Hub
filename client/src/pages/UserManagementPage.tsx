@@ -9,6 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle, CheckCircle, Loader2, Trash2 } from "lucide-react";
 import { apiService } from "@/services/apiService";
 import type { User as UserType } from "@/types/activity";
 import { logger } from "@/services/logger";
@@ -38,6 +48,9 @@ export const UserManagementPage: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [isEditing, setIsEditing] = useState<number | null>(null);
   const [message, setMessage] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserType | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Create user form state
   const [createForm, setCreateForm] = useState<CreateUserData>({
@@ -149,21 +162,70 @@ export const UserManagementPage: React.FC = () => {
     }
   };
 
-  const handleDeleteUser = async (userId: number) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) {
-      return;
-    }
-
-    setMessage("");
+  const openDeleteDialog = (user: UserType) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
     setError(null);
+    setMessage("");
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+    setUserToDelete(null);
+    setError(null);
+  };
+
+  const getErrorMessage = (err: unknown): string => {
+    if (err instanceof Error) {
+      const message = err.message.toLowerCase();
+
+      // Handle specific error cases
+      if (message.includes("cannot delete your own account")) {
+        return "You cannot delete your own account. Please ask another admin to delete it.";
+      }
+      if (message.includes("not found")) {
+        return "User not found. It may have already been deleted.";
+      }
+      if (message.includes("foreign key") || message.includes("constraint")) {
+        return "Unable to delete user due to database constraints. Please contact support if this persists.";
+      }
+      if (message.includes("network") || message.includes("fetch")) {
+        return "Network error. Please check your connection and try again.";
+      }
+      if (message.includes("401") || message.includes("unauthorized")) {
+        return "You don't have permission to delete users. Please contact an administrator.";
+      }
+      if (message.includes("403") || message.includes("forbidden")) {
+        return "You don't have permission to delete users.";
+      }
+      if (message.includes("500") || message.includes("server")) {
+        return "Server error occurred. Please try again later or contact support.";
+      }
+
+      // Return the original message if it's meaningful
+      return err.message;
+    }
+    return "An unexpected error occurred. Please try again.";
+  };
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    setIsDeleting(true);
+    setError(null);
+    setMessage("");
 
     try {
-      await apiService.deleteUser(userId);
-      setMessage("User deleted successfully");
+      await apiService.deleteUser(userToDelete.id);
+      setMessage(`User "${userToDelete.email}" deleted successfully`);
+      closeDeleteDialog();
       fetchUsers(); // Refresh the list
     } catch (err) {
       logger.error("Error deleting user", err, "UserManagementPage");
-      setError(err instanceof Error ? err.message : "Failed to delete user");
+      const errorMessage = getErrorMessage(err);
+      setError(errorMessage);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -223,14 +285,18 @@ export const UserManagementPage: React.FC = () => {
 
         {/* Messages */}
         {message && (
-          <div className="mb-4 p-3 bg-success/10 border border-success text-success rounded">
-            {message}
-          </div>
+          <Alert className="mb-4 border-green-500/50 bg-green-500/10">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-700">
+              {message}
+            </AlertDescription>
+          </Alert>
         )}
         {error && (
-          <div className="mb-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-            <p className="text-destructive text-sm">{error}</p>
-          </div>
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
 
         {/* Create User Form */}
@@ -486,10 +552,12 @@ export const UserManagementPage: React.FC = () => {
                               Edit
                             </Button>
                             <Button
-                              onClick={() => handleDeleteUser(user.id)}
+                              onClick={() => openDeleteDialog(user)}
                               size="sm"
                               className="bg-destructive hover:bg-destructive/80"
+                              disabled={isDeleting}
                             >
+                              <Trash2 className="h-3 w-3 mr-1" />
                               Delete
                             </Button>
                           </div>
@@ -547,6 +615,90 @@ export const UserManagementPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Delete User
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this user? This action cannot be
+              undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          {userToDelete && (
+            <div className="py-4">
+              <div className="p-3 bg-muted rounded-lg space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Email:</span>
+                  <span className="text-sm">{userToDelete.email}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Name:</span>
+                  <span className="text-sm">
+                    {userToDelete.first_name} {userToDelete.last_name}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Role:</span>
+                  <span className="text-sm">{userToDelete.role}</span>
+                </div>
+              </div>
+
+              <div className="mt-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
+                <p className="text-sm font-medium text-destructive mb-2">
+                  This will permanently delete:
+                </p>
+                <ul className="text-xs text-muted-foreground space-y-1 ml-4 list-disc">
+                  <li>User account and profile information</li>
+                  <li>All saved favorites and lesson plans</li>
+                  <li>Search history</li>
+                  <li>Verification codes</li>
+                  <li>All other personal data</li>
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <Alert variant="destructive" className="mt-2">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription className="text-xs">{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={closeDeleteDialog}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteUser}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete User
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

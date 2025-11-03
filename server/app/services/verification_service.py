@@ -89,3 +89,18 @@ class VerificationService:
             self.db_session.delete(code)
 
         self.db_session.commit()
+
+    def delete_all_user_codes(self, user_id: int) -> int:
+        """Delete all verification codes for a user (expired and non-expired).
+
+        This is used when deleting a user to prevent foreign key constraint violations.
+
+        Args:
+            user_id: ID of the user whose codes should be deleted
+
+        Returns:
+            Number of verification codes that were deleted
+        """
+        deleted_count = self.db_session.query(VerificationCode).filter(VerificationCode.user_id == user_id).delete()
+        self.db_session.commit()
+        return deleted_count

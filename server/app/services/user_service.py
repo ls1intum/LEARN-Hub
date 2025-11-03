@@ -2,9 +2,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, scoped_session
 
 from app.db.models.user import User, UserRole
+from app.services.user_favourites_service import UserFavouritesService
+from app.services.user_search_history_service import UserSearchHistoryService
+from app.services.verification_service import VerificationService
 from app.utils.password_utils import PasswordUtils
 
 
@@ -31,12 +35,46 @@ class UserService:
         return user
 
     def delete_user(self, user_id: int) -> bool:
+        """Delete a user and all associated data.
+
+        This method handles cleanup of related records to prevent foreign key constraint
+        violations:
+        - Verification codes (expired and non-expired)
+        - User search history
+        - User favourites
+
+        Args:
+            user_id: ID of the user to delete
+
+        Returns:
+            True if deletion was successful, False if user not found
+
+        Raises:
+            IntegrityError: If deletion fails due to database constraints
+        """
         user = self.get_user_by_id(user_id)
-        if user:
+        if not user:
+            return False
+
+        try:
+            # Clean up related data in order to prevent foreign key constraint violations
+            verification_service = VerificationService(self.db)
+            verification_service.delete_all_user_codes(user_id)
+
+            search_history_service = UserSearchHistoryService(self.db)
+            search_history_service.reset_user_search_history(user_id)
+
+            favourites_service = UserFavouritesService(self.db)
+            favourites_service.reset_user_favourites(user_id)
+
+            # Now safe to delete the user
             self.db.delete(user)
             self.db.commit()
             return True
-        return False
+        except IntegrityError as e:
+            # Rollback the transaction on integrity error
+            self.db.rollback()
+            raise e
 
     def get_all_users(self) -> list[User]:
         return self.db.query(User).all()
