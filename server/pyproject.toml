@@ -95,7 +95,10 @@ minversion = "6.0"
 # Ignore warnings
 filterwarnings = [
     "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning"
+    "ignore::PendingDeprecationWarning",
+    # Ignore unclosed database warnings from pydantic schema generation
+    # These occur during OpenAPI schema generation in tests and are properly cleaned up
+    "ignore:unclosed database:ResourceWarning"
 ]
 
 [tool.coverage.run]

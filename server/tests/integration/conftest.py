@@ -83,11 +83,22 @@ def app():
         except Exception:
             pass  # Ignore errors if tables don't exist
         Base.metadata.create_all(bind=engine)  # Create fresh tables
+
         yield app
 
-        # Clean up database after test - dispose engine to close all connections
-        if engine:
+        # Clean up database after test (still within app context)
+        try:
+            # Remove scoped session to close thread-local sessions
+            session = get_db_session()
+            session.remove()
+        except Exception:
+            pass  # Ignore cleanup errors
+
+        # Dispose engine to close all connections
+        try:
             engine.dispose()
+        except Exception:
+            pass  # Ignore disposal errors
 
 
 @pytest.fixture(scope="function")

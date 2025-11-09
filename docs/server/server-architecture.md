@@ -72,7 +72,7 @@ The service layer implements the business logic as a collection of specialized s
 
 **RecommendationService**: Orchestrates the recommendation engine, translating API requests into core engine inputs and formatting results for API responses. This separation allows the recommendation algorithm to remain independent of web framework concerns.
 
-**UserService**: Handles user management operations including registration, authentication, and profile updates.
+**UserService**: Handles user management operations including registration, authentication, and profile updates. Complex operations like user deletion implement the Unit of Work pattern, ensuring all related data changes occur atomically within a single database transaction.
 
 **EmailService**: Manages email delivery for verification codes. The service is configured differently for development (local SMTP with MailHog) and production (external SMTP provider), demonstrating environment-specific configuration management.
 
@@ -81,6 +81,8 @@ The service layer implements the business logic as a collection of specialized s
 ### Service Design Rationale
 
 Services are instantiated with explicit dependency injection, making dependencies visible and testable. This design choice favors clarity over convenience—while more verbose than implicit dependencies, it makes the system's structure explicit and facilitates unit testing with mock dependencies.
+
+**Transaction Management**: Services that modify data support optional transaction control through an `auto_commit` parameter. This allows orchestrating services to manage complex multi-step operations atomically, ensuring data consistency. For example, user deletion removes verification codes, search history, favourites, and the user record in a single transaction—either all succeed or all roll back.
 
 ## External Integrations
 
@@ -198,6 +200,8 @@ These optimizations reflect a pragmatic approach to algorithm design—perfect a
 ### Database Performance
 
 The relatively small expected dataset (hundreds of activities, thousands of users) allowed for straightforward relational design without extensive optimization. Indexes on commonly queried fields (activity name, user email) provide adequate performance for the expected scale.
+
+**Transaction Design**: Complex operations are implemented as atomic transactions to ensure data consistency. While this increases lock duration compared to multiple smaller transactions, the trade-off is acceptable given that these operations are infrequent (administrative tasks) and the benefits of guaranteed consistency outweigh the minimal performance impact.
 
 ## Deployment Architecture
 

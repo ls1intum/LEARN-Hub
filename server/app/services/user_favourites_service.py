@@ -225,16 +225,18 @@ class UserFavouritesService:
             .all()
         )
 
-    def reset_user_favourites(self, user_id: int) -> int:
+    def reset_user_favourites(self, user_id: int, auto_commit: bool = True) -> int:
         """
         Delete all favourites for a specific user.
 
         Args:
             user_id: ID of the user whose favourites should be deleted
+            auto_commit: Whether to commit the transaction automatically (default: True)
 
         Returns:
             Number of favourites that were deleted
         """
         deleted_count = self.db.query(UserFavourites).filter(UserFavourites.user_id == user_id).delete()
-        self.db.commit()
+        if auto_commit:
+            self.db.commit()
         return deleted_count

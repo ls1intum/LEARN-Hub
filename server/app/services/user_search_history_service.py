@@ -94,16 +94,18 @@ class UserSearchHistoryService:
             return True
         return False
 
-    def reset_user_search_history(self, user_id: int) -> int:
+    def reset_user_search_history(self, user_id: int, auto_commit: bool = True) -> int:
         """
         Delete all search history for a specific user.
 
         Args:
             user_id: ID of the user whose search history should be deleted
+            auto_commit: Whether to commit the transaction automatically (default: True)
 
         Returns:
             Number of search history entries that were deleted
         """
         deleted_count = self.db.query(UserSearchHistory).filter(UserSearchHistory.user_id == user_id).delete()
-        self.db.commit()
+        if auto_commit:
+            self.db.commit()
         return deleted_count
