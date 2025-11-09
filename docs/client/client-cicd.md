@@ -41,23 +41,37 @@ dist/
 
 ## Testing Strategy
 
-The testing strategy prioritizes high-value tests over comprehensive coverage:
+The client test suite prioritizes high-value regression protection with **108 tests running in ~900ms**. Tests focus on critical business logic rather than comprehensive coverage.
 
-**Focus Areas**: Authentication flows, form state management, utility functions, error handling
+### Test Coverage
 
-**Not Tested**: Component visual rendering (manual testing), third-party libraries, simple getters/setters
+**Tested**: Authentication state, API layer, custom hooks, data transformers, secure storage  
+**Not Tested**: UI components, visual rendering, third-party libraries
 
-**Framework**: Vitest (Vite-native, fast, TypeScript support) with React Testing Library (user-perspective component testing)
+Tests are colocated with source code in `__tests__` directories and protect against regressions in user-facing features and API contracts.
 
-**Running Tests**:
+### Testing Tools
+
+**Vitest**: Vite-native test runner with TypeScript support  
+**React Testing Library**: Hook and component testing  
+**Mock Service Worker (MSW)**: Network-level API mocking in `src/test/mocks/`
+
+### Running Tests
+
 ```bash
 cd client/
-make test           # Watch mode
-npm run test:run    # Single run (CI)
-npm run test:ui     # UI mode
+
+# Watch mode
+npm run test
+
+# Single run (CI)
+npm run test:run
+
+# UI mode
+npm run test:ui
 ```
 
-Tests are colocated with code (`src/services/__tests__/`, `src/hooks/__tests__/`, `src/utils/__tests__/`) and use single-threaded execution for stability.
+Configuration in `vitest.config.ts` with jsdom environment and single-threaded execution for stability.
 
 ## Code Quality
 

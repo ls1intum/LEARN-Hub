@@ -1,49 +1,49 @@
 import "@testing-library/jest-dom";
-import { vi, describe, it, beforeEach, afterEach, expect } from "vitest";
+import {
+  vi,
+  describe,
+  it,
+  beforeEach,
+  afterEach,
+  expect,
+  beforeAll,
+  afterAll,
+} from "vitest";
 import React from "react";
 
-// Mock sessionStorage (replacing localStorage for security)
+// Mock storage BEFORE importing MSW (MSW uses localStorage on init)
 const sessionStorageMock = {
-  getItem: vi.fn(),
+  getItem: vi.fn(() => null),
   setItem: vi.fn(),
   removeItem: vi.fn(),
   clear: vi.fn(),
   length: 0,
-  key: vi.fn(),
+  key: vi.fn(() => null),
 };
-Object.defineProperty(window, "sessionStorage", {
-  value: sessionStorageMock,
-});
 
-// Also mock for global
-Object.defineProperty(global, "sessionStorage", {
-  value: sessionStorageMock,
-});
-
-// Mock localStorage for backward compatibility (theme storage still uses it)
 const localStorageMock = {
-  getItem: vi.fn(),
+  getItem: vi.fn(() => null),
   setItem: vi.fn(),
   removeItem: vi.fn(),
   clear: vi.fn(),
   length: 0,
-  key: vi.fn(),
+  key: vi.fn(() => null),
 };
-Object.defineProperty(window, "localStorage", {
-  value: localStorageMock,
+
+// Set up storage mocks immediately for all global contexts
+Object.defineProperty(globalThis, "sessionStorage", {
+  value: sessionStorageMock,
+  writable: true,
+  configurable: true,
 });
 
-// Also mock for global
-Object.defineProperty(global, "localStorage", {
+Object.defineProperty(globalThis, "localStorage", {
   value: localStorageMock,
+  writable: true,
+  configurable: true,
 });
 
-// Mock fetch
-global.fetch = vi.fn().mockResolvedValue({
-  ok: true,
-  json: () => Promise.resolve({}),
-  text: () => Promise.resolve(""),
-});
+// Note: MSW server is initialized in individual test files to avoid initialization issues
 
 // Mock heavy components to improve test performance
 vi.mock("@/components/ui/LoadingState", () => ({
@@ -160,6 +160,8 @@ declare global {
   var it: typeof import("vitest").it;
   var beforeEach: typeof import("vitest").beforeEach;
   var afterEach: typeof import("vitest").afterEach;
+  var beforeAll: typeof import("vitest").beforeAll;
+  var afterAll: typeof import("vitest").afterAll;
   var expect: typeof import("vitest").expect;
   var vi: typeof import("vitest").vi;
 }
@@ -169,5 +171,7 @@ declare global {
 (globalThis as unknown as Record<string, unknown>).it = it;
 (globalThis as unknown as Record<string, unknown>).beforeEach = beforeEach;
 (globalThis as unknown as Record<string, unknown>).afterEach = afterEach;
+(globalThis as unknown as Record<string, unknown>).beforeAll = beforeAll;
+(globalThis as unknown as Record<string, unknown>).afterAll = afterAll;
 (globalThis as unknown as Record<string, unknown>).expect = expect;
 (globalThis as unknown as Record<string, unknown>).vi = vi;

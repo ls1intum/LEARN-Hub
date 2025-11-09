@@ -94,6 +94,17 @@ The application prioritizes simplicity over premature optimization. Performance 
 
 **Code Quality**: ESLint catches common mistakes and enforces best practices. Prettier ensures consistent code style.
 
+## Testing Philosophy
+
+The client employs a targeted testing approach prioritizing critical business logic over comprehensive coverage, achieving **108 tests in ~900ms**.
+
+**Tested**: Authentication flows, API layer, state management hooks, data transformers, secure storage  
+**Not Tested**: UI components, visual rendering, third-party libraries
+
+**Tools**: Vitest (test runner), React Testing Library (hooks/components), MSW (API mocking)
+
+Tests colocated in `__tests__` directories maximize regression protection while maintaining fast feedback loops.
+
 ## Design Principles
 
 **Simplicity**: Straightforward solutions over complex abstractions. Context over Redux. Client-side field values over API synchronization.
