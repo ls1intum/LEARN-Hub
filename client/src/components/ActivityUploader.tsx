@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { logger } from "@/services/logger";
-import { CheckCircle, AlertCircle, ExternalLink } from "lucide-react";
+import {
+  CheckCircle,
+  AlertCircle,
+  ExternalLink,
+  RefreshCw,
+  Edit,
+} from "lucide-react";
 import { FileUploadArea } from "@/components/ui/FileUploadArea";
 import { SelectedFileInfo } from "@/components/ui/SelectedFileInfo";
 import { Button } from "@/components/ui/button";
@@ -14,7 +20,9 @@ import {
 } from "@/components/ui/card";
 import { Upload, Loader2 } from "lucide-react";
 import { apiService } from "@/services/apiService";
+import { ActivityCreationModal } from "@/components/ActivityCreationModal";
 import type { FormFieldData } from "@/types/api";
+import type { Activity } from "@/types/activity";
 
 interface UploadResultData {
   success: boolean;
@@ -44,6 +52,39 @@ export const ActivityUploader: React.FC = () => {
     null,
   );
   const [dragActive, setDragActive] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>(
+    "Creating Activity...",
+  );
+  const [showManualEntryModal, setShowManualEntryModal] = useState(false);
+  const [extractedData, setExtractedData] = useState<
+    Record<string, unknown> | undefined
+  >(undefined);
+  const [pdfDocumentId, setPdfDocumentId] = useState<number | undefined>(
+    undefined,
+  );
+
+  // Cycle through loading messages to keep user informed
+  useEffect(() => {
+    if (!isUploading) return;
+
+    const messages = [
+      "Uploading PDF...",
+      "Extracting text from PDF...",
+      "Processing with AI (this may take ~10 seconds)...",
+      "Analyzing activity data...",
+      "Almost done...",
+    ];
+
+    let currentIndex = 0;
+    setLoadingMessage(messages[0]);
+
+    const interval = setInterval(() => {
+      currentIndex = (currentIndex + 1) % messages.length;
+      setLoadingMessage(messages[currentIndex]);
+    }, 2500); // Change message every 2.5 seconds
+
+    return () => clearInterval(interval);
+  }, [isUploading]);
 
   const validateFile = (file: File) => {
     // Check file type
@@ -111,6 +152,8 @@ export const ActivityUploader: React.FC = () => {
 
     setIsUploading(true);
     setUploadResult(null);
+    setExtractedData(undefined);
+    setPdfDocumentId(undefined);
 
     try {
       const response = await apiService.uploadAndCreateActivity(selectedFile);
@@ -149,13 +192,41 @@ export const ActivityUploader: React.FC = () => {
       }
     } catch (error) {
       logger.error("Upload error", error, "ActivityUploader");
+
+      // Extract any partial data from the error if available
+      const errorData = error as {
+        response?: {
+          data?: { activity?: FormFieldData; document_id?: number };
+        };
+      };
+      if (errorData.response?.data?.activity) {
+        setExtractedData(errorData.response.data.activity);
+      }
+      if (errorData.response?.data?.document_id) {
+        setPdfDocumentId(errorData.response.data.document_id);
+      }
+
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+
       setUploadResult({
         success: false,
-        message: "Failed to create activity from PDF. Please try again.",
+        message: `Failed to create activity from PDF: ${errorMessage}`,
       });
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleManualEntry = () => {
+    setShowManualEntryModal(true);
+  };
+
+  const handleManualEntrySuccess = (activity: Activity) => {
+    setShowManualEntryModal(false);
+    setSelectedFile(null);
+    setUploadResult(null);
+    navigate(`/activity-details/${activity.id}`);
   };
 
   return (
@@ -202,7 +273,7 @@ export const ActivityUploader: React.FC = () => {
             {isUploading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Creating Activity...
+                {loadingMessage}
               </>
             ) : (
               <>
@@ -238,6 +309,28 @@ export const ActivityUploader: React.FC = () => {
                 >
                   {uploadResult.message}
                 </p>
+
+                {/* Error actions: Retry and Manual Entry */}
+                {!uploadResult.success && (
+                  <div className="mt-4 flex flex-col sm:flex-row gap-3">
+                    <Button
+                      onClick={handleUpload}
+                      variant="default"
+                      className="flex-1"
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Retry Upload
+                    </Button>
+                    <Button
+                      onClick={handleManualEntry}
+                      variant="outline"
+                      className="flex-1"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Enter Manually
+                    </Button>
+                  </div>
+                )}
 
                 {uploadResult.success && uploadResult.activity && (
                   <div className="mt-4 space-y-4">
@@ -370,6 +463,15 @@ export const ActivityUploader: React.FC = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* Manual Entry Modal */}
+      <ActivityCreationModal
+        isOpen={showManualEntryModal}
+        onClose={() => setShowManualEntryModal(false)}
+        extractedFields={extractedData}
+        pdfDocumentId={pdfDocumentId}
+        onSuccess={handleManualEntrySuccess}
+      />
     </div>
   );
 };

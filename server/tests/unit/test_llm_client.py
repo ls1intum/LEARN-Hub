@@ -1,248 +1,145 @@
 """
-Comprehensive tests for app/services/llm_client.py - 75% coverage target.
+Comprehensive tests for app/services/llm_client.py - timeout and retry coverage.
 """
 
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from unittest.mock import Mock, patch
 
 import pytest
 
 from app.services.llm_client import (
-    ActivityData,
     ExtractionResult,
+    LLMAuthenticationError,
     LLMClient,
-    ThinkingParser,
+    LLMServiceError,
+    LLMTimeoutError,
 )
 
 
-class TestThinkingParser:
-    """Test ThinkingParser class - comprehensive coverage."""
-
-    def test_parse_thinking_output_with_answer_tags(self):
-        """Test parsing thinking output with answer tags."""
-        parser = ThinkingParser()
-        text = "<thinking>Let me think about this</thinking><answer>Final result</answer>"
-        result = parser.parse_thinking_output(text)
-        assert result == "Final result"
-
-    def test_parse_thinking_output_with_final_answer_tags(self):
-        """Test parsing thinking output with final answer tags."""
-        parser = ThinkingParser()
-        text = "<thinking>Analysis</thinking><final_answer>Complete result</final_answer>"
-        result = parser.parse_thinking_output(text)
-        assert result == "Complete result"
-
-    def test_parse_thinking_output_with_json_tags(self):
-        """Test parsing thinking output with JSON tags."""
-        parser = ThinkingParser()
-        text = '<thinking>Processing</thinking><json>{"key": "value"}</json>'
-        result = parser.parse_thinking_output(text)
-        assert result == '{"key": "value"}'
-
-    def test_parse_thinking_output_with_json_blocks(self):
-        """Test parsing thinking output with JSON code blocks."""
-        parser = ThinkingParser()
-        text = '```json\n{"name": "test"}\n```'
-        result = parser.parse_thinking_output(text)
-        assert result == '{\n  "name": "test"\n}'
-
-    def test_parse_thinking_output_without_tags(self):
-        """Test parsing thinking output without structured tags."""
-        parser = ThinkingParser()
-        text = "This is just plain text without any tags"
-        result = parser.parse_thinking_output(text)
-        assert result == "This is just plain text without any tags"
-
-    def test_parse_thinking_output_empty(self):
-        """Test parsing empty thinking output."""
-        parser = ThinkingParser()
-        result = parser.parse_thinking_output("")
-        assert result == ""
-
-    def test_parse_thinking_output_none(self):
-        """Test parsing None thinking output."""
-        parser = ThinkingParser()
-        result = parser.parse_thinking_output(None)
-        assert result == ""
-
-    def test_extract_json_from_text_valid_json(self):
-        """Test JSON extraction with valid JSON."""
-        parser = ThinkingParser()
-        text = '{"name": "test", "value": 123}'
-        result = parser._extract_json_from_text(text)
-        assert result == '{\n  "name": "test",\n  "value": 123\n}'
-
-    def test_extract_json_from_text_invalid_json(self):
-        """Test JSON extraction with invalid JSON."""
-        parser = ThinkingParser()
-        text = "This is not JSON at all"
-        result = parser._extract_json_from_text(text)
-        assert result is None
-
-    def test_extract_json_from_text_with_code_blocks(self):
-        """Test JSON extraction with code blocks."""
-        parser = ThinkingParser()
-        text = '```json\n{"test": true}\n```'
-        result = parser._extract_json_from_text(text)
-        assert result == '{\n  "test": true\n}'
-
-    def test_fix_common_json_issues_trailing_comma(self):
-        """Test fixing common JSON issues - trailing comma."""
-        parser = ThinkingParser()
-        json_str = '{"key": "value",}'
-        result = parser._fix_common_json_issues(json_str)
-        assert result == '{"key": "value"}'
-
-    def test_fix_common_json_issues_unquoted_keys(self):
-        """Test fixing common JSON issues - unquoted keys."""
-        parser = ThinkingParser()
-        json_str = "{key: 'value'}"
-        result = parser._fix_common_json_issues(json_str)
-        assert result == '{"key": "value"}'
-
-    def test_fix_common_json_issues_single_quotes(self):
-        """Test fixing common JSON issues - single quotes."""
-        parser = ThinkingParser()
-        json_str = "{'key': 'value'}"
-        result = parser._fix_common_json_issues(json_str)
-        assert result == '{"key": "value"}'
-
-    def test_remove_thinking_blocks(self):
-        """Test removing thinking blocks from text."""
-        parser = ThinkingParser()
-        text = "<thinking>This is thinking</thinking>Final answer here"
-        result = parser._remove_thinking_blocks(text)
-        assert result == "Final answer here"
-
-    def test_clean_answer_remove_prefixes(self):
-        """Test cleaning answer by removing common prefixes."""
-        parser = ThinkingParser()
-        answer = "Final answer: This is the result"
-        result = parser._clean_answer(answer)
-        assert result == "This is the result"
-
-    def test_clean_answer_normalize_whitespace(self):
-        """Test cleaning answer by normalizing whitespace."""
-        parser = ThinkingParser()
-        answer = "This   has    excessive    whitespace"
-        result = parser._clean_answer(answer)
-        assert result == "This has excessive whitespace"
-
-
-class TestActivityData:
-    """Test ActivityData model validation."""
-
-    def test_activity_data_valid(self):
-        """Test ActivityData with valid data."""
-        data = ActivityData(
-            name="Test Activity",
-            description="This is a test activity with sufficient description length",
-            age_min=8,
-            age_max=12,
-            format="digital",
-            bloom_level="understand",
-            duration_min_minutes=30,
-        )
-        assert data.name == "Test Activity"
-        assert data.age_min == 8
-        assert data.age_max == 12
-
-    def test_activity_data_description_too_short(self):
-        """Test ActivityData with description too short."""
-        with pytest.raises(ValueError, match="Description must be at least 25 characters"):
-            ActivityData(
-                name="Test Activity",
-                description="Too short",
-                age_min=8,
-                age_max=12,
-                format="digital",
-                bloom_level="understand",
-                duration_min_minutes=30,
-            )
-
-    def test_activity_data_description_too_long(self):
-        """Test ActivityData with description too long."""
-        long_desc = "a" * 1001
-        with pytest.raises(ValueError, match="Description must be at most 1000 characters"):
-            ActivityData(
-                name="Test Activity",
-                description=long_desc,
-                age_min=8,
-                age_max=12,
-                format="digital",
-                bloom_level="understand",
-                duration_min_minutes=30,
-            )
-
-    def test_activity_data_normalize_lists_string(self):
-        """Test ActivityData list normalization with string input."""
-        data = ActivityData(
-            name="Test Activity",
-            description="This is a test activity with sufficient description length",
-            age_min=8,
-            age_max=12,
-            format="digital",
-            bloom_level="understand",
-            duration_min_minutes=30,
-            resources_needed="computers",
-            topics="algorithms",
-        )
-        assert data.resources_needed == ["computers"]
-        assert data.topics == ["algorithms"]
-
-    def test_activity_data_normalize_lists_list(self):
-        """Test ActivityData list normalization with list input."""
-        data = ActivityData(
-            name="Test Activity",
-            description="This is a test activity with sufficient description length",
-            age_min=8,
-            age_max=12,
-            format="digital",
-            bloom_level="understand",
-            duration_min_minutes=30,
-            resources_needed=["computers", "tablets"],
-            topics=["algorithms", "patterns"],
-        )
-        assert data.resources_needed == ["computers", "tablets"]
-        assert data.topics == ["algorithms", "patterns"]
-
-    def test_activity_data_normalize_lists_none(self):
-        """Test ActivityData list normalization with None input."""
-        data = ActivityData(
-            name="Test Activity",
-            description="This is a test activity with sufficient description length",
-            age_min=8,
-            age_max=12,
-            format="digital",
-            bloom_level="understand",
-            duration_min_minutes=30,
-            resources_needed=None,
-            topics=None,
-        )
-        assert data.resources_needed == []
-        assert data.topics == []
-
-
 class TestExtractionResult:
-    """Test ExtractionResult model."""
+    """Test ExtractionResult validation and normalization."""
 
-    def test_extraction_result_valid(self):
-        """Test ExtractionResult with valid data."""
-        activity_data = ActivityData(
-            name="Test Activity",
-            description="This is a test activity with sufficient description length",
-            age_min=8,
-            age_max=12,
-            format="digital",
-            bloom_level="understand",
-            duration_min_minutes=30,
-        )
-        result = ExtractionResult(data=activity_data, confidence=0.8)
-        assert result.data == activity_data
-        assert result.confidence == 0.8
+    def test_extraction_result_normalizes_short_description(self):
+        """Test that short descriptions are padded."""
+        data = {
+            "name": "Test",
+            "description": "Short",  # Too short
+            "age_min": 8,
+            "age_max": 10,
+            "format": "digital",
+            "bloom_level": "understand",
+            "duration_min_minutes": 30,
+        }
+        result = ExtractionResult(data=data, confidence=0.8)
+        assert len(result.data.description) >= 25
+        assert "This activity provides a concise summary" in result.data.description
+
+    def test_extraction_result_truncates_long_description(self):
+        """Test that long descriptions are truncated."""
+        data = {
+            "name": "Test",
+            "description": "a" * 1500,  # Too long
+            "age_min": 8,
+            "age_max": 10,
+            "format": "digital",
+            "bloom_level": "understand",
+            "duration_min_minutes": 30,
+        }
+        result = ExtractionResult(data=data, confidence=0.8)
+        assert len(result.data.description) <= 1000
+        assert result.data.description.endswith("...")
+
+    def test_extraction_result_clamps_age_values(self):
+        """Test that age values are clamped to valid range."""
+        data = {
+            "name": "Test",
+            "description": "This is a test activity description with enough characters",
+            "age_min": 3,  # Too low
+            "age_max": 20,  # Too high
+            "format": "digital",
+            "bloom_level": "understand",
+            "duration_min_minutes": 30,
+        }
+        result = ExtractionResult(data=data, confidence=0.8)
+        assert result.data.age_min >= 6
+        assert result.data.age_max <= 15
+
+    def test_extraction_result_normalizes_format_hybrid(self):
+        """Test format normalization to hybrid."""
+        data = {
+            "name": "Test",
+            "description": "This is a test activity description with enough characters",
+            "age_min": 8,
+            "age_max": 10,
+            "format": "digital and paper",  # Should become hybrid
+            "bloom_level": "understand",
+            "duration_min_minutes": 30,
+        }
+        result = ExtractionResult(data=data, confidence=0.8)
+        assert result.data.format == "hybrid"
+
+    def test_extraction_result_normalizes_bloom_level(self):
+        """Test bloom level normalization from variations."""
+        data = {
+            "name": "Test",
+            "description": "This is a test activity description with enough characters",
+            "age_min": 8,
+            "age_max": 10,
+            "format": "digital",
+            "bloom_level": "analysis",  # Should become "analyze"
+            "duration_min_minutes": 30,
+        }
+        result = ExtractionResult(data=data, confidence=0.8)
+        assert result.data.bloom_level == "analyze"
+
+    def test_extraction_result_allows_empty_topics(self):
+        """Test that empty topics list is allowed."""
+        data = {
+            "name": "Test",
+            "description": "This is a test activity description with enough characters",
+            "age_min": 8,
+            "age_max": 10,
+            "format": "digital",
+            "bloom_level": "understand",
+            "duration_min_minutes": 30,
+            "topics": [],
+        }
+        result = ExtractionResult(data=data, confidence=0.8)
+        assert result.data.topics == []
+
+    def test_extraction_result_allows_empty_resources(self):
+        """Test that empty resources list is allowed."""
+        data = {
+            "name": "Test",
+            "description": "This is a test activity description with enough characters",
+            "age_min": 8,
+            "age_max": 10,
+            "format": "digital",
+            "bloom_level": "understand",
+            "duration_min_minutes": 30,
+            "resources_needed": [],
+        }
+        result = ExtractionResult(data=data, confidence=0.8)
+        assert result.data.resources_needed == []
+
+    def test_extraction_result_valid_confidence(self):
+        """Test that valid confidence values are accepted."""
+        data = {
+            "name": "Test",
+            "description": "This is a test activity description with enough characters",
+            "age_min": 8,
+            "age_max": 10,
+            "format": "digital",
+            "bloom_level": "understand",
+            "duration_min_minutes": 30,
+        }
+        result = ExtractionResult(data=data, confidence=0.75)
+        assert result.confidence == 0.75
+        assert 0.0 <= result.confidence <= 1.0
 
 
 class TestLLMClient:
-    """Test LLMClient class - comprehensive coverage with mocks."""
+    """Test LLMClient class - timeout and retry functionality."""
 
     @patch("app.services.llm_client.Config")
     def test_llm_client_init_missing_config(self, mock_config):
@@ -253,12 +150,12 @@ class TestLLMClient:
         mock_config_instance.llm_model_name = "test_model"
         mock_config.get_instance.return_value = mock_config_instance
 
-        with pytest.raises(ValueError, match="LLM configuration is incomplete"):
+        with pytest.raises(ValueError, match="Missing LLM_BASE_URL"):
             LLMClient()
 
-    @patch("app.services.llm_client.ChatOpenAI")
+    @patch("app.services.llm_client.ChatOllama")
     @patch("app.services.llm_client.Config")
-    def test_llm_client_init_valid_config(self, mock_config, mock_chat_openai):
+    def test_llm_client_init_valid_config(self, mock_config, mock_chat_ollama):
         """Test LLMClient initialization with valid configuration."""
         mock_config_instance = Mock()
         mock_config_instance.llm_base_url = "http://test.com"
@@ -267,17 +164,50 @@ class TestLLMClient:
         mock_config.get_instance.return_value = mock_config_instance
 
         mock_llm = Mock()
-        mock_chat_openai.return_value = mock_llm
+        mock_structured = Mock()
+        mock_llm.with_structured_output.return_value = mock_structured
+        mock_chat_ollama.return_value = mock_llm
 
         client = LLMClient()
-        assert client.config == mock_config_instance
         assert client.llm == mock_llm
+        assert client.structured == mock_structured
 
-    @patch("app.services.llm_client.ChatOpenAI")
+    def test_calculate_timeout_short_text(self):
+        """Test timeout calculation for short text."""
+        with patch("app.services.llm_client.Config") as mock_config:
+            mock_config_instance = Mock()
+            mock_config_instance.llm_base_url = "http://test.com"
+            mock_config_instance.llm_api_key = "test_key"
+            mock_config_instance.llm_model_name = "test_model"
+            mock_config.get_instance.return_value = mock_config_instance
+
+            with patch("app.services.llm_client.ChatOllama"):
+                client = LLMClient()
+                timeout = client._calculate_timeout("Short text")
+                assert timeout >= 10.0  # Minimum timeout
+
+    def test_calculate_timeout_long_text(self):
+        """Test timeout calculation for long text."""
+        with patch("app.services.llm_client.Config") as mock_config:
+            mock_config_instance = Mock()
+            mock_config_instance.llm_base_url = "http://test.com"
+            mock_config_instance.llm_api_key = "test_key"
+            mock_config_instance.llm_model_name = "test_model"
+            mock_config.get_instance.return_value = mock_config_instance
+
+            with patch("app.services.llm_client.ChatOllama"):
+                client = LLMClient()
+                # 8000 chars ≈ 2000 tokens = 2s timeout, plus max(10, 2) = 10s minimum
+                # So we need much longer text: 80000 chars ≈ 20000 tokens = 20s
+                long_text = "a" * 80000
+                timeout = client._calculate_timeout(long_text)
+                assert timeout >= 10.0
+                assert timeout > 10.0  # Should be more than minimum for very long text
+
+    @patch("app.services.llm_client.ChatOllama")
     @patch("app.services.llm_client.Config")
-    def test_extract_activity_data_success(self, mock_config, mock_chat_openai):
-        """Test successful activity data extraction."""
-        # Setup mocks
+    def test_invoke_with_timeout_success(self, mock_config, mock_chat_ollama):
+        """Test successful invocation with timeout."""
         mock_config_instance = Mock()
         mock_config_instance.llm_base_url = "http://test.com"
         mock_config_instance.llm_api_key = "test_key"
@@ -285,39 +215,35 @@ class TestLLMClient:
         mock_config.get_instance.return_value = mock_config_instance
 
         mock_llm = Mock()
-        mock_structured_llm = Mock()
-        mock_llm.with_structured_output.return_value = mock_structured_llm
-        mock_chat_openai.return_value = mock_llm
-
-        # Mock the chain invoke
-        mock_activity_data = ActivityData(
-            name="Test Activity",
-            description="This is a test activity with sufficient description length",
-            age_min=8,
-            age_max=12,
-            format="digital",
-            bloom_level="understand",
-            duration_min_minutes=30,
-        )
-        mock_chain = Mock()
-        mock_chain.invoke.return_value = mock_activity_data
+        mock_structured = Mock()
+        mock_llm.with_structured_output.return_value = mock_structured
+        mock_chat_ollama.return_value = mock_llm
 
         client = LLMClient()
-        client.chain = mock_chain
 
-        # Test extraction
-        result = client.extract_activity_data("Test PDF text", document_id=123)
+        # Mock chain
+        mock_result = ExtractionResult(
+            data={
+                "name": "Test",
+                "description": "This is a test activity description with enough characters",
+                "age_min": 8,
+                "age_max": 10,
+                "format": "digital",
+                "bloom_level": "understand",
+                "duration_min_minutes": 30,
+            },
+            confidence=0.8,
+        )
+        client.chain = Mock()
+        client.chain.invoke.return_value = mock_result
 
+        result = client._invoke_with_timeout("Test text", timeout=5.0)
         assert isinstance(result, ExtractionResult)
-        assert result.data == mock_activity_data
-        assert result.data.document_id == 123
-        assert 0.0 <= result.confidence <= 1.0
 
-    @patch("app.services.llm_client.ChatOpenAI")
+    @patch("app.services.llm_client.ChatOllama")
     @patch("app.services.llm_client.Config")
-    def test_extract_activity_data_fallback_success(self, mock_config, mock_chat_openai):
-        """Test activity data extraction with fallback to thinking parsing."""
-        # Setup mocks
+    def test_invoke_with_timeout_timeout_error(self, mock_config, mock_chat_ollama):
+        """Test invocation that times out."""
         mock_config_instance = Mock()
         mock_config_instance.llm_base_url = "http://test.com"
         mock_config_instance.llm_api_key = "test_key"
@@ -325,40 +251,69 @@ class TestLLMClient:
         mock_config.get_instance.return_value = mock_config_instance
 
         mock_llm = Mock()
-        mock_structured_llm = Mock()
-        mock_llm.with_structured_output.return_value = mock_structured_llm
-        mock_chat_openai.return_value = mock_llm
-
-        # Mock the chain invoke to fail
-        mock_chain = Mock()
-        mock_chain.invoke.side_effect = Exception("Structured output failed")
-
-        # Mock the fallback method
-        mock_activity_data = ActivityData(
-            name="Fallback Activity",
-            description="This is a fallback activity with sufficient description length",
-            age_min=8,
-            age_max=12,
-            format="digital",
-            bloom_level="understand",
-            duration_min_minutes=30,
-        )
+        mock_structured = Mock()
+        mock_llm.with_structured_output.return_value = mock_structured
+        mock_chat_ollama.return_value = mock_llm
 
         client = LLMClient()
-        client.chain = mock_chain
 
-        with patch.object(client, "_extract_with_thinking_parsing", return_value=mock_activity_data):
+        # Mock chain that takes too long
+        with patch("app.services.llm_client.ThreadPoolExecutor") as mock_executor_class:
+            mock_future = Mock()
+            mock_future.result.side_effect = FuturesTimeoutError("Timed out")
+            mock_future.cancel.return_value = True
+
+            mock_executor_instance = Mock()
+            mock_executor_instance.submit.return_value = mock_future
+            mock_executor_instance.__enter__ = Mock(return_value=mock_executor_instance)
+            mock_executor_instance.__exit__ = Mock(return_value=None)
+
+            mock_executor_class.return_value = mock_executor_instance
+
+            with pytest.raises(LLMTimeoutError, match="LLM request timed out"):
+                client._invoke_with_timeout("Test text", timeout=0.1)
+
+    @patch("app.services.llm_client.ChatOllama")
+    @patch("app.services.llm_client.Config")
+    def test_extract_activity_data_success_first_try(self, mock_config, mock_chat_ollama):
+        """Test successful extraction on first try."""
+        mock_config_instance = Mock()
+        mock_config_instance.llm_base_url = "http://test.com"
+        mock_config_instance.llm_api_key = "test_key"
+        mock_config_instance.llm_model_name = "test_model"
+        mock_config.get_instance.return_value = mock_config_instance
+
+        mock_llm = Mock()
+        mock_structured = Mock()
+        mock_llm.with_structured_output.return_value = mock_structured
+        mock_chat_ollama.return_value = mock_llm
+
+        client = LLMClient()
+
+        mock_result = ExtractionResult(
+            data={
+                "name": "Test Activity",
+                "description": "This is a test activity description with enough characters",
+                "age_min": 8,
+                "age_max": 10,
+                "format": "digital",
+                "bloom_level": "understand",
+                "duration_min_minutes": 30,
+            },
+            confidence=0.9,
+        )
+
+        with patch.object(client, "_invoke_with_timeout", return_value=mock_result):
             result = client.extract_activity_data("Test PDF text")
 
         assert isinstance(result, ExtractionResult)
-        assert result.data == mock_activity_data
-        assert 0.0 <= result.confidence <= 1.0
+        assert result.data.name == "Test Activity"
+        assert result.confidence == 0.9
 
-    @patch("app.services.llm_client.ChatOpenAI")
+    @patch("app.services.llm_client.ChatOllama")
     @patch("app.services.llm_client.Config")
-    def test_extract_activity_data_complete_failure(self, mock_config, mock_chat_openai):
-        """Test activity data extraction with complete failure."""
-        # Setup mocks
+    def test_extract_activity_data_success_on_retry(self, mock_config, mock_chat_ollama):
+        """Test successful extraction after retry."""
         mock_config_instance = Mock()
         mock_config_instance.llm_base_url = "http://test.com"
         mock_config_instance.llm_api_key = "test_key"
@@ -366,31 +321,40 @@ class TestLLMClient:
         mock_config.get_instance.return_value = mock_config_instance
 
         mock_llm = Mock()
-        mock_structured_llm = Mock()
-        mock_llm.with_structured_output.return_value = mock_structured_llm
-        mock_chat_openai.return_value = mock_llm
-
-        # Mock the chain invoke to fail
-        mock_chain = Mock()
-        mock_chain.invoke.side_effect = Exception("Structured output failed")
+        mock_structured = Mock()
+        mock_llm.with_structured_output.return_value = mock_structured
+        mock_chat_ollama.return_value = mock_llm
 
         client = LLMClient()
-        client.chain = mock_chain
 
-        # Mock the fallback method to also fail
-        with patch.object(client, "_extract_with_thinking_parsing", side_effect=Exception("Fallback failed")):
+        mock_result = ExtractionResult(
+            data={
+                "name": "Test Activity",
+                "description": "This is a test activity description with enough characters",
+                "age_min": 8,
+                "age_max": 10,
+                "format": "digital",
+                "bloom_level": "understand",
+                "duration_min_minutes": 30,
+            },
+            confidence=0.9,
+        )
+
+        # First call times out, second succeeds
+        with patch.object(
+            client,
+            "_invoke_with_timeout",
+            side_effect=[LLMTimeoutError("Timeout on first try"), mock_result],
+        ):
             result = client.extract_activity_data("Test PDF text")
 
-        # Should return fallback data
         assert isinstance(result, ExtractionResult)
-        assert result.data.name == "Unknown Activity"
-        assert result.confidence == 0.3
+        assert result.data.name == "Test Activity"
 
-    @patch("app.services.llm_client.ChatOpenAI")
+    @patch("app.services.llm_client.ChatOllama")
     @patch("app.services.llm_client.Config")
-    def test_extract_with_thinking_parsing_success(self, mock_config, mock_chat_openai):
-        """Test thinking parsing extraction with success."""
-        # Setup mocks
+    def test_extract_activity_data_timeout_both_tries(self, mock_config, mock_chat_ollama):
+        """Test extraction fails after both timeout attempts."""
         mock_config_instance = Mock()
         mock_config_instance.llm_base_url = "http://test.com"
         mock_config_instance.llm_api_key = "test_key"
@@ -398,31 +362,25 @@ class TestLLMClient:
         mock_config.get_instance.return_value = mock_config_instance
 
         mock_llm = Mock()
-        mock_structured_llm = Mock()
-        mock_llm.with_structured_output.return_value = mock_structured_llm
-        mock_chat_openai.return_value = mock_llm
-
-        # Mock LLM response
-        mock_response = Mock()
-        mock_response.content = (
-            '{"name": "Test Activity", "description": "This is a test activity with sufficient description length", '
-            '"age_min": 8, "age_max": 12, "format": "digital", "bloom_level": "understand", "duration_min_minutes": 30}'
-        )
-        mock_llm.invoke.return_value = mock_response
+        mock_structured = Mock()
+        mock_llm.with_structured_output.return_value = mock_structured
+        mock_chat_ollama.return_value = mock_llm
 
         client = LLMClient()
 
-        result = client._extract_with_thinking_parsing("Test PDF text", document_id=123)
+        # Both attempts time out
+        with patch.object(
+            client,
+            "_invoke_with_timeout",
+            side_effect=LLMTimeoutError("Timeout"),
+        ):
+            with pytest.raises(LLMServiceError, match="timed out.*tried twice"):
+                client.extract_activity_data("Test PDF text")
 
-        assert isinstance(result, ActivityData)
-        assert result.name == "Test Activity"
-        assert result.document_id == 123
-
-    @patch("app.services.llm_client.ChatOpenAI")
+    @patch("app.services.llm_client.ChatOllama")
     @patch("app.services.llm_client.Config")
-    def test_extract_with_thinking_parsing_json_fix(self, mock_config, mock_chat_openai):
-        """Test thinking parsing extraction with JSON fixing."""
-        # Setup mocks
+    def test_extract_activity_data_authentication_error(self, mock_config, mock_chat_ollama):
+        """Test authentication error handling."""
         mock_config_instance = Mock()
         mock_config_instance.llm_base_url = "http://test.com"
         mock_config_instance.llm_api_key = "test_key"
@@ -430,30 +388,24 @@ class TestLLMClient:
         mock_config.get_instance.return_value = mock_config_instance
 
         mock_llm = Mock()
-        mock_structured_llm = Mock()
-        mock_llm.with_structured_output.return_value = mock_structured_llm
-        mock_chat_openai.return_value = mock_llm
-
-        # Mock LLM response with malformed JSON
-        mock_response = Mock()
-        mock_response.content = (
-            '{name: "Test Activity", description: "This is a test activity with sufficient description length", '
-            'age_min: 8, age_max: 12, format: "digital", bloom_level: "understand", duration_min_minutes: 30}'
-        )
-        mock_llm.invoke.return_value = mock_response
+        mock_structured = Mock()
+        mock_llm.with_structured_output.return_value = mock_structured
+        mock_chat_ollama.return_value = mock_llm
 
         client = LLMClient()
 
-        result = client._extract_with_thinking_parsing("Test PDF text")
+        with patch.object(
+            client,
+            "_invoke_with_timeout",
+            side_effect=Exception("401 unauthorized"),
+        ):
+            with pytest.raises(LLMAuthenticationError, match="authentication failed"):
+                client.extract_activity_data("Test PDF text")
 
-        assert isinstance(result, ActivityData)
-        assert result.name == "Test Activity"
-
-    @patch("app.services.llm_client.ChatOpenAI")
+    @patch("app.services.llm_client.ChatOllama")
     @patch("app.services.llm_client.Config")
-    def test_extract_with_thinking_parsing_key_value_extraction(self, mock_config, mock_chat_openai):
-        """Test thinking parsing extraction with key-value pair extraction."""
-        # Setup mocks
+    def test_extract_activity_data_http_error(self, mock_config, mock_chat_ollama):
+        """Test HTTP error handling."""
         mock_config_instance = Mock()
         mock_config_instance.llm_base_url = "http://test.com"
         mock_config_instance.llm_api_key = "test_key"
@@ -461,192 +413,41 @@ class TestLLMClient:
         mock_config.get_instance.return_value = mock_config_instance
 
         mock_llm = Mock()
-        mock_structured_llm = Mock()
-        mock_llm.with_structured_output.return_value = mock_structured_llm
-        mock_chat_openai.return_value = mock_llm
-
-        # Mock LLM response with key-value format
-        mock_response = Mock()
-        mock_response.content = (
-            "name: Test Activity\ndescription: This is a test activity with sufficient description length\n"
-            "age_min: 8\nage_max: 12\nformat: digital\nbloom_level: understand\nduration_min_minutes: 30"
-        )
-        mock_llm.invoke.return_value = mock_response
+        mock_structured = Mock()
+        mock_llm.with_structured_output.return_value = mock_structured
+        mock_chat_ollama.return_value = mock_llm
 
         client = LLMClient()
 
-        result = client._extract_with_thinking_parsing("Test PDF text")
+        with patch.object(
+            client,
+            "_invoke_with_timeout",
+            side_effect=Exception("HTTP error with status code 500"),
+        ):
+            with pytest.raises(LLMServiceError, match="LLM service error"):
+                client.extract_activity_data("Test PDF text")
 
-        assert isinstance(result, ActivityData)
-        # The key-value extraction might include the full text, so we check it contains the expected name
-        assert "Test Activity" in result.name
+    @patch("app.services.llm_client.ChatOllama")
+    @patch("app.services.llm_client.Config")
+    def test_extract_activity_data_generic_error(self, mock_config, mock_chat_ollama):
+        """Test generic error handling."""
+        mock_config_instance = Mock()
+        mock_config_instance.llm_base_url = "http://test.com"
+        mock_config_instance.llm_api_key = "test_key"
+        mock_config_instance.llm_model_name = "test_model"
+        mock_config.get_instance.return_value = mock_config_instance
 
-    def test_preprocess_text(self):
-        """Test text preprocessing."""
-        with patch("app.services.llm_client.Config") as mock_config:
-            mock_config_instance = Mock()
-            mock_config_instance.llm_base_url = "http://test.com"
-            mock_config_instance.llm_api_key = "test_key"
-            mock_config_instance.llm_model_name = "test_model"
-            mock_config.get_instance.return_value = mock_config_instance
+        mock_llm = Mock()
+        mock_structured = Mock()
+        mock_llm.with_structured_output.return_value = mock_structured
+        mock_chat_ollama.return_value = mock_llm
 
-            with patch("app.services.llm_client.ChatOpenAI"):
-                client = LLMClient()
+        client = LLMClient()
 
-                # Test text preprocessing
-                text = "This   has    excessive    whitespace\n\nAnd page numbers 1 2 3"
-                result = client._preprocess_text(text)
-                assert "excessive whitespace" in result
-                # The preprocessing normalizes whitespace and removes some artifacts
-                assert "This has excessive whitespace" in result
-
-    def test_extract_key_value_pairs_success(self):
-        """Test key-value pair extraction."""
-        with patch("app.services.llm_client.Config") as mock_config:
-            mock_config_instance = Mock()
-            mock_config_instance.llm_base_url = "http://test.com"
-            mock_config_instance.llm_api_key = "test_key"
-            mock_config_instance.llm_model_name = "test_model"
-            mock_config.get_instance.return_value = mock_config_instance
-
-            with patch("app.services.llm_client.ChatOpenAI"):
-                client = LLMClient()
-
-                text = "name: Test Activity\nage_min: 8\nage_max: 12\nformat: digital"
-                result = client._extract_key_value_pairs(text, document_id=123)
-
-                assert result is not None
-                assert result["name"] == "Test Activity"
-                assert result["age_min"] == 8
-                assert result["document_id"] == 123
-
-    def test_extract_key_value_pairs_failure(self):
-        """Test key-value pair extraction failure."""
-        with patch("app.services.llm_client.Config") as mock_config:
-            mock_config_instance = Mock()
-            mock_config_instance.llm_base_url = "http://test.com"
-            mock_config_instance.llm_api_key = "test_key"
-            mock_config_instance.llm_model_name = "test_model"
-            mock_config.get_instance.return_value = mock_config_instance
-
-            with patch("app.services.llm_client.ChatOpenAI"):
-                client = LLMClient()
-
-                # Test with empty text
-                result = client._extract_key_value_pairs("", document_id=123)
-                assert result is not None  # Should return defaults
-
-    def test_validate_and_fix_extracted_data(self):
-        """Test validation and fixing of extracted data."""
-        with patch("app.services.llm_client.Config") as mock_config:
-            mock_config_instance = Mock()
-            mock_config_instance.llm_base_url = "http://test.com"
-            mock_config_instance.llm_api_key = "test_key"
-            mock_config_instance.llm_model_name = "test_model"
-            mock_config.get_instance.return_value = mock_config_instance
-
-            with patch("app.services.llm_client.ChatOpenAI"):
-                client = LLMClient()
-
-                # Test with incomplete data
-                data = {"name": "Test Activity"}
-                result = client._validate_and_fix_extracted_data(data, document_id=123)
-
-                assert result["name"] == "Test Activity"
-                assert result["age_min"] == 8  # Default
-                assert result["age_max"] == 12  # Default
-                assert result["format"] == "unplugged"  # Default
-                assert result["document_id"] == 123
-
-    def test_validate_and_fix_extracted_data_invalid_values(self):
-        """Test validation and fixing with invalid values."""
-        with patch("app.services.llm_client.Config") as mock_config:
-            mock_config_instance = Mock()
-            mock_config_instance.llm_base_url = "http://test.com"
-            mock_config_instance.llm_api_key = "test_key"
-            mock_config_instance.llm_model_name = "test_model"
-            mock_config.get_instance.return_value = mock_config_instance
-
-            with patch("app.services.llm_client.ChatOpenAI"):
-                client = LLMClient()
-
-                # Test with invalid values
-                data = {
-                    "name": "Test Activity",
-                    "age_min": 3,  # Too low
-                    "age_max": 20,  # Too high
-                    "format": "invalid",
-                    "bloom_level": "invalid",
-                    "duration_min_minutes": 1,  # Too low
-                }
-                result = client._validate_and_fix_extracted_data(data, document_id=123)
-
-                assert result["age_min"] == 6  # Fixed
-                assert result["age_max"] == 12  # Fixed
-                assert result["format"] == "unplugged"  # Fixed
-                assert result["bloom_level"] == "understand"  # Fixed
-                assert result["duration_min_minutes"] == 30  # Fixed
-
-    def test_calculate_overall_confidence_high_quality(self):
-        """Test confidence calculation with high quality data."""
-        with patch("app.services.llm_client.Config") as mock_config:
-            mock_config_instance = Mock()
-            mock_config_instance.llm_base_url = "http://test.com"
-            mock_config_instance.llm_api_key = "test_key"
-            mock_config_instance.llm_model_name = "test_model"
-            mock_config.get_instance.return_value = mock_config_instance
-
-            with patch("app.services.llm_client.ChatOpenAI"):
-                client = LLMClient()
-
-                activity_data = ActivityData(
-                    name="High Quality Activity",
-                    description="This is a high quality activity with sufficient description length for testing",
-                    age_min=8,
-                    age_max=12,
-                    format="digital",
-                    bloom_level="understand",
-                    duration_min_minutes=30,
-                    topics=["algorithms"],
-                )
-
-                confidence = client._calculate_overall_confidence(activity_data, "Original text")
-                assert 0.0 <= confidence <= 1.0
-                assert confidence > 0.5  # Should be high confidence
-
-    def test_calculate_overall_confidence_low_quality(self):
-        """Test confidence calculation with low quality data."""
-        with patch("app.services.llm_client.Config") as mock_config:
-            mock_config_instance = Mock()
-            mock_config_instance.llm_base_url = "http://test.com"
-            mock_config_instance.llm_api_key = "test_key"
-            mock_config_instance.llm_model_name = "test_model"
-            mock_config.get_instance.return_value = mock_config_instance
-
-            with patch("app.services.llm_client.ChatOpenAI"):
-                client = LLMClient()
-
-                # Create a valid ActivityData first, then modify attributes for testing
-                activity_data = ActivityData(
-                    name="Valid Activity",
-                    description="This is a valid activity with sufficient description length",
-                    age_min=8,
-                    age_max=12,
-                    format="digital",
-                    bloom_level="understand",
-                    duration_min_minutes=30,
-                    topics=["algorithms"],
-                )
-
-                # Manually set low quality attributes for testing
-                activity_data.name = "X"  # Too short
-                activity_data.age_min = 3  # Invalid
-                activity_data.age_max = 20  # Invalid
-                activity_data.format = "invalid"
-                activity_data.bloom_level = "invalid"
-                activity_data.duration_min_minutes = 1  # Invalid
-                activity_data.topics = []  # Empty
-
-                confidence = client._calculate_overall_confidence(activity_data, "Original text")
-                assert 0.0 <= confidence <= 1.0
-                assert confidence < 0.5  # Should be low confidence
+        with patch.object(
+            client,
+            "_invoke_with_timeout",
+            side_effect=Exception("Some random error"),
+        ):
+            with pytest.raises(LLMServiceError, match="Failed to extract activity data"):
+                client.extract_activity_data("Test PDF text")

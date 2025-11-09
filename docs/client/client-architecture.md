@@ -86,6 +86,10 @@ Custom form components (`BadgeSelector`, `PriorityToggle`, `RangeSlider`, `FormF
 
 The application prioritizes simplicity over premature optimization. Performance enhancements are applied based on profiling results rather than speculation.
 
+### Key Optimizations
+
+**N+1 Query Elimination**: Activity list pages (Library) fetch all user favourites in a single API call at the page level, then pass pre-computed favourite status to individual buttons. This reduces network overhead from O(N) individual status checks to O(1) lookups, avoiding N+1 queries entirely. The `FavouriteButton` component accepts an optional `initialIsFavourited` prop to skip individual API calls when status is pre-computed.
+
 ## Development Experience
 
 **Hot Module Replacement**: Vite's HMR preserves application state during development for rapid iteration.

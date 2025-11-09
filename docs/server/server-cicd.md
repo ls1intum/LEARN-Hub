@@ -31,7 +31,7 @@ make dev        # Start development server
 ### Environment Configuration
 
 Required environment variables:
-- `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL_NAME` - LLM service integration
+- `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL_NAME` - Ollama LLM service integration (API key is used as OLLAMA_API_KEY for LangChain authentication)
 - `FLASK_SECRET_KEY`, `JWT_SECRET_KEY` - Security keys
 - `SQLALCHEMY_DATABASE_URI` - PostgreSQL connection
 - `SMTP_*` - Email service configuration

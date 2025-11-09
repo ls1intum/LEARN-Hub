@@ -5,7 +5,8 @@ import { CheckCircle, AlertCircle } from "lucide-react";
 import { FormField } from "@/components/ui/FormField";
 import { NumberField } from "@/components/ui/NumberField";
 import { SelectField } from "@/components/ui/SelectField";
-import { TagList } from "@/components/ui/TagList";
+import { BadgeSelector } from "@/components/ui/BadgeSelector";
+import { useFieldValues } from "@/hooks/useFieldValues";
 import type { FormFieldData } from "@/types/api";
 
 interface ActivityFormData extends FormFieldData {
@@ -59,12 +60,11 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
   onCancel,
   isLoading = false,
 }) => {
+  const { fieldValues } = useFieldValues();
   const [formData, setFormData] = useState<ActivityFormData>({
     ...defaultFormData,
     ...initialData,
   });
-  const [newResource, setNewResource] = useState("");
-  const [newTopic, setNewTopic] = useState("");
   const [error, setError] = useState("");
 
   // Form field options
@@ -96,53 +96,12 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const addToList = (
-    list: string[],
-    newItem: string,
-    setList: (items: string[]) => void,
-  ) => {
-    const trimmed = newItem.trim();
-    if (trimmed && !list.includes(trimmed) && trimmed.length <= 50) {
-      setList([...list, trimmed]);
-      return true;
-    }
-    return false;
-  };
-
-  const addResource = () => {
-    if (
-      addToList(formData.resources_needed, newResource, (items) =>
-        updateField("resources_needed", items),
-      )
-    ) {
-      setNewResource("");
-    } else if (newResource.trim().length > 50) {
-      setError("Resource name must be 50 characters or less");
-    }
-  };
-
-  const addTopic = () => {
-    if (
-      addToList(formData.topics, newTopic, (items) =>
-        updateField("topics", items),
-      )
-    ) {
-      setNewTopic("");
-    } else if (newTopic.trim().length > 50) {
-      setError("Topic name must be 50 characters or less");
-    }
-  };
-
-  const removeResource = (index: number) => {
-    const newResources = formData.resources_needed.filter(
-      (_, i) => i !== index,
-    );
-    updateField("resources_needed", newResources);
-  };
-
-  const removeTopic = (index: number) => {
-    const newTopics = formData.topics.filter((_, i) => i !== index);
-    updateField("topics", newTopics);
+  const toggleArrayValue = (field: keyof ActivityFormData, value: string) => {
+    const currentArray = (formData[field] as string[]) || [];
+    const newArray = currentArray.includes(value)
+      ? currentArray.filter((v) => v !== value)
+      : [...currentArray, value];
+    updateField(field, newArray);
   };
 
   const validateForm = (): string | null => {
@@ -372,7 +331,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-success" />
               <div>
-                <p className="font-medium text-success-foreground">
+                <p className="font-medium text-foreground">
                   PDF Document Ready
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -385,7 +344,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
           <div className="mt-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-destructive" />
-              <p className="font-medium text-destructive">
+              <p className="font-medium text-foreground">
                 No PDF document attached
               </p>
             </div>
@@ -394,27 +353,19 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
       </FormField>
 
       {/* Resources and Topics */}
-      <FormField label="Resources Needed">
-        <TagList
-          items={formData.resources_needed}
-          onRemove={removeResource}
-          placeholder="Add a resource"
-          value={newResource}
-          onChange={setNewResource}
-          onAdd={addResource}
-        />
-      </FormField>
+      <BadgeSelector
+        label="Resources Needed"
+        options={fieldValues?.resources_available || []}
+        selectedValues={formData.resources_needed}
+        onToggle={(value) => toggleArrayValue("resources_needed", value)}
+      />
 
-      <FormField label="Topics">
-        <TagList
-          items={formData.topics}
-          onRemove={removeTopic}
-          placeholder="Add a topic"
-          value={newTopic}
-          onChange={setNewTopic}
-          onAdd={addTopic}
-        />
-      </FormField>
+      <BadgeSelector
+        label="Topics"
+        options={fieldValues?.topics || []}
+        selectedValues={formData.topics}
+        onToggle={(value) => toggleArrayValue("topics", value)}
+      />
 
       <div className="flex gap-2 justify-end">
         <Button type="button" variant="outline" onClick={onCancel}>

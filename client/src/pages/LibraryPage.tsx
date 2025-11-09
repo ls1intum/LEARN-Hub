@@ -62,6 +62,9 @@ export const LibraryPage: React.FC = () => {
   const { fieldValues } = useFieldValues();
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+  const [favouritedActivityIds, setFavouritedActivityIds] = useState<
+    Set<number>
+  >(new Set());
 
   const itemsPerPage = ACTIVITY_CONSTANTS.ITEMS_PER_PAGE;
   const isAdmin = user?.role === "ADMIN";
@@ -126,6 +129,28 @@ export const LibraryPage: React.FC = () => {
 
   const activities = activitiesData?.activities || [];
   const total = activitiesData?.total || 0;
+
+  // Fetch all favourited activities in bulk (avoid N+1 requests)
+  React.useEffect(() => {
+    const fetchFavourites = async () => {
+      if (!user) {
+        return;
+      }
+
+      try {
+        const response = await apiService.getActivityFavourites();
+        const favouritedIds = new Set(
+          response.favourites.map((fav) => fav.activity_id),
+        );
+        setFavouritedActivityIds(favouritedIds);
+      } catch {
+        // Silently fail - this is optional feature
+        setFavouritedActivityIds(new Set());
+      }
+    };
+
+    fetchFavourites();
+  }, [user]);
 
   const handleFilterChange = (
     filterType: keyof FilterFormData,
@@ -537,7 +562,12 @@ export const LibraryPage: React.FC = () => {
                             {activity.source}
                           </p>
                         </div>
-                        <FavouriteButton activityId={activity.id} />
+                        <FavouriteButton
+                          activityId={activity.id}
+                          initialIsFavourited={favouritedActivityIds.has(
+                            activity.id,
+                          )}
+                        />
                       </div>
 
                       <div className="grid grid-cols-2 gap-4 mb-4">
@@ -691,7 +721,12 @@ export const LibraryPage: React.FC = () => {
                             </td>
                             <td className="px-2 py-3 whitespace-nowrap text-right text-sm font-medium">
                               <div className="flex items-center justify-end space-x-2">
-                                <FavouriteButton activityId={activity.id} />
+                                <FavouriteButton
+                                  activityId={activity.id}
+                                  initialIsFavourited={favouritedActivityIds.has(
+                                    activity.id,
+                                  )}
+                                />
                                 <Button
                                   variant="outline"
                                   size="sm"

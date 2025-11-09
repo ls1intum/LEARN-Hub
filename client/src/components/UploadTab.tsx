@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Loader2,
   Plus,
+  RefreshCw,
 } from "lucide-react";
 import { apiService } from "@/services/apiService";
 import { ActivityCreationModal } from "./ActivityCreationModal";
@@ -55,9 +56,15 @@ export const UploadTab: React.FC = () => {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadedDocumentId, setUploadedDocumentId] = useState<number | null>(
+    null,
+  );
+  const [processingError, setProcessingError] = useState<string | null>(null);
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
+  const [isManualEntry, setIsManualEntry] = useState(false);
 
   const handleFileSelect = (file: File) => {
     if (file.type !== "application/pdf") {
@@ -117,27 +124,15 @@ export const UploadTab: React.FC = () => {
     }
   };
 
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      setUploadResult({
-        success: false,
-        message: "Please select a file to upload",
-      });
-      return;
-    }
-
-    setIsUploading(true);
-    setUploadResult(null);
+  const handleProcessPdf = async (
+    documentId: number,
+    filename: string,
+    fileSize: number,
+  ) => {
+    setIsProcessing(true);
+    setProcessingError(null);
 
     try {
-      // Upload the PDF
-      const uploadResponse = (await apiService.uploadPdf(selectedFile)) as {
-        document_id: number;
-        filename: string;
-        file_size: number;
-      };
-      const documentId = uploadResponse.document_id;
-
       // Process the PDF to extract activity data
       const processResponse = (await apiService.processPdf(documentId)) as {
         extracted_data: Record<string, unknown>;
@@ -150,8 +145,8 @@ export const UploadTab: React.FC = () => {
         message: "PDF uploaded and processed successfully",
         document: {
           id: documentId,
-          filename: uploadResponse.filename,
-          file_size: uploadResponse.file_size,
+          filename: filename,
+          file_size: fileSize,
           extracted_fields: processResponse.extracted_data,
           confidence: processResponse.confidence,
           extraction_quality: processResponse.extraction_quality,
@@ -162,15 +157,84 @@ export const UploadTab: React.FC = () => {
       // Reset file input
       const fileInput = document.getElementById("pdf-file") as HTMLInputElement;
       if (fileInput) fileInput.value = "";
+      setUploadedDocumentId(null);
     } catch (error) {
-      logger.error("Upload/processing error", error, "UploadTab");
+      logger.error("Processing error", error, "UploadTab");
+      setProcessingError(
+        error instanceof Error
+          ? error.message
+          : "An unexpected error occurred during PDF processing",
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
       setUploadResult({
         success: false,
-        message: "An unexpected error occurred during upload or processing",
+        message: "Please select a file to upload",
       });
-    } finally {
-      setIsUploading(false);
+      return;
     }
+
+    setIsUploading(true);
+    setUploadResult(null);
+    setProcessingError(null);
+
+    try {
+      // Upload the PDF
+      const uploadResponse = (await apiService.uploadPdf(selectedFile)) as {
+        document_id: number;
+        filename: string;
+        file_size: number;
+      };
+      const documentId = uploadResponse.document_id;
+      setUploadedDocumentId(documentId);
+      setIsUploading(false);
+
+      // Now process the PDF
+      await handleProcessPdf(
+        documentId,
+        uploadResponse.filename,
+        uploadResponse.file_size,
+      );
+    } catch (error) {
+      logger.error("Upload error", error, "UploadTab");
+      setUploadResult({
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred during file upload",
+      });
+      setIsUploading(false);
+      setUploadedDocumentId(null);
+    }
+  };
+
+  const handleSkip = () => {
+    // Stop processing and show manual entry form
+    setIsProcessing(false);
+    setIsManualEntry(true);
+    setShowActivityModal(true);
+  };
+
+  const handleRetry = () => {
+    if (uploadedDocumentId) {
+      // Reset manual entry flag when retrying
+      setIsManualEntry(false);
+      // Get the filename and file size from the selected file
+      const filename = selectedFile?.name || "document.pdf";
+      const fileSize = selectedFile?.size || 0;
+      handleProcessPdf(uploadedDocumentId, filename, fileSize);
+    }
+  };
+
+  const handleManualEntry = () => {
+    setIsManualEntry(true);
+    setShowActivityModal(true);
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -261,13 +325,18 @@ export const UploadTab: React.FC = () => {
           {/* Upload Button */}
           <Button
             onClick={handleUpload}
-            disabled={!selectedFile || isUploading}
+            disabled={!selectedFile || isUploading || isProcessing}
             className="w-full"
           >
             {isUploading ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Uploading and Processing...
+                Uploading PDF...
+              </>
+            ) : isProcessing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processing with AI...
               </>
             ) : (
               <>
@@ -276,6 +345,45 @@ export const UploadTab: React.FC = () => {
               </>
             )}
           </Button>
+
+          {/* Skip Button - shown during processing */}
+          {isProcessing && (
+            <Button onClick={handleSkip} variant="outline" className="w-full">
+              Skip and Enter Manually
+            </Button>
+          )}
+
+          {/* Processing Error - shown when extraction fails */}
+          {processingError && uploadedDocumentId && (
+            <div className="mt-4 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+              <div className="flex items-start gap-3 mb-3">
+                <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-medium text-destructive">
+                    Processing Failed
+                  </p>
+                  <p className="text-sm text-destructive/80 mt-1">
+                    {processingError}
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleRetry}
+                  variant="outline"
+                  className="flex-1"
+                  disabled={isProcessing}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Retry Extraction
+                </Button>
+                <Button onClick={handleManualEntry} className="flex-1">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Manually
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -562,15 +670,49 @@ export const UploadTab: React.FC = () => {
       )}
 
       {/* Activity Creation Modal */}
-      {uploadResult?.success && uploadResult.document && (
+      {((uploadResult?.success && uploadResult.document) ||
+        uploadedDocumentId) && (
         <ActivityCreationModal
           isOpen={showActivityModal}
-          onClose={() => setShowActivityModal(false)}
-          pdfDocumentId={uploadResult.document.id}
-          extractedFields={uploadResult.document.extracted_fields}
+          onClose={() => {
+            setShowActivityModal(false);
+            setIsManualEntry(false);
+            // Clear the uploaded document ID if user closes without creating
+            if (!uploadResult?.success) {
+              setUploadedDocumentId(null);
+              setProcessingError(null);
+            }
+          }}
+          pdfDocumentId={
+            uploadResult?.document?.id || uploadedDocumentId || undefined
+          }
+          extractedFields={
+            isManualEntry
+              ? {
+                  name: "",
+                  description: "",
+                  source: "",
+                  age_min: undefined,
+                  age_max: undefined,
+                  format: "",
+                  bloom_level: "",
+                  duration_min_minutes: undefined,
+                  duration_max_minutes: undefined,
+                  mental_load: "",
+                  physical_energy: "",
+                  prep_time_minutes: undefined,
+                  cleanup_time_minutes: undefined,
+                  resources_needed: [],
+                  topics: [],
+                }
+              : uploadResult?.document?.extracted_fields || {}
+          }
           onSuccess={(activity: Activity) => {
             logger.debug("Activity created", activity, "UploadTab");
             setShowActivityModal(false);
+            setUploadedDocumentId(null);
+            setProcessingError(null);
+            setIsManualEntry(false);
             // Navigate to the newly created activity details page
             navigate(`/activity-details/${activity.id}`, {
               state: { activity, fromBrowser: false },

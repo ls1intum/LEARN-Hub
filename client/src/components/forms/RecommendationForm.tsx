@@ -176,46 +176,40 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
       {/* Basic Requirements */}
       <FormSection title="Basic Requirements" icon={Target}>
         {/* Target Age */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+        <RangeSlider
+          label="Age Appropriateness"
+          value={formData.target_age}
+          min={6}
+          max={15}
+          step={1}
+          onChange={(value) => updateFormData({ target_age: value })}
+          unit=" years"
+          priorityToggle={
             <PriorityToggle
               category="age_appropriateness"
-              label="Age Appropriateness"
               isPriority={isPriorityCategory("age_appropriateness")}
               onToggle={togglePriorityCategory}
             />
-          </div>
-          <RangeSlider
-            label="Age Appropriateness"
-            value={formData.target_age}
-            min={6}
-            max={15}
-            step={1}
-            onChange={(value) => updateFormData({ target_age: value })}
-            unit=" years"
-          />
-        </div>
+          }
+        />
 
         {/* Target Duration */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+        <RangeSlider
+          label="Duration Fit"
+          value={formData.target_duration}
+          min={15}
+          max={180}
+          step={15}
+          onChange={(value) => updateFormData({ target_duration: value })}
+          unit=" minutes"
+          priorityToggle={
             <PriorityToggle
               category="duration_fit"
-              label="Duration Fit"
               isPriority={isPriorityCategory("duration_fit")}
               onToggle={togglePriorityCategory}
             />
-          </div>
-          <RangeSlider
-            label="Duration Fit"
-            value={formData.target_duration}
-            min={15}
-            max={180}
-            step={15}
-            onChange={(value) => updateFormData({ target_duration: value })}
-            unit=" minutes"
-          />
-        </div>
+          }
+        />
 
         {/* Format Selection */}
         <BadgeSelector
@@ -237,40 +231,34 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
       {/* Learning Objectives */}
       <FormSection title="Learning Objectives" icon={BookOpen}>
         {/* Bloom's Taxonomy Levels */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+        <BadgeSelector
+          label="Bloom Level Match"
+          options={actualBloomLevels}
+          selectedValues={formData.bloom_levels}
+          onToggle={(value) => toggleArrayValue("bloom_levels", value)}
+          priorityToggle={
             <PriorityToggle
               category="bloom_level_match"
-              label="Bloom Level Match"
               isPriority={isPriorityCategory("bloom_level_match")}
               onToggle={togglePriorityCategory}
             />
-          </div>
-          <BadgeSelector
-            label="Bloom Level Match"
-            options={actualBloomLevels}
-            selectedValues={formData.bloom_levels}
-            onToggle={(value) => toggleArrayValue("bloom_levels", value)}
-          />
-        </div>
+          }
+        />
 
         {/* Topics */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
+        <BadgeSelector
+          label="Topic Relevance"
+          options={actualTopics}
+          selectedValues={formData.topics}
+          onToggle={(value) => toggleArrayValue("topics", value)}
+          priorityToggle={
             <PriorityToggle
               category="topic_relevance"
-              label="Topic Relevance"
               isPriority={isPriorityCategory("topic_relevance")}
               onToggle={togglePriorityCategory}
             />
-          </div>
-          <BadgeSelector
-            label="Topic Relevance"
-            options={actualTopics}
-            selectedValues={formData.topics}
-            onToggle={(value) => toggleArrayValue("topics", value)}
-          />
-        </div>
+          }
+        />
       </FormSection>
 
       {/* Advanced Options */}
@@ -321,10 +309,14 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
         )}
       </FormSection>
 
-      <Separator />
+      <Separator className="my-6" />
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={isLoading} className="min-w-[120px]">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="min-w-[140px] bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-md hover:shadow-lg transition-all duration-300"
+        >
           {isLoading ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />

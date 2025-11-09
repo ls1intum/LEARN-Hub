@@ -3,7 +3,7 @@ import logging
 
 from pdfminer.high_level import extract_text
 
-from app.services.llm_client import LLMClient
+from app.services.llm_client import LLMAuthenticationError, LLMClient, LLMServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +35,15 @@ class PDFProcessor:
                 ),
             }
 
+        except LLMAuthenticationError as e:
+            logger.error(f"LLM authentication failed: {e}")
+            return {
+                "error": "LLM authentication failed. Please check your LLM_API_KEY configuration.",
+                "confidence": None,
+            }
+        except LLMServiceError as e:
+            logger.error(f"LLM service error: {e}")
+            return {"error": f"LLM service error: {str(e)}", "confidence": None}
         except Exception as e:
             logger.error(f"Failed to parse PDF content: {e}")
             return {"error": f"Failed to parse PDF: {str(e)}", "confidence": None}

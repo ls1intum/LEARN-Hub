@@ -9,6 +9,7 @@ interface BadgeSelectorProps {
   onToggle: (value: string) => void;
   disabled?: boolean;
   className?: string;
+  priorityToggle?: React.ReactNode;
 }
 
 export const BadgeSelector: React.FC<BadgeSelectorProps> = ({
@@ -18,6 +19,7 @@ export const BadgeSelector: React.FC<BadgeSelectorProps> = ({
   onToggle,
   disabled = false,
   className = "",
+  priorityToggle,
 }) => {
   const isBadgeDisabled = (value: string) => {
     if (disabled) return true;
@@ -27,7 +29,10 @@ export const BadgeSelector: React.FC<BadgeSelectorProps> = ({
 
   return (
     <div className={`space-y-3 ${className}`}>
-      <Label className="text-base font-medium">{label}</Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label className="text-base font-medium">{label}</Label>
+        {priorityToggle && <div>{priorityToggle}</div>}
+      </div>
       <div className="flex flex-wrap gap-2">
         {options.map((option) => {
           const isDisabled = isBadgeDisabled(option);
@@ -35,8 +40,10 @@ export const BadgeSelector: React.FC<BadgeSelectorProps> = ({
             <Badge
               key={option}
               variant={selectedValues.includes(option) ? "default" : "outline"}
-              className={`px-3 py-1 ${
-                isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+              className={`px-3 py-1 transition-all duration-200 ${
+                isDisabled
+                  ? "cursor-not-allowed opacity-50"
+                  : "cursor-pointer hover:scale-105"
               }`}
               onClick={() => !isDisabled && onToggle(option)}
             >

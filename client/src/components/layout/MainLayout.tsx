@@ -62,7 +62,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex">
       {/* Left Sidebar */}
-      <div className="w-72 h-screen border-r border-border/50 bg-card/80 backdrop-blur-xl hidden lg:block shadow-xl flex flex-col">
+      <div className="fixed left-0 top-0 w-72 h-screen border-r border-border/50 bg-card/80 backdrop-blur-xl hidden lg:flex shadow-xl flex-col">
         <UserHeader user={user ?? { role: "GUEST" }} onLogout={handleLogout} />
         <div className="flex-1 overflow-y-auto">
           <NavigationMenu
@@ -141,7 +141,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col lg:ml-72">
         {/* Mobile Header */}
         <div className="lg:hidden p-6 border-b border-border/50 bg-card/80 backdrop-blur-xl shadow-lg">
           <div className="flex items-center justify-between">

@@ -29,6 +29,7 @@ ApiService.request<T>(url, options) -> T // server returns data directly without
 ApiService.getRecommendations(params) -> ResultsData // GET /api/activities/recommendations?{params}
 ApiService.getEnvironment() -> { environment: string } // GET /api/meta/environment
 ApiService.uploadPdf(file) -> UploadResponse // POST /api/documents/upload_pdf
+ApiService.processPdf(documentId) -> ProcessingResponse // POST /api/documents/{id}/process
 ApiService.createActivity(data) -> ActivityResponse // POST /api/activities/create
 ApiService.generateLessonPlan(data) -> Blob // POST /api/activities/lesson-plan (returns application/pdf)
 ApiService.updateProfile(data) -> UserResponse // PUT /api/auth/me
@@ -37,6 +38,20 @@ ApiService.deleteProfile() -> MessageResponse // DELETE /api/auth/me
 // Available but not used by client (for third-party integrations)
 ApiService.getFieldValues() -> FieldValues // GET /api/meta/field-values
 ```
+
+### N+1 Query Problem & Solution
+
+**Problem**: When displaying activity lists (e.g., Library page), checking if each activity is favourited would require N individual API calls (`GET /api/history/favourites/activities/{id}/status` for each activity), plus 1 initial page load = N+1 queries.
+
+**Solution**: Pages that display activity lists now fetch all favourites in a single bulk API call using `getActivityFavourites()`. This returns all favourited activity IDs at once, which are then passed to individual buttons via props for O(1) status lookups.
+
+**Implementation**:
+1. **Page Level** (`LibraryPage`): Fetch all favourites once on mount → store IDs in a Set
+2. **Component Level** (`FavouriteButton`): Receive pre-computed favourite status via `initialIsFavourited` prop
+3. **Lookup**: Check if activity is favourited using Set membership test (O(1) instead of API call per activity)
+4. **Toggle**: User actions still make individual API calls (`POST`/`DELETE`) to add/remove from favourites
+
+**Result**: Single API call instead of N+1, dramatically reducing network overhead for pages with many activities.
 
 ### Type System (`types/api.ts`)
 - **`ApiResponse<T>`** - Generic API response wrapper
@@ -63,8 +78,10 @@ ApiService.getFieldValues() -> FieldValues // GET /api/meta/field-values
 - **`GET /api/activities/{id}/pdf`** - Download activity PDF
 
 ### Favourites & History
-- **`GET /api/history/favourites/activities`** - Get user's favourite activities
+- **`GET /api/history/favourites/activities`** - Get user's favourite activities (bulk fetch, all at once)
 - **`POST /api/history/favourites/activities`** - Save activity as favourite
+- **`DELETE /api/history/favourites/activities/{activity_id}`** - Remove activity from favourites
+- **`GET /api/history/favourites/activities/{activity_id}/status`** - Check if activity is favourited (individual lookup)
 - **`GET /api/history/favourites/lesson-plans`** - Get user's favourite lesson plans (includes `lesson_plan` snapshot)
 - **`POST /api/history/favourites/lesson-plans`** - Save lesson plan favourite with snapshot
   - Request body:
@@ -136,6 +153,11 @@ interface Recommendation {
 - **Connection Timeout** - Handles network connectivity issues
 - **Manual Retry** - Users can retry failed requests via UI buttons
 - **Error Messages** - Clear, actionable error messages guide user recovery
+- **PDF Upload Error Recovery** - UploadTab provides flexible error handling:
+  - **Skip During Processing**: Users can skip AI extraction while it's running and enter data manually
+  - **Retry on Failure**: Failed extractions can be retried without re-uploading the PDF
+  - **Manual Fallback**: Users can always choose to fill the form manually if extraction fails or takes too long
+  - The uploaded PDF remains linked to the activity regardless of extraction method
 
 ### Authentication Errors
 - **Automatic Token Refresh** - On 401 responses (uses refresh token)

@@ -88,9 +88,24 @@ Services are instantiated with explicit dependency injection, making dependencie
 
 ### LLM Integration
 
-The system integrates with Large Language Models for PDF content extraction. The model is configurable via the `LLM_MODEL_NAME` environment variable:
+The system integrates with Ollama (via LangChain) for PDF content extraction. The integration uses LangChain's native `ChatOllama` client with authentication via the `OLLAMA_API_KEY` environment variable.
 
 **PDF Content Extraction**: Automated extraction of structured activity metadata from uploaded PDF documents. The LLM analyzes PDF text and extracts fields like activity name, description, age range, Bloom level, topics, duration, and resource requirements.
+
+**Configuration**: 
+- `LLM_BASE_URL`: Base URL of the Ollama server (e.g., `https://gpu.aet.cit.tum.de/ollama`)
+- `LLM_API_KEY`: Bearer token for authentication (set as `OLLAMA_API_KEY` during client initialization)
+- `LLM_MODEL_NAME`: Model name to use (e.g., `qwen3:30b-a3b`)
+
+**Authentication**: The system sets `OLLAMA_API_KEY` environment variable temporarily during LLM client initialization, allowing LangChain's `ChatOllama` to authenticate with the remote Ollama server. The original environment variable value is restored after initialization.
+
+**Error Handling**: The system includes comprehensive error handling:
+- `LLMAuthenticationError`: Raised when authentication fails (401 errors)
+- `LLMServiceError`: Raised for other LLM service errors (includes timeout errors after retry)
+- `LLMTimeoutError`: Internal exception for timeout scenarios
+- Automatic retry mechanism (one retry on timeout)
+- Dynamic timeout calculation (1 second per 1000 tokens, minimum 10 seconds)
+- Graceful handling of optional fields (empty lists allowed for topics and resources)
 
 **Design Rationale**: Integrating LLM-based content processing addresses a significant challenge in educational content management—manually extracting and structuring information from diverse document formats is time-consuming and error-prone. The LLM approach provides:
 

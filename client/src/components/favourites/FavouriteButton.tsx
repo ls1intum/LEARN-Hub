@@ -17,6 +17,7 @@ interface FavouriteButtonProps {
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
   onToggle?: (isFavourited: boolean) => void;
+  initialIsFavourited?: boolean;
 }
 
 export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
@@ -25,11 +26,16 @@ export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
   size = "sm",
   className = "",
   onToggle,
+  initialIsFavourited,
 }) => {
   const { user } = useAuth();
-  const [isFavourited, setIsFavourited] = useState(false);
+  const [isFavourited, setIsFavourited] = useState(
+    initialIsFavourited ?? false,
+  );
   const [loading, setLoading] = useState(false);
-  const [checkingStatus, setCheckingStatus] = useState(true);
+  const [checkingStatus, setCheckingStatus] = useState(
+    initialIsFavourited === undefined,
+  );
 
   const checkFavouriteStatus = useCallback(async () => {
     if (!user) {
@@ -71,8 +77,13 @@ export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
   };
 
   useEffect(() => {
+    // If initialIsFavourited is provided, don't make an API call
+    if (initialIsFavourited !== undefined) {
+      setCheckingStatus(false);
+      return;
+    }
     checkFavouriteStatus();
-  }, [checkFavouriteStatus]);
+  }, [checkFavouriteStatus, initialIsFavourited]);
 
   // Don't render if user is not logged in
   if (!user) {

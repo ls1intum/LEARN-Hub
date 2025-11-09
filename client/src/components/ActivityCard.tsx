@@ -11,12 +11,14 @@ interface ActivityCardProps {
   activity: Activity;
   compact?: boolean;
   className?: string;
+  isFavourited?: boolean;
 }
 
 export const ActivityCard: React.FC<ActivityCardProps> = ({
   activity,
   compact = false,
   className = "",
+  isFavourited,
 }) => {
   const navigate = useNavigate();
 
@@ -58,7 +60,10 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           >
             {activity.name}
           </CardTitle>
-          <FavouriteButton activityId={activity.id} />
+          <FavouriteButton
+            activityId={activity.id}
+            initialIsFavourited={isFavourited}
+          />
         </div>
       </CardHeader>
 

@@ -84,6 +84,7 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 **Upload and Create Activity**: `POST /api/activities/upload-and-create` (Admin only)
 - Combined endpoint: upload PDF, extract activity data, and create activity in one request
 - Returns: Created activity object with extraction confidence and quality metrics
+- Note: LLM processing typically takes ~10 seconds; request includes automatic retry on timeout
 
 **Delete Activity**: `DELETE /api/activities/{id}` (Admin only)
 

@@ -1,4 +1,4 @@
-"""Constants for the recommendation engine."""
+"""Constants for the recommendation engine and shared validation ranges."""
 
 from __future__ import annotations
 
@@ -83,3 +83,21 @@ DEFAULT_RECOMMENDATION_LIMIT = 10
 # Score normalization
 SCORE_MAX_VALUE = 100  # Maximum score value for normalization
 SCORE_MIN_VALUE = 0  # Minimum score value for normalization
+
+# -----------------------------
+# Activity validation constants
+# -----------------------------
+# Age bounds used across extraction/validation
+ACTIVITY_MIN_AGE = 6
+ACTIVITY_MAX_AGE = 15
+
+# Duration bounds (minutes)
+ACTIVITY_MIN_DURATION = 5
+ACTIVITY_MAX_DURATION = 300
+
+# Description length (characters)
+ACTIVITY_DESCRIPTION_MIN_CHARS = 25
+ACTIVITY_DESCRIPTION_MAX_CHARS = 1000
+
+# Topic selection
+TOPICS_MAX_COUNT = 2

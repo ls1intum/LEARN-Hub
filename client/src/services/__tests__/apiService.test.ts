@@ -289,6 +289,29 @@ describe("ApiService", () => {
       const formData = call[1]?.body as FormData;
       expect(formData.get("pdf_file")).toBe(file);
     });
+
+    it("should process uploaded PDF document", async () => {
+      const mockResponse = {
+        extracted_data: {
+          name: "Test Activity",
+          description: "Test description",
+          format: "unplugged",
+        },
+        confidence: 0.85,
+        extraction_quality: "high",
+      };
+      vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
+        new Response(JSON.stringify(mockResponse), { status: 200 }),
+      );
+
+      const result = await ApiService.processPdf(123);
+
+      const call = vi.mocked(authService.makeAuthenticatedRequest).mock
+        .calls[0];
+      expect(call[0]).toBe("/api/documents/123/process");
+      expect(call[1]?.method).toBe("POST");
+      expect(result).toEqual(mockResponse);
+    });
   });
 
   describe("DELETE Methods", () => {

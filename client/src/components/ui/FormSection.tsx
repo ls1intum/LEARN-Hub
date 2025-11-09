@@ -16,14 +16,16 @@ export const FormSection: React.FC<FormSectionProps> = ({
   className = "",
 }) => {
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Icon className="h-5 w-5" />
+    <Card
+      className={`border-l-4 border-l-primary/50 bg-gradient-to-br from-background via-background to-primary/5 transition-all duration-300 hover:shadow-md hover:border-l-primary ${className}`}
+    >
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Icon className="h-5 w-5 text-primary/80" />
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">{children}</CardContent>
+      <CardContent className="space-y-5">{children}</CardContent>
     </Card>
   );
 };
