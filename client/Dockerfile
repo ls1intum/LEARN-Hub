@@ -31,7 +31,7 @@ FROM nginx:1.25-alpine AS runner
 
 # Add labels for better image management
 LABEL org.opencontainers.image.title="LEARN-Hub Client"
-LABEL org.opencontainers.image.description="React frontend for LEARN-Hub application"
+LABEL org.opencontainers.image.description="React client for LEARN-Hub application"
 LABEL org.opencontainers.image.vendor="LEARN-Hub Project"
 
 # Use existing nginx user for security (already exists in nginx:alpine)

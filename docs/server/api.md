@@ -5,7 +5,7 @@
 RESTful API providing activity recommendations with scoring algorithms, lesson plan generation, and user preference tracking with dual authentication for admins and teachers.
 
 **Base URL**: `http://localhost:5001` (development) | `https://your-domain.com` (production)  
-**Documentation**: `/openapi` (Swagger UI) | `/openapi.json` (OpenAPI spec)
+**Documentation**: `/api/openapi` (Swagger UI) | `/openapi.json` (OpenAPI spec)
 
 ## Authentication
 
@@ -43,7 +43,7 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 **API Framework**:
 - Flask-OpenAPI3 for automatic OpenAPI 3.0 specification generation
 - Type-safe request/response validation with Pydantic v2
-- Automatic Swagger UI documentation at `/openapi`
+- Automatic Swagger UI documentation at `/api/openapi`
 - JWT Bearer authentication scheme with automatic token validation
 - Error handling and validation
 
@@ -73,9 +73,17 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 **Get Activity Details**: `GET /api/activities/{id}`
 - Returns: Single activity details by ID
 
+**Get Activity PDF**: `GET /api/activities/{id}/pdf`
+- Retrieve the PDF document associated with a specific activity
+- Returns: PDF file as binary attachment with appropriate headers
+
 **Create Activity**: `POST /api/activities/create` (Admin only)
-- Creates activity from uploaded PDF document
-- Requires: `document_id` from PDF upload
+- Creates activity from previously uploaded PDF document
+- Requires: `document_id` from `POST /api/documents/upload_pdf` and extracted data
+
+**Upload and Create Activity**: `POST /api/activities/upload-and-create` (Admin only)
+- Combined endpoint: upload PDF, extract activity data, and create activity in one request
+- Returns: Created activity object with extraction confidence and quality metrics
 
 **Delete Activity**: `DELETE /api/activities/{id}` (Admin only)
 
@@ -90,12 +98,13 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 **Get Scoring Insights**: `GET /api/activities/scoring-insights`
 - Returns: Information about scoring categories and their impact levels
 
-### Lesson Planning (Teacher Access)
+### Lesson Planning (Public Access)
 
 **Generate Lesson Plan**: `POST /api/activities/lesson-plan`
 - Request body: `activities`, `search_criteria`, `breaks`, `total_duration`
 - Returns: `application/pdf` attachment with summary page + combined activity PDFs
 - Break constraints: Breaks are allowed only between activities. A break after the final activity is automatically removed; at most `(len(activities) - 1)` breaks are included.
+- Authentication: Not required (public endpoint)
 
 ### User Management
 
@@ -168,7 +177,22 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 ### Content Management (Admin Only)
 
 **PDF Upload**: `POST /api/documents/upload_pdf`
+- Upload a PDF document for processing
+- Returns: `document_id` for subsequent operations
+- Response: `{"document_id": integer, "filename": string, "file_size": integer}`
+
 **PDF Retrieval**: `GET /api/documents/{document_id}`
+- Retrieve raw PDF file content
+- Returns: PDF file as binary attachment
+
+**PDF Document Info**: `GET /api/documents/{document_id}/info`
+- Get metadata about an uploaded PDF document
+- Returns: Document information including filename, size, extraction results (if processed)
+
+**Process PDF Document**: `POST /api/documents/{document_id}/process`
+- Extract activity data from PDF using LLM
+- Analyzes document content and extracts structured activity metadata
+- Returns: `{"document_id": integer, "extracted_data": object, "confidence": float, "extraction_quality": string}`
 
 ### System Information (Public Access)
 
@@ -178,7 +202,7 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 **Environment Information**: `GET /api/meta/environment`
 - Returns: Current environment (local, staging, production) read from `ENVIRONMENT` config
 - Response: `{"environment": "staging"}`
-- Use Case: Frontend can dynamically display environment context to users without build-time configuration
+- Use Case: Client can dynamically display environment context to users without build-time configuration
 
 ## Error Handling
 
@@ -214,6 +238,10 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 
 ### Lesson Plan Generation
 
+**Generate Lesson Plan Info**: `POST /api/activities/lesson-plan/info`
+- Check if lesson plan can be generated for the given activities
+- Returns: Information about available PDFs and generation feasibility
+
 **Activity Series Generation**:
 - Generates activity series with configurable length (1-5 activities)
 - Enforces Bloom's taxonomy progression (non-decreasing)
@@ -242,4 +270,4 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 **Testing**: `make test` (pytest with coverage)
 **Code Quality**: `make lint` (ruff), `make format` (black)
 **Database**: `make db-setup` (Alembic migrations)
-**API Documentation**: Visit `/openapi` for interactive Swagger UI
+**API Documentation**: Visit `/api/openapi` for interactive Swagger UI

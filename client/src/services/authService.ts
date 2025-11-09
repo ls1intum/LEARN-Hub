@@ -228,7 +228,7 @@ export class AuthService {
       );
 
       const responseData = await response.json();
-      // For verification code request, the backend returns success/message directly
+      // For verification code request, the server returns success/message directly
       return {
         success: response.ok,
         message: responseData.message || responseData.error,

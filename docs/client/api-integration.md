@@ -2,7 +2,7 @@
 
 ## Overview
 
-API service layer implementing activity recommendation system with priority scoring, field value synchronization, and role-based authentication. Focus on type safety, error resilience, and development debugging capabilities.
+API service layer implementing activity recommendation system with priority scoring and role-based authentication. Focus on type safety, error resilience, and development debugging capabilities.
 
 ## Service Architecture
 
@@ -27,13 +27,15 @@ ApiService.request<T>(url, options) -> T // server returns data directly without
 
 // Key service methods
 ApiService.getRecommendations(params) -> ResultsData // GET /api/activities/recommendations?{params}
-ApiService.getFieldValues() -> FieldValues // GET /api/meta/field-values
 ApiService.getEnvironment() -> { environment: string } // GET /api/meta/environment
 ApiService.uploadPdf(file) -> UploadResponse // POST /api/documents/upload_pdf
 ApiService.createActivity(data) -> ActivityResponse // POST /api/activities/create
 ApiService.generateLessonPlan(data) -> Blob // POST /api/activities/lesson-plan (returns application/pdf)
 ApiService.updateProfile(data) -> UserResponse // PUT /api/auth/me
 ApiService.deleteProfile() -> MessageResponse // DELETE /api/auth/me
+
+// Available but not used by client (for third-party integrations)
+ApiService.getFieldValues() -> FieldValues // GET /api/meta/field-values
 ```
 
 ### Type System (`types/api.ts`)
@@ -132,28 +134,24 @@ interface Recommendation {
 
 ### Network Resilience
 - **Connection Timeout** - Handles network connectivity issues
-- **Retry Logic** - Automatic retry for transient failures
-- **Break Processing Fallback** - Automatic retry without breaks when server has errors
-- **Graceful Degradation** - Users get recommendations, even when breaks fail
+- **Manual Retry** - Users can retry failed requests via UI buttons
+- **Error Messages** - Clear, actionable error messages guide user recovery
 
 ### Authentication Errors
-- **Automatic Token Refresh** - On 401 responses
+- **Automatic Token Refresh** - On 401 responses (uses refresh token)
 - **Redirect to Login** - On refresh failure
 - **Clear Error States** - On successful re-authentication
-
-### Server Response Inconsistencies
-- **Break Duration Field Fallback** - Handles `duration` vs `duration_minutes` field names
-- **Field Name Priority** - `duration_minutes` > `duration` > `duration_min_minutes` > `0`
 
 ## Field Values Synchronization
 
 ### Field Values Strategy
-- **Primary Source** - Client-side constants in `constants/fieldValues.ts`
-- **Fallback System** - API as optional enhancement
-- **Type Safety** - TypeScript types generated from field values
+- **Primary Source** - Client-side constants defined in `client/src/constants/fieldValues.ts`
+- **Server Authority** - Server enum values in `server/app/core/models.py` are authoritative
+- **Manual Synchronization** - Client and server values must be kept in sync during development
+- **Type Safety** - TypeScript types derived from field values constants
 - **Priority Categories** - `age_appropriateness`, `bloom_level_match`, `topic_relevance`, `duration_fit`
 
-### Field Values API
+### Field Values Structure
 ```typescript
 interface FieldValues {
   format: string[];

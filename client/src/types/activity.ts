@@ -83,7 +83,7 @@ export interface FavoriteActivity {
   duration_max_minutes?: number;
   topics: string[];
   favorited_at: string;
-  backendData?: Record<string, string | number | boolean | string[]>;
+  serverData?: Record<string, string | number | boolean | string[]>;
 }
 
 // User response types

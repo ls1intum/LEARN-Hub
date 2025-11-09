@@ -47,7 +47,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/hello"]
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/hello"]
       interval: 30s
       timeout: 10s
       retries: 3

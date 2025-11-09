@@ -2,259 +2,231 @@
 
 ## Overview
 
-Flask-based REST API server providing activity recommendations with scoring algorithms, PDF processing, user management, and lesson plan generation with PostgreSQL persistence.
+The LEARN-Hub server implements a Flask-based REST API designed to support educational activity recommendations through category-based scoring algorithms. The architecture emphasizes modularity, type safety, and scalability while maintaining a clear separation of concerns across application layers.
 
 ## System Architecture
 
-### Core Components
+### Layered Architecture
 
-**Application Layer** (`app/`):
-- **API Routes** (`api/`): RESTful endpoints with Flask-OpenAPI3 for automatic OpenAPI 3.0 generation
-- **Authentication** (`auth/`): JWT-based dual authentication system
-- **Services** (`services/`): Business logic and external integrations
-- **Database Models** (`db/models/`): SQLAlchemy ORM models
-- **Core Engine** (`core/`): Recommendation system and automated processing
+The server follows a classical layered architecture pattern with distinct responsibilities:
 
-**Infrastructure Layer**:
-- **PostgreSQL**: Primary data persistence
-- **File Storage**: PDF document storage and processing
-- **LLM Integration**: Activity recommendations and lesson plan generation
-- **Email Service**: Teacher verification codes
+**API Layer** (`app/api/`): Exposes RESTful endpoints with automated OpenAPI documentation generation via Flask-OpenAPI3. This layer handles request validation, authentication enforcement, and response formatting.
 
-### Technology Stack
+**Service Layer** (`app/services/`): Encapsulates business logic and orchestrates interactions between different system components. Services are designed as independent units with clear interfaces, facilitating testing and modification.
 
-**Backend Framework**: Flask 3.0 with Python 3.13 features
-**Database**: PostgreSQL 15+ with SQLAlchemy ORM and Alembic migrations
-**Automated Processing**: LLM integration for recommendations and content generation
-**Authentication**: JWT tokens with role-based access control
-**Validation**: Pydantic v2 for type-safe request/response handling
-**Documentation**: Flask-OpenAPI3 with automatic OpenAPI 3.0 specification generation
+**Core Engine** (`app/core/`): Implements the recommendation algorithm as a standalone package. This isolation allows the recommendation logic to be tested independently and potentially reused in other contexts.
+
+**Data Access Layer** (`app/db/`): Manages database interactions through SQLAlchemy ORM models. This layer abstracts database operations and provides a consistent interface for data manipulation.
+
+### Technology Choices
+
+#### Flask Framework
+
+Flask was selected for its lightweight nature and flexibility, which aligns well with the prototype scope of this project. Unlike heavier frameworks like Django, Flask allows for explicit control over components and dependencies, making architectural decisions more transparent. The Flask-OpenAPI3 extension provides automatic API documentation generation, reducing the overhead of maintaining separate documentation.
+
+#### PostgreSQL Database
+
+PostgreSQL serves as the primary data store for both development and production environments. This choice was driven by several factors:
+
+**Relational Integrity**: The application's data model involves complex relationships between activities, topics, and user preferences. PostgreSQL's robust support for foreign keys, constraints, and transactions ensures data consistency.
+
+**Production Readiness**: Unlike SQLite, PostgreSQL is designed for concurrent access and production workloads, eliminating the need for a different database system between development and deployment.
+
+**Advanced Features**: PostgreSQL's support for array types, JSON columns, and full-text search provides flexibility without requiring external tools.
+
+The use of SQLAlchemy as an ORM provides database abstraction while maintaining the ability to optimize queries when needed. Alembic manages schema migrations, allowing version-controlled database evolution that can be reviewed and tested before deployment.
+
+#### Python 3.13
+
+The project leverages Python 3.13's modern language features, including enhanced type hints and performance improvements. The decision to use current Python versions reflects a forward-looking approach while acknowledging that this is a research prototype rather than a system requiring long-term backward compatibility.
 
 ## Authentication Architecture
 
 ### Dual Authentication Model
 
-**Admin Access** (Content Management):
-- Email/password authentication
-- Full CRUD operations on activities and users
-- PDF upload and activity creation capabilities
+The system implements two distinct authentication pathways to accommodate different user roles and security requirements:
 
-**Teacher Access** (Activity Discovery):
-- Email verification code system OR password authentication
-- Read-only access to activity library
-- Lesson plan generation and favorites management
+**Administrative Authentication**: Administrators use traditional email and password authentication with JWT token management. This approach provides robust security for users who have full system access, including the ability to create, modify, and delete activities.
 
-### Security Implementation
+**Teacher Authentication**: Teachers can authenticate using either email verification codes or passwords. The verification code system was designed to reduce friction in the teacher onboarding process. Teachers can receive a 6-digit code via email and gain immediate access without remembering passwords, addressing a common usability challenge in educational software where teachers may access the system infrequently.
 
-**JWT Token Management**:
-- Access tokens (15-minute expiration)
-- Refresh tokens (30-day expiration)
-- Automatic token refresh in client applications
+This dual approach represents a design tradeoff: prioritizing security for administrative functions while optimizing usability for the primary user group (teachers). The verification code system accepts slightly higher security risk (time-limited codes can be intercepted) in exchange for significantly improved user experience.
 
-**Request Validation**:
-- Server-side validation using Pydantic models
-- No trust of client data - all inputs validated
-- Input sanitization and type checking
+### JWT Token Management
 
-## Database Architecture
+The system uses JSON Web Tokens (JWT) for stateless authentication:
 
-### Data Models
+- **Access Tokens**: Short-lived (15 minutes) to limit exposure if compromised
+- **Refresh Tokens**: Longer-lived (30 days) to maintain user sessions without repeated logins
+- **Automatic Refresh**: Client applications automatically refresh expired access tokens
 
-**Core Entities**:
-- `User`: Admin and teacher accounts with role-based permissions
-- `Activity`: Educational activities with mandatory PDF document references and database-level validation
-- `UserSearchHistory`: Teacher search queries for recommendation tracking
-- `UserFavourites`: User favourites supporting both individual activities and lesson plans with simplified data structure
-
-**Relationships**:
-- One-to-many: User → SearchHistory, User → Favourites
-- One-to-one: Activity → PDF Document (via document_id reference)
-- Many-to-many: Activity ↔ Topics (through association table)
-
-### Data Model Architecture
-
-**Unified Data Flow**:
-- **Database**: `Activity` (SQLAlchemy ORM model)
-- **API Layer**: `ActivityModel` (Pydantic model for validation and serialization)
-- **Core Engine**: `ActivityModel` (Pydantic model for recommendations)
-
-**Key Benefits**:
-- **Type Safety**: Pydantic models provide runtime validation and type hints
-- **Single Source of Truth**: ActivityModel serves both API and core engine
-- **Performance**: Direct conversion from database to Pydantic models
-- **Maintainability**: Consistent data structures across all layers
-
-### Migration Strategy
-
-**Alembic Integration**:
-- Version-controlled database schema changes
-- Automatic migration generation from model changes
-- Production-safe migration rollback capabilities
+This token-based approach eliminates the need for server-side session storage, improving scalability and simplifying deployment across multiple server instances.
 
 ## Service Architecture
 
 ### Service Layer Pattern
 
-**PDF Services**:
-- `PDFService`: Unified PDF storage, retrieval, and lesson plan generation
+The service layer implements the business logic as a collection of specialized services:
 
-**Business Services**:
-- `RecommendationService`: Activity recommendations with scoring algorithms using ActivityModel
-- `UserService`: User management and authentication
-- `EmailService`: Verification code delivery
-- `UserSearchHistoryService`: User preference tracking and search history management
-- `UserFavouritesService`: User favourites management for both individual activities and lesson plans with CRUD operations and status checking
+**PDFService**: Manages PDF document storage, retrieval, and lesson plan generation. This service consolidates all PDF-related operations, providing a single interface for document handling.
 
-**Integration Services**:
-- `LLMClient`: External LLM API integration for content generation
+**RecommendationService**: Orchestrates the recommendation engine, translating API requests into core engine inputs and formatting results for API responses. This separation allows the recommendation algorithm to remain independent of web framework concerns.
 
-### Dependency Injection
+**UserService**: Handles user management operations including registration, authentication, and profile updates.
 
-**Service Initialization**:
-- Direct service instantiation with dependency injection
-- Testable service dependencies through constructor injection
-- Configuration-driven service initialization
+**EmailService**: Manages email delivery for verification codes. The service is configured differently for development (local SMTP with MailHog) and production (external SMTP provider), demonstrating environment-specific configuration management.
 
-## API Architecture
+**UserSearchHistoryService & UserFavouritesService**: Track user preferences and interactions for personalized experiences and analytics.
 
-### Route Organization
+### Service Design Rationale
 
-**Flask-OpenAPI3 Architecture**:
-- **Modular Route Registration**: Each API module registers routes with Flask-OpenAPI3
-- **Automatic OpenAPI Generation**: OpenAPI 3.0 specification generated automatically
-- **Type-Safe Validation**: Pydantic models provide request/response validation
-- **Response Format**: All endpoints return standardized JSON responses
-
-**Route Implementation**:
-- `app.api.activities.listing` - Activity discovery and management
-- `app.api.activities.recommendations` - Recommendation engine endpoints
-- `app.api.activities.lesson_plan` - Lesson plan generation
-- `app.api.activities.creation` - Activity creation (admin only)
-- `app.api.activities.pdf` - PDF processing for activities
-- `app.api.history` - User search history and favourites management
-- `app.api.auth` - Authentication and user management
-- `app.api.documents` - PDF upload and processing
-- `app.api.meta` - System metadata and field values (environment, field values)
-
-### RESTful Design
-
-**Resource-Based URLs**:
-- `/api/activities/` - Activity discovery, recommendations, and management
-- `/api/history/` - User search history and favourites management
-- `/api/auth/` - Authentication and user management
-- `/api/documents/` - PDF upload and processing
-- `/api/meta/` - System metadata:
-  - `/api/meta/field-values` - Enumeration values for form fields
-  - `/api/meta/environment` - Current environment (local, staging, production)
-
-**HTTP Methods**:
-- GET: Resource retrieval with filtering and pagination
-- POST: Resource creation and complex operations (recommendations, lesson plans)
-- PUT: Resource modification
-- DELETE: Resource removal
-
-### Response Standardization
-
-**Direct Response Format**:
-```json
-// Success responses return data directly
-{ /* response data */ }
-
-// Error responses use consistent error format
-{
-  "error": "Error message describing what went wrong"
-}
-```
-
-**Error Handling**:
-- Standardized error codes and messages
-- Validation error responses
-- Proper HTTP status codes
-
-## Configuration Management
-
-### Environment-Based Configuration
-
-**Pydantic Settings** (`app/utils/config.py`):
-- Type-safe configuration validation
-- Environment variable mapping
-- Default value management
-- Production vs. development settings
-
-**Configuration Categories**:
-- Database connection settings
-- LLM service API keys
-- Email service configuration
-- Security settings (JWT secrets, CORS)
-- Environment identification (ENVIRONMENT: local, staging, production)
-
-## File Storage Architecture
-
-### PDF Document Management
-
-**Storage Strategy**:
-- Filesystem-only storage with configurable paths
-- Document ID-based file naming: `doc_{id}_{filename}` for easy reconstruction
-- No database table for PDF metadata
-- Test fallback for missing documents during development
-
-**Processing Pipeline**:
-1. PDF upload → validation → filesystem storage → return document_id
-2. Activity creation → validate document_id exists → create activity
-3. PDF retrieval → lookup by document_id → return file content
-4. Lesson plan generation → summary page + PDF merging
-
-**Service Consolidation**:
-- Single `PDFService` handles all PDF operations
-- Unified interface for storage, retrieval, and lesson plan generation
-- API endpoints with consistent error handling
+Services are instantiated with explicit dependency injection, making dependencies visible and testable. This design choice favors clarity over convenience—while more verbose than implicit dependencies, it makes the system's structure explicit and facilitates unit testing with mock dependencies.
 
 ## External Integrations
 
 ### LLM Integration
 
-**API Usage**:
-- Activity recommendation generation
-- Lesson plan content creation
-- Error handling and rate limiting
-- API key management and rotation
+The system integrates with Large Language Models for PDF content extraction. The model is configurable via the `LLM_MODEL_NAME` environment variable:
+
+**PDF Content Extraction**: Automated extraction of structured activity metadata from uploaded PDF documents. The LLM analyzes PDF text and extracts fields like activity name, description, age range, Bloom level, topics, duration, and resource requirements.
+
+**Design Rationale**: Integrating LLM-based content processing addresses a significant challenge in educational content management—manually extracting and structuring information from diverse document formats is time-consuming and error-prone. The LLM approach provides:
+
+- **Consistency**: Structured data extraction follows a defined schema regardless of document formatting
+- **Efficiency**: Automated processing eliminates manual data entry
+- **Flexibility**: The system can handle documents with varying layouts and structures
+
+**Trade-offs**: This integration introduces external dependencies and API costs. The system requires network connectivity and is subject to API rate limits and costs. Additionally, LLM outputs require validation to ensure accuracy. These trade-offs were deemed acceptable for a research prototype where the benefits of automation outweigh the operational complexity.
+
+**Lesson Plan Generation**: Lesson plan PDFs are generated programmatically using ReportLab (Python PDF library), not the LLM. The system creates summary pages with search criteria and activity details, then merges them with individual activity PDFs.
 
 ### Email Service Integration
 
-**SMTP Configuration**:
-- Development: Local SMTP server (MailHog)
-- Production: External SMTP provider
-- Template-based email generation
-- Delivery tracking and error handling
+Email delivery uses SMTP with environment-specific configuration. In development, MailHog provides a local SMTP server with a web interface for testing without sending real emails. In production, an external SMTP provider ensures reliable delivery. This configuration demonstrates the system's adaptability to different deployment contexts.
 
-## Performance Optimizations
+## API Architecture
 
-**Recommendation Engine**:
-- Early filtering: Zero-score activities removed before expensive operations
-- Series generation limits: Top 20 activities only, reducing complexity from O(n^k) to O(20^k)
-- Optimized for 50-activity dataset with responsive user experience
-- Memory-efficient data structures using Pydantic models
+### RESTful Design Principles
 
-### Health Checks
+The API follows REST principles with resource-based URLs and appropriate HTTP methods:
 
-**Endpoint Monitoring**:
-- `/hello` - Basic application health
-- `/openapi` - API documentation and health check
+- **GET**: Retrieve resources (activities, user data, metadata)
+- **POST**: Create resources and trigger complex operations (recommendations, lesson plans)
+- **PUT**: Update existing resources
+- **DELETE**: Remove resources
 
-### Logging Strategy
+Resource organization reflects the domain model:
+- `/api/activities/` - Activity discovery and management
+- `/api/auth/` - Authentication and user management
+- `/api/history/` - User history and favourites
+- `/api/documents/` - PDF upload and retrieval
+- `/api/meta/` - System metadata and configuration
 
-**Structured Logging**:
-- Request/response logging
-- Error tracking and alerting
-- Performance metrics collection
-- Security event logging
+### Flask-OpenAPI3 Integration
+
+Flask-OpenAPI3 automatically generates OpenAPI 3.0 specifications from Pydantic model annotations. This approach provides several benefits:
+
+**Single Source of Truth**: API documentation is generated from the same type definitions used for validation, ensuring documentation accuracy.
+
+**Type Safety**: Pydantic models provide runtime validation with detailed error messages, reducing the need for manual input validation code.
+
+**Interactive Documentation**: The automatically generated Swagger UI allows developers and researchers to explore and test the API without writing test scripts.
+
+This tooling choice reflects a preference for automation and type safety over manual documentation maintenance.
+
+## Data Model Architecture
+
+### Unified Data Flow
+
+The system uses Pydantic models (`ActivityModel`) as the primary data transfer object throughout the application stack:
+
+**Database → API → Core Engine**
+
+This design eliminates the need for multiple intermediate representations and reduces the risk of data transformation errors. SQLAlchemy ORM models are converted to Pydantic models at the data access layer, and these Pydantic models flow through the entire application.
+
+**Benefits**:
+- Type safety with runtime validation
+- Consistent data structures across layers
+- Automatic serialization/deserialization
+- Single source of truth for data schemas
+
+### Database Models
+
+Core entities include:
+
+**User**: Stores user accounts with role-based permissions (ADMIN, TEACHER). The role system enables different authentication flows and access controls without requiring separate user tables.
+
+**Activity**: Represents educational activities with comprehensive metadata. Each activity requires a PDF document reference, enforced at the database level through foreign key constraints and NOT NULL constraints on the `document_id` column.
+
+**UserSearchHistory**: Tracks teacher search queries for analytics and personalized recommendations.
+
+**UserFavourites**: Stores both individual activity favourites and complete lesson plans (activity sequences with breaks). Lesson plans are stored as JSON snapshots, capturing the complete state at the time of favouriting to ensure the experience can be replayed even if activities are modified.
+
+### Migration Strategy
+
+Alembic manages database schema evolution through version-controlled migration scripts. Each schema change is captured in a migration file that can be reviewed, tested, and applied consistently across environments. This approach ensures that database changes are traceable and reversible, critical for maintaining data integrity during system evolution.
+
+## Configuration Management
+
+### Environment-Based Configuration
+
+The system uses Pydantic Settings for type-safe configuration management. Environment variables are mapped to strongly-typed configuration objects, preventing runtime errors from configuration mistakes. This approach also makes configuration requirements explicit—missing required values cause startup failures with clear error messages.
+
+Configuration categories include:
+- Database connection parameters
+- LLM service credentials
+- Email service settings
+- Security keys (JWT, Flask session)
+- Environment identification (local, staging, production)
+
+The `ENVIRONMENT` variable enables runtime behavior adaptation without code changes, allowing the same container image to run in different deployment contexts.
+
+## Performance Considerations
+
+### Recommendation Engine Optimization
+
+The recommendation engine implements several optimizations to maintain responsive performance:
+
+**Two-Stage Scoring**: Activities are first scored without duration considerations (computationally expensive), then only top candidates are re-scored with complete criteria. This approach significantly reduces computation time for large activity sets.
+
+**Combination Limits**: Lesson plan generation is limited to combinations of the top 20 activities rather than all available activities. This reduces the computational complexity from O(n^k) to O(20^k), where k is the number of activities per lesson plan.
+
+**Early Filtering**: Hard filters eliminate incompatible activities before scoring, reducing the number of activities that require detailed evaluation.
+
+These optimizations reflect a pragmatic approach to algorithm design—perfect accuracy is less valuable than timely responses in an interactive educational tool.
+
+### Database Performance
+
+The relatively small expected dataset (hundreds of activities, thousands of users) allowed for straightforward relational design without extensive optimization. Indexes on commonly queried fields (activity name, user email) provide adequate performance for the expected scale.
 
 ## Deployment Architecture
 
-### Container Strategy
+### Containerization Strategy
 
-**Docker Integration**:
-- Multi-stage builds for optimization
-- Environment-specific configurations
-- Health check integration
-- Resource limit management
+The application is containerized using Docker with multi-stage builds to optimize image size and security:
+
+**Build Stage**: Uses the `uv` tool to install dependencies and prepare the application environment.
+
+**Production Stage**: Uses a minimal Python slim image with only runtime dependencies. The application runs with Gunicorn as the WSGI server, configured for concurrent request handling.
+
+**Health Checks**: The container includes health check endpoints (`/api/hello`) that container orchestrators can use to verify application availability.
+
+This containerization approach ensures consistent deployment across development and production environments while minimizing the attack surface through minimal base images.
+
+### Resource Management
+
+Docker Compose configurations specify resource limits (memory, CPU) to ensure predictable performance and prevent resource exhaustion. These limits are tuned based on expected load patterns and available infrastructure.
+
+## Design Philosophy
+
+The architecture reflects several guiding principles:
+
+**Explicitness over Implicitness**: Dependencies, configurations, and data flows are explicit rather than hidden through framework magic. This increases verbosity but improves understandability for research and educational purposes.
+
+**Type Safety**: Strong typing with Pydantic models and Python type hints catches errors during development rather than runtime.
+
+**Modularity**: Clear boundaries between layers and services facilitate independent testing and modifications.
+
+**Pragmatic Optimization**: Performance optimizations focus on actual bottlenecks rather than premature optimization, balancing simplicity with efficiency.
+
+These principles guided technical decisions throughout the implementation, prioritizing clarity and maintainability appropriate for a research prototype.

@@ -1,8 +1,8 @@
 /**
  * Field values for activity forms and filters.
  *
- * IMPORTANT: These values must be kept in sync with the server-side constants
- * defined in server/app/core/constants.py and server/app/core/recommendation/models.py
+ * IMPORTANT: These values must be kept in sync with the server-side enum definitions
+ * defined in server/app/core/models.py
  *
  * When updating these values, ensure both client and server are updated simultaneously.
  */

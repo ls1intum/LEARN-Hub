@@ -1,196 +1,146 @@
-# CI/CD & Deployment
+# Client Development and Deployment
 
 ## Overview
 
-Modern React SPA with Vite build system, testing strategy, and Docker deployment. Focus on performance optimization, type safety, and development workflow efficiency.
+This document describes the build system, testing strategy, and deployment procedures for the LEARN-Hub client.
 
 ## Build System
 
-### Development Stack
-- **Vite** - Fast development server with HMR
-- **TypeScript** - Type checking and compilation
-- **React** - React features and performance improvements
-- **Tailwind CSS** - Utility-first styling with dark mode support
+### Vite Build Tool
 
-### Production Build
-- **Optimized Bundle** - Tree shaking, code splitting, asset optimization
-- **Type Safety** - TypeScript compilation with strict mode
-- **Static Serving** - Built files served via npx serve
-- **Docker Multi-stage** - Optimized container image
+The application uses Vite, which uses native ES modules during development for fast server startup and hot module replacement (HMR). Production builds use Rollup for optimization (tree shaking, asset minification, hash-based filenames for cache invalidation).
+
+**Development**:
+```bash
+cd client/
+make dev        # Starts Vite dev server on port 3001
+```
+
+Development features: HMR, Fast Refresh, error overlay, source maps, no bundling, no minification.
+
+**Production Build**:
+```bash
+make build      # Compiles TypeScript, bundles assets, optimizes output
+```
+
+Production optimizations:
+- JavaScript/CSS minification
+- Image optimization
+- Hash-based filenames for aggressive caching
+- Tree shaking to remove unused code
+
+Build output structure:
+```
+dist/
+├── index.html              # Entry point
+├── assets/
+│   ├── index-[hash].js    # Bundled application code
+│   ├── index-[hash].css   # Bundled styles
+│   └── ...                # Other generated assets
+```
 
 ## Testing Strategy
 
-### Test Structure
-- **Vitest Framework** - Fast unit testing with Vite integration
-- **Testing Library** - Component testing utilities for hooks
-- **Quality over Quantity** - Essential functionality, not implementation details
+The testing strategy prioritizes high-value tests over comprehensive coverage:
 
-### Test Coverage
-- **Authentication Service** - Token management, API calls, error handling
-- **Custom Hooks** - Form state management and validation
-- **Utility Functions** - SessionStorage operations and error resilience
+**Focus Areas**: Authentication flows, form state management, utility functions, error handling
 
-### Test Commands
+**Not Tested**: Component visual rendering (manual testing), third-party libraries, simple getters/setters
+
+**Framework**: Vitest (Vite-native, fast, TypeScript support) with React Testing Library (user-perspective component testing)
+
+**Running Tests**:
 ```bash
-npm run test        # Watch mode
-npm run test:run    # Single run
+cd client/
+make test           # Watch mode
+npm run test:run    # Single run (CI)
 npm run test:ui     # UI mode
-make test           # Via Makefile
 ```
 
-### Test Philosophy
-- **High-Value Testing** - Focus on critical business logic and error paths
-- **Essential Functionality** - Authentication, form state, storage utilities
-- **Error Handling** - Network failures, invalid data, edge cases
+Tests are colocated with code (`src/services/__tests__/`, `src/hooks/__tests__/`, `src/utils/__tests__/`) and use single-threaded execution for stability.
 
 ## Code Quality
 
-### Linting & Formatting
-- **ESLint** - JavaScript/TypeScript linting with React hooks rules
-- **Prettier** - Consistent code formatting
-- **Type Checking** - TypeScript compilation before build
+**ESLint**: React rules, TypeScript rules, accessibility rules
+**Prettier**: Automated formatting
+**TypeScript**: Static type checking with `npx tsc --noEmit`
 
-### Pre-commit Checks
-- Lint and format validation
-- Type checking before build
-- Test execution for critical paths
-
-## Docker Configuration
-
-### Multi-stage Build
-```dockerfile
-# Dependencies stage
-FROM node:20-alpine AS deps
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-
-# Build stage  
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-# Production stage
-FROM node:20-alpine AS runner
-WORKDIR /app
-COPY --from=builder /app/dist ./dist
-EXPOSE 3000
-CMD ["npx", "serve", "-s", "dist", "-l", "3000"]
-```
-
-### Container Features
-- **Node.js 20 Alpine** - Lightweight base image
-- **Non-root user** - Security best practices
-- **Static file serving** - Production-ready serving with npx serve
-- **Multi-stage build** - Optimized image size
-
-## Development Workflow
-
-### Local Development
+**Pre-commit Workflow**:
 ```bash
-# Install dependencies
-make install
-
-# Start development server
-make dev
-
-# Run tests
-make test
-
-# Format and lint
-make format
-make lint
+make format && make lint && make test
 ```
 
-### Production Build
+## Production Deployment
+
+### Multi-Stage Docker Build
+
+**Build Stage**: Node.js 20 Alpine image installs dependencies (`npm ci`) and builds the application
+
+**Production Stage**: Nginx 1.25 Alpine image serves built artifacts from `dist/`
+- Only built artifacts copied (no source/dependencies)
+- Runs as non-root nginx user
+- Final image ~40MB vs ~400MB with full Node.js
+
+### Nginx Configuration
+
+Nginx was chosen for performance (optimized static file serving), security (built-in headers), production readiness, and SPA routing support.
+
+**Key Features**:
+
+Security headers (X-Frame-Options, X-Content-Type-Options, CSP) protect against clickjacking, MIME sniffing, and XSS.
+
+SPA routing via `try_files $uri $uri/ /index.html` ensures all routes serve `index.html` for client-side routing.
+
+Asset caching with 1-year expiration for hash-named files.
+
+API proxying to server (proxies `/api/*` requests to server container).
+
+### Container Orchestration
+
+Docker Compose manages the multi-container application:
+
 ```bash
-# Build for production
-make build
+# Development
+docker compose up --build -d
 
-# Build Docker image
-make docker-build
+# Production (pre-built images from GitHub Container Registry)
+docker compose -f compose.prod.yml up -d
 
-# Run Docker container
-make docker-run
+# View logs
+docker compose logs -f client
 ```
+
+Production compose file uses pre-built images, implements health checks, defines resource limits, and configures service dependencies.
+
+Health checks (`wget --spider http://localhost:3001/`) enable automatic recovery, rolling deployments, and monitoring integration.
 
 ## Performance Optimization
 
-### Build Optimizations
-- **Tree shaking** - Remove unused code
-- **Code splitting** - Route-based splitting
-- **Asset optimization** - Image and CSS minification
-- **Bundle analysis** - Size monitoring
+**Build-Time**:
+- Tree shaking removes unused code
+- Vite dependency optimization (pre-bundling, CommonJS to ES modules conversion)
 
-### Runtime Optimizations
-- **Lazy loading** - Route-based code splitting
-- **Memoization** - React.memo for expensive components
-- **Debounced inputs** - Search and form inputs
+**Runtime**:
+- Debounced inputs for search/filter operations
+- Efficient state management with React Context
+- Component-level error boundaries for fault isolation
 
-## Features & Components
+Performance optimizations are applied based on profiling results rather than speculative optimization.
 
-### Type System
-- **API types** - Strongly typed request/response interfaces
-- **Form data types** - Form field handling with proper typing
-- **Error handling types** - Standardized error response structures
+## Environment Configuration
 
-### UI Components
-- **Form Components** - BadgeSelector, FormField, FormSection, NumberField, PriorityToggle, RangeSlider, SelectField
-- **File Handling** - FileUploadArea, SelectedFileInfo
-- **Layout Components** - MainLayout, NavigationMenu, NavigationItem, UserHeader
-- **Display Components** - TagList, TimelineContainer, TimelineItem, BreakCard
+**Build-Time**: Bundler settings, TypeScript options, CSS processing
 
-### API Service
-- **API Methods** - Full API coverage with standardized responses
-- **Type Safety** - Strongly typed API responses with type system
-- **Authentication** - Automatic JWT token management with sessionStorage
-- **Logging Integration** - Development logging for API calls and errors
+**Runtime**: API endpoints, feature flags, environment identification
 
-## Security Considerations
+Runtime configuration fetched from `/api/meta/environment`, enabling the same build to run across environments by connecting to different server instances.
 
-### Application Security
-- **HTTPS only** - Secure communication
-- **CSP headers** - Content Security Policy
-- **XSS protection** - Input sanitization
-- **CSRF protection** - Same-origin requests
+**Development vs Production**:
+- Development: Source maps, full logging, HMR, no minification, detailed errors, Vite proxy to `localhost:5001`
+- Production: Minified code, generic errors, security headers, Nginx proxy to server container
 
-## Troubleshooting
+## Related Documentation
 
-### Common Issues
-- **Build failures** - TypeScript errors or dependency issues
-- **Storage errors** - SessionStorage access issues in private browsing
-- **Type errors** - API type mismatches or missing type definitions
-- **Authentication issues** - Token storage or refresh problems
-
-### Debug Commands
-```bash
-# Check build output
-npm run build
-
-# Run tests with verbose output
-npm run test:run -- --reporter=verbose
-
-# Run specific test file
-npm run test:run -- services/__tests__/authService.test.ts
-
-# Test secure storage functionality
-# Check browser dev tools > Application > Session Storage
-
-# Debug logging in development
-# Check browser console for logger output (debug/info only in dev mode)
-```
-
-## Implementation References
-
-For detailed implementation, see:
-- **Build Configuration**: `vite.config.ts`, `tsconfig.json`
-- **Docker Setup**: `Dockerfile`, `compose.yml`
-- **Test Configuration**: `vitest.config.ts`, `src/test/setup.ts`
-- **Test Files**: `src/services/__tests__/authService.test.ts`, `src/hooks/__tests__/useForm.test.ts`, `src/utils/__tests__/secureStorage.test.ts`
-- **Package Management**: `package.json`, `Makefile`
-- **Components**: `src/components/ui/`, `src/components/layout/`
-- **Services**: `src/services/apiService.ts`, `src/services/authService.ts`, `src/services/logger.ts`
-- **Utilities**: `src/utils/secureStorage.ts`
+- [Client Architecture](client-architecture.md) - Architecture decisions and design patterns
+- [API Integration](api-integration.md) - Server integration patterns
+- [Server Deployment](../server/server-cicd.md) - Server deployment procedures

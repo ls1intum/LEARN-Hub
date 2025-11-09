@@ -1,158 +1,167 @@
-# CI/CD and Operations
+# Server Development and Deployment
 
 ## Overview
 
-Deployment and operational procedures for the Flask backend. This document provides high-level guidance for development, deployment, and maintenance procedures.
+This document outlines the development workflow, testing strategy, and deployment procedures for the LEARN-Hub server.
 
 ## Development Environment
+
+### Package Management with `uv`
+
+**Critical Requirement**: All Python operations must use `uv` as the package and task manager. Direct use of `pip` or `python` is prohibited to ensure consistent dependency resolution and virtual environment management.
+
+All Python tool execution must be prefixed with `uv run`:
+
+```bash
+uv run python <script>
+uv run pytest
+uv run alembic <command>
+```
 
 ### Quick Start
 
 ```bash
 cd server/
-make setup      # Install dependencies with uv
+make setup      # Install dependencies via uv sync
 make db-setup   # Run database migrations
-make restore    # Load initial data
+make restore    # Load initial dataset
 make dev        # Start development server
 ```
 
 ### Environment Configuration
 
-Copy `example.env` to `.env` and configure required variables:
-- LLM Integration: `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL_NAME`
-- Security: `FLASK_SECRET_KEY`, `JWT_SECRET_KEY`
-- Database: PostgreSQL connection settings
-- Email: SMTP configuration
-- Admin: Initial admin account setup
+Required environment variables:
+- `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL_NAME` - LLM service integration
+- `FLASK_SECRET_KEY`, `JWT_SECRET_KEY` - Security keys
+- `SQLALCHEMY_DATABASE_URI` - PostgreSQL connection
+- `SMTP_*` - Email service configuration
+- `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` - Bootstrap admin
 
-See `example.env` for complete variable list and `server/Makefile` for all available commands.
+Environment variables enable the same codebase to run across different environments without modification.
 
-#### SMTP Variables
-The Docker Compose service expects these SMTP environment variables:
-
-- `SMTP_SERVER`
-- `SMTP_PORT`
-- `EMAIL_USERNAME`
-- `EMAIL_PASSWORD`
-- `EMAIL_ADDRESS`
-
-The application reads these via `compose.yml`.
+```bash
+cp example.env .env
+# Edit .env with appropriate values
+```
 
 ### Development Commands
 
-**Code Quality**: `make format`, `make lint`, `make lint-fix`
-**Testing**: `make test`, `make test-unit`, `make test-integration`
-**Database**: `make db-setup`, `make db-init`, `make db-reset`, `make backup`, `make restore`
+**Application**:
+- `make dev` - Development server (port 5001)
+- `make run` - Production-like server (Gunicorn)
 
-### Testing Strategy
+**Code Quality**:
+- `make format` - Format with Black (120 char lines)
+- `make lint` - Check with Ruff
+- `make lint-fix` - Auto-fix linting issues
 
-**Test Suite**: Test coverage with fast execution
-- **Unit Tests**: Core business logic, models, validation, and services
-- **Integration Tests**: API endpoints, database operations, error handling
+**Testing**:
+- `make test` - All tests with coverage
+- `make test-unit` - Unit tests only
+- `make test-integration` - Integration tests
 
-**Focus**: Critical business functionality and error paths only
-**Commands**: `make test` (all), `make test-unit` (fast), `make test-integration`
+**Database**:
+- `make db-setup` - Apply migrations
+- `make db-init` - Fresh database
+- `make db-reset` - Reset (development only)
+- `make backup` / `make restore` - Backup/restore
 
-Refer to `server/Makefile` for complete command reference.
+## Testing Strategy
 
-## Production Deployment
+The testing strategy prioritizes high-value tests over comprehensive coverage:
 
-### Docker Deployment
+**Targets**:
+- Execution time: <4 seconds
+- Test count: <100 tests
+- Coverage: >50% on critical business logic
+- Focus: User-facing features and error paths
 
-**Local Setup**:
+**Test Organization**:
+- **Unit Tests** (`tests/unit/`): Isolated components with mocked dependencies
+- **Integration Tests** (`tests/integration/`): Database operations and API endpoints with in-memory SQLite
+
+Tests use isolated environments (in-memory database, test variables, mocked external services) to ensure reproducibility.
+
+**Running Tests**:
 ```bash
-docker compose up --build -d
-docker compose logs -f server
+make test                    # All tests with coverage
+make test-unit               # Fast unit tests only
+uv run pytest                # Direct execution
+uv run pytest tests/unit/    # Specific directory
 ```
 
-**Production Configuration**:
-- Use `server/Dockerfile` for container builds
-- Configure production environment variables
-- Set up health checks and resource limits
-- Use `compose.yml` for orchestration
+## Code Quality
 
-### Production Considerations
+**Black** (formatter): 120-character lines, automatic formatting
+**Ruff** (linter): Fast Python linter combining multiple tools
+**Type Hints**: Required for all functions, use modern syntax (`list[str]`)
 
-**Database**: PostgreSQL with connection pooling, read replicas, automated backups
-**Security**: HTTPS termination, strong secrets, input validation, rate limiting
-**Performance**: Multiple workers, load balancing, caching, resource monitoring
+**Pre-commit Workflow**:
+```bash
+make format && make lint && make test
+```
 
-See `server/Dockerfile` and `compose.yml` for implementation details.
+The project uses Python 3.13 features including enhanced type hints, improved error messages, and match/case pattern matching.
 
 ## Database Management
 
-### Migration Management
+Database schema evolution uses Alembic for version-controlled migrations:
 
-**Alembic Commands**:
-- Create migration: `uv run alembic revision --autogenerate -m "Description"`
-- Apply migrations: `uv run alembic upgrade head`
-- Rollback: `uv run alembic downgrade -1`
-- Check status: `uv run alembic current`
+**Common Operations**:
+```bash
+uv run alembic revision --autogenerate -m "Description"  # Create migration
+uv run alembic upgrade head                               # Apply migrations
+uv run alembic downgrade -1                               # Revert last
+uv run alembic current                                    # Check status
+```
 
-**Note**: All Alembic commands must be run with `uv run` prefix as per project standards.
+Migrations are version-controlled Python scripts that can be applied (upgrade) or reversed (downgrade). Review auto-generated migrations before applying and never modify already-applied migrations.
 
-### Database Operations
+**Workflows**:
+```bash
+# Development
+make db-setup     # Apply migrations
+make db-init      # Fresh database
 
-**Make Commands**:
-- `make db-setup` - Run migrations
-- `make db-init` - Initialize fresh database
-- `make db-reset` - Reset database (development only)
-- `make backup` - Create data backup
-- `make restore` - Restore from backup
+# Production
+make backup       # Create backup
+make db-setup     # Apply migrations
+make restore      # Rollback if needed
+```
 
-See `server/Makefile` for complete database command reference.
+## Production Deployment
 
-## Monitoring and Health Checks
+### Containerization
 
-### Health Check Endpoints
+The application uses Docker with multi-stage builds:
 
-- `/hello` - Basic application health
-- `/openapi` - API documentation and health check
+**Build Stage**: Uses official `uv` image to install dependencies from `pyproject.toml` and `uv.lock`
 
-### Logging and Monitoring
+**Production Stage**: Minimal Python slim image with Gunicorn as WSGI server, runs as non-root user
 
-**Application Logs**: `docker compose logs -f server`
-**Database Logs**: `docker compose logs -f db`
-**Performance**: Monitor request times, database performance, resource usage, error rates
+This approach minimizes image size while maintaining reproducibility.
 
-## Troubleshooting
+### Container Orchestration
 
-### Common Issues
+Docker Compose manages the multi-container application (PostgreSQL database, Flask server, React client):
 
-**Database**: Check connectivity with `docker compose exec server psql -h db -U postgres -d cs_activities`, reset with `make db-reset`
-**API Keys**: Verify with `docker compose exec server env | grep LLM_API_KEY`
-**API Documentation**: Check `/openapi` endpoint for interactive documentation
-**Port Conflicts**: Check with `lsof -i :5001`, kill conflicting processes
-**Python Environment**: Ensure using `uv` for all Python operations, not direct `python` commands
+```bash
+# Development
+docker compose up --build -d
 
-### Error Diagnosis
+# Production (uses pre-built images from GitHub Container Registry)
+docker compose -f compose.prod.yml up -d
 
-**Application**: Check logs, verify environment variables, test database connectivity
-**Database**: Check PostgreSQL logs, verify migration status, check disk space
-**Performance**: Monitor resource usage, check query performance, scale as needed
+# View logs
+docker compose logs -f server
+```
 
-## Security and Maintenance
+### Health Checks
 
-### Security Procedures
-
-**Environment**: Set proper permissions with `chmod 600 .env`
-**API Keys**: Rotate regularly, use environment variables, monitor usage
-**Database**: Use SSL in production, implement connection pooling
-
-### Backup and Recovery
-
-**Backup**: Automated daily database backups, PDF and config backups, offsite storage
-**Recovery**: Database with `make restore`, application with `git pull && docker compose up --build -d`
-
-### Maintenance
-
-**Regular Tasks**: Weekly log review, monthly security reviews, quarterly audits
-**Application Updates**: `git pull && make db-setup && docker compose up --build -d`
-**Scaling**: Multiple instances, read replicas, connection pooling, resource monitoring
-**Code Quality**: Run `make lint` and `make format` before committing changes
+The `/api/hello` endpoint provides health checking for container orchestration. The `/api/openapi` endpoint serves interactive API documentation. Application logs are captured by the container orchestration system.
 
 ## Related Documentation
 
-- [Server Architecture](server-architecture.md) - System architecture and design patterns
-- [API Documentation](api.md) - REST API endpoints and integration
-- [Client Deployment](../client/client-cicd.md) - Frontend deployment procedures
+- [Server Architecture](server-architecture.md) - Architectural decisions and design patterns
+- [API Documentation](api.md) - REST API endpoints and data models
+- [Client Deployment](../client/client-cicd.md) - Client deployment procedures

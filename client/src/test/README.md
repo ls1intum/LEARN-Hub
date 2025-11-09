@@ -1,6 +1,6 @@
-# Frontend Testing
+# Client Testing
 
-This directory contains the minimal testing setup for the frontend, focused on high-value business logic.
+This directory contains the minimal testing setup for the client, focused on high-value business logic.
 
 ## Test Structure
 
