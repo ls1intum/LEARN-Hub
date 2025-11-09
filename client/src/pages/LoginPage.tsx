@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/hooks/useAuth";
+import { useEnvironment } from "@/hooks/useEnvironment";
 import {
   LogIn,
   Mail,
@@ -17,7 +19,12 @@ import {
   GraduationCap,
   AlertCircle,
   Users,
+  Server,
 } from "lucide-react";
+import {
+  getEnvironmentDisplayText,
+  getEnvironmentBadgeVariant,
+} from "@/utils/environment";
 
 type LoginMode =
   | "admin"
@@ -52,6 +59,7 @@ export const LoginPage: React.FC = () => {
     user,
   } = useAuth();
   const navigate = useNavigate();
+  const { environment } = useEnvironment();
 
   // Handle redirect after user state is updated
   useEffect(() => {
@@ -696,6 +704,24 @@ export const LoginPage: React.FC = () => {
                 {message}
               </AlertDescription>
             </Alert>
+          )}
+
+          <Separator />
+
+          {/* Environment Display */}
+          {environment && (
+            <div className="flex items-center justify-center gap-2 py-2">
+              <Server className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">
+                Connecting to:
+              </span>
+              <Badge
+                variant={getEnvironmentBadgeVariant(environment)}
+                className="text-xs font-medium px-2.5 py-0.5"
+              >
+                {getEnvironmentDisplayText(environment)}
+              </Badge>
+            </div>
           )}
         </CardContent>
       </Card>

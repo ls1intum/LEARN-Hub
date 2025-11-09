@@ -433,6 +433,13 @@ export class ApiService {
   }
 
   /**
+   * Get current environment from server
+   */
+  static async getEnvironment() {
+    return this.request<{ environment: string }>("/api/meta/environment");
+  }
+
+  /**
    * Get scoring insights
    */
   static async getScoringInsights() {

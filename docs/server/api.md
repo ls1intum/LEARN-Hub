@@ -175,6 +175,11 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 **Field Values**: `GET /api/meta/field-values`
 - Returns: Available enum values for all form fields (format, resources, bloom_level, topics, etc.)
 
+**Environment Information**: `GET /api/meta/environment`
+- Returns: Current environment (local, staging, production) read from `ENVIRONMENT` config
+- Response: `{"environment": "staging"}`
+- Use Case: Frontend can dynamically display environment context to users without build-time configuration
+
 ## Error Handling
 
 **Standard Error Codes**: `400` (Bad Request), `401` (Unauthorized), `403` (Forbidden), `404` (Not Found), `500` (Internal Server Error)

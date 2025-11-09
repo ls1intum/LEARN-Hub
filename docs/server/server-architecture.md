@@ -134,7 +134,7 @@ Flask-based REST API server providing activity recommendations with scoring algo
 - `app.api.history` - User search history and favourites management
 - `app.api.auth` - Authentication and user management
 - `app.api.documents` - PDF upload and processing
-- `app.api.meta` - System metadata and field values
+- `app.api.meta` - System metadata and field values (environment, field values)
 
 ### RESTful Design
 
@@ -143,7 +143,9 @@ Flask-based REST API server providing activity recommendations with scoring algo
 - `/api/history/` - User search history and favourites management
 - `/api/auth/` - Authentication and user management
 - `/api/documents/` - PDF upload and processing
-- `/api/meta/` - System metadata and field values
+- `/api/meta/` - System metadata:
+  - `/api/meta/field-values` - Enumeration values for form fields
+  - `/api/meta/environment` - Current environment (local, staging, production)
 
 **HTTP Methods**:
 - GET: Resource retrieval with filtering and pagination
@@ -184,6 +186,7 @@ Flask-based REST API server providing activity recommendations with scoring algo
 - LLM service API keys
 - Email service configuration
 - Security settings (JWT secrets, CORS)
+- Environment identification (ENVIRONMENT: local, staging, production)
 
 ## File Storage Architecture
 

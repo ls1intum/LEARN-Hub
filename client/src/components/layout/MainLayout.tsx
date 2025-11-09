@@ -3,12 +3,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useEnvironment } from "@/hooks/useEnvironment";
 import { Menu, Server } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAVIGATION_TABS, getCurrentTab } from "@/constants/navigation";
 import { NavigationMenu } from "./NavigationMenu";
 import { UserHeader } from "./UserHeader";
-import { getEnvironmentVersion, getEnvironmentBadgeVariant } from "@/utils/environment";
+import {
+  getEnvironmentDisplayText,
+  getEnvironmentBadgeVariant,
+} from "@/utils/environment";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -19,6 +23,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const { environment } = useEnvironment();
 
   const handleLogout = async () => {
     await logout();
@@ -70,12 +75,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <div className="mt-auto p-4 border-t border-border/50 bg-card/50">
           <div className="flex items-center justify-center gap-2">
             <Server className="h-3.5 w-3.5 text-muted-foreground" />
-            <Badge
-              variant={getEnvironmentBadgeVariant()}
-              className="text-xs font-medium px-2.5 py-1"
-            >
-              {getEnvironmentVersion()}
-            </Badge>
+            {environment && (
+              <Badge
+                variant={getEnvironmentBadgeVariant(environment)}
+                className="text-xs font-medium px-2.5 py-1"
+              >
+                {getEnvironmentDisplayText(environment)}
+              </Badge>
+            )}
           </div>
         </div>
       </div>
@@ -121,12 +128,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           {/* Environment Version */}
           <div className="flex items-center justify-center gap-2">
             <Server className="h-3.5 w-3.5 text-muted-foreground" />
-            <Badge
-              variant={getEnvironmentBadgeVariant()}
-              className="text-xs font-medium px-2.5 py-1"
-            >
-              {getEnvironmentVersion()}
-            </Badge>
+            {environment && (
+              <Badge
+                variant={getEnvironmentBadgeVariant(environment)}
+                className="text-xs font-medium px-2.5 py-1"
+              >
+                {getEnvironmentDisplayText(environment)}
+              </Badge>
+            )}
           </div>
         </div>
       </div>

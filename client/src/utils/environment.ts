@@ -1,55 +1,50 @@
 /**
- * Environment version utility
- * Displays the current environment version in the UI
+ * Environment configuration utility
+ * Maps environment values to display text and badge styles
  */
 
-export type EnvironmentType = "local" | "development" | "production";
+export type EnvironmentType = "local" | "staging" | "production";
+
+interface EnvironmentConfig {
+  displayText: string;
+  badgeVariant: "default" | "secondary" | "outline";
+}
 
 /**
- * Get the current environment type from Vite environment variable
+ * Configuration mapping for each environment
+ * - local: Displays "Local" with secondary styling
+ * - staging: Displays "Staging" with default styling
+ * - production: Displays "Public Testing" with outline styling
  */
-export const getEnvironmentType = (): EnvironmentType => {
-  const env = import.meta.env.VITE_ENVIRONMENT?.toLowerCase();
-  if (env === "local" || env === "development" || env === "production") {
-    return env;
-  }
-  // Default to local if not set or invalid
-  return "local";
+const ENVIRONMENT_CONFIG: Record<EnvironmentType, EnvironmentConfig> = {
+  local: {
+    displayText: "Local",
+    badgeVariant: "secondary",
+  },
+  staging: {
+    displayText: "Staging",
+    badgeVariant: "default",
+  },
+  production: {
+    displayText: "Public Testing",
+    badgeVariant: "outline",
+  },
 };
 
 /**
- * Get the display text for the current environment
- * - local: "Local"
- * - development: "Development"
- * - production: "Public Testing"
+ * Get the display text for an environment
  */
-export const getEnvironmentVersion = (): string => {
-  const env = getEnvironmentType();
-  switch (env) {
-    case "local":
-      return "Local";
-    case "development":
-      return "Development";
-    case "production":
-      return "Public Testing";
-    default:
-      return "Local";
-  }
+export const getEnvironmentDisplayText = (environment: string): string => {
+  const env = environment.toLowerCase() as EnvironmentType;
+  return ENVIRONMENT_CONFIG[env]?.displayText || "Unknown";
 };
 
 /**
- * Get the badge variant color for the current environment
+ * Get the badge variant for an environment
  */
-export const getEnvironmentBadgeVariant = (): "default" | "secondary" | "outline" => {
-  const env = getEnvironmentType();
-  switch (env) {
-    case "local":
-      return "secondary";
-    case "development":
-      return "default";
-    case "production":
-      return "outline";
-    default:
-      return "secondary";
-  }
+export const getEnvironmentBadgeVariant = (
+  environment: string,
+): "default" | "secondary" | "outline" => {
+  const env = environment.toLowerCase() as EnvironmentType;
+  return ENVIRONMENT_CONFIG[env]?.badgeVariant || "secondary";
 };

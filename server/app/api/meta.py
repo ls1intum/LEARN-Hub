@@ -12,6 +12,7 @@ from app.core.models import (
     BloomLevel,
     EnergyLevel,
 )
+from app.utils.config import Config
 from app.utils.pydantic_models import ErrorResponse, FieldValuesResponse
 from app.utils.response_helpers import error_response, success_response
 
@@ -44,3 +45,18 @@ def register_meta_routes(api):
             return success_response(data)
         except Exception as e:
             return error_response(f"Failed to get field values: {str(e)}", 500)
+
+    @api.get(
+        "/api/meta/environment",
+        tags=[meta_tag],
+        responses={200: ErrorResponse, 500: ErrorResponse},
+        summary="Get current environment",
+        description="Get the current environment (local, staging, production)",
+    )
+    def get_environment():
+        """Get the current environment."""
+        try:
+            config = Config.get_instance()
+            return success_response({"environment": config.environment})
+        except Exception as e:
+            return error_response(f"Failed to get environment: {str(e)}", 500)

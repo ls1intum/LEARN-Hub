@@ -23,10 +23,6 @@ COPY src ./src
 COPY public ./public
 COPY index.html vite.config.ts tsconfig.json tailwind.config.js postcss.config.js eslint.config.js ./
 
-# Accept build arguments for environment variables
-ARG VITE_ENVIRONMENT=local
-ENV VITE_ENVIRONMENT=${VITE_ENVIRONMENT}
-
 # Build the application
 RUN npm run build
 

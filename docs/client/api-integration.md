@@ -28,6 +28,7 @@ ApiService.request<T>(url, options) -> T // server returns data directly without
 // Key service methods
 ApiService.getRecommendations(params) -> ResultsData // GET /api/activities/recommendations?{params}
 ApiService.getFieldValues() -> FieldValues // GET /api/meta/field-values
+ApiService.getEnvironment() -> { environment: string } // GET /api/meta/environment
 ApiService.uploadPdf(file) -> UploadResponse // POST /api/documents/upload_pdf
 ApiService.createActivity(data) -> ActivityResponse // POST /api/activities/create
 ApiService.generateLessonPlan(data) -> Blob // POST /api/activities/lesson-plan (returns application/pdf)
@@ -166,6 +167,17 @@ interface FieldValues {
 }
 ```
 
+## Environment Display
+
+The environment is fetched at runtime from `/api/meta/environment` endpoint, allowing the same build to run across different environments. Configured via `ENVIRONMENT` variable in `.env` (options: local, staging, production).
+
+**Hook**: `useEnvironment()` returns `{ environment, isLoading, error }`
+
+**Mapping** (`utils/environment.ts`):
+- `local` → "Local" (secondary badge)
+- `staging` → "Staging" (default badge)
+- `production` → "Public Testing" (outline badge)
+
 ## Utilities
 
 ### Secure Storage (`utils/secureStorage.ts`)
@@ -209,5 +221,8 @@ For detailed implementation, see:
 - **Authentication**: `src/services/authService.ts`
 - **Type Definitions**: `src/types/api.ts`, `src/types/activity.ts`, `src/types/test.ts`
 - **Field Values**: `src/constants/fieldValues.ts`, `src/hooks/useFieldValues.ts`
+- **Environment Display**: `src/hooks/useEnvironment.ts`, `src/utils/environment.ts`
+- **Layout Components**: `src/components/layout/MainLayout.tsx` (desktop & mobile environment display)
+- **Authentication Pages**: `src/pages/LoginPage.tsx` (environment indicator)
 - **Utilities**: `src/utils/secureStorage.ts`, `src/services/logger.ts`
 - **Testing**: `src/test/setup.ts`, `src/services/__tests__/`, `src/hooks/__tests__/`, `src/utils/__tests__/`

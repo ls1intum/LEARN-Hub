@@ -62,13 +62,13 @@ class Config(BaseSettings):
     pdf_storage_path: str = Field(default="/app/data/pdfs/", alias="PDF_SERVER_PATH")
 
     # Environment
-    environment: str = Field(default="development", alias="ENVIRONMENT")
+    environment: str = Field(default="local", alias="ENVIRONMENT")
     debug: bool = Field(default=False, alias="DEBUG")
 
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, v: str) -> str:
-        allowed = {"development", "testing", "production"}
+        allowed = {"local", "staging", "production"}
         if v.lower() not in allowed:
             raise ValueError(f"Environment must be one of: {allowed}")
         return v.lower()
