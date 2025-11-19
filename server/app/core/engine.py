@@ -5,6 +5,7 @@ from itertools import combinations
 from app.core.constants import (
     DEFAULT_MAX_ACTIVITY_COUNT,
     DEFAULT_RECOMMENDATION_LIMIT,
+    LESSON_PLAN_TOP_ACTIVITIES_LIMIT,
 )
 from app.core.filters import apply_hard_filters
 from app.core.models import (
@@ -41,9 +42,10 @@ class RecommendationPipeline:
         filtered_activities = apply_hard_filters(activities, self.criteria)
         scored_results = self._score_all_activities_without_duration(filtered_activities)
         ranked_results = sorted(scored_results, key=lambda x: x[1].total_score, reverse=True)
-        limited_results = ranked_results[: self.limit]
-        results_with_breaks = self._add_breaks_if_requested(limited_results)
-        return self._rescore_duration_and_rank(results_with_breaks)
+        results_with_breaks = self._add_breaks_if_requested(ranked_results)
+        rescored_results = self._rescore_duration_and_rank(results_with_breaks)
+        # apply the final limit after duration has been factored in
+        return rescored_results[: self.limit]
 
     def _score_all_activities_without_duration(
         self, activities: list[ActivityModel]
@@ -59,7 +61,7 @@ class RecommendationPipeline:
         # Generate lesson plans if max_activity_count > 1
         if self.max_activity_count > 1 and len(activities) > 1:
             # Get top activities for lesson plan generation (limit for performance)
-            top_activities = [result[0][0] for result in results[:20]]
+            top_activities = [result[0][0] for result in results[:LESSON_PLAN_TOP_ACTIVITIES_LIMIT]]
 
             # Generate lesson plans of different lengths using simple combinations
             for k in range(2, min(self.max_activity_count + 1, 6)):  # 2-5 activities

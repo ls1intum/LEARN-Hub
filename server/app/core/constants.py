@@ -63,7 +63,7 @@ PRIORITY_CATEGORIES = ["age_appropriateness", "bloom_level_match", "topic_releva
 
 
 # Lesson plan generation limits
-LESSON_PLAN_TOP_ACTIVITIES_LIMIT = 20  # Limit for performance in lesson plan generation
+LESSON_PLAN_TOP_ACTIVITIES_LIMIT = 25  # Limit for performance in lesson plan generation
 
 # Break duration constants
 BREAK_MIN_DURATION = 5  # Minimum break duration in minutes

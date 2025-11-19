@@ -271,9 +271,19 @@ class ScoringEngine:
 
         raw_score = 0.0
 
-        if total_duration <= target_duration:
+        if total_duration == target_duration:
             raw_score = 100.0
+        elif total_duration < target_duration:
+            # Penalize being too short
+            shortfall_ratio = (target_duration - total_duration) / target_duration
+            if shortfall_ratio <= 0.5:
+                # Linear decay from 100% to 50% as it gets shorter (down to half duration)
+                raw_score = (1 - shortfall_ratio) * 100.0
+            else:
+                # Too short (less than half the target) gets 0
+                raw_score = 0.0
         else:
+            # Penalize being too long (existing logic)
             excess_ratio = (total_duration - target_duration) / target_duration
             if excess_ratio <= 0.5:
                 raw_score = (1 - excess_ratio) * 100.0
