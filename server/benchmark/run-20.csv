@@ -1,0 +1,19 @@
+scenario_name,num_activities,include_breaks,filters_complexity,avg_response_time_ms,min_response_time_ms,max_response_time_ms,iterations
+"1. High Cost - Single Activity, No Filters (No Breaks)",1,False,high,215.43,204.41,236.52,5
+"2. High Cost - 5 Activities, No Filters (No Breaks)",5,False,high,913.99,878.75,947.52,5
+"2. High Cost - 5 Activities, No Filters (With Breaks)",5,True,high,1023.45,990.6,1057.76,5
+"3. High Cost - 5 Activities, Age Only (No Breaks)",5,False,high,954.07,929.72,979.12,5
+"3. High Cost - 5 Activities, Age Only (With Breaks)",5,True,high,1082.85,1040.22,1108.52,5
+"4. High Cost - 5 Activities, Age + Format (Broad) (No Breaks)",5,False,high,962.64,932.84,989.85,5
+"4. High Cost - 5 Activities, Age + Format (Broad) (With Breaks)",5,True,high,1075.27,1036.69,1098.62,5
+"5. Medium Cost - 4 Activities, Age + Format (No Breaks)",4,False,medium,372.95,360.24,400.7,5
+"5. Medium Cost - 4 Activities, Age + Format (With Breaks)",4,True,medium,405.21,380.76,425.71,5
+"6. Medium Cost - 4 Activities, Age + Topic (No Breaks)",4,False,medium,443.8,413.83,473.41,5
+"6. Medium Cost - 4 Activities, Age + Topic (With Breaks)",4,True,medium,457.9,437.97,481.08,5
+"7. Medium Cost - 3 Activities, Age + Bloom + Topic (No Breaks)",3,False,medium,226.36,222.88,230.47,5
+"7. Medium Cost - 3 Activities, Age + Bloom + Topic (With Breaks)",3,True,medium,228.75,226.78,231.75,5
+"8. Low Cost - 3 Activities, Age + Format + Bloom + Topic (No Breaks)",3,False,low,202.23,177.5,215.85,5
+"8. Low Cost - 3 Activities, Age + Format + Bloom + Topic (With Breaks)",3,True,low,212.14,205.61,217.79,5
+"9. Low Cost - 2 Activities, Multiple Filters + Resources (No Breaks)",2,False,low,168.98,142.18,186.04,5
+"9. Low Cost - 2 Activities, Multiple Filters + Resources (With Breaks)",2,True,low,162.48,141.24,183.82,5
+"10. Low Cost - 1 Activity, Most Restrictive Filters (No Breaks)",1,False,low,160.45,137.61,171.75,5
