@@ -104,3 +104,6 @@ clean: ## Remove build artifacts
 # Utility
 version: ## Show installed package versions
 	uv lock --upgrade
+
+import-dataset-prod: ## Import the dataset from the CSV file
+	docker exec lhub-server /app/.venv/bin/python scripts/import_activities.py --csv /app/dataset/dataset.csv --pdf-dir /app/dataset/pdfs

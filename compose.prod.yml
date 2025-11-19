@@ -14,7 +14,7 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ${POSTGRES_DATA:-./pg_data}:/var/lib/postgresql/data
     networks:
       - app-network
     healthcheck:
@@ -42,6 +42,7 @@ services:
       - SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-learn_hub_activities}
     volumes:
       - ${PDF_HOST_PATH:-./data/pdfs}:/app/data/pdfs
+      - ${DATASET_PATH:-./dataset}:/app/dataset:ro
     depends_on:
       postgres:
         condition: service_healthy

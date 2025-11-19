@@ -10,7 +10,6 @@ import csv
 import logging
 import sys
 from pathlib import Path
-from typing import Any
 
 # Add the server directory to the Python path
 server_dir = Path(__file__).parent.parent
@@ -79,7 +78,7 @@ def import_data(csv_path: Path, pdf_dir: Path):
     pdf_service = PDFService()
     
     try:
-        with open(csv_path, "r", encoding="utf-8") as f:
+        with open(csv_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             
             count = 0
@@ -93,11 +92,18 @@ def import_data(csv_path: Path, pdf_dir: Path):
                 
                 logger.info(f"Processing activity: {row['name']}")
                 
-                # Store PDF
+                # Read PDF content
                 with open(pdf_path, "rb") as pdf_file:
                     pdf_content = pdf_file.read()
-                    document_id = pdf_service.store_pdf(pdf_content, filename)
                 
+                # Store PDF using PDFService
+                try:
+                    document_id = pdf_service.store_pdf(pdf_content, filename)
+                    logger.info(f"PDF stored with document_id: {document_id}")
+                except Exception as e:
+                    logger.error(f"Failed to store PDF for '{filename}': {e}")
+                    raise
+
                 # Parse and validate resources
                 raw_resources = parse_list(row["resources_needed"])
                 validated_resources = validate_resources(raw_resources)
