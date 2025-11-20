@@ -120,7 +120,7 @@ export const RecommendationRow: React.FC<RecommendationRowProps> = ({
                       ([category, scoreData]) => (
                         <div key={category} className="flex justify-between">
                           <span className="capitalize">
-                            {category.replace("_", " ")}:
+                            {category.replace(/_/g, " ")}:
                           </span>
                           <span className="font-medium">
                             {scoreData.score}%
