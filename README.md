@@ -60,9 +60,11 @@ See `example.env` for a complete list of configurable variables.
 
 ## Documentation
 
-Comprehensive documentation is organized in the `docs/` directory by architectural layer:
+**User Documentation**: https://ls1intum.github.io/learn-hub/docs
 
-### Core System
+**Developer Documentation** is organized in the `docs/` directory by architectural layer:
+
+#### Core System
 - [`docs/core/recommendation-engine.md`](docs/core/recommendation-engine.md) - Recommendation algorithm design, scoring methodology, and architectural decisions
 
 ### Server
