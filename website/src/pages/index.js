@@ -37,7 +37,7 @@ export default function Home() {
   return (
     <Layout
       title={`Welcome to ${siteConfig.title}`}
-      description="AI-Powered Lesson Recommendations for Computer Science Education">
+      description="Lesson Recommendations for Computer Science Education">
       <HomepageHeader />
     </Layout>
   );

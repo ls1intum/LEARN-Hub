@@ -23,12 +23,12 @@ const config = {
   url: 'https://ls1intum.github.io',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/learn-hub/',
+  baseUrl: '/LEARN-Hub/',
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'ls1intum', // Usually your GitHub org/user name.
-  projectName: 'learn-hub', // Usually your repo name.
+  projectName: 'LEARN-Hub', // Usually your repo name.
 
   onBrokenLinks: 'throw',
 
