@@ -60,7 +60,7 @@ See `example.env` for a complete list of configurable variables.
 
 ## Documentation
 
-**User Documentation**: https://ls1intum.github.io/learn-hub/docs
+**User Documentation**: https://ls1intum.github.io/LEARN-Hub/
 
 **Developer Documentation** is organized in the `docs/` directory by architectural layer:
 
