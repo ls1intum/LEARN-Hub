@@ -1,15 +1,33 @@
+---
+sidebar_position: 0
+---
+
 # App Documentation
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+LEARNApp helps teachers find suitable computer science activities for their classes, create activity recommendations, and prepare material for teaching.  
+This documentation explains step by step how to discover activities, create recommendations, save favorites, manage your account, and download materials for offline use.
 
 ## Overview
 
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+The user documentation is organized around typical tasks in everyday teaching:
+
+- **Create Activity Recommendations** – Use the Recommendation Configurator to build full activity sets tailored to lesson duration, grade level, topic, and available devices.  
+- **Activity Discovery** – Browse all available activities by title or filter by grade, duration, topic, and required materials.  
+- **Favorites & History** – Save single activities or full recommendations as favorites and access them later via the Favorites or History view.  
+- **Account Management & Offline Use** – Set up an account, manage your profile data, and download recommendations as PDFs for offline use in the classroom.  
+
+Each section contains a short introduction and a step-by-step guide from the in-app perspective.
 
 ## Features
 
-- Lorem ipsum dolor sit amet
-- Consectetur adipiscing elit
-- Sed do eiusmod tempor incididunt
+- **Guided recommendation creation**  
+  Plan complete lessons in the **Planning** tab by selecting duration, grade level, topics, and available devices.  
 
-Ut labore et dolore magna aliqua.
+- **Fast activity search**  
+  Find individual activities in the **Search** tab, including filters for topic, duration, materials, and grade level.  
+
+- **Save & reuse**  
+  Mark activities and recommendations as **favorites** and revisit them later via the Favorites or **History** section.  
+
+- **Account & offline materials**  
+  Create an account, manage your profile, and download complete recommendations as **PDFs** to use without an internet connection.
