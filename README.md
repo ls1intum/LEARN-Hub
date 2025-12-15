@@ -42,19 +42,7 @@ The `docs/figures/` directory contains UML diagrams documenting the system archi
 ![Subsystem Decomposition](docs/figures/final-lucid-subsystem.svg)
 
 ## Quick Start
-
-```bash
-# Setup environment and dependencies
-make setup
-make db-setup
-make db-mock  # Populate with mock data (or use: make db-dataset)
-
-# Run locally (development mode)
-make dev      # Starts server on port 5001 and client on port 3001
-
-# Or run with Docker
-docker compose up --build -d
-```
+See [`docs/dev-setup.md`](docs/dev-setup.md)
 
 ## Services
 
