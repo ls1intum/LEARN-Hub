@@ -40,7 +40,6 @@ class Config(BaseSettings):
     jwt_access_token_expires: int = Field(default=900, alias="JWT_ACCESS_TOKEN_EXPIRES")  # 15 minutes
     jwt_refresh_token_expires: int = Field(default=2592000, alias="JWT_REFRESH_TOKEN_EXPIRES")  # 30 days
     flask_secret_key: str = Field(default="dev-flask-secret", alias="FLASK_SECRET_KEY")
-    dev_secret_key: str = Field(default="dev-dev-secret", alias="DEV_SECRET_KEY")
 
     # Email settings (STARTTLS only)
     email_address: str = Field(default="", alias="EMAIL_ADDRESS")

@@ -17,7 +17,6 @@ def setup_unit_test_env():
     """Set up environment for unit tests."""
     # Override environment variables for testing
     os.environ["GOOGLE_API_KEY"] = "test_key"
-    os.environ["DEV_SECRET_KEY"] = "test_dev_secret"
     os.environ["FLASK_SECRET_KEY"] = "test_flask_secret"
     os.environ["JWT_SECRET_KEY"] = "test_jwt_secret"
     os.environ["ADMIN_EMAIL"] = "admin@test.com"
