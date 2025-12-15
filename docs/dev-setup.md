@@ -41,7 +41,7 @@ Start the PostgreSQL database using Docker Compose:
 docker compose -f compose.dev.yml up -d
 ```
 
-Run migrations (create db tableas)
+Run migrations (create db tables)
 ```bash
 make db-setup
 ```
@@ -70,6 +70,7 @@ Once the server is running, verify the setup:
 
 1. **API Health Check**: Visit [http://localhost:5001/api/hello](http://localhost:5001/api/hello)
 2. **API Documentation**: Visit [http://localhost:5001/api/openapi/swagger](http://localhost:5001/api/openapi/swagger)
+3. **Client UI**: Visit [http://localhost:3001](http://localhost:3001)
 
 You should see the Swagger UI with all available endpoints.
 
