@@ -1,30 +1,78 @@
-#!/usr/bin/env python3
 """
-Demo data population script for Phase 3.1.
-This script populates the database with sample activities and users for demonstration.
+Utility functions and constants for database setup scripts.
 """
 
+from __future__ import annotations
+
 import io
-import sys
-from pathlib import Path
+import logging
+import secrets
+import string
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
-# Add the server directory to the Python path
-server_dir = Path(__file__).parent.parent
-sys.path.insert(0, str(server_dir))
-
-from app.core.models import EnergyLevel
-from app.db.database import get_db_session
+from app.core.models import ActivityResource, EnergyLevel
 from app.db.models.activity import Activity
-from app.db.models.user import User, UserRole, PDFDocument
-from app.services.pdf_service import PDFService
+from app.db.models.user import User, UserRole
 from app.services.user_service import UserService
 
+logger = logging.getLogger(__name__)
+admin_email = "admin@learn.hub"
 
-def create_demo_activities():
+# ============================================================================
+# ADMIN USER MANAGEMENT
+# ============================================================================
+
+
+def generate_random_password(length: int = 16) -> str:
+    """Generate a secure random password."""
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def ensure_admin_user(session) -> str:
+    """
+    Ensure admin user exists with email admin@learnhub.
+    Returns the password (either existing or newly generated).
+    """
+    user_service = UserService(session)
+
+    # Check if admin user already exists
+    admin_user = user_service.get_user_by_email(admin_email)
+
+    if admin_user:
+        logger.info(f"Admin user {admin_email} already exists")
+        # Generate new password for existing user
+        new_password = generate_random_password()
+        user_service.set_password(admin_user.id, new_password)
+        logger.info("Reset password for existing admin user")
+        return new_password
+    else:
+        # Create new admin user
+        admin_user = User(
+            email=admin_email,
+            first_name="Admin",
+            last_name="User",
+            role=UserRole.ADMIN,
+        )
+        session.add(admin_user)
+        session.commit()
+
+        # Set password
+        password = generate_random_password()
+        user_service.set_password(admin_user.id, password)
+        logger.info(f"Created new admin user: {admin_email}")
+        return password
+
+
+# ============================================================================
+# DEMO ACTIVITIES DATA
+# ============================================================================
+
+
+def get_demo_activities() -> list[Activity]:
     """Create a comprehensive set of demo activities with diverse series possibilities."""
     return [
         # === ALGORITHMS SERIES (Remember → Understand → Apply → Analyze → Evaluate) ===
@@ -108,7 +156,6 @@ def create_demo_activities():
             cleanup_time_minutes=8,
             topics=["algorithms"],
         ),
-
         # === PATTERNS SERIES (Remember → Understand → Apply → Create) ===
         Activity(
             name="Pattern Recognition Cards",
@@ -174,7 +221,6 @@ def create_demo_activities():
             cleanup_time_minutes=5,
             topics=["patterns"],
         ),
-
         # === ABSTRACTION SERIES (Understand → Apply → Analyze → Create) ===
         Activity(
             name="Abstraction Concept Introduction",
@@ -240,7 +286,6 @@ def create_demo_activities():
             cleanup_time_minutes=10,
             topics=["abstraction"],
         ),
-
         # === DECOMPOSITION SERIES (Understand → Apply → Analyze → Evaluate) ===
         Activity(
             name="Decomposition Story Problems",
@@ -306,7 +351,6 @@ def create_demo_activities():
             cleanup_time_minutes=8,
             topics=["decomposition"],
         ),
-
         # === CROSS-TOPIC SERIES (Multiple topics for complex series) ===
         Activity(
             name="Algorithm Pattern Recognition",
@@ -356,7 +400,6 @@ def create_demo_activities():
             cleanup_time_minutes=5,
             topics=["algorithms", "abstraction"],
         ),
-
         # === SHORT DURATION SERIES (for quick lesson plans) ===
         Activity(
             name="Quick Pattern Match",
@@ -406,7 +449,6 @@ def create_demo_activities():
             cleanup_time_minutes=2,
             topics=["algorithms"],
         ),
-
         # === LONG DURATION SERIES (for extended lesson plans) ===
         Activity(
             name="Comprehensive Algorithm Study",
@@ -440,7 +482,6 @@ def create_demo_activities():
             cleanup_time_minutes=8,
             topics=["patterns", "abstraction"],
         ),
-
         # === ENERGY BALANCE ACTIVITIES ===
         Activity(
             name="Physical Algorithm Walk",
@@ -476,23 +517,9 @@ def create_demo_activities():
         ),
     ]
 
-
-def create_demo_users():
-    """Create demo users for testing."""
-    return [
-        User(
-            email="teacher@demo.com",
-            first_name="Demo",
-            last_name="Teacher",
-            role=UserRole.TEACHER,
-        ),
-        User(
-            email="admin@demo.com",
-            first_name="Demo",
-            last_name="Admin",
-            role=UserRole.ADMIN,
-        ),
-    ]
+# ============================================================================
+# PDF UTILITIES
+# ============================================================================
 
 
 def create_placeholder_pdf() -> bytes:
@@ -526,75 +553,25 @@ def create_placeholder_pdf() -> bytes:
     return buffer.getvalue()
 
 
-def main():
-    """Populate the database with demo data."""
-    print("Populating database with demo data...")
+# ============================================================================
+# CSV PARSING UTILITIES
+# ============================================================================
 
-    # Get database session
-    session = get_db_session()
 
-    try:
-        # Check if data already exists
-        existing_activities = session.query(Activity).count()
-        existing_users = session.query(User).count()
-        existing_documents = session.query(PDFDocument).count()
+def parse_list(value: str) -> list[str]:
+    """Parse pipe-separated list string."""
+    if not value:
+        return []
+    return [item.strip() for item in value.split("|") if item.strip()]
 
-        # Create or use existing PDF document
-        if existing_documents == 0:
-            # Generate placeholder PDF and store it
-            pdf_content = create_placeholder_pdf()
-            pdf_service = PDFService()
-            document_id = pdf_service.store_pdf(pdf_content, "demo_activities_placeholder.pdf")
-            print(f"Created demo placeholder PDF with document ID: {document_id}")
+
+def validate_resources(resources: list[str]) -> list[str]:
+    """Filter resources to only include valid ActivityResource values."""
+    valid_resources = {r.value for r in ActivityResource}
+    validated = []
+    for r in resources:
+        if r.lower() in valid_resources:
+            validated.append(r.lower())
         else:
-            # Use existing document
-            document_id = session.query(PDFDocument).first().id
-            print(f"Using existing PDF document (ID: {document_id})")
-
-        if existing_activities > 0:
-            print(f"Database already contains {existing_activities} activities. Skipping activity creation.")
-        else:
-            # Create activities with document_id and description
-            activities = create_demo_activities()
-            for activity in activities:
-                activity.document_id = document_id
-                # Add default description if not set
-                if not hasattr(activity, 'description') or not activity.description:
-                    activity.description = f"Demo activity: {activity.name} - A comprehensive educational activity designed for students aged {activity.age_min}-{activity.age_max} years."
-                session.add(activity)
-            print(f"Created {len(activities)} demo activities")
-
-        if existing_users > 0:
-            print(f"Database already contains {existing_users} users. Skipping user creation.")
-        else:
-            # Create users
-            users = create_demo_users()
-            for user in users:
-                session.add(user)
-            print(f"Created {len(users)} demo users")
-
-        # Commit changes
-        session.commit()
-
-        # Set password for admin user after commit
-        user_service = UserService(session)
-        admin_user = user_service.get_user_by_email("admin@demo.com")
-        if admin_user:
-            user_service.set_password(admin_user.id, "admin123")
-            print("Set password for admin user")
-
-        print("Demo data populated successfully!")
-        print("\nDemo credentials:")
-        print("- Teacher: teacher@demo.com (use magic link)")
-        print("- Admin: admin@demo.com (password: admin123)")
-
-    except Exception as e:
-        session.rollback()
-        print(f"Error populating demo data: {e}")
-        raise
-    finally:
-        session.close()
-
-
-if __name__ == "__main__":
-    main()
+            logger.warning(f"Ignoring invalid resource: {r}. Valid resources are: {valid_resources}")
+    return validated

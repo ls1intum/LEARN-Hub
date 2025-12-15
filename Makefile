@@ -17,6 +17,9 @@ help: ## Show this help
 	@echo "Code Quality:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(format|lint|test|clean)" | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo ""
+	@echo "Database:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(db-setup|db-migrate|db-check|db-mock|db-dataset|db-reset|backup|restore)" | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo ""
 	@echo "Server-specific commands: cd server && make help"
 	@echo "Client-specific commands: cd client && make help"
 
@@ -91,14 +94,20 @@ clean: ## Clean build artifacts for both server and client
 	cd client && $(MAKE) clean || true
 
 # Database targets
-db-setup: ## Setup database
+db-setup: ## Apply all Alembic migrations
 	cd server && $(MAKE) db-setup
 
-db-migrate: ## Run database migrations
+db-migrate: ## Run database migrations (alias for db-setup)
 	cd server && $(MAKE) db-migrate
 
-db-init: ## Initialize fresh database with new schema
-	cd server && $(MAKE) db-init
+db-check: ## Check that migrations are up to date
+	cd server && $(MAKE) db-check
+
+db-mock: ## Populate database with mock data (requires migrations applied)
+	cd server && $(MAKE) db-mock
+
+db-dataset: ## Import real dataset (requires migrations applied)
+	cd server && $(MAKE) db-dataset
 
 db-reset: ## Reset database (delete and recreate)
 	cd server && $(MAKE) db-reset
