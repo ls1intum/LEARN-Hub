@@ -2,92 +2,77 @@
 
 ## Overview
 
-The LEARN-Hub recommendation engine uses a category-based scoring system to match educational activities with teacher requirements. It quantifies pedagogical fit across age appropriateness, learning objectives, resources, and time constraints, generating recommendations for both individual activities and multi-activity lesson plans.
+The recommendation engine functions as an autonomous subsystem, isolated from the server's web framework to ensure architectural independence and algorithm reusability. The engine implements content-based filtering, scoring activities based on their metadata attributes rather than user interaction patterns. This approach provides an explainable alternative to opaque collaborative filtering methods.
 
-## Scoring Architecture
+**Note**: For detailed scoring formulas, design rationale, and pedagogical principles, see the thesis (Section 5.3.3, Architecture chapter).
 
-### Dimensions & Weighting
-
-The engine evaluates activities across five independent categories. Each category generates a raw score [0-100], which is aggregated using a weighted average. Teachers can prioritize categories to apply a 2x multiplier.
+## Scoring Categories
 
 | Category | Impact | Description |
 |----------|--------|-------------|
-| **Age Appropriateness** | 4 | Tolerance-based matching (±5 years) with linear decay. |
-| **Bloom's Alignment** | 5 | Hierarchical matching: Exact=100, Adjacent=50, Others=0. |
-| **Topic Relevance** | 4 | Proportional coverage of requested topics. |
-| **Duration Fit** | 3 | Checks fit within constraints; includes 50% excess tolerance. |
-| **Series Cohesion** | 3 | For lesson plans: Topic overlap (50%) + Bloom progression (50%). |
+| **Age Appropriateness** | 4 | Tolerance-based matching with linear decay for activities outside target range |
+| **Bloom's Alignment** | 5 | Hierarchical matching recognising cognitive progression across six levels |
+| **Topic Relevance** | 4 | Proportional coverage of requested computational thinking topics |
+| **Duration Fit** | 3 | Symmetric penalty model for deviations from target duration |
+| **Series Cohesion** | 3 | For lesson plans: Topic overlap and Bloom progression between consecutive activities |
 
-**Formula**: `total_score = Σ(category_score × impact × priority_multiplier) / Σ(impact × priority_multiplier)`
-
-### Scoring Logic
-
-*   **Age**: Uses a linear decay for ages outside the target range but within tolerance, acknowledging that activity difficulty is approximate.
-*   **Bloom's**: Recognizes cognitive hierarchy (Remember → Create). Adjacent levels get partial credit as they represent scaffolded steps.
-*   **Topics**: calculated as `(matching_topics / requested_topics) × 100`.
-*   **Duration**: Penalizes activities exceeding target duration, but allows slight overage (up to 50%) to prevent rigid rejection of good content.
+**Aggregation**: total_score = Σ(category_score × impact) / Σ(impact)
 
 ## Processing Pipeline
 
 ### 1. Hard Filtering
-Before scoring, activities must pass hard filters to eliminate incompatible items:
-*   **Age**: Within ±2 years of target.
-*   **Format**: Matches preferred format (unplugged/digital/hybrid).
-*   **Resources**: Requires only available resources.
-*   **Bloom/Topics**: Must match at least one preferred level/topic.
+
+Activities must pass filters for age (within ±2 years), format, duration constraints, and resource requirements before scoring. This eliminates incompatible candidates early.
 
 ### 2. Two-Stage Scoring
-To optimize performance (<2s response), the engine uses a two-stage process:
 
-**Stage 1: Preliminary Scoring & Ranking**
-*   Score all filtered activities excluding duration (computationally cheap).
-*   Rank results.
-*   Select top **25** activities for lesson plan combination generation.
+- **Stage 1**: Score all candidates by age, Bloom alignment, and topic; select top 25 by preliminary score
+- **Stage 2**: Generate activity combinations from top 25 only; insert breaks; re-score with duration
 
-**Stage 2: Duration Re-scoring**
-*   Generate combinations (if requested) from the top 25 candidates.
-*   Insert breaks into lesson plans.
-*   Re-score candidates including duration fit (computationally expensive).
-*   Final ranking and selection.
+This limits combinatorial complexity from O(n!) to O(25^k), achieving sub-three-second response times.
 
 ### 3. Lesson Plan Generation
-Lesson plans are generated via combinatorial analysis of the top **25** activities from Stage 1.
-*   **Limit**: Top 25 activities (reduced from O(n^k) to O(25^k)).
-*   **Size**: Configurable 2-5 activities per plan.
+
+Generates 2-5 activity sequences with:
+- Combinatorial limit: Top 25 activities only
+- Pedagogical coherence via series cohesion scoring
+- Bloom progression enforcement (non-decreasing)
+- Topic overlap between consecutive activities
 
 ## Break System
 
-The system automatically inserts breaks in multi-activity plans to account for transitions and fatigue. Breaks are added to the total duration.
+Automated break calculation using rule-based logic:
 
-*   **Cleanup**: Based on activity metadata.
-*   **Mental Rest**: 10 mins after "high" mental load activities.
-*   **Physical Rest**: 5 mins after "high" physical energy activities.
-*   **Transition**: 5 mins when format changes (e.g., Unplugged → Digital).
+| Break Type | Duration | Trigger |
+|-----------|----------|---------|
+| **Cleanup** | Variable | Based on activity metadata |
+| **Mental Rest** | 10 min | After high mental load activities |
+| **Physical Rest** | 5 min | After high physical energy activities |
+| **Format Transition** | 5 min | When activity format changes |
 
-*Note: Breaks are never added after the final activity.*
+**Note**: Breaks never added after the final activity in a lesson plan.
 
 ## System Integration
 
-The engine resides in `app/core/` and is decoupled from the web framework.
-*   **Input**: `SearchCriteria`, `List[ActivityModel]`, configuration.
-*   **Output**: Recommendations with detailed score breakdowns.
+The engine resides in `app/core/` as a standalone package:
 
-### Performance Optimizations
-1.  **Two-Stage Scoring**: Defers expensive duration/break logic.
-2.  **Hard Filters**: Reduces the initial candidate pool.
-3.  **Combinatorial Limit**: Restricts lesson plan generation to the top 25 activities.
-4.  **Integer Math**: Uses [0-100] integer scales for efficiency.
+| Module | Responsibility |
+|--------|----------------|
+| `app/core/engine.py` | Main recommendation algorithm orchestration |
+| `app/core/scoring.py` | Individual category scoring functions |
+| `app/core/constants.py` | Configurable scoring parameters and thresholds |
+| `app/core/models.py` | Data models for search criteria and results |
 
-## Trade-offs & Design Evaluation
+### Engine Interface
 
-| Aspect | Choice | Rationale |
-|--------|--------|-----------|
-| **Algorithm** | Category Scoring | No training data needed; highly explainable to teachers. |
-| **Aggregation** | Weighted Average | Normalizes scores; handles trade-offs gracefully. |
-| **Performance** | Two-Stage + Top-25 | Enables interactive response times for combinatorial problems. |
-| **Breaks** | Automated | Reduces teacher cognitive load; standardizes transition times. |
+- **Input**: `SearchCriteria`, `List[ActivityModel]`, configuration parameters
+- **Output**: Ranked recommendations with detailed score breakdowns per category
 
-**Limitations**:
-*   **Manual Weights**: Impact weights are heuristically defined, not learned.
-*   **Local Optima**: Limiting combinations to the top 25 individual activities might miss optimal plans composed of medium-scoring activities that fit well together.
-*   **Static Rules**: Break durations and tolerances are fixed constants.
+## Performance Characteristics
+
+- **Candidate Limit**: Top 25 activities before expensive sequence generation
+- **Hard Filtering**: Reduces initial candidate pool before scoring
+- **Two-Stage Pipeline**: Defers expensive duration/break logic to Stage 2
+- **Integer Arithmetic**: Uses [0-100] integer scales for efficiency
+
+For detailed performance benchmarks and analysis, see the thesis (Chapter 6, Validation).

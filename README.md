@@ -2,21 +2,44 @@
 
 A recommendation system prototype for Computer Science education activities that leverages automated content processing and category-based scoring algorithms to support teachers in activity selection and lesson planning.
 
+This system was developed as part of a Master's thesis at the Technical University of Munich, Chair of Applied Education Technologies. The architecture prioritises transparency and explainability, enabling teachers to understand how recommendations are generated rather than relying on opaque black-box algorithms.
+
 ## Overview
 
-LEARN-Hub addresses the challenge of finding appropriate educational activities for computer science courses by implementing an intelligent recommendation engine. The system processes educational activity documents, analyzes their pedagogical characteristics, and generates personalized recommendations based on teacher requirements such as target age group, available resources, and learning objectives aligned with Bloom's taxonomy.
+LEARN-Hub addresses the challenge of finding appropriate educational activities for computer science courses by implementing an intelligent recommendation engine. The system processes educational activity documents, analyses their pedagogical characteristics, and generates personalised recommendations based on teacher requirements such as target age group, available resources, and learning objectives aligned with Bloom's Taxonomy.
+
+The recommendation engine implements content-based filtering with category-based scoring, offering an explainable alternative to collaborative filtering approaches. Teachers receive detailed scoring breakdowns across age appropriateness, topic relevance, duration fit, Bloom alignment, and series cohesion, fostering agency and trust in the recommendation process.
 
 ## Architectural Overview
 
-The system implements a three-tier architecture designed for scalability and maintainability:
+The system implements a three-tier containerised web application architecture following the System Design Document approach:
 
-**Client Layer**: A React single-page application (SPA) provides an interactive user interface for teachers and administrators. The client implements role-based access control, supports both light and dark themes, and maintains session-based authentication for enhanced security.
+**Client Subsystem**: A React single-page application provides an interactive user interface for teachers and administrators. The client implements role-based access control, supports both light and dark themes, and maintains session-based authentication using sessionStorage for enhanced security on shared school computers.
 
-**Server Layer**: A Flask REST API server handles all business logic, including the core recommendation engine, user management, and content processing. The API uses automated processing to extract structured data from PDF documents and generate activity recommendations using a category-based scoring system.
+**Server Subsystem**: A Flask REST API server orchestrates the core application logic through specialised internal systems. The Recommendation System encapsulates the algorithmic intelligence. The User System manages identity through user, history, and favourites services. The Document System oversees content ingestion via PDF processing and LLM-assisted metadata extraction.
 
-**Data Layer**: PostgreSQL serves as the primary data store, managing activities, user accounts, search history, and favorites. The database schema supports complex relationships between activities, topics, and user preferences while maintaining referential integrity.
+**Data Layer**: PostgreSQL serves as the primary data store, managing activities, user accounts, search history, and favourites. The database schema supports complex relationships between activities, topics, and user preferences whilst maintaining referential integrity.
 
-**Containerization**: Docker and Docker Compose orchestrate the deployment of all services, ensuring consistent environments across development, staging, and production deployments.
+**Containerisation**: Docker Compose orchestrates three containerised services on a single host, connected via an internal bridge network. The deployment includes health checks and dependency chains to ensure proper sequencing during startup.
+
+### Design Goals
+
+The architecture addresses several key quality attributes:
+
+- **Transparency (QA3)**: Category-based scoring with detailed breakdowns enables teachers to understand recommendations
+- **Maintainability (QA7)**: Clear, explicit code with dependency injection favours clarity over convenience
+- **Performance (QA5, QA6)**: Two-stage scoring pipeline and hard filtering ensure sub-three-second response times
+- **Extensibility (QA1, QA8)**: Comprehensive OpenAPI documentation enables integration with external learning platforms
+
+## Architecture Diagrams
+
+The `docs/figures/` directory contains UML diagrams documenting the system architecture:
+
+- **Subsystem Decomposition** ([`docs/figures/final-lucid-subsystem.svg`](docs/figures/final-lucid-subsystem.svg)): Shows the internal components of the server and client subsystems
+- **Deployment Diagram** ([`docs/figures/final-lucid-deployment.svg`](docs/figures/final-lucid-deployment.svg)): Container topology, volumes, and external service dependencies
+- **Analysis Object Model** ([`docs/figures/final-lucid-aom.svg`](docs/figures/final-lucid-aom.svg)): Domain entities and their relationships
+
+![Subsystem Decomposition](docs/figures/final-lucid-subsystem.svg)
 
 ## Quick Start
 
@@ -40,6 +63,7 @@ Once running, access the system at:
 - **Client**: http://localhost:3001
 - **Server API**: http://localhost:5001
 - **API Documentation**: http://localhost:5001/api/openapi
+- **Hosted API Documentation (test deployment)**: https://learnhub-test.aet.cit.tum.de/api/openapi/swagger
 
 ## Environment Configuration
 
@@ -62,9 +86,9 @@ See `example.env` for a complete list of configurable variables.
 
 **User Documentation**: https://ls1intum.github.io/LEARN-Hub/
 
-**Developer Documentation** is organized in the `docs/` directory by architectural layer:
+**Developer Documentation** is organised in the `docs/` directory by architectural layer:
 
-#### Core System
+### Core System
 - [`docs/core/recommendation-engine.md`](docs/core/recommendation-engine.md) - Recommendation algorithm design, scoring methodology, and architectural decisions
 
 ### Server
@@ -80,21 +104,22 @@ See `example.env` for a complete list of configurable variables.
 ## Technology Stack
 
 **Server**:
-- Python 3.13 with modern language features
-- Flask 3.0 for REST API implementation
+- Python 3.13 with modern type hints and performance improvements
+- Flask 3.0 with Flask-OpenAPI3 for automatic API documentation
 - SQLAlchemy ORM with Alembic migrations
-- PostgreSQL 15+ for data persistence
-- Gunicorn for production deployment
+- PostgreSQL 17+ for relational data persistence
+- Gunicorn WSGI server for production deployment
 
 **Client**:
-- React 19 with TypeScript
-- Vite for build tooling
-- Tailwind CSS for styling
-- Nginx for production serving
+- React 19 with TypeScript for type safety
+- Vite for rapid build tooling with hot module replacement
+- Tailwind CSS for utility-first styling
+- shadcn/ui for accessible interface elements
+- Nginx for production serving and API proxying
 
 **Infrastructure**:
-- Docker for containerization
-- Docker Compose for orchestration
+- Docker for containerisation with multi-stage builds
+- Docker Compose for container orchestration
 - GitHub Container Registry for image distribution
 
 **Development Tools**:
@@ -123,4 +148,3 @@ make test         # Run tests
 make build        # Build for production
 make lint         # Check code quality
 ```
-
