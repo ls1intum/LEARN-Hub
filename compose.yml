@@ -39,8 +39,9 @@ services:
       - .env
     environment:
       - SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-learn_hub_activities}
+      - PDF_PATH=/app/data/pdfs
     volumes:
-      - ${PDF_HOST_PATH:-./data/pdfs}:/app/data/pdfs
+      - ${PDF_PATH}:/app/data/pdfs
     depends_on:
       postgres:
         condition: service_healthy

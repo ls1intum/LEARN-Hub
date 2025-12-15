@@ -35,7 +35,7 @@ def app():
     os.environ["EMAIL_SENDER_NAME"] = "LEARN-Hub Test"
     os.environ["SMTP_SERVER"] = "smtp.test.com"
     os.environ["SMTP_PORT"] = "587"
-    os.environ["PDF_STORAGE_PATH"] = "/tmp/test_pdfs"
+    os.environ["PDF_PATH"] = "/tmp/test_pdfs"
 
     # Reset global database state
     global engine

@@ -24,7 +24,7 @@ class TestPDFService:
     def pdf_service(self, temp_storage_path):
         """Create PDFService with mocked dependencies."""
         with patch("app.services.pdf_service.Config.get_instance") as mock_config:
-            mock_config.return_value.pdf_storage_path = str(temp_storage_path)
+            mock_config.return_value.pdf_path = str(temp_storage_path)
             service = PDFService()
             return service
 

@@ -1,11 +1,11 @@
 # LEARN-Hub Client Makefile for React + Vite + shadcn/ui
 
-.PHONY: help install dev build preview lint format test test-ui clean docker-build docker-run
+.PHONY: help setup dev build preview lint format test test-ui clean docker-build docker-run
 
 # Default target
 help:
 	@echo "Available commands:"
-	@echo "  install     - Install dependencies"
+	@echo "  setup     - Install dependencies"
 	@echo "  dev         - Start development server"
 	@echo "  build       - Build for production"
 	@echo "  lint        - Run ESLint"
@@ -17,7 +17,7 @@ help:
 	@echo "  docker-run  - Run Docker container"
 
 # Install dependencies
-install:
+setup:
 	npm install
 
 # Start development server
