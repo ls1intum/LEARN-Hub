@@ -49,25 +49,8 @@ dev-client: ## Run client server locally
 docker-up: ## Start services with Docker Compose
 	docker compose up --build -d
 
-docker-down: ## Stop Docker Compose services
-	docker compose down
-
 docker-build: ## Build Docker images
 	docker compose build
-
-docker-build-multiarch: ## Build multi-arch Docker images
-	docker buildx build --platform linux/amd64,linux/arm64 -f client/Dockerfile -t learn-hub-client ./client
-	docker buildx build --platform linux/amd64,linux/arm64 -f server/Dockerfile -t learn-hub-server ./server
-
-docker-logs: ## Show Docker Compose logs
-	docker compose logs -f
-
-docker-status: ## Show Docker Compose service status
-	docker compose ps
-
-docker-clean: ## Clean up Docker resources
-	docker compose down -v
-	docker system prune -f
 
 docker-prod: ## Start production services
 	docker compose -f compose.prod.yml up -d
@@ -81,10 +64,6 @@ lint: ## Lint code in both server and client
 	cd server && $(MAKE) lint
 	cd client && $(MAKE) lint
 
-lint-fix: ## Auto-fix lint issues in both server and client
-	cd server && $(MAKE) lint-fix
-	cd client && $(MAKE) lint-fix
-
 test: ## Run tests for server
 	cd server && $(MAKE) test
 	cd client && $(MAKE) test
@@ -97,9 +76,6 @@ clean: ## Clean build artifacts for both server and client
 db-setup: ## Apply all Alembic migrations
 	cd server && $(MAKE) db-setup
 
-db-migrate: ## Run database migrations (alias for db-setup)
-	cd server && $(MAKE) db-migrate
-
 db-check: ## Check that migrations are up to date
 	cd server && $(MAKE) db-check
 
@@ -111,9 +87,3 @@ db-dataset: ## Import real dataset (requires migrations applied)
 
 db-reset: ## Reset database (delete and recreate)
 	cd server && $(MAKE) db-reset
-
-backup: ## Backup database
-	cd server && $(MAKE) backup
-
-restore: ## Restore database
-	cd server && $(MAKE) restore

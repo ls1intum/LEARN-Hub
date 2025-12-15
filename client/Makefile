@@ -8,13 +8,11 @@ help:
 	@echo "  install     - Install dependencies"
 	@echo "  dev         - Start development server"
 	@echo "  build       - Build for production"
-	@echo "  preview     - Preview production build"
 	@echo "  lint        - Run ESLint"
 	@echo "  format      - Format code with Prettier"
 	@echo "  test        - Run tests"
 	@echo "  test-ui     - Run tests with UI"
 	@echo "  clean       - Clean build artifacts"
-	@echo "  docker-build - Build Docker image (multi-arch)"
 	@echo "  docker-build-local - Build Docker image (current platform)"
 	@echo "  docker-run  - Run Docker container"
 
@@ -34,19 +32,6 @@ dev:
 # Build for production
 build:
 	npm run build
-
-# Preview production build
-preview:
-	@if [ -f ../.env ]; then \
-		export $$(grep -v '^#' ../.env | xargs) && \
-		CLIENT_PORT=$${CLIENT_PORT:-3001} npm run preview; \
-	else \
-		CLIENT_PORT=$${CLIENT_PORT:-3001} npm run preview; \
-	fi
-
-# Run linter
-lint:
-	npm run lint
 
 # Run linter with fix
 lint-fix:
@@ -68,10 +53,6 @@ test-ui:
 clean:
 	rm -rf dist
 	rm -rf node_modules/.vite
-
-# Build Docker image (multi-arch)
-docker-build:
-	docker buildx build --platform linux/amd64,linux/arm64 -t learn-hub-client .
 
 # Build Docker image for current platform
 docker-build-local:

@@ -38,9 +38,6 @@ run: ## Run the main application
 format: ## Format code with Black
 	$(BLACK) $(PROJECT) $(TESTS) $(MAIN) $(SCRIPTS)
 
-lint: ## Lint code with Ruff
-	$(RUFF) check $(PROJECT) $(TESTS) $(MAIN) $(SCRIPTS)
-
 lint-fix: ## Lint and auto-fix with Ruff
 	$(RUFF) check --fix $(PROJECT) $(TESTS) $(MAIN) $(SCRIPTS)
 
@@ -61,9 +58,6 @@ test-coverage: ## Run all tests with coverage (single-threaded)
 db-setup: ## Apply all Alembic migrations
 	$(ALEMBIC) upgrade head
 
-db-migrate: ## Run database migrations (alias for db-setup)
-	$(ALEMBIC) upgrade head
-
 db-check: ## Check that migrations are up to date
 	@$(ALEMBIC) check || (echo "ERROR: Migrations not up to date. Run 'make db-setup' first." && exit 1)
 
@@ -72,14 +66,6 @@ db-mock: db-check ## Populate database with mock data (requires migrations appli
 
 db-dataset: db-check ## Import real dataset (requires migrations applied)
 	$(PYTHON) scripts/setup_db.py dataset --csv ../dataset/dataset.csv --pdf-dir ../dataset/pdfs
-
-db-reset: ## Reset database (delete and recreate)
-	$(ALEMBIC) downgrade base
-	$(ALEMBIC) upgrade head
-
-# Docker operations
-build-docker: ## Build the Docker image (multi-arch)
-	docker buildx build --platform linux/amd64,linux/arm64 -t learn-hub-server .
 
 build-docker-local: ## Build the Docker image (current platform)
 	docker build -t learn-hub-server .
@@ -100,9 +86,5 @@ clean: ## Remove build artifacts
 	find . -type f -name "*.pyc" -delete
 
 # Utility
-version: ## Show installed package versions
+version: ## Upgrade server dependencies
 	uv lock --upgrade
-
-import-dataset-prod: ## DEPRECATED: Use 'make db-dataset' from host instead
-	@echo "WARNING: This command runs inside Docker container. Recommended: Run 'make db-dataset' from host."
-	docker exec lhub-server /app/.venv/bin/python scripts/setup_db.py dataset --csv /app/dataset/dataset.csv --pdf-dir /app/dataset/pdfs
