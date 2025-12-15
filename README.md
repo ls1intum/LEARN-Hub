@@ -47,7 +47,7 @@ The `docs/figures/` directory contains UML diagrams documenting the system archi
 # Setup environment and dependencies
 make setup
 make db-setup
-make restore  # Load initial data
+make db-mock  # Populate with mock data (or use: make db-dataset)
 
 # Run locally (development mode)
 make dev      # Starts server on port 5001 and client on port 3001
@@ -87,6 +87,9 @@ See `example.env` for a complete list of configurable variables.
 **User Documentation**: https://ls1intum.github.io/LEARN-Hub/
 
 **Developer Documentation** is organised in the `docs/` directory by architectural layer:
+
+### Local Development
+- [`docs/dev-setup.md`](docs/dev-setup.md) - Quick local development setup guide
 
 ### Core System
 - [`docs/core/recommendation-engine.md`](docs/core/recommendation-engine.md) - Recommendation algorithm design, scoring methodology, and architectural decisions
@@ -135,7 +138,7 @@ See `example.env` for a complete list of configurable variables.
 cd server/
 make dev          # Start development server
 make test         # Run tests with coverage
-make lint         # Check code quality
+make lint-fix     # Check and fix code quality
 make format       # Format code
 make db-setup     # Run database migrations
 ```

@@ -6,7 +6,7 @@
 cd server/
 make setup      # Install dependencies via uv sync
 make db-setup   # Run database migrations
-make restore    # Load initial dataset
+make db-mock    # Populate with mock data (or use: make db-dataset)
 make dev        # Start development server (port 5001)
 ```
 
@@ -28,8 +28,7 @@ uv run alembic <command>
 
 ### Code Quality
 - `make format` - Format with Black (120 character lines)
-- `make lint` - Check with Ruff
-- `make lint-fix` - Auto-fix linting issues
+- `make lint-fix` - Check and auto-fix linting issues with Ruff
 
 ### Testing
 - `make test` - All tests with coverage
@@ -39,10 +38,11 @@ uv run alembic <command>
 **Testing Targets**: < 4 seconds execution, < 100 tests, > 50% coverage on critical business logic.
 
 ### Database
-- `make db-setup` - Apply migrations
-- `make db-init` - Fresh database
+- `make db-setup` - Apply Alembic migrations
+- `make db-check` - Verify migrations are up to date
+- `make db-mock` - Seed mock data (requires migrations)
+- `make db-dataset` - Import real dataset (requires migrations)
 - `make db-reset` - Reset (development only)
-- `make backup` / `make restore` - Backup/restore
 
 ## Testing Strategy
 
@@ -67,7 +67,7 @@ uv run pytest tests/unit/    # Specific directory
 
 **Pre-commit Workflow**:
 ```bash
-make format && make lint && make test
+make format && make lint-fix && make test
 ```
 
 ## Database Management
@@ -85,11 +85,11 @@ uv run alembic current                                    # Check status
 ```bash
 # Development
 make db-setup     # Apply migrations
-make db-init      # Fresh database
+make db-mock      # Seed with mock data (optional)
 
 # Production
-make backup       # Create backup
 make db-setup     # Apply migrations
+make db-dataset   # Import real dataset
 ```
 
 ## Production Deployment
@@ -101,7 +101,7 @@ Multi-stage Docker build:
 - **Production Stage**: Minimal Python slim image with Gunicorn as WSGI server
 - **Non-root User**: Application runs as non-root for security
 
-Health check endpoint: `/api/hello`
+Health check endpoint: `/api/hello` (used by Docker health checks)
 
 ### Container Orchestration
 
