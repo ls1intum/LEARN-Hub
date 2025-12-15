@@ -52,7 +52,6 @@ class Config(BaseSettings):
 
     # External services
     google_api_key: str = Field(default="", alias="GOOGLE_API_KEY")
-    frontend_url: str = Field(default="http://localhost:3000", alias="FRONTEND_URL")
 
     # LLM Configuration
     llm_base_url: str = Field(default="", alias="LLM_BASE_URL")
