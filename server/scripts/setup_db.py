@@ -32,7 +32,7 @@ from utils import (
 from app.core.models import ActivityFormat, BloomLevel, EnergyLevel
 from app.db.database import get_db_session
 from app.db.models.activity import Activity
-from app.db.models.user import PDFDocument, User
+from app.db.models.user import PDFDocument
 from app.services.pdf_service import PDFService
 
 # Configure logging
