@@ -26,9 +26,6 @@ help: ## Show server-specific commands
 setup: ## Install Python dependencies and set up virtual environment
 	uv sync
 
-requirements: ## Generate requirements.txt from pyproject.toml
-	uv pip compile pyproject.toml -o requirements.txt
-
 # Development
 dev: ## Run Flask server in development mode
 	FLASK_APP=$(PROJECT).main:get_app FLASK_ENV=development $(PYTHON) -m flask run --host=0.0.0.0 --port=5001 --debug
