@@ -2,247 +2,131 @@
 
 ## Overview
 
-API service layer implementing activity recommendation system with priority scoring and role-based authentication. Focus on type safety, error resilience, and development debugging capabilities.
+Client-side API service layer implementing type-safe communication with the server, handling token management, error resilience, and optimised data loading patterns.
 
 ## Service Architecture
 
-### Core Services
 - **`authService`** - JWT token management with sessionStorage integration
-- **`apiService`** - API service with standardized request handling
+- **`apiService`** - Standardised request handling with automatic token refresh
 - **`logger`** - Environment-aware logging for development debugging
 - **`secureStorage`** - Session-based token storage with automatic cleanup
 
-### Authentication Flow
-1. **Login** - Admin password or teacher verification code
+## Authentication Flow
+
+1. **Login** - Admin password or teacher verification code authentication
 2. **Token Storage** - Access/refresh tokens in sessionStorage via `secureStorage`
 3. **Auto-refresh** - Automatic token refresh on 401 responses
 4. **Session Management** - Automatic token cleanup when browser session ends
 
 ## API Service Patterns
 
-### Request Handling
+### Core Service Methods
+
 ```typescript
-// Standardized API calls via ApiService class
-ApiService.request<T>(url, options) -> T // server returns data directly without a wrapper
-
-// Key service methods
-ApiService.getRecommendations(params) -> ResultsData // GET /api/activities/recommendations?{params}
-ApiService.getEnvironment() -> { environment: string } // GET /api/meta/environment
-ApiService.uploadPdf(file) -> UploadResponse // POST /api/documents/upload_pdf
-ApiService.processPdf(documentId) -> ProcessingResponse // POST /api/documents/{id}/process
-ApiService.createActivity(data) -> ActivityResponse // POST /api/activities/create
-ApiService.generateLessonPlan(data) -> Blob // POST /api/activities/lesson-plan (returns application/pdf)
-ApiService.updateProfile(data) -> UserResponse // PUT /api/auth/me
-ApiService.deleteProfile() -> MessageResponse // DELETE /api/auth/me
-
-// Available but not used by client (for third-party integrations)
-ApiService.getFieldValues() -> FieldValues // GET /api/meta/field-values
+ApiService.getRecommendations(params) -> Recommendations
+ApiService.generateLessonPlan(data) -> Blob (PDF)
+ApiService.getActivityFavourites() -> Activity[] (bulk fetch)
+ApiService.updateProfile(data) -> User
+ApiService.deleteProfile() -> Confirmation
 ```
 
-### N+1 Query Problem & Solution
+### N+1 Query Optimisation
 
-**Problem**: When displaying activity lists (e.g., Library page), checking if each activity is favourited would require N individual API calls (`GET /api/history/favourites/activities/{id}/status` for each activity), plus 1 initial page load = N+1 queries.
+**Problem**: Individual favourite status checks for each activity in lists would require N API calls.
 
-**Solution**: Pages that display activity lists now fetch all favourites in a single bulk API call using `getActivityFavourites()`. This returns all favourited activity IDs at once, which are then passed to individual buttons via props for O(1) status lookups.
+**Solution**: Pages fetch all favourites in a single bulk call using `getActivityFavourites()`, returning all IDs at once. Components receive pre-computed favourite status via props for O(1) lookups.
 
 **Implementation**:
-1. **Page Level** (`LibraryPage`): Fetch all favourites once on mount → store IDs in a Set
-2. **Component Level** (`FavouriteButton`): Receive pre-computed favourite status via `initialIsFavourited` prop
-3. **Lookup**: Check if activity is favourited using Set membership test (O(1) instead of API call per activity)
-4. **Toggle**: User actions still make individual API calls (`POST`/`DELETE`) to add/remove from favourites
+1. Page level fetches all favourites on mount → stores IDs in a Set
+2. Component receives `initialIsFavourited` prop with pre-computed status
+3. Lookup via Set membership test (O(1) instead of API call)
+4. User actions still make individual API calls to add/remove
 
-**Result**: Single API call instead of N+1, dramatically reducing network overhead for pages with many activities.
+**Result**: Single API call replaces N+1 pattern, dramatically reducing network overhead.
 
-### Type System (`types/api.ts`)
-- **`ApiResponse<T>`** - Generic API response wrapper
-- **`FormFieldData`** - Form field handling with proper typing
-- **`SearchCriteria`** - Recommendation search criteria
-- **`CreateActivityRequest`** - Activity creation request structure
-- **`UpdateProfileRequest`** - Profile update request structure
-- **`FavoriteActivityRequest`** - Activity favourite request
-- **`LessonPlanRequest`** - Lesson plan generation request
+## Authentication Strategy
 
-## Key API Endpoints
+### Token Storage
 
-### Authentication
-- **`POST /api/auth/login`** - Admin login with email/password
-- **`POST /api/auth/verification-code`** - Teacher verification code login
-- **`GET /api/auth/me`** - Get user info
-- **`PUT /api/auth/me`** - Update user profile (self-service)
-- **`DELETE /api/auth/me`** - Delete user account (self-service)
+JWT tokens stored in `sessionStorage` with tokens sent via `Authorization` headers:
+- **CSRF Immune**: Browsers do not automatically attach sessionStorage tokens to cross-site requests
+- **Automatic Cleanup**: Session ends when browser closes, preventing token inheritance on shared devices
+- **Tab Isolation**: Tokens not shared across browser tabs
+- **Educational Context**: Aligns with shared lab computer usage patterns in classrooms
 
-### Activities & Recommendations
-- **`GET /api/activities/recommendations`** - Get activity recommendations with priority scoring
-- **`POST /api/activities/lesson-plan`** - Generate lesson plan from activities
-- **`POST /api/activities/create`** - Create activity (admin)
-- **`GET /api/activities/{id}/pdf`** - Download activity PDF
+### Error Resilience
 
-### Favourites & History
-- **`GET /api/history/favourites/activities`** - Get user's favourite activities (bulk fetch, all at once)
-- **`POST /api/history/favourites/activities`** - Save activity as favourite
-- **`DELETE /api/history/favourites/activities/{activity_id}`** - Remove activity from favourites
-- **`GET /api/history/favourites/activities/{activity_id}/status`** - Check if activity is favourited (individual lookup)
-- **`GET /api/history/favourites/lesson-plans`** - Get user's favourite lesson plans (includes `lesson_plan` snapshot)
-- **`POST /api/history/favourites/lesson-plans`** - Save lesson plan favourite with snapshot
-  - Request body:
-    - `activity_ids: number[]` (required)
-    - `name?: string`
-    - `lesson_plan: LessonPlanData` (required)
-- **`GET /api/history/search`** - Get user's search history
+- **Connection Timeout** - Handles network connectivity issues
+- **Manual Retry** - Users can retry failed requests via UI buttons
+- **Authentication Errors** - Automatic token refresh on 401; redirect to login on refresh failure
+- **PDF Upload Error Recovery** - Users can skip AI extraction while running and enter data manually; failed extractions can be retried
+
+## Field Values Synchronisation
+
+### Strategy
+
+- **Client Defaults**: `src/constants/fieldValues.ts` provides instant form rendering
+- **Server Authority**: `server/app/core/models.py` enum values are authoritative
+- **Manual Sync**: Client and server values must be kept in sync during development
+- **Fallback**: API endpoint `/api/meta/field-values` available for API-driven clients
+
+### Field Categories
+
+- `format` - Activity format (unplugged, digital, hybrid)
+- `resources_available` - Required resources
+- `bloom_level` - Bloom's Taxonomy levels
+- `topics` - Computational thinking topics
+- `priority_categories` - Recommendation scoring emphasis
+- `mental_load`, `physical_energy` - Activity intensity levels
+- `age_range` - Valid age bounds
+
+## Environment Detection
+
+Runtime environment fetched from `/api/meta/environment` endpoint:
+- Allows same build to run across environments
+- Configured via `ENVIRONMENT` variable in `.env`
+- Options: local, staging, production
+- Hook: `useEnvironment()` returns `{ environment, isLoading, error }`
 
 ## Data Models
 
-### Activity
-```typescript
-interface Activity {
-  id: number;
-  name: string;
-  age_min: number;
-  age_max: number;
-  format: string;
-  bloom_level: string;
-  duration_min_minutes: number;
-  topics?: string[];
-  type: "activity" | "break";
-  break_after?: BreakAfter; // Embedded breaks
-}
-```
+### Core Types
 
-### LessonPlanData (snapshot)
-```typescript
-interface LessonPlanData {
-  activities: Activity[]; // activities may include break_after inline
-  total_duration_minutes: number;
-  ordering_strategy?: string;
-  title?: string;
-}
-```
+- **Activity**: id, name, age_min, age_max, format, bloom_level, duration_min, topics, breaks
+- **SearchCriteria**: target_age, format, bloom_levels, duration, topics, priority_categories
+- **Recommendation**: activities (array), score (0-100), score_breakdown (per-category scores)
+- **LessonPlanData**: activities (with inline breaks), total_duration, title
 
-### Recommendation Request
-```typescript
-interface RecommendationRequest {
-  target_age?: number;
-  format?: string[];
-  bloom_levels?: string[];
-  target_duration?: number;
-  max_activity_count?: number;
-  priority_categories?: string[]; // 2x scoring multiplier
-  include_breaks?: boolean;
-}
-```
+## Error Handling
 
-### Recommendation Response
-```typescript
-interface ResultsData {
-  activities: Recommendation[];
-  total: number;
-  search_criteria: Record<string, string>;
-  generated_at: string;
-}
-
-interface Recommendation {
-  activities: Activity[];
-  score: number; // 0-100 relevance score
-  score_breakdown: Record<string, CategoryScore>;
-}
-```
-
-## Error Handling Strategy
-
-### Network Resilience
-- **Connection Timeout** - Handles network connectivity issues
-- **Manual Retry** - Users can retry failed requests via UI buttons
-- **Error Messages** - Clear, actionable error messages guide user recovery
-- **PDF Upload Error Recovery** - UploadTab provides flexible error handling:
-  - **Skip During Processing**: Users can skip AI extraction while it's running and enter data manually
-  - **Retry on Failure**: Failed extractions can be retried without re-uploading the PDF
-  - **Manual Fallback**: Users can always choose to fill the form manually if extraction fails or takes too long
-  - The uploaded PDF remains linked to the activity regardless of extraction method
-
-### Authentication Errors
-- **Automatic Token Refresh** - On 401 responses (uses refresh token)
-- **Redirect to Login** - On refresh failure
-- **Clear Error States** - On successful re-authentication
-
-## Field Values Synchronization
-
-### Field Values Strategy
-- **Primary Source** - Client-side constants defined in `client/src/constants/fieldValues.ts`
-- **Server Authority** - Server enum values in `server/app/core/models.py` are authoritative
-- **Manual Synchronization** - Client and server values must be kept in sync during development
-- **Type Safety** - TypeScript types derived from field values constants
-- **Priority Categories** - `age_appropriateness`, `bloom_level_match`, `topic_relevance`, `duration_fit`
-
-### Field Values Structure
-```typescript
-interface FieldValues {
-  format: string[];
-  resources_available: string[];
-  bloom_level: string[];
-  topics: string[];
-  priority_categories: string[];
-  mental_load: string[];
-  physical_energy: string[];
-  age_range: { min: number; max: number };
-}
-```
-
-## Environment Display
-
-The environment is fetched at runtime from `/api/meta/environment` endpoint, allowing the same build to run across different environments. Configured via `ENVIRONMENT` variable in `.env` (options: local, staging, production).
-
-**Hook**: `useEnvironment()` returns `{ environment, isLoading, error }`
-
-**Mapping** (`utils/environment.ts`):
-- `local` → "Local" (secondary badge)
-- `staging` → "Staging" (default badge)
-- `production` → "Public Testing" (outline badge)
+**Automatic token refresh** on 401 with transparent session maintenance. **Clear error messages** guide user recovery. **API errors** logged with context for debugging. **Graceful degradation** when services unavailable.
 
 ## Utilities
 
-### Secure Storage (`utils/secureStorage.ts`)
+### Secure Storage
+
 ```typescript
 secureStorage.getAccessToken(): string | null
-secureStorage.setTokens(accessToken: string, refreshToken: string): void
+secureStorage.setTokens(accessToken, refreshToken): void
 secureStorage.clearTokens(): void
 ```
-- **Session-based storage** - Uses sessionStorage for automatic cleanup
-- **Error resilience** - Graceful handling of storage errors
-- **Security enhancement** - Reduced token persistence
 
-### Logging Service (`services/logger.ts`)
+Session-based storage with error resilience for private browsing mode.
+
+### Logging Service
+
 ```typescript
-logger.debug(message: string, data?: unknown, source?: string): void
-logger.info(message: string, data?: unknown, source?: string): void
-logger.warn(message: string, data?: unknown, source?: string): void
-logger.error(message: string, data?: unknown, source?: string): void
+logger.debug(message, data?, source?)
+logger.info(message, data?, source?)
+logger.warn(message, data?, source?)
+logger.error(message, data?, source?)
 ```
-- **Environment-aware** - Debug/info only in development mode
-- **Structured logging** - Consistent message formatting with source tags
-- **Production-safe** - Warn/error always logged
+
+Environment-aware: debug/info only in development; warn/error always logged.
 
 ## Testing Strategy
 
-### Test Coverage
-- **Authentication Service** - Token management, API calls, error handling
-- **Custom Hooks** - Form state management and validation
-- **Utility Functions** - SessionStorage operations and error resilience
-
-### Test Philosophy
-- **High-Value Testing** - Focus on critical business logic and error paths
-- **Essential Functionality** - Authentication, form state, storage utilities
-- **Error Handling** - Network failures, invalid data, edge cases
-- **Integration Points** - Service layer interactions
-
-## Implementation References
-
-For detailed implementation, see:
-- **API Service**: `src/services/apiService.ts`
-- **Authentication**: `src/services/authService.ts`
-- **Type Definitions**: `src/types/api.ts`, `src/types/activity.ts`, `src/types/test.ts`
-- **Field Values**: `src/constants/fieldValues.ts`, `src/hooks/useFieldValues.ts`
-- **Environment Display**: `src/hooks/useEnvironment.ts`, `src/utils/environment.ts`
-- **Layout Components**: `src/components/layout/MainLayout.tsx` (desktop & mobile environment display)
-- **Authentication Pages**: `src/pages/LoginPage.tsx` (environment indicator)
-- **Utilities**: `src/utils/secureStorage.ts`, `src/services/logger.ts`
-- **Testing**: `src/test/setup.ts`, `src/services/__tests__/`, `src/hooks/__tests__/`, `src/utils/__tests__/`
+**Authentication Service** - Token management, API calls, error handling  
+**Custom Hooks** - Form state management and validation  
+**Utility Functions** - SessionStorage operations and error resilience  
+**Focus**: Critical business logic and error paths, not UI rendering

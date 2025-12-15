@@ -9,6 +9,7 @@ PROJECT := app
 TESTS := tests
 PYTEST := uv run pytest
 MAIN := ${PROJECT}/main.py
+SCRIPTS := scripts
 ALEMBIC := uv run alembic -c alembic.ini
 
 # Default target
@@ -26,9 +27,6 @@ help: ## Show server-specific commands
 setup: ## Install Python dependencies and set up virtual environment
 	uv sync
 
-requirements: ## Generate requirements.txt from pyproject.toml
-	uv pip compile pyproject.toml -o requirements.txt
-
 # Development
 dev: ## Run Flask server in development mode
 	FLASK_APP=$(PROJECT).main:get_app FLASK_ENV=development $(PYTHON) -m flask run --host=0.0.0.0 --port=5001 --debug
@@ -38,13 +36,10 @@ run: ## Run the main application
 
 # Code quality
 format: ## Format code with Black
-	$(BLACK) $(PROJECT) $(TESTS) $(MAIN)
-
-lint: ## Lint code with Ruff
-	$(RUFF) check $(PROJECT) $(TESTS) $(MAIN)
+	$(BLACK) $(PROJECT) $(TESTS) $(MAIN) $(SCRIPTS)
 
 lint-fix: ## Lint and auto-fix with Ruff
-	$(RUFF) check --fix $(PROJECT) $(TESTS) $(MAIN)
+	$(RUFF) check --fix $(PROJECT) $(TESTS) $(MAIN) $(SCRIPTS)
 
 # Testing
 test: ## Run all tests in parallel (optimized startup)
@@ -60,28 +55,17 @@ test-coverage: ## Run all tests with coverage (single-threaded)
 	$(PYTEST) --cov=$(PROJECT) --cov-report=term-missing $(TESTS)
 
 # Database operations
-db-setup: ## Create the database and apply migrations
+db-setup: ## Apply all Alembic migrations
 	$(ALEMBIC) upgrade head
 
-db-migrate: ## Run database migrations
-	$(ALEMBIC) upgrade head
+db-check: ## Check that migrations are up to date
+	@$(ALEMBIC) check || (echo "ERROR: Migrations not up to date. Run 'make db-setup' first." && exit 1)
 
-db-init: ## Initialize fresh database with new schema
-	$(PYTHON) scripts/init_db.py
+db-mock: db-check ## Populate database with mock data (requires migrations applied)
+	$(PYTHON) scripts/setup_db.py mock
 
-db-reset: ## Reset database (delete and recreate)
-	$(ALEMBIC) downgrade base
-	$(ALEMBIC) upgrade head
-
-backup: ## Backup the database to a CSV file
-	$(PYTHON) data/scripts/backup.py
-
-restore: ## Restore the database from the latest CSV backup
-	$(PYTHON) data/scripts/restore.py
-
-# Docker operations
-build-docker: ## Build the Docker image (multi-arch)
-	docker buildx build --platform linux/amd64,linux/arm64 -t learn-hub-server .
+db-dataset: db-check ## Import real dataset (requires migrations applied)
+	$(PYTHON) scripts/setup_db.py dataset --csv ../dataset/dataset.csv --pdf-dir ../dataset/pdfs
 
 build-docker-local: ## Build the Docker image (current platform)
 	docker build -t learn-hub-server .
@@ -102,8 +86,5 @@ clean: ## Remove build artifacts
 	find . -type f -name "*.pyc" -delete
 
 # Utility
-version: ## Show installed package versions
+version: ## Upgrade server dependencies
 	uv lock --upgrade
-
-import-dataset-prod: ## Import the dataset from the CSV file
-	docker exec lhub-server /app/.venv/bin/python scripts/import_activities.py --csv /app/dataset/dataset.csv --pdf-dir /app/dataset/pdfs

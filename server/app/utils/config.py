@@ -40,7 +40,6 @@ class Config(BaseSettings):
     jwt_access_token_expires: int = Field(default=900, alias="JWT_ACCESS_TOKEN_EXPIRES")  # 15 minutes
     jwt_refresh_token_expires: int = Field(default=2592000, alias="JWT_REFRESH_TOKEN_EXPIRES")  # 30 days
     flask_secret_key: str = Field(default="dev-flask-secret", alias="FLASK_SECRET_KEY")
-    dev_secret_key: str = Field(default="dev-dev-secret", alias="DEV_SECRET_KEY")
 
     # Email settings (STARTTLS only)
     email_address: str = Field(default="", alias="EMAIL_ADDRESS")
@@ -52,7 +51,6 @@ class Config(BaseSettings):
 
     # External services
     google_api_key: str = Field(default="", alias="GOOGLE_API_KEY")
-    frontend_url: str = Field(default="http://localhost:3000", alias="FRONTEND_URL")
 
     # LLM Configuration
     llm_base_url: str = Field(default="", alias="LLM_BASE_URL")
@@ -60,7 +58,7 @@ class Config(BaseSettings):
     llm_model_name: str = Field(default="", alias="LLM_MODEL_NAME")
 
     # Storage
-    pdf_storage_path: str = Field(default="/app/data/pdfs/", alias="PDF_SERVER_PATH")
+    pdf_path: str = Field(alias="PDF_PATH")
 
     # Environment
     environment: str = Field(default="local", alias="ENVIRONMENT")

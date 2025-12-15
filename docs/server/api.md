@@ -2,212 +2,105 @@
 
 ## Overview
 
-RESTful API providing activity recommendations with scoring algorithms, lesson plan generation, and user preference tracking with dual authentication for admins and teachers.
+RESTful API providing activity recommendations with transparent scoring, lesson plan generation, and user preference tracking with dual authentication for admins and teachers.
 
 **Base URL**: `http://localhost:5001` (development) | `https://your-domain.com` (production)  
-**Documentation**: `/api/openapi` (Swagger UI) | `/openapi.json` (OpenAPI spec)
+**Documentation**: `/api/openapi` (Swagger UI) | `/openapi.json` (OpenAPI spec) | [Hosted Swagger UI (test deployment)](https://learnhub-test.aet.cit.tum.de/api/openapi/swagger)
 
 ## Authentication
 
 ### Dual Authentication System
 
-**Admin Access** (Content Management):
-- Email/password authentication for full system access
-- Activity creation, user management, PDF upload capabilities
-- JWT tokens with admin role permissions
+**Admin Access**: Email/password authentication with JWT tokens for full system access (activity creation, user management, PDF upload).
 
-**Teacher Access** (Activity Discovery):
-- Email verification codes OR password authentication
-- Email verification: 6-digit codes (10-minute expiration, 3-attempt limit)
-- Password login: Auto-generated secure passwords
-- Lesson plan generation, favourites management, search history
-- JWT tokens with teacher role permissions
+**Teacher Access**: Email verification codes (6-digit, 10-minute expiry, 3-attempt limit) OR password authentication for activity discovery, lesson planning, and favourites management.
 
-### Authentication Endpoints
+### Core Endpoints
 
-**Admin Login**: `POST /api/auth/admin/login`
-**Teacher Login**: `POST /api/auth/login` (password-based)
-**Teacher Verification**: `POST /api/auth/verification-code` → `POST /api/auth/verify` (email code)
-**Teacher Registration**: `POST /api/auth/register-teacher` (auto-generates credentials)
-**Password Reset**: `POST /api/auth/reset-password` (generates password)
-**Token Refresh**: `POST /api/auth/refresh`
-**User Info**: `GET /api/auth/me`
-**Update Profile**: `PUT /api/auth/me` (self-service)
-**Delete Account**: `DELETE /api/auth/me` (self-service)
-**Logout**: `POST /api/auth/logout`
+**Authentication**: `POST /api/auth/admin/login`, `POST /api/auth/login`, `POST /api/auth/verification-code`, `POST /api/auth/verify`, `POST /api/auth/refresh`, `GET /api/auth/me`, `PUT /api/auth/me`, `DELETE /api/auth/me`
 
-## Core API Patterns
+## API Architecture
 
 ### Flask-OpenAPI3 Integration
 
-**API Framework**:
-- Flask-OpenAPI3 for automatic OpenAPI 3.0 specification generation
-- Type-safe request/response validation with Pydantic v2
-- Automatic Swagger UI documentation at `/api/openapi`
-- JWT Bearer authentication scheme with automatic token validation
-- Error handling and validation
+- Automatic OpenAPI 3.0 specification generation from Pydantic models
+- Type-safe request/response validation
+- Automatic Swagger UI at `/api/openapi`
+- JWT Bearer authentication with automatic token validation
+- Comprehensive error handling
 
 ### Request Validation
 
-**Pydantic Models** (`app/utils/pydantic_models.py`):
-- Type-safe request validation with strict type checking
-- Email format validation using `EmailStr`
-- Range validation for age (6-15), duration (1-300 minutes)
-- Enum validation for formats, bloom levels, energy levels
-- Automatic conversion of single strings to lists for consistency
+Pydantic v2 models enforce type safety and validation: email format validation, range constraints (age 6-15, duration 1-300 minutes), enum validation for formats/bloom levels/energy levels, automatic list conversion for consistency.
 
-**Validation Decorators**:
-- `@auth_required`: General authenticated access
-- `@admin_required`: Admin-only endpoints
-- Automatic Pydantic validation via Flask-OpenAPI3
+## Core API Patterns
 
-## API Endpoints
+### Resource-Based Design
 
-### Activity Discovery (Public Access)
+Resources organised by domain:
+- `/api/activities/` - Activity discovery and management
+- `/api/auth/` - Authentication and user management
+- `/api/history/` - User history and favourites
+- `/api/documents/` - PDF upload and retrieval
+- `/api/meta/` - System metadata and configuration
 
-**Search Activities**: `GET /api/activities/`
-- Query parameters: `name`, `age_min`, `age_max`, `format`, `bloom_level`, `resources_needed`, `topics`, `mental_load`, `physical_energy`, `duration_min`, `duration_max`
-- Pagination: `limit`, `offset`
-- Returns: List of activities with filtering and pagination
+### Recommendation Endpoints
 
-**Get Activity Details**: `GET /api/activities/{id}`
-- Returns: Single activity details by ID
+**GET /api/activities/recommendations**: Accepts teacher-specified criteria (target age, format, Bloom levels, duration, topics, priority categories), returns ranked recommendations with detailed scoring breakdowns.
 
-**Get Activity PDF**: `GET /api/activities/{id}/pdf`
-- Retrieve the PDF document associated with a specific activity
-- Returns: PDF file as binary attachment with appropriate headers
+**POST /api/activities/lesson-plan**: Generates multi-activity lesson plans from activities list with optional breaks. Break constraints enforce that breaks appear only between activities (not after the final activity).
 
-**Create Activity**: `POST /api/activities/create` (Admin only)
-- Creates activity from previously uploaded PDF document
-- Requires: `document_id` from `POST /api/documents/upload_pdf` and extracted data
+**GET /api/activities/scoring-insights**: Returns information about scoring categories and their impact weights.
 
-**Upload and Create Activity**: `POST /api/activities/upload-and-create` (Admin only)
-- Combined endpoint: upload PDF, extract activity data, and create activity in one request
-- Returns: Created activity object with extraction confidence and quality metrics
-- Note: LLM processing typically takes ~10 seconds; request includes automatic retry on timeout
+## User Management
 
-**Delete Activity**: `DELETE /api/activities/{id}` (Admin only)
+### Teacher-Specific Endpoints
 
-### Recommendations (Public Access with Optional Auth)
+**Search History** (authenticated teachers):
+- `GET /api/history/search` - Retrieve previous searches with pagination
+- `DELETE /api/history/search/{id}` - Remove search history entry
 
-**Get Recommendations**: `GET /api/activities/recommendations`
-- Query parameters: `name`, `target_age`, `format`, `available_resources`, `bloom_levels`, `preferred_topics`, `priority_categories`, `target_duration`, `include_breaks`, `max_activity_count`, `limit`
-- Returns: Activity recommendations with enhanced scoring and lesson plan generation
-- **Priority Categories**: Support for `age_appropriateness`, `topic_relevance`, `duration_fit`, `bloom_level_match`, `series_duration_fit` to boost scoring for specific criteria
-- Authentication: Optional. If a valid Bearer token is provided, the request is associated with the user and their search query is saved to search history. If no/invalid token is provided, results are still returned but no history is saved.
+**Favourites** (authenticated teachers):
+- `POST /api/history/favourites/activities`, `GET /api/history/favourites/activities`, `DELETE /api/history/favourites/activities/{id}` - Individual activity favourites
+- `POST /api/history/favourites/lesson-plans`, `GET /api/history/favourites/lesson-plans`, `DELETE /api/history/favourites/{id}` - Lesson plan snapshots with breaks preserved
 
-**Get Scoring Insights**: `GET /api/activities/scoring-insights`
-- Returns: Information about scoring categories and their impact levels
+**Self-Service Profile**:
+- `PUT /api/auth/me` - Update own profile (email, name, password)
+- `DELETE /api/auth/me` - Delete own account with cascading deletion
 
-### Lesson Planning (Public Access)
+### Admin User Management
 
-**Generate Lesson Plan**: `POST /api/activities/lesson-plan`
-- Request body: `activities`, `search_criteria`, `breaks`, `total_duration`
-- Returns: `application/pdf` attachment with summary page + combined activity PDFs
-- Break constraints: Breaks are allowed only between activities. A break after the final activity is automatically removed; at most `(len(activities) - 1)` breaks are included.
-- Authentication: Not required (public endpoint)
+- `GET /api/auth/users` - List all users
+- `POST /api/auth/users` - Create user with role assignment
+- `PUT /api/auth/users/{id}` - Update user (prevents self-deletion)
+- `DELETE /api/auth/users/{id}` - Remove user and related data
 
-### User Management
+## Activity and Content Management
 
-**Teacher Registration** (Public): `POST /api/auth/register-teacher`
-**Password Management** (Public): `POST /api/auth/reset-password`
-**Search History** (Teacher Access):
-- Get search history: `GET /api/history/search?limit=50&offset=0`
-  - Pagination: `limit` (default 50), `offset` (default 0)
-  - Returns: Array of search queries with timestamps and search criteria
-  - Response: `{"search_history": [...], "pagination": {limit, offset, count}}`
-- Delete search history entry: `DELETE /api/history/search/{history_id}`
-  - Removes a specific search query from user's history
-  - Returns: Confirmation message
-- **Automatic Tracking**: Search queries are automatically saved when users make recommendations requests with valid authentication
+**Activity Discovery** (public):
+- `GET /api/activities/` - Search with filters (name, age, format, bloom_level, resources, topics, duration)
+- `GET /api/activities/{id}` - Retrieve single activity
+- `GET /api/activities/{id}/pdf` - Download activity PDF
 
-**Favourites** (Teacher Access):
-- **Individual Activities**:
-  - Save favourite: `POST /api/history/favourites/activities` with `{activity_id, name?}`
-  - Get favourites: `GET /api/history/favourites/activities?limit=50&offset=0`
-  - Check status: `GET /api/history/favourites/activities/{activity_id}/status`
-  - Remove favourite: `DELETE /api/history/favourites/activities/{activity_id}`
-- **Lesson Plans**:
-  - Save favourite: `POST /api/history/favourites/lesson-plans` with `{activity_ids, name?, lesson_plan}`
-  - Get favourites: `GET /api/history/favourites/lesson-plans?limit=50&offset=0`
-  - Delete favourite: `DELETE /api/history/favourites/{favourite_id}`
-- **Response Format**:
-  - Each favourite includes: `id, favourite_type ("activity" or "lesson_plan"), name, created_at`
-  - Lesson plan snapshots preserve activities with breaks for accurate replay
+**Admin Content Management**:
+- `POST /api/activities/create` - Create activity from previously uploaded PDF
+- `POST /api/activities/upload-and-create` - Combined endpoint: upload, extract (via LLM), and create
+- `DELETE /api/activities/{id}` - Remove activity
 
-### Self-Service Profile Management
+**PDF Document Operations**:
+- `POST /api/documents/upload_pdf` - Upload PDF document
+- `GET /api/documents/{id}` - Retrieve raw PDF
+- `GET /api/documents/{id}/info` - Get document metadata
+- `POST /api/documents/{id}/process` - Extract activity data via LLM
 
-**Update Profile**: `PUT /api/auth/me`
-- Request body: `{email?, first_name?, last_name?, password?}` (all optional)
-- Allows users to update their own profile information
-- Email validation: Prevents duplicate emails (409 conflict if taken)
-- Password change: Optional, minimum 8 characters
-- Returns: Updated user object
-- Access: All authenticated users (ADMIN, TEACHER)
+## System Information
 
-**Delete Account**: `DELETE /api/auth/me`
-- Permanently deletes the current user's account
-- Cascades deletion to related data (search history, favourites)
-- Returns: Confirmation message
-- Access: All authenticated users (ADMIN, TEACHER)
-
-### User Management (Admin Only)
-
-**Get Users**: `GET /api/auth/users`
-- Returns: List of all users with role and account information
-- Response: `{"users": [{"id", "email", "first_name", "last_name", "role"}, ...]}`
-
-**Create User**: `POST /api/auth/users`
-- Request body: `{email, first_name, last_name, role, password}`
-- Role options: "TEACHER" or "ADMIN"
-- Password requirements: Minimum 8 characters
-- Returns: Created user object with ID
-- Email notification: Sent to teachers with their credentials
-
-**Update User**: `PUT /api/auth/users/{user_id}`
-- Request body: `{email?, first_name?, last_name?, role?, password?}` (all optional)
-- Allows updating any user field individually
-- Email validation: Prevents duplicate emails
-- Returns: Updated user object
-
-**Delete User**: `DELETE /api/auth/users/{user_id}`
-- Prevents admin from deleting their own account
-- Permanently removes user and associated data
-- Returns: Confirmation message
-
-### Content Management (Admin Only)
-
-**PDF Upload**: `POST /api/documents/upload_pdf`
-- Upload a PDF document for processing
-- Returns: `document_id` for subsequent operations
-- Response: `{"document_id": integer, "filename": string, "file_size": integer}`
-
-**PDF Retrieval**: `GET /api/documents/{document_id}`
-- Retrieve raw PDF file content
-- Returns: PDF file as binary attachment
-
-**PDF Document Info**: `GET /api/documents/{document_id}/info`
-- Get metadata about an uploaded PDF document
-- Returns: Document information including filename, size, extraction results (if processed)
-
-**Process PDF Document**: `POST /api/documents/{document_id}/process`
-- Extract activity data from PDF using LLM
-- Analyzes document content and extracts structured activity metadata
-- Returns: `{"document_id": integer, "extracted_data": object, "confidence": float, "extraction_quality": string}`
-
-### System Information (Public Access)
-
-**Field Values**: `GET /api/meta/field-values`
-- Returns: Available enum values for all form fields (format, resources, bloom_level, topics, etc.)
-
-**Environment Information**: `GET /api/meta/environment`
-- Returns: Current environment (local, staging, production) read from `ENVIRONMENT` config
-- Response: `{"environment": "staging"}`
-- Use Case: Client can dynamically display environment context to users without build-time configuration
+- `GET /api/meta/field-values` - Available enum values for all form fields
+- `GET /api/meta/environment` - Current environment (local, staging, production)
 
 ## Error Handling
 
-**Standard Error Codes**: `400` (Bad Request), `401` (Unauthorized), `403` (Forbidden), `404` (Not Found), `500` (Internal Server Error)
+**Standard Error Codes**: 400 (Bad Request), 401 (Unauthorised), 403 (Forbidden), 404 (Not Found), 500 (Internal Server Error)
 
 **Error Response Format**:
 ```json
@@ -216,59 +109,17 @@ RESTful API providing activity recommendations with scoring algorithms, lesson p
 }
 ```
 
-## Core Recommendation Engine
-
-### Enhanced Scoring System
-
-**Category-Based Scoring**:
-- Age appropriateness: Age closeness scoring
-- Bloom level match: Exact and adjacent level matching
-- Topic relevance: Topic overlap scoring
-- Duration fit: Duration closeness scoring
-- Series duration fit: Multi-activity duration optimization
-
-**Priority Fields System**:
-- Fields marked as priority receive 2x scoring multiplier
-- Supported priority fields: `age_appropriateness`, `topic_relevance`, `duration_fit`, `bloom_level_match`, `series_duration_fit`
-
-**Return Format**:
-- Returns `list[tuple[list[ActivityModel | Break], ScoreModel]]`
-- Each tuple represents one recommendation: `(activities_list, score_model)`
-- `activities_list`: List of activities and breaks for this recommendation
-- `score_model`: Detailed scoring breakdown with category scores
-
-### Lesson Plan Generation
-
-**Generate Lesson Plan Info**: `POST /api/activities/lesson-plan/info`
-- Check if lesson plan can be generated for the given activities
-- Returns: Information about available PDFs and generation feasibility
-
-**Activity Series Generation**:
-- Generates activity series with configurable length (1-5 activities)
-- Enforces Bloom's taxonomy progression (non-decreasing)
-- Supports topic overlap between consecutive activities
-- Automated break insertion based on energy levels and format transitions
-
-**Break Calculation**:
-- Format transition breaks (5 minutes)
-- High mental load breaks (10 minutes)
-- High physical energy breaks (5 minutes)
-- Prep/cleanup time integration
-
 ## Implementation Details
 
-**Service Architecture**: See `docs/server/server-architecture.md`
-**Database Models**: `app/db/models/`
-**API Endpoints**: `app/api/` (Flask-OpenAPI3 routes)
-**Business Logic**: `app/services/`
-**Core Engine**: `app/core/engine.py` - Main recommendation algorithm
-**Scoring Logic**: `app/core/scoring.py` - Individual scoring functions
-**Request Validation**: `app/utils/pydantic_models.py` (Pydantic v2 models)
+- **Service Architecture**: See `docs/server/server-architecture.md`
+- **Database Models**: `app/db/models/`
+- **API Routes**: `app/api/`
+- **Business Logic**: `app/services/`
+- **Recommendation Engine**: `app/core/`
+- **Request Validation**: `app/utils/pydantic_models.py`
 
 ## Development
 
-**Local Development**: `make dev` (Flask development server)
-**Testing**: `make test` (pytest with coverage)
-**Code Quality**: `make lint` (ruff), `make format` (black)
-**Database**: `make db-setup` (Alembic migrations)
+**Local Development**: `make dev` (Flask development server on port 5001)  
+**Testing**: `make test` (pytest with coverage)  
 **API Documentation**: Visit `/api/openapi` for interactive Swagger UI

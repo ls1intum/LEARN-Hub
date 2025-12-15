@@ -74,7 +74,6 @@ def create_app():
         init_database()
 
     app.config["SECRET_KEY"] = config.flask_secret_key
-    app.config["FRONTEND_URL"] = config.frontend_url
     app.config["SESSION_COOKIE_SECURE"] = True
 
     # Initialize email service

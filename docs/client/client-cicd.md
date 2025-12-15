@@ -1,83 +1,61 @@
 # Client Development and Deployment
 
-## Overview
+## Quick Start
 
-This document describes the build system, testing strategy, and deployment procedures for the LEARN-Hub client.
-
-## Build System
-
-### Vite Build Tool
-
-The application uses Vite, which uses native ES modules during development for fast server startup and hot module replacement (HMR). Production builds use Rollup for optimization (tree shaking, asset minification, hash-based filenames for cache invalidation).
-
-**Development**:
 ```bash
 cd client/
 make dev        # Starts Vite dev server on port 3001
+make build      # Production build
+make test       # Run tests in watch mode
+make test:run   # Single test run (CI)
 ```
 
-Development features: HMR, Fast Refresh, error overlay, source maps, no bundling, no minification.
+## Build System
 
-**Production Build**:
+### Development
+
+Vite with native ES modules during development for fast server startup and hot module replacement (HMR):
+
 ```bash
-make build      # Compiles TypeScript, bundles assets, optimizes output
+make dev        # Dev server with HMR, source maps, full logging
 ```
 
-Production optimizations:
-- JavaScript/CSS minification
-- Image optimization
-- Hash-based filenames for aggressive caching
-- Tree shaking to remove unused code
+### Production
 
-Build output structure:
+Rollup optimisation with tree shaking, minification, and hash-based filenames for cache invalidation:
+
+```bash
+make build
+```
+
+Build output:
 ```
 dist/
 ├── index.html              # Entry point
 ├── assets/
 │   ├── index-[hash].js    # Bundled application code
-│   ├── index-[hash].css   # Bundled styles
-│   └── ...                # Other generated assets
+│   └── index-[hash].css   # Bundled styles
 ```
 
 ## Testing Strategy
 
-The client test suite prioritizes high-value regression protection with **108 tests running in ~900ms**. Tests focus on critical business logic rather than comprehensive coverage.
-
-### Test Coverage
+The test suite prioritises high-value regression protection with **108 tests running in ~900ms**.
 
 **Tested**: Authentication state, API layer, custom hooks, data transformers, secure storage  
 **Not Tested**: UI components, visual rendering, third-party libraries
 
-Tests are colocated with source code in `__tests__` directories and protect against regressions in user-facing features and API contracts.
-
-### Testing Tools
-
-**Vitest**: Vite-native test runner with TypeScript support  
-**React Testing Library**: Hook and component testing  
-**Mock Service Worker (MSW)**: Network-level API mocking in `src/test/mocks/`
-
-### Running Tests
-
+**Running Tests**:
 ```bash
-cd client/
-
-# Watch mode
-npm run test
-
-# Single run (CI)
-npm run test:run
-
-# UI mode
-npm run test:ui
+make test           # Watch mode
+make test:run       # Single run (CI)
+make test:ui        # UI mode
 ```
-
-Configuration in `vitest.config.ts` with jsdom environment and single-threaded execution for stability.
 
 ## Code Quality
 
-**ESLint**: React rules, TypeScript rules, accessibility rules
-**Prettier**: Automated formatting
-**TypeScript**: Static type checking with `npx tsc --noEmit`
+- **ESLint**: React rules, TypeScript rules, accessibility rules
+- **Prettier**: Automated formatting
+- **TypeScript**: Static type checking with `npx tsc --noEmit`
 
 **Pre-commit Workflow**:
 ```bash
@@ -88,70 +66,52 @@ make format && make lint && make test
 
 ### Multi-Stage Docker Build
 
-**Build Stage**: Node.js 20 Alpine image installs dependencies (`npm ci`) and builds the application
-
-**Production Stage**: Nginx 1.25 Alpine image serves built artifacts from `dist/`
-- Only built artifacts copied (no source/dependencies)
-- Runs as non-root nginx user
-- Final image ~40MB vs ~400MB with full Node.js
+- **Build Stage**: Node.js 20 Alpine installs dependencies and builds
+- **Production Stage**: Nginx 1.25 Alpine serves built artifacts (~40MB final image)
 
 ### Nginx Configuration
 
-Nginx was chosen for performance (optimized static file serving), security (built-in headers), production readiness, and SPA routing support.
-
-**Key Features**:
-
-Security headers (X-Frame-Options, X-Content-Type-Options, CSP) protect against clickjacking, MIME sniffing, and XSS.
-
-SPA routing via `try_files $uri $uri/ /index.html` ensures all routes serve `index.html` for client-side routing.
-
-Asset caching with 1-year expiration for hash-named files.
-
-API proxying to server (proxies `/api/*` requests to server container).
+Serves built assets via Nginx with:
+- Security headers (X-Frame-Options, X-Content-Type-Options, CSP)
+- SPA routing via `try_files $uri $uri/ /index.html`
+- 1-year cache expiration for hash-named assets
+- API proxying to server container at `/api/*`
 
 ### Container Orchestration
 
-Docker Compose manages the multi-container application:
+Docker Compose manages the application:
 
 ```bash
 # Development
 docker compose up --build -d
 
-# Production (pre-built images from GitHub Container Registry)
+# Production (pre-built images)
 docker compose -f compose.prod.yml up -d
 
 # View logs
 docker compose logs -f client
 ```
 
-Production compose file uses pre-built images, implements health checks, defines resource limits, and configures service dependencies.
-
-Health checks (`wget --spider http://localhost:3001/`) enable automatic recovery, rolling deployments, and monitoring integration.
-
-## Performance Optimization
-
-**Build-Time**:
-- Tree shaking removes unused code
-- Vite dependency optimization (pre-bundling, CommonJS to ES modules conversion)
-
-**Runtime**:
-- Debounced inputs for search/filter operations
-- Efficient state management with React Context
-- Component-level error boundaries for fault isolation
-
-Performance optimizations are applied based on profiling results rather than speculative optimization.
+Health checks enable automatic recovery and rolling deployments.
 
 ## Environment Configuration
 
-**Build-Time**: Bundler settings, TypeScript options, CSS processing
-
-**Runtime**: API endpoints, feature flags, environment identification
-
-Runtime configuration fetched from `/api/meta/environment`, enabling the same build to run across environments by connecting to different server instances.
+**Runtime Configuration**: Fetched from `/api/meta/environment`, enabling the same build to run across environments by connecting to different server instances.
 
 **Development vs Production**:
-- Development: Source maps, full logging, HMR, no minification, detailed errors, Vite proxy to `localhost:5001`
-- Production: Minified code, generic errors, security headers, Nginx proxy to server container
+- Development: Source maps, full logging, HMR, no minification, Vite proxy to `localhost:5001`
+- Production: Minified code, generic error messages, security headers, Nginx proxy to server container
+
+## Performance Optimisations
+
+**Build-Time**:
+- Tree shaking removes unused code
+- Vite dependency optimisation (pre-bundling, CommonJS conversion)
+
+**Runtime**:
+- Debounced inputs for search/filter operations
+- React Context for lightweight state management
+- N+1 query elimination via bulk API fetches with component-level caching
 
 ## Related Documentation
 

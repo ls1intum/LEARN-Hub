@@ -21,8 +21,6 @@ def setup_test_env():
     """Set up basic environment for all tests."""
     # Override environment variables for testing
     os.environ["GOOGLE_API_KEY"] = "test_key"
-    os.environ["FRONTEND_URL"] = "http://localhost:3000"
-    os.environ["DEV_SECRET_KEY"] = "test_dev_secret"
     os.environ["FLASK_SECRET_KEY"] = "test_flask_secret"
     os.environ["JWT_SECRET_KEY"] = "test_jwt_secret"
     os.environ["ADMIN_EMAIL"] = "admin@test.com"
@@ -33,7 +31,7 @@ def setup_test_env():
     os.environ["EMAIL_SENDER_NAME"] = "LEARN-Hub Test"
     os.environ["SMTP_SERVER"] = "smtp.test.com"
     os.environ["SMTP_PORT"] = "587"
-    os.environ["PDF_STORAGE_PATH"] = "/tmp/test_pdfs"
+    os.environ["PDF_PATH"] = "/tmp/test_pdfs"
 
     # Reset config singleton
     Config._instance = None

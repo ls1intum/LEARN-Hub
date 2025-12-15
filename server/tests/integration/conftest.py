@@ -25,7 +25,6 @@ def app():
     os.environ["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:?cache=private&check_same_thread=false"
     os.environ["DATABASE_URL"] = "sqlite:///:memory:?cache=private&check_same_thread=false"
     os.environ["GOOGLE_API_KEY"] = "test_key"
-    os.environ["DEV_SECRET_KEY"] = "test_dev_secret"
     os.environ["FLASK_SECRET_KEY"] = "test_flask_secret"
     os.environ["JWT_SECRET_KEY"] = "test_jwt_secret"
     os.environ["ADMIN_EMAIL"] = "admin@test.com"
@@ -36,7 +35,7 @@ def app():
     os.environ["EMAIL_SENDER_NAME"] = "LEARN-Hub Test"
     os.environ["SMTP_SERVER"] = "smtp.test.com"
     os.environ["SMTP_PORT"] = "587"
-    os.environ["PDF_STORAGE_PATH"] = "/tmp/test_pdfs"
+    os.environ["PDF_PATH"] = "/tmp/test_pdfs"
 
     # Reset global database state
     global engine

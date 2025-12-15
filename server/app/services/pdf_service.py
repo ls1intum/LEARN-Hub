@@ -25,7 +25,7 @@ class PDFService:
 
     def __init__(self):
         config = Config.get_instance()
-        self.storage_path = Path(config.pdf_storage_path)
+        self.storage_path = Path(config.pdf_path)
         self.max_file_size = 100 * 1024 * 1024  # 100MB
         self._ensure_storage_directory()
 
