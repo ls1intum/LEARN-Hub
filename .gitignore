@@ -10,3 +10,11 @@ pg-data
 server/data
 .cursor
 
+# Spring Boot / Maven
+server-spring/target/
+server-spring/.mvn/
+server-spring/mvnw
+server-spring/mvnw.cmd
+*.jar
+*.war
+*.class
