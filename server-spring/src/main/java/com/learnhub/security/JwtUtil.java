@@ -3,6 +3,7 @@ package com.learnhub.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +27,16 @@ public class JwtUtil {
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
+
+        // If the raw secret is too short, try treating it as Base64
+        if (keyBytes.length < 32) {
+            keyBytes = Decoders.BASE64.decode(secret);
+        }
+
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("JWT secret must be at least 256 bits (32 bytes). Provide a longer key or a Base64-encoded 256-bit value.");
+        }
+
         return Keys.hmacShaKeyFor(keyBytes);
     }
 

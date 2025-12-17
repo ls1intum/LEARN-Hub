@@ -60,12 +60,14 @@ public class Activity {
     @Column(name = "duration_max_minutes")
     private Integer durationMaxMinutes;
 
-    @Column(name = "mental_load", nullable = false)
+    @Column(name = "mental_load", nullable = false, columnDefinition = "energylevel")
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private EnergyLevel mentalLoad = EnergyLevel.MEDIUM;
 
-    @Column(name = "physical_energy", nullable = false)
+    @Column(name = "physical_energy", nullable = false, columnDefinition = "energylevel")
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private EnergyLevel physicalEnergy = EnergyLevel.MEDIUM;
 
     @Column(name = "prep_time_minutes", nullable = false)
