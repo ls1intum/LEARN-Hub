@@ -22,7 +22,7 @@ The server has been migrated from Flask/Python to Spring Boot/Java while maintai
 ### Prerequisites
 
 - Java 21 or higher
-- Maven 3.9+ (or use included wrapper)
+- **Maven Wrapper included** - no need to install Maven separately
 - Docker (for PostgreSQL and containerized deployment)
 - PostgreSQL 17+ (if running locally without Docker)
 
@@ -40,6 +40,7 @@ Update the following variables:
 - `JWT_SECRET_KEY` - JWT token signing key
 - `EMAIL_ADDRESS`, `EMAIL_USERNAME`, `EMAIL_PASSWORD` - Email configuration for verification
 - `PDF_PATH` - Path for PDF storage
+- `app.db-seed.enabled` - Set to `true` to enable database seeding
 
 ### Local Development Setup
 
@@ -51,11 +52,15 @@ docker compose -f compose-spring.yml up postgres -d
 2. **Run Database Migrations**:
 ```bash
 cd server-spring
+./mvnw flyway:migrate
+# OR
 make db-migrate
 ```
 
 3. **Run the Application**:
 ```bash
+./mvnw spring-boot:run
+# OR
 make dev
 ```
 
@@ -63,18 +68,43 @@ The server will start on `http://localhost:5001`
 
 ### Database Seeding
 
-To seed the database with demo data, set the following in your `.env` or application.properties:
+The seeder automatically loads the **full dataset** from the repository if available:
+
+**Option 1: Full Dataset (37 activities)**
+- Requires `dataset/dataset.csv` and `dataset/pdfs/` to be present
+- Automatically loads all 37 activities with their PDF files
+- Copies PDFs to the configured storage path
+
+**Option 2: Demo Data (5 activities)**
+- Falls back if dataset files not found
+- Creates placeholder PDF and 5 sample activities
+
+To enable seeding, add to your `.env`:
 
 ```properties
 app.db-seed.enabled=true
 ```
 
 Then restart the application. The seeder will:
-- Create a placeholder PDF document
-- Create 5 demo activities
+- Check for `dataset/dataset.csv` and load full dataset if present
+- Otherwise create 5 demo activities
 - Create an admin user with auto-generated credentials (printed in logs)
 
 For production deployment, set `app.db-seed.enabled=false`.
+
+### Maven Wrapper
+
+The project includes Maven Wrapper, so you don't need to install Maven:
+
+```bash
+# Unix/Linux/Mac
+./mvnw clean package
+./mvnw spring-boot:run
+
+# Windows
+mvnw.cmd clean package
+mvnw.cmd spring-boot:run
+```
 
 ### Docker Deployment
 
@@ -119,7 +149,19 @@ All Flask API endpoints have been migrated to Spring Boot with identical paths a
 - `POST /api/activities/` - Create new activity (admin only)
 - `PUT /api/activities/{id}` - Update activity (admin only)
 - `DELETE /api/activities/{id}` - Delete activity (admin only)
-- `GET /api/activities/recommendations` - Get activity recommendations
+
+### History & Favourites
+- `GET /api/history/search` - Get user's search history
+- `DELETE /api/history/search/{id}` - Delete search history entry
+- `GET /api/history/favourites` - Get all favourites (optional type filter)
+- `POST /api/history/favourites/activities` - Save activity as favourite
+- `POST /api/history/favourites/lesson-plans` - Save lesson plan as favourite
+- `DELETE /api/history/favourites/{id}` - Delete favourite
+
+### Documents
+- `POST /api/documents/upload_pdf` - Upload PDF document (admin only)
+- `GET /api/documents/{id}` - Download PDF file
+- `GET /api/documents/{id}/info` - Get PDF metadata
 
 ### Meta
 - `GET /api/hello` - Health check
@@ -127,6 +169,7 @@ All Flask API endpoints have been migrated to Spring Boot with identical paths a
 - `GET /api/meta/bloom-levels` - Get Bloom taxonomy levels
 - `GET /api/meta/resources` - Get available resources
 - `GET /api/meta/topics` - Get computational thinking topics
+- `GET /api/meta/energy-levels` - Get energy levels
 
 ### Documentation
 - `GET /api/openapi/swagger` - Swagger UI
