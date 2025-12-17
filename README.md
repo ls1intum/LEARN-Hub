@@ -80,7 +80,6 @@ cp example.env .env
 
 Key configuration variables:
 - `LLM_API_KEY` - API key for automated content processing
-- `FLASK_SECRET_KEY` - Flask session security
 - `JWT_SECRET_KEY` - JWT token signing
 - `SQLALCHEMY_DATABASE_URI` - PostgreSQL connection string
 - `SMTP_*` - Email service configuration for teacher verification

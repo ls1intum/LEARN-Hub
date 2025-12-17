@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -165,8 +166,8 @@ public class AuthController {
     @Operation(summary = "Get all users", description = "Get list of all users (admin only)")
     public ResponseEntity<?> getUsers() {
         try {
-            // TODO: Implement get all users
-            return ResponseEntity.ok(new HashMap<>());
+            List<UserResponse> users = authService.getAllUsers();
+            return ResponseEntity.ok(users);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(ErrorResponse.of(e.getMessage()));
         }
