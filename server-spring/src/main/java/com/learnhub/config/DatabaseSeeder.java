@@ -10,21 +10,30 @@ import com.learnhub.model.enums.UserRole;
 import com.learnhub.repository.ActivityRepository;
 import com.learnhub.repository.PDFDocumentRepository;
 import com.learnhub.repository.UserRepository;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 @Component
 @ConditionalOnProperty(name = "app.db-seed.enabled", havingValue = "true", matchIfMissing = false)
@@ -44,29 +53,134 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Value("${pdf.storage.path:/app/data/pdfs}")
+    private String pdfStoragePath;
+
     @Override
     public void run(String... args) throws Exception {
         logger.info("Starting database seeding...");
 
         // Check if data already exists
         long existingActivities = activityRepository.count();
-        long existingUsers = userRepository.count();
 
         if (existingActivities > 0) {
             logger.info("Database already contains {} activities. Skipping seeding.", existingActivities);
             return;
         }
 
-        // Create placeholder PDF document
-        PDFDocument pdfDocument = createPlaceholderPDF();
+        // Try to load full dataset from CSV
+        Path datasetCsv = Paths.get("dataset/dataset.csv");
+        Path pdfDir = Paths.get("dataset/pdfs");
         
-        // Create demo activities
-        createDemoActivities(pdfDocument.getId());
+        if (Files.exists(datasetCsv) && Files.isDirectory(pdfDir)) {
+            logger.info("Found dataset CSV and PDF directory. Loading full dataset...");
+            loadDatasetFromCSV(datasetCsv, pdfDir);
+        } else {
+            logger.warn("Dataset CSV or PDF directory not found. Creating demo data instead.");
+            // Fallback to demo data
+            PDFDocument pdfDocument = createPlaceholderPDF();
+            createDemoActivities(pdfDocument.getId());
+        }
         
         // Create admin user
         createAdminUser();
 
         logger.info("Database seeding completed successfully!");
+    }
+
+    private void loadDatasetFromCSV(Path csvPath, Path pdfDir) {
+        try (FileReader reader = new FileReader(csvPath.toFile());
+             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.builder()
+                     .setHeader()
+                     .setSkipHeaderRecord(true)
+                     .build())) {
+
+            int count = 0;
+            for (CSVRecord record : csvParser) {
+                try {
+                    String filename = record.get("filename");
+                    Path pdfPath = pdfDir.resolve(filename);
+
+                    if (!Files.exists(pdfPath)) {
+                        logger.warn("PDF file not found: {}. Skipping activity.", filename);
+                        continue;
+                    }
+
+                    logger.info("Processing activity: {}", record.get("name"));
+
+                    // Read PDF file
+                    byte[] pdfContent = Files.readAllBytes(pdfPath);
+
+                    // Store PDF document
+                    PDFDocument pdfDocument = new PDFDocument();
+                    pdfDocument.setFilename(filename);
+                    pdfDocument.setFilePath(Paths.get(pdfStoragePath, filename).toString());
+                    pdfDocument.setFileSize((long) pdfContent.length);
+                    pdfDocument.setExtractedFields("{}");
+                    pdfDocument.setConfidenceScore("1.0");
+                    pdfDocument.setExtractionQuality("manual");
+                    pdfDocument.setCreatedAt(LocalDateTime.now());
+                    pdfDocument = pdfDocumentRepository.save(pdfDocument);
+
+                    // Optionally save PDF to storage path
+                    try {
+                        Path storagePath = Paths.get(pdfStoragePath);
+                        Files.createDirectories(storagePath);
+                        Files.write(storagePath.resolve(filename), pdfContent);
+                    } catch (IOException e) {
+                        logger.warn("Could not save PDF to storage path: {}", e.getMessage());
+                    }
+
+                    // Parse and create activity
+                    Activity activity = new Activity();
+                    activity.setName(record.get("name"));
+                    activity.setDescription(record.get("description"));
+                    activity.setSource(record.get("source"));
+                    activity.setAgeMin(Integer.parseInt(record.get("age_min")));
+                    activity.setAgeMax(Integer.parseInt(record.get("age_max")));
+                    activity.setFormat(ActivityFormat.fromValue(record.get("format")));
+                    activity.setBloomLevel(BloomLevel.fromValue(record.get("bloom_level")));
+                    activity.setDurationMinMinutes(Integer.parseInt(record.get("duration_min_minutes")));
+                    activity.setDurationMaxMinutes(Integer.parseInt(record.get("duration_max_minutes")));
+                    activity.setMentalLoad(EnergyLevel.fromValue(record.get("mental_load")));
+                    activity.setPhysicalEnergy(EnergyLevel.fromValue(record.get("physical_energy")));
+                    activity.setPrepTimeMinutes(Integer.parseInt(record.get("prep_time_minutes")));
+                    activity.setCleanupTimeMinutes(Integer.parseInt(record.get("cleanup_time_minutes")));
+                    
+                    // Parse pipe-delimited resources and topics
+                    String resourcesStr = record.get("resources_needed");
+                    activity.setResourcesNeeded(parseDelimitedList(resourcesStr));
+                    
+                    String topicsStr = record.get("topics");
+                    activity.setTopics(parseDelimitedList(topicsStr));
+                    
+                    activity.setDocumentId(pdfDocument.getId());
+                    activity.setCreatedAt(LocalDateTime.now());
+
+                    activityRepository.save(activity);
+                    count++;
+
+                } catch (Exception e) {
+                    logger.error("Error processing activity from CSV: {}", e.getMessage(), e);
+                }
+            }
+
+            logger.info("Successfully imported {} activities from dataset", count);
+
+        } catch (IOException e) {
+            logger.error("Error reading dataset CSV: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to load dataset", e);
+        }
+    }
+
+    private List<String> parseDelimitedList(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        return Arrays.stream(value.split("\\|"))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
     }
 
     private PDFDocument createPlaceholderPDF() {
@@ -78,7 +192,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         PDFDocument document = new PDFDocument();
         document.setFilename("demo_activities_placeholder.pdf");
-        document.setFilePath("/app/data/pdfs/demo_activities_placeholder.pdf");
+        document.setFilePath(Paths.get(pdfStoragePath, "demo_activities_placeholder.pdf").toString());
         document.setFileSize(1024L);
         document.setExtractedFields("{}");
         document.setConfidenceScore("0.95");
