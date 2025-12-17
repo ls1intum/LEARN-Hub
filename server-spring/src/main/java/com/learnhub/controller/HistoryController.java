@@ -108,9 +108,10 @@ public class HistoryController {
 
     @GetMapping("/favourites/activities")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "Get favourites", description = "Get user's favourites (activities and lesson plans)")
-    public ResponseEntity<?> getFavourites(
-            @RequestParam(required = false) String type,
+    @Operation(summary = "Get activity favourites", description = "Get user's favourite activities")
+    public ResponseEntity<?> getActivityFavourites(
+            @RequestParam(required = false, defaultValue = "10") Integer limit,
+            @RequestParam(required = false, defaultValue = "0") Integer offset,
             HttpServletRequest request) {
         try {
             Long userId = (Long) request.getAttribute("userId");
@@ -118,8 +119,49 @@ public class HistoryController {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
-            List<UserFavourites> favourites = type != null ? favouritesService.getUserFavourites(userId, type)
-                    : favouritesService.getUserFavourites(userId);
+            List<UserFavourites> favourites = favouritesService.getUserFavourites(userId, "activity");
+
+            List<Map<String, Object>> favouritesData = favourites.stream()
+                    .map(fav -> {
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("id", fav.getId());
+                        data.put("favourite_type", fav.getFavouriteType());
+                        data.put("activity_id", fav.getActivityId());
+                        data.put("name", fav.getName());
+                        data.put("created_at", fav.getCreatedAt().toString());
+                        return data;
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("favourites", favouritesData);
+            Map<String, Object> pagination = new HashMap<>();
+            pagination.put("limit", limit);
+            pagination.put("offset", offset);
+            pagination.put("count", favouritesData.size());
+            response.put("pagination", pagination);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to retrieve activity favourites: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/favourites/lesson-plans")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Get lesson plan favourites", description = "Get user's favourite lesson plans")
+    public ResponseEntity<?> getLessonPlanFavourites(
+            @RequestParam(required = false, defaultValue = "10") Integer limit,
+            @RequestParam(required = false, defaultValue = "0") Integer offset,
+            HttpServletRequest request) {
+        try {
+            Long userId = (Long) request.getAttribute("userId");
+            if (userId == null) {
+                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
+            }
+
+            List<UserFavourites> favourites = favouritesService.getUserFavourites(userId, "lesson_plan");
 
             List<Map<String, Object>> favouritesData = favourites.stream()
                     .map(fav -> {
@@ -128,28 +170,31 @@ public class HistoryController {
                         data.put("favourite_type", fav.getFavouriteType());
                         data.put("name", fav.getName());
                         data.put("created_at", fav.getCreatedAt().toString());
-
-                        if ("activity".equals(fav.getFavouriteType())) {
-                            data.put("activity_id", fav.getActivityId());
-                        } else if ("lesson_plan".equals(fav.getFavouriteType())) {
-                            try {
-                                data.put("activity_ids", objectMapper.readValue(fav.getActivityIds(), List.class));
-                                if (fav.getLessonPlanSnapshot() != null) {
-                                    data.put("lesson_plan_snapshot",
-                                            objectMapper.readValue(fav.getLessonPlanSnapshot(), Object.class));
-                                }
-                            } catch (Exception e) {
-                                // Ignore parsing errors
+                        
+                        try {
+                            data.put("activity_ids", objectMapper.readValue(fav.getActivityIds(), List.class));
+                            if (fav.getLessonPlanSnapshot() != null) {
+                                data.put("lesson_plan", objectMapper.readValue(fav.getLessonPlanSnapshot(), Object.class));
                             }
+                        } catch (Exception e) {
+                            // Ignore parsing errors
                         }
                         return data;
                     })
                     .collect(Collectors.toList());
 
-            return ResponseEntity.ok(favouritesData);
+            Map<String, Object> response = new HashMap<>();
+            response.put("favourites", favouritesData);
+            Map<String, Object> pagination = new HashMap<>();
+            pagination.put("limit", limit);
+            pagination.put("offset", offset);
+            pagination.put("count", favouritesData.size());
+            response.put("pagination", pagination);
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(500)
-                    .body(ErrorResponse.of("Failed to retrieve favourites: " + e.getMessage()));
+                    .body(ErrorResponse.of("Failed to retrieve lesson plan favourites: " + e.getMessage()));
         }
     }
 
@@ -171,8 +216,8 @@ public class HistoryController {
             UserFavourites favourite = favouritesService.saveActivityFavourite(userId, activityId, name);
 
             Map<String, Object> response = new HashMap<>();
-            response.put("id", favourite.getId());
             response.put("message", "Activity favourite saved successfully");
+            response.put("favourite_id", favourite.getId());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -204,8 +249,8 @@ public class HistoryController {
                     lessonPlanSnapshot, name);
 
             Map<String, Object> response = new HashMap<>();
-            response.put("id", favourite.getId());
             response.put("message", "Lesson plan favourite saved successfully");
+            response.put("favourite_id", favourite.getId());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -236,6 +281,55 @@ public class HistoryController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(ErrorResponse.of("Failed to delete favourite: " + e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/favourites/activities/{activityId}")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Remove activity favourite", description = "Remove an activity from favourites")
+    public ResponseEntity<?> removeActivityFavourite(
+            @PathVariable Long activityId,
+            HttpServletRequest request) {
+        try {
+            Long userId = (Long) request.getAttribute("userId");
+            if (userId == null) {
+                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
+            }
+
+            boolean deleted = favouritesService.deleteActivityFavourite(userId, activityId);
+            if (!deleted) {
+                return ResponseEntity.status(404).body(ErrorResponse.of("Activity favourite not found"));
+            }
+
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Activity favourite removed successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to remove activity favourite: " + e.getMessage()));
+        }
+    }
+
+    @GetMapping("/favourites/activities/{activityId}/status")
+    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Check activity favourite status", description = "Check if an activity is favourited by the user")
+    public ResponseEntity<?> checkActivityFavouriteStatus(
+            @PathVariable Long activityId,
+            HttpServletRequest request) {
+        try {
+            Long userId = (Long) request.getAttribute("userId");
+            if (userId == null) {
+                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
+            }
+
+            boolean isFavourited = favouritesService.isActivityFavourited(userId, activityId);
+
+            Map<String, Boolean> response = new HashMap<>();
+            response.put("is_favourited", isFavourited);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to check activity favourite status: " + e.getMessage()));
         }
     }
 }

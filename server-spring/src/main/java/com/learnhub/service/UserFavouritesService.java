@@ -64,4 +64,21 @@ public class UserFavouritesService {
             })
             .orElse(false);
     }
+
+    @Transactional
+    public boolean deleteActivityFavourite(Long userId, Long activityId) {
+        List<UserFavourites> favourites = userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityId(
+            userId, "activity", activityId);
+        if (!favourites.isEmpty()) {
+            userFavouritesRepository.delete(favourites.get(0));
+            return true;
+        }
+        return false;
+    }
+
+    public boolean isActivityFavourited(Long userId, Long activityId) {
+        List<UserFavourites> favourites = userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityId(
+            userId, "activity", activityId);
+        return !favourites.isEmpty();
+    }
 }

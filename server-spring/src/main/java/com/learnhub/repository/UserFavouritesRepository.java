@@ -12,4 +12,6 @@ public interface UserFavouritesRepository extends JpaRepository<UserFavourites, 
     List<UserFavourites> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     List<UserFavourites> findByUserIdAndFavouriteType(Long userId, String favouriteType);
+
+    List<UserFavourites> findByUserIdAndFavouriteTypeAndActivityId(Long userId, String favouriteType, Long activityId);
 }
