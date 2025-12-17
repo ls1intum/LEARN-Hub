@@ -1,7 +1,6 @@
 package com.learnhub.controller;
 
 import com.learnhub.dto.response.ErrorResponse;
-import com.learnhub.dto.response.MessageResponse;
 import com.learnhub.model.PDFDocument;
 import com.learnhub.service.PDFService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,7 +29,7 @@ public class DocumentsController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Upload PDF", description = "Upload and process PDF document for activity creation")
-    public ResponseEntity<?>> uploadPdf(
+    public ResponseEntity<?> uploadPdf(
             @RequestParam("pdf_file") MultipartFile pdfFile) {
         try {
             if (pdfFile.isEmpty()) {
@@ -52,8 +51,9 @@ public class DocumentsController {
             response.put("document_id", documentId);
             response.put("filename", pdfFile.getOriginalFilename());
             response.put("file_size", pdfContent.length);
+            response.put("message", "PDF uploaded successfully");
 
-            return ResponseEntity.status(201).body(ResponseEntity.ok("PDF uploaded successfully", response));
+            return ResponseEntity.status(201).body(ResponseEntity.ok(response));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(ErrorResponse.of("Failed to upload PDF: " + e.getMessage()));
         }
@@ -72,8 +72,8 @@ public class DocumentsController {
             headers.setContentLength(pdfContent.length);
 
             return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfContent);
+                    .headers(headers)
+                    .body(pdfContent);
         } catch (Exception e) {
             return ResponseEntity.status(404).body(ErrorResponse.of("Document not found: " + e.getMessage()));
         }
@@ -81,7 +81,7 @@ public class DocumentsController {
 
     @GetMapping("/{documentId}/info")
     @Operation(summary = "Get document info", description = "Get PDF document metadata")
-    public ResponseEntity<?>> getDocumentInfo(@PathVariable Long documentId) {
+    public ResponseEntity<?> getDocumentInfo(@PathVariable Long documentId) {
         try {
             PDFDocument document = pdfService.getPdfDocument(documentId);
 

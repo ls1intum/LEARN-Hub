@@ -2,7 +2,6 @@ package com.learnhub.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learnhub.dto.response.ErrorResponse;
-import com.learnhub.dto.response.MessageResponse;
 import com.learnhub.model.UserFavourites;
 import com.learnhub.model.UserSearchHistory;
 import com.learnhub.service.UserFavouritesService;
@@ -38,7 +37,7 @@ public class HistoryController {
     @GetMapping("/search")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get search history", description = "Get user's search history")
-    public ResponseEntity<?>> getSearchHistory(
+    public ResponseEntity<?> getSearchHistory(
             @RequestParam(required = false, defaultValue = "10") Integer limit,
             @RequestParam(required = false, defaultValue = "0") Integer offset,
             HttpServletRequest request) {
@@ -51,20 +50,20 @@ public class HistoryController {
             List<UserSearchHistory> history = searchHistoryService.getUserSearchHistory(userId, limit, offset);
 
             List<Map<String, Object>> historyData = history.stream()
-                .limit(limit)
-                .skip(offset)
-                .map(entry -> {
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("id", entry.getId());
-                    try {
-                        data.put("search_criteria", objectMapper.readValue(entry.getSearchCriteria(), Map.class));
-                    } catch (Exception e) {
-                        data.put("search_criteria", new HashMap<>());
-                    }
-                    data.put("created_at", entry.getCreatedAt().toString());
-                    return data;
-                })
-                .collect(Collectors.toList());
+                    .limit(limit)
+                    .skip(offset)
+                    .map(entry -> {
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("id", entry.getId());
+                        try {
+                            data.put("search_criteria", objectMapper.readValue(entry.getSearchCriteria(), Map.class));
+                        } catch (Exception e) {
+                            data.put("search_criteria", new HashMap<>());
+                        }
+                        data.put("created_at", entry.getCreatedAt().toString());
+                        return data;
+                    })
+                    .collect(Collectors.toList());
 
             Map<String, Object> response = new HashMap<>();
             response.put("search_history", historyData);
@@ -76,14 +75,15 @@ public class HistoryController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to retrieve search history: " + e.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to retrieve search history: " + e.getMessage()));
         }
     }
 
     @DeleteMapping("/search/{historyId}")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Delete search history entry", description = "Delete a specific search history entry")
-    public ResponseEntity<?>> deleteSearchHistory(
+    public ResponseEntity<?> deleteSearchHistory(
             @PathVariable Long historyId,
             HttpServletRequest request) {
         try {
@@ -101,11 +101,12 @@ public class HistoryController {
             response.put("message", "Search history entry deleted successfully");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to delete search history: " + e.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to delete search history: " + e.getMessage()));
         }
     }
 
-    @GetMapping("/favourites")
+    @GetMapping("/favourites/activities")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get favourites", description = "Get user's favourites (activities and lesson plans)")
     public ResponseEntity<?> getFavourites(
@@ -117,44 +118,45 @@ public class HistoryController {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
-            List<UserFavourites> favourites = type != null ? 
-                favouritesService.getUserFavourites(userId, type) :
-                favouritesService.getUserFavourites(userId);
+            List<UserFavourites> favourites = type != null ? favouritesService.getUserFavourites(userId, type)
+                    : favouritesService.getUserFavourites(userId);
 
             List<Map<String, Object>> favouritesData = favourites.stream()
-                .map(fav -> {
-                    Map<String, Object> data = new HashMap<>();
-                    data.put("id", fav.getId());
-                    data.put("favourite_type", fav.getFavouriteType());
-                    data.put("name", fav.getName());
-                    data.put("created_at", fav.getCreatedAt().toString());
-                    
-                    if ("activity".equals(fav.getFavouriteType())) {
-                        data.put("activity_id", fav.getActivityId());
-                    } else if ("lesson_plan".equals(fav.getFavouriteType())) {
-                        try {
-                            data.put("activity_ids", objectMapper.readValue(fav.getActivityIds(), List.class));
-                            if (fav.getLessonPlanSnapshot() != null) {
-                                data.put("lesson_plan_snapshot", objectMapper.readValue(fav.getLessonPlanSnapshot(), Object.class));
+                    .map(fav -> {
+                        Map<String, Object> data = new HashMap<>();
+                        data.put("id", fav.getId());
+                        data.put("favourite_type", fav.getFavouriteType());
+                        data.put("name", fav.getName());
+                        data.put("created_at", fav.getCreatedAt().toString());
+
+                        if ("activity".equals(fav.getFavouriteType())) {
+                            data.put("activity_id", fav.getActivityId());
+                        } else if ("lesson_plan".equals(fav.getFavouriteType())) {
+                            try {
+                                data.put("activity_ids", objectMapper.readValue(fav.getActivityIds(), List.class));
+                                if (fav.getLessonPlanSnapshot() != null) {
+                                    data.put("lesson_plan_snapshot",
+                                            objectMapper.readValue(fav.getLessonPlanSnapshot(), Object.class));
+                                }
+                            } catch (Exception e) {
+                                // Ignore parsing errors
                             }
-                        } catch (Exception e) {
-                            // Ignore parsing errors
                         }
-                    }
-                    return data;
-                })
-                .collect(Collectors.toList());
+                        return data;
+                    })
+                    .collect(Collectors.toList());
 
             return ResponseEntity.ok(favouritesData);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to retrieve favourites: " + e.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to retrieve favourites: " + e.getMessage()));
         }
     }
 
     @PostMapping("/favourites/activities")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Save activity favourite", description = "Save an activity as favourite")
-    public ResponseEntity<?>> saveActivityFavourite(
+    public ResponseEntity<?> saveActivityFavourite(
             @RequestBody Map<String, Object> requestBody,
             HttpServletRequest request) {
         try {
@@ -174,14 +176,15 @@ public class HistoryController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to save activity favourite: " + e.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to save activity favourite: " + e.getMessage()));
         }
     }
 
     @PostMapping("/favourites/lesson-plans")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Save lesson plan favourite", description = "Save a lesson plan as favourite")
-    public ResponseEntity<?>> saveLessonPlanFavourite(
+    public ResponseEntity<?> saveLessonPlanFavourite(
             @RequestBody Map<String, Object> requestBody,
             HttpServletRequest request) {
         try {
@@ -192,12 +195,13 @@ public class HistoryController {
 
             @SuppressWarnings("unchecked")
             List<Long> activityIds = ((List<Object>) requestBody.get("activity_ids")).stream()
-                .map(id -> Long.valueOf(id.toString()))
-                .collect(Collectors.toList());
+                    .map(id -> Long.valueOf(id.toString()))
+                    .collect(Collectors.toList());
             String name = (String) requestBody.get("name");
             String lessonPlanSnapshot = objectMapper.writeValueAsString(requestBody.get("lesson_plan_snapshot"));
 
-            UserFavourites favourite = favouritesService.saveLessonPlanFavourite(userId, activityIds, lessonPlanSnapshot, name);
+            UserFavourites favourite = favouritesService.saveLessonPlanFavourite(userId, activityIds,
+                    lessonPlanSnapshot, name);
 
             Map<String, Object> response = new HashMap<>();
             response.put("id", favourite.getId());
@@ -205,14 +209,15 @@ public class HistoryController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to save lesson plan favourite: " + e.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to save lesson plan favourite: " + e.getMessage()));
         }
     }
 
     @DeleteMapping("/favourites/{favouriteId}")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Delete favourite", description = "Delete a favourite (activity or lesson plan)")
-    public ResponseEntity<?>> deleteFavourite(
+    public ResponseEntity<?> deleteFavourite(
             @PathVariable Long favouriteId,
             HttpServletRequest request) {
         try {

@@ -2,7 +2,6 @@ package com.learnhub.controller;
 
 import com.learnhub.dto.response.ActivityResponse;
 import com.learnhub.dto.response.ErrorResponse;
-import com.learnhub.dto.response.MessageResponse;
 import com.learnhub.model.PDFDocument;
 import com.learnhub.service.ActivityService;
 import com.learnhub.service.PDFService;
@@ -34,7 +33,7 @@ public class ActivityController {
 
     @GetMapping("/")
     @Operation(summary = "Get activities", description = "Get a list of activities with optional filtering and pagination")
-    public ResponseEntity<?>> getActivities(
+    public ResponseEntity<?> getActivities(
             @RequestParam(required = false) String name,
             @RequestParam(name = "age_min", required = false) Integer ageMin,
             @RequestParam(name = "age_max", required = false) Integer ageMax,
@@ -46,8 +45,7 @@ public class ActivityController {
             @RequestParam(required = false, defaultValue = "0") Integer offset) {
         try {
             List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
-                name, ageMin, ageMax, format, bloomLevel, limit, offset
-            );
+                    name, ageMin, ageMax, format, bloomLevel, limit, offset);
             return ResponseEntity.ok(activities);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
@@ -82,7 +80,7 @@ public class ActivityController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Delete activity", description = "Delete an activity by its ID (admin only)")
-    public ResponseEntity<?>> deleteActivity(@PathVariable Long id) {
+    public ResponseEntity<?> deleteActivity(@PathVariable Long id) {
         try {
             activityService.deleteActivity(id);
             Map<String, String> response = new HashMap<>();
@@ -97,7 +95,7 @@ public class ActivityController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Upload PDF and create activity", description = "Upload PDF, extract data, and create activity in one step (admin only)")
-    public ResponseEntity<?>> uploadAndCreateActivity(
+    public ResponseEntity<?> uploadAndCreateActivity(
             @RequestParam("pdf_file") MultipartFile pdfFile) {
         try {
             if (pdfFile.isEmpty()) {
@@ -117,7 +115,8 @@ public class ActivityController {
             response.put("message", "Activity created successfully");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to upload and create activity: " + e.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to upload and create activity: " + e.getMessage()));
         }
     }
 
@@ -139,8 +138,8 @@ public class ActivityController {
             headers.setContentLength(pdfContent.length);
 
             return ResponseEntity.ok()
-                .headers(headers)
-                .body(pdfContent);
+                    .headers(headers)
+                    .body(pdfContent);
         } catch (Exception e) {
             return ResponseEntity.status(404).body(ErrorResponse.of("PDF not found: " + e.getMessage()));
         }
@@ -159,8 +158,7 @@ public class ActivityController {
         try {
             // TODO: Implement recommendation logic
             List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
-                null, age_min, age_max, format, bloom_level, limit, 0
-            );
+                    null, age_min, age_max, format, bloom_level, limit, 0);
             return ResponseEntity.ok(activities);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
