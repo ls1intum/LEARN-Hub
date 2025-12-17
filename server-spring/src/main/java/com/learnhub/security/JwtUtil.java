@@ -24,6 +24,9 @@ public class JwtUtil {
 
     @Value("${jwt.expiration}")
     private Long expiration;
+    
+    @Value("${jwt.refresh.expiration}")
+    private Long refreshExpiration;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
@@ -74,15 +77,28 @@ public class JwtUtil {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("role", role);
-        return createToken(claims, username);
+        claims.put("type", "access");
+        return createToken(claims, username, expiration);
+    }
+    
+    public String generateRefreshToken(String username, Long userId, String role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
+        claims.put("role", role);
+        claims.put("type", "refresh");
+        return createToken(claims, username, refreshExpiration);
     }
 
     private String createToken(Map<String, Object> claims, String subject) {
+        return createToken(claims, subject, expiration);
+    }
+    
+    private String createToken(Map<String, Object> claims, String subject, Long expirationTime) {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiration))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -108,5 +124,28 @@ public class JwtUtil {
     public String extractRole(String token) {
         Claims claims = extractAllClaims(token);
         return claims.get("role", String.class);
+    }
+    
+    public String extractTokenType(String token) {
+        Claims claims = extractAllClaims(token);
+        return claims.get("type", String.class);
+    }
+    
+    public Boolean validateRefreshToken(String token) {
+        try {
+            String tokenType = extractTokenType(token);
+            return "refresh".equals(tokenType) && !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    
+    public Boolean validateAccessToken(String token) {
+        try {
+            String tokenType = extractTokenType(token);
+            return "access".equals(tokenType) && !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

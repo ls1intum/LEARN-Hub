@@ -2,6 +2,7 @@ package com.learnhub.controller;
 
 import com.learnhub.dto.request.CreateUserRequest;
 import com.learnhub.dto.request.LoginRequest;
+import com.learnhub.dto.request.RefreshTokenRequest;
 import com.learnhub.dto.request.TeacherRegistrationRequest;
 import com.learnhub.dto.request.UpdateProfileRequest;
 import com.learnhub.dto.request.UpdateUserRequest;
@@ -64,7 +65,8 @@ public class AuthController {
             Map<String, Object> result = new HashMap<>();
             result.put("user", response.getUser());
             result.put("access_token", response.getAccessToken());
-            result.put("refresh_token", response.getAccessToken()); // TODO: Implement refresh token
+            result.put("refresh_token", response.getRefreshToken());
+            result.put("token_type", "Bearer");
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
@@ -79,7 +81,8 @@ public class AuthController {
             Map<String, Object> result = new HashMap<>();
             result.put("user", response.getUser());
             result.put("access_token", response.getAccessToken());
-            result.put("refresh_token", response.getAccessToken()); // TODO: Implement refresh token
+            result.put("refresh_token", response.getRefreshToken());
+            result.put("token_type", "Bearer");
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
@@ -98,7 +101,8 @@ public class AuthController {
             Map<String, Object> result = new HashMap<>();
             result.put("user", response.getUser());
             result.put("access_token", response.getAccessToken());
-            result.put("refresh_token", response.getAccessToken()); // TODO: Implement refresh token
+            result.put("refresh_token", response.getRefreshToken());
+            result.put("token_type", "Bearer");
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
@@ -127,15 +131,15 @@ public class AuthController {
 
     @PostMapping("/refresh")
     @Operation(summary = "Refresh token", description = "Refresh the JWT access token using refresh token")
-    public ResponseEntity<?> refreshToken(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
         try {
-            // TODO: Implement refresh token logic
-            Map<String, String> response = new HashMap<>();
-            response.put("access_token", "");
-            response.put("refresh_token", "");
-            return ResponseEntity.ok(response);
+            LoginResponse response = authService.refreshToken(request.getRefreshToken());
+            Map<String, String> result = new HashMap<>();
+            result.put("access_token", response.getAccessToken());
+            result.put("refresh_token", response.getRefreshToken());
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+            return ResponseEntity.status(401).body(ErrorResponse.of(e.getMessage()));
         }
     }
 

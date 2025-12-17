@@ -75,8 +75,9 @@ public class AuthService {
 
         // For admin users with password
         if (request.getPassword() != null && passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            String token = jwtUtil.generateToken(user.getEmail(), user.getId(), user.getRole().name());
-            return new LoginResponse(token, mapToUserResponse(user));
+            String accessToken = jwtUtil.generateToken(user.getEmail(), user.getId(), user.getRole().name());
+            String refreshToken = jwtUtil.generateRefreshToken(user.getEmail(), user.getId(), user.getRole().name());
+            return new LoginResponse(accessToken, refreshToken, mapToUserResponse(user));
         }
 
         throw new RuntimeException("Invalid credentials");
@@ -96,9 +97,10 @@ public class AuthService {
         verificationCode.setUsed("Y");
         verificationCodeRepository.save(verificationCode);
 
-        // Generate JWT token
-        String token = jwtUtil.generateToken(user.getEmail(), user.getId(), user.getRole().name());
-        return new LoginResponse(token, mapToUserResponse(user));
+        // Generate JWT tokens
+        String accessToken = jwtUtil.generateToken(user.getEmail(), user.getId(), user.getRole().name());
+        String refreshToken = jwtUtil.generateRefreshToken(user.getEmail(), user.getId(), user.getRole().name());
+        return new LoginResponse(accessToken, refreshToken, mapToUserResponse(user));
     }
 
     @Transactional
@@ -286,5 +288,27 @@ public class AuthService {
         
         userRepository.delete(user);
         return true;
+    }
+    
+    public LoginResponse refreshToken(String refreshToken) {
+        // Validate refresh token
+        if (!jwtUtil.validateRefreshToken(refreshToken)) {
+            throw new RuntimeException("Invalid or expired refresh token");
+        }
+        
+        // Extract user information from refresh token
+        Long userId = jwtUtil.extractUserId(refreshToken);
+        String email = jwtUtil.extractUsername(refreshToken);
+        String role = jwtUtil.extractRole(refreshToken);
+        
+        // Verify user still exists
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        // Generate new tokens
+        String newAccessToken = jwtUtil.generateToken(email, userId, role);
+        String newRefreshToken = jwtUtil.generateRefreshToken(email, userId, role);
+        
+        return new LoginResponse(newAccessToken, newRefreshToken, mapToUserResponse(user));
     }
 }
