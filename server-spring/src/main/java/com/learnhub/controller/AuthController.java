@@ -1,7 +1,10 @@
 package com.learnhub.controller;
 
+import com.learnhub.dto.request.CreateUserRequest;
 import com.learnhub.dto.request.LoginRequest;
 import com.learnhub.dto.request.TeacherRegistrationRequest;
+import com.learnhub.dto.request.UpdateProfileRequest;
+import com.learnhub.dto.request.UpdateUserRequest;
 import com.learnhub.dto.request.VerifyCodeRequest;
 import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.dto.response.LoginResponse;
@@ -167,7 +170,9 @@ public class AuthController {
     public ResponseEntity<?> getUsers() {
         try {
             List<UserResponse> users = authService.getAllUsers();
-            return ResponseEntity.ok(users);
+            Map<String, Object> response = new HashMap<>();
+            response.put("users", users);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(ErrorResponse.of(e.getMessage()));
         }
@@ -177,12 +182,25 @@ public class AuthController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Create user", description = "Create a new user (admin only)")
-    public ResponseEntity<?> createUser(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserRequest request) {
         try {
-            // TODO: Implement create user
-            return ResponseEntity.ok(new HashMap<>());
-        } catch (Exception e) {
+            UserResponse user = authService.createUser(
+                request.getEmail(),
+                request.getFirstName(),
+                request.getLastName(),
+                request.getRole(),
+                request.getPassword()
+            );
+            Map<String, Object> response = new HashMap<>();
+            response.put("user", user);
+            return ResponseEntity.status(201).ok(response);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("already exists")) {
+                return ResponseEntity.status(409).body(ErrorResponse.of(e.getMessage()));
+            }
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ErrorResponse.of(e.getMessage()));
         }
     }
 
@@ -190,12 +208,29 @@ public class AuthController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Update user", description = "Update user details (admin only)")
-    public ResponseEntity<?> updateUser(@PathVariable Long userId, @RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> updateUser(@PathVariable Long userId, @Valid @RequestBody UpdateUserRequest request) {
         try {
-            // TODO: Implement update user
-            return ResponseEntity.ok(new HashMap<>());
-        } catch (Exception e) {
+            UserResponse user = authService.updateUser(
+                userId,
+                request.getEmail(),
+                request.getFirstName(),
+                request.getLastName(),
+                request.getRole(),
+                request.getPassword()
+            );
+            Map<String, Object> response = new HashMap<>();
+            response.put("user", user);
+            return ResponseEntity.ok(response);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.status(404).body(ErrorResponse.of(e.getMessage()));
+            }
+            if (e.getMessage().contains("already exists")) {
+                return ResponseEntity.status(409).body(ErrorResponse.of(e.getMessage()));
+            }
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ErrorResponse.of(e.getMessage()));
         }
     }
 
@@ -203,12 +238,21 @@ public class AuthController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Delete user", description = "Delete a user (admin only)")
-    public ResponseEntity<?> deleteUser(@PathVariable Long userId) {
+    public ResponseEntity<?> deleteUser(@PathVariable Long userId, HttpServletRequest httpRequest) {
         try {
-            // TODO: Implement delete user
+            Long currentUserId = (Long) httpRequest.getAttribute("userId");
+            boolean deleted = authService.deleteUser(userId, currentUserId);
+            if (!deleted) {
+                return ResponseEntity.status(404).body(ErrorResponse.of("User not found"));
+            }
             return ResponseEntity.ok(MessageResponse.of("User deleted successfully"));
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("Cannot delete")) {
+                return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+            }
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ErrorResponse.of(e.getMessage()));
         }
     }
 
@@ -216,12 +260,30 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Update profile", description = "Update current user's profile")
-    public ResponseEntity<?> updateProfile(@RequestBody Map<String, Object> request, HttpServletRequest httpRequest) {
+    public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest request, HttpServletRequest httpRequest) {
         try {
-            // TODO: Implement update profile
-            return ResponseEntity.ok(new HashMap<>());
-        } catch (Exception e) {
+            Long userId = (Long) httpRequest.getAttribute("userId");
+            if (userId == null) {
+                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
+            }
+            UserResponse user = authService.updateProfile(
+                userId,
+                request.getEmail(),
+                request.getFirstName(),
+                request.getLastName(),
+                request.getPassword()
+            );
+            return ResponseEntity.ok(user);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("not found")) {
+                return ResponseEntity.status(404).body(ErrorResponse.of(e.getMessage()));
+            }
+            if (e.getMessage().contains("already exists")) {
+                return ResponseEntity.status(409).body(ErrorResponse.of(e.getMessage()));
+            }
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ErrorResponse.of(e.getMessage()));
         }
     }
 
@@ -229,12 +291,19 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Delete account", description = "Delete current user's account")
-    public ResponseEntity<?> deleteAccount() {
+    public ResponseEntity<?> deleteAccount(HttpServletRequest httpRequest) {
         try {
-            // TODO: Implement delete account
+            Long userId = (Long) httpRequest.getAttribute("userId");
+            if (userId == null) {
+                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
+            }
+            boolean deleted = authService.deleteAccount(userId);
+            if (!deleted) {
+                return ResponseEntity.status(404).body(ErrorResponse.of("User not found"));
+            }
             return ResponseEntity.ok(MessageResponse.of("Account deleted successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+            return ResponseEntity.status(500).body(ErrorResponse.of(e.getMessage()));
         }
     }
 }

@@ -151,4 +151,140 @@ public class AuthService {
             .map(this::mapToUserResponse)
             .toList();
     }
+
+    @Transactional
+    public UserResponse createUser(String email, String firstName, String lastName, String roleStr, String password) {
+        // Check if user already exists
+        if (userRepository.existsByEmail(email)) {
+            throw new RuntimeException("User with this email already exists");
+        }
+
+        UserRole role = UserRole.valueOf(roleStr);
+
+        User user = new User();
+        user.setEmail(email);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setRole(role);
+        
+        // Set password (required for both admin and teacher)
+        if (password != null && !password.isEmpty()) {
+            user.setPasswordHash(passwordEncoder.encode(password));
+        }
+        
+        user = userRepository.save(user);
+
+        // Send credentials email for teachers
+        if (role == UserRole.TEACHER) {
+            emailService.sendTeacherCredentials(email, firstName, password);
+        }
+
+        return mapToUserResponse(user);
+    }
+
+    @Transactional
+    public UserResponse updateUser(Long userId, String email, String firstName, String lastName, String roleStr, String password) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Update email if provided
+        if (email != null && !email.isEmpty() && !email.equals(user.getEmail())) {
+            // Check if email is already taken by another user
+            Optional<User> existingUser = userRepository.findByEmail(email);
+            if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
+                throw new RuntimeException("Email already exists");
+            }
+            user.setEmail(email);
+        }
+
+        // Update first name if provided
+        if (firstName != null && !firstName.isEmpty()) {
+            user.setFirstName(firstName);
+        }
+
+        // Update last name if provided
+        if (lastName != null && !lastName.isEmpty()) {
+            user.setLastName(lastName);
+        }
+
+        // Update role if provided
+        if (roleStr != null && !roleStr.isEmpty()) {
+            user.setRole(UserRole.valueOf(roleStr));
+        }
+
+        // Update password if provided
+        if (password != null && !password.isEmpty()) {
+            user.setPasswordHash(passwordEncoder.encode(password));
+        }
+
+        user = userRepository.save(user);
+        return mapToUserResponse(user);
+    }
+
+    @Transactional
+    public boolean deleteUser(Long userId, Long currentUserId) {
+        // Prevent admin from deleting themselves
+        if (userId.equals(currentUserId)) {
+            throw new RuntimeException("Cannot delete your own account");
+        }
+
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return false;
+        }
+
+        // Delete related data
+        verificationCodeRepository.deleteByUserId(userId);
+        
+        userRepository.delete(user);
+        return true;
+    }
+
+    @Transactional
+    public UserResponse updateProfile(Long userId, String email, String firstName, String lastName, String password) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Update email if provided
+        if (email != null && !email.isEmpty() && !email.equals(user.getEmail())) {
+            // Check if email is already taken by another user
+            Optional<User> existingUser = userRepository.findByEmail(email);
+            if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
+                throw new RuntimeException("Email already exists");
+            }
+            user.setEmail(email);
+        }
+
+        // Update first name if provided
+        if (firstName != null && !firstName.isEmpty()) {
+            user.setFirstName(firstName);
+        }
+
+        // Update last name if provided
+        if (lastName != null && !lastName.isEmpty()) {
+            user.setLastName(lastName);
+        }
+
+        // Update password if provided
+        if (password != null && !password.isEmpty()) {
+            user.setPasswordHash(passwordEncoder.encode(password));
+        }
+
+        user = userRepository.save(user);
+        return mapToUserResponse(user);
+    }
+
+    @Transactional
+    public boolean deleteAccount(Long userId) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return false;
+        }
+
+        // Delete related data
+        verificationCodeRepository.deleteByUserId(userId);
+        
+        userRepository.delete(user);
+        return true;
+    }
 }
