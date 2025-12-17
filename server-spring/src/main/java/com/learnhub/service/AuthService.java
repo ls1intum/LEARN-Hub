@@ -137,4 +137,10 @@ public class AuthService {
         response.setRole(user.getRole().name());
         return response;
     }
+
+    public UserResponse getUserById(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+        return mapToUserResponse(user);
+    }
 }

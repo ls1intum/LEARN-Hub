@@ -111,9 +111,10 @@ public class AuthController {
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
-            // TODO: Implement get user by ID
-            UserResponse user = new UserResponse();
-            user.setId(userId);
+            UserResponse user = authService.getUserById(userId);
+            if (user == null) {
+                return ResponseEntity.status(404).body(ErrorResponse.of("User not found"));
+            }
             return ResponseEntity.ok(user);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(ErrorResponse.of(e.getMessage()));
