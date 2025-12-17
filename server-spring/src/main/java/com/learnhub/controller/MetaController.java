@@ -1,6 +1,7 @@
 package com.learnhub.controller;
 
-import com.learnhub.dto.response.ApiResponse;
+import com.learnhub.dto.response.ErrorResponse;
+import com.learnhub.dto.response.MessageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -31,37 +32,37 @@ public class MetaController {
 
     @GetMapping("/api/meta/formats")
     @Operation(summary = "Get activity formats", description = "Get list of available activity formats")
-    public ResponseEntity<ApiResponse<String[]>> getFormats() {
-        return ResponseEntity.ok(ApiResponse.success(new String[]{"unplugged", "digital", "hybrid"}));
+    public ResponseEntity<?> getFormats() {
+        return ResponseEntity.ok(new String[]{"unplugged", "digital", "hybrid"});
     }
 
     @GetMapping("/api/meta/bloom-levels")
     @Operation(summary = "Get Bloom levels", description = "Get list of available Bloom taxonomy levels")
-    public ResponseEntity<ApiResponse<String[]>> getBloomLevels() {
-        return ResponseEntity.ok(ApiResponse.success(
+    public ResponseEntity<?> getBloomLevels() {
+        return ResponseEntity.ok(
             new String[]{"remember", "understand", "apply", "analyze", "evaluate", "create"}
-        ));
+        );
     }
 
     @GetMapping("/api/meta/resources")
     @Operation(summary = "Get resources", description = "Get list of available resources")
-    public ResponseEntity<ApiResponse<String[]>> getResources() {
-        return ResponseEntity.ok(ApiResponse.success(
+    public ResponseEntity<?> getResources() {
+        return ResponseEntity.ok(
             new String[]{"computers", "tablets", "handouts", "blocks", "electronics", "stationery"}
-        ));
+        );
     }
 
     @GetMapping("/api/meta/topics")
     @Operation(summary = "Get topics", description = "Get list of available computational thinking topics")
-    public ResponseEntity<ApiResponse<String[]>> getTopics() {
-        return ResponseEntity.ok(ApiResponse.success(
+    public ResponseEntity<?> getTopics() {
+        return ResponseEntity.ok(
             new String[]{"decomposition", "patterns", "abstraction", "algorithms"}
-        ));
+        );
     }
 
     @GetMapping("/api/meta/energy-levels")
     @Operation(summary = "Get energy levels", description = "Get list of available energy levels")
-    public ResponseEntity<ApiResponse<String[]>> getEnergyLevels() {
-        return ResponseEntity.ok(ApiResponse.success(new String[]{"low", "medium", "high"}));
+    public ResponseEntity<?> getEnergyLevels() {
+        return ResponseEntity.ok(new String[]{"low", "medium", "high"});
     }
 }

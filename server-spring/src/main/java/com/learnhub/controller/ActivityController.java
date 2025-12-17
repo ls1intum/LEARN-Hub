@@ -1,7 +1,8 @@
 package com.learnhub.controller;
 
 import com.learnhub.dto.response.ActivityResponse;
-import com.learnhub.dto.response.ApiResponse;
+import com.learnhub.dto.response.ErrorResponse;
+import com.learnhub.dto.response.MessageResponse;
 import com.learnhub.model.PDFDocument;
 import com.learnhub.service.ActivityService;
 import com.learnhub.service.PDFService;
@@ -33,7 +34,7 @@ public class ActivityController {
 
     @GetMapping("/")
     @Operation(summary = "Get activities", description = "Get a list of activities with optional filtering and pagination")
-    public ResponseEntity<ApiResponse<List<ActivityResponse>>> getActivities(
+    public ResponseEntity<?>> getActivities(
             @RequestParam(required = false) String name,
             @RequestParam(name = "age_min", required = false) Integer ageMin,
             @RequestParam(name = "age_max", required = false) Integer ageMax,
@@ -47,20 +48,20 @@ public class ActivityController {
             List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
                 name, ageMin, ageMax, format, bloomLevel, limit, offset
             );
-            return ResponseEntity.ok(ApiResponse.success(activities));
+            return ResponseEntity.ok(activities);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
         }
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get activity by ID", description = "Get a single activity by its ID")
-    public ResponseEntity<ApiResponse<ActivityResponse>> getActivity(@PathVariable Long id) {
+    public ResponseEntity<?> getActivity(@PathVariable Long id) {
         try {
             ActivityResponse activity = activityService.getActivityById(id);
-            return ResponseEntity.ok(ApiResponse.success(activity));
+            return ResponseEntity.ok(activity);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
         }
     }
 
@@ -68,12 +69,12 @@ public class ActivityController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Create activity", description = "Create a new activity (admin only)")
-    public ResponseEntity<ApiResponse<Object>> createActivity(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> createActivity(@RequestBody Map<String, Object> request) {
         try {
             // TODO: Implement create activity
-            return ResponseEntity.ok(ApiResponse.success(new HashMap<>()));
+            return ResponseEntity.ok(ResponseEntity.ok(new HashMap<>()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
         }
     }
 
@@ -81,14 +82,14 @@ public class ActivityController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Delete activity", description = "Delete an activity by its ID (admin only)")
-    public ResponseEntity<ApiResponse<Map<String, String>>> deleteActivity(@PathVariable Long id) {
+    public ResponseEntity<?>> deleteActivity(@PathVariable Long id) {
         try {
             activityService.deleteActivity(id);
             Map<String, String> response = new HashMap<>();
             response.put("message", "Activity deleted successfully");
-            return ResponseEntity.ok(ApiResponse.success(response));
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
         }
     }
 
@@ -96,15 +97,15 @@ public class ActivityController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Upload PDF and create activity", description = "Upload PDF, extract data, and create activity in one step (admin only)")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadAndCreateActivity(
+    public ResponseEntity<?>> uploadAndCreateActivity(
             @RequestParam("pdf_file") MultipartFile pdfFile) {
         try {
             if (pdfFile.isEmpty()) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("No PDF file provided"));
+                return ResponseEntity.badRequest().body(ErrorResponse.of("No PDF file provided"));
             }
 
             if (!pdfFile.getOriginalFilename().toLowerCase().endsWith(".pdf")) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("File must be a PDF"));
+                return ResponseEntity.badRequest().body(ErrorResponse.of("File must be a PDF"));
             }
 
             // TODO: Implement full upload and create logic
@@ -114,9 +115,9 @@ public class ActivityController {
             Map<String, Object> response = new HashMap<>();
             response.put("document_id", documentId);
             response.put("message", "Activity created successfully");
-            return ResponseEntity.ok(ApiResponse.success(response));
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Failed to upload and create activity: " + e.getMessage()));
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to upload and create activity: " + e.getMessage()));
         }
     }
 
@@ -126,7 +127,7 @@ public class ActivityController {
         try {
             ActivityResponse activity = activityService.getActivityById(activityId);
             if (activity.getDocumentId() == null) {
-                return ResponseEntity.status(404).body(ApiResponse.error("PDF not found for this activity"));
+                return ResponseEntity.status(404).body(ErrorResponse.of("PDF not found for this activity"));
             }
 
             byte[] pdfContent = pdfService.getPdfContent(activity.getDocumentId());
@@ -141,13 +142,13 @@ public class ActivityController {
                 .headers(headers)
                 .body(pdfContent);
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(ApiResponse.error("PDF not found: " + e.getMessage()));
+            return ResponseEntity.status(404).body(ErrorResponse.of("PDF not found: " + e.getMessage()));
         }
     }
 
     @GetMapping("/recommendations")
     @Operation(summary = "Get activity recommendations", description = "Get personalized activity recommendations")
-    public ResponseEntity<ApiResponse<Object>> getRecommendations(
+    public ResponseEntity<?> getRecommendations(
             @RequestParam(required = false) Integer age_min,
             @RequestParam(required = false) Integer age_max,
             @RequestParam(required = false) List<String> format,
@@ -160,22 +161,22 @@ public class ActivityController {
             List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
                 null, age_min, age_max, format, bloom_level, limit, 0
             );
-            return ResponseEntity.ok(ApiResponse.success(activities));
+            return ResponseEntity.ok(activities);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
         }
     }
 
     @PostMapping("/lesson-plan")
     @Operation(summary = "Generate lesson plan", description = "Generate a lesson plan from selected activities")
-    public ResponseEntity<ApiResponse<Object>> generateLessonPlan(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> generateLessonPlan(@RequestBody Map<String, Object> request) {
         try {
             // TODO: Implement lesson plan generation
             Map<String, Object> response = new HashMap<>();
             response.put("lesson_plan", new HashMap<>());
-            return ResponseEntity.ok(ApiResponse.success(response));
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
         }
     }
 }

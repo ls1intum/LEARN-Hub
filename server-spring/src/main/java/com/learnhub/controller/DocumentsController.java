@@ -1,6 +1,7 @@
 package com.learnhub.controller;
 
-import com.learnhub.dto.response.ApiResponse;
+import com.learnhub.dto.response.ErrorResponse;
+import com.learnhub.dto.response.MessageResponse;
 import com.learnhub.model.PDFDocument;
 import com.learnhub.service.PDFService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,20 +30,20 @@ public class DocumentsController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Upload PDF", description = "Upload and process PDF document for activity creation")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> uploadPdf(
+    public ResponseEntity<?>> uploadPdf(
             @RequestParam("pdf_file") MultipartFile pdfFile) {
         try {
             if (pdfFile.isEmpty()) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("No PDF file provided"));
+                return ResponseEntity.badRequest().body(ErrorResponse.of("No PDF file provided"));
             }
 
             if (!pdfFile.getOriginalFilename().toLowerCase().endsWith(".pdf")) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("File must be a PDF"));
+                return ResponseEntity.badRequest().body(ErrorResponse.of("File must be a PDF"));
             }
 
             byte[] pdfContent = pdfFile.getBytes();
             if (pdfContent.length == 0) {
-                return ResponseEntity.badRequest().body(ApiResponse.error("PDF file is empty"));
+                return ResponseEntity.badRequest().body(ErrorResponse.of("PDF file is empty"));
             }
 
             Long documentId = pdfService.storePdf(pdfContent, pdfFile.getOriginalFilename());
@@ -52,9 +53,9 @@ public class DocumentsController {
             response.put("filename", pdfFile.getOriginalFilename());
             response.put("file_size", pdfContent.length);
 
-            return ResponseEntity.status(201).body(ApiResponse.success("PDF uploaded successfully", response));
+            return ResponseEntity.status(201).body(ResponseEntity.ok("PDF uploaded successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Failed to upload PDF: " + e.getMessage()));
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to upload PDF: " + e.getMessage()));
         }
     }
 
@@ -74,13 +75,13 @@ public class DocumentsController {
                 .headers(headers)
                 .body(pdfContent);
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(ApiResponse.error("Document not found: " + e.getMessage()));
+            return ResponseEntity.status(404).body(ErrorResponse.of("Document not found: " + e.getMessage()));
         }
     }
 
     @GetMapping("/{documentId}/info")
     @Operation(summary = "Get document info", description = "Get PDF document metadata")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getDocumentInfo(@PathVariable Long documentId) {
+    public ResponseEntity<?>> getDocumentInfo(@PathVariable Long documentId) {
         try {
             PDFDocument document = pdfService.getPdfDocument(documentId);
 
@@ -92,9 +93,9 @@ public class DocumentsController {
             response.put("extraction_quality", document.getExtractionQuality());
             response.put("created_at", document.getCreatedAt().toString());
 
-            return ResponseEntity.ok(ApiResponse.success(response));
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(404).body(ApiResponse.error("Document not found: " + e.getMessage()));
+            return ResponseEntity.status(404).body(ErrorResponse.of("Document not found: " + e.getMessage()));
         }
     }
 }

@@ -1,7 +1,8 @@
 package com.learnhub.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.learnhub.dto.response.ApiResponse;
+import com.learnhub.dto.response.ErrorResponse;
+import com.learnhub.dto.response.MessageResponse;
 import com.learnhub.model.UserFavourites;
 import com.learnhub.model.UserSearchHistory;
 import com.learnhub.service.UserFavouritesService;
@@ -37,14 +38,14 @@ public class HistoryController {
     @GetMapping("/search")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get search history", description = "Get user's search history")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getSearchHistory(
+    public ResponseEntity<?>> getSearchHistory(
             @RequestParam(required = false, defaultValue = "10") Integer limit,
             @RequestParam(required = false, defaultValue = "0") Integer offset,
             HttpServletRequest request) {
         try {
             Long userId = (Long) request.getAttribute("userId");
             if (userId == null) {
-                return ResponseEntity.status(401).body(ApiResponse.error("Unauthorized"));
+                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
             List<UserSearchHistory> history = searchHistoryService.getUserSearchHistory(userId, limit, offset);
@@ -73,47 +74,47 @@ public class HistoryController {
             pagination.put("count", historyData.size());
             response.put("pagination", pagination);
 
-            return ResponseEntity.ok(ApiResponse.success(response));
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Failed to retrieve search history: " + e.getMessage()));
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to retrieve search history: " + e.getMessage()));
         }
     }
 
     @DeleteMapping("/search/{historyId}")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Delete search history entry", description = "Delete a specific search history entry")
-    public ResponseEntity<ApiResponse<Map<String, String>>> deleteSearchHistory(
+    public ResponseEntity<?>> deleteSearchHistory(
             @PathVariable Long historyId,
             HttpServletRequest request) {
         try {
             Long userId = (Long) request.getAttribute("userId");
             if (userId == null) {
-                return ResponseEntity.status(401).body(ApiResponse.error("Unauthorized"));
+                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
             boolean deleted = searchHistoryService.deleteSearchHistory(historyId, userId);
             if (!deleted) {
-                return ResponseEntity.status(404).body(ApiResponse.error("Search history entry not found"));
+                return ResponseEntity.status(404).body(ErrorResponse.of("Search history entry not found"));
             }
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Search history entry deleted successfully");
-            return ResponseEntity.ok(ApiResponse.success(response));
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Failed to delete search history: " + e.getMessage()));
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to delete search history: " + e.getMessage()));
         }
     }
 
     @GetMapping("/favourites")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get favourites", description = "Get user's favourites (activities and lesson plans)")
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getFavourites(
+    public ResponseEntity<?> getFavourites(
             @RequestParam(required = false) String type,
             HttpServletRequest request) {
         try {
             Long userId = (Long) request.getAttribute("userId");
             if (userId == null) {
-                return ResponseEntity.status(401).body(ApiResponse.error("Unauthorized"));
+                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
             List<UserFavourites> favourites = type != null ? 
@@ -144,22 +145,22 @@ public class HistoryController {
                 })
                 .collect(Collectors.toList());
 
-            return ResponseEntity.ok(ApiResponse.success(favouritesData));
+            return ResponseEntity.ok(favouritesData);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Failed to retrieve favourites: " + e.getMessage()));
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to retrieve favourites: " + e.getMessage()));
         }
     }
 
     @PostMapping("/favourites/activities")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Save activity favourite", description = "Save an activity as favourite")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> saveActivityFavourite(
+    public ResponseEntity<?>> saveActivityFavourite(
             @RequestBody Map<String, Object> requestBody,
             HttpServletRequest request) {
         try {
             Long userId = (Long) request.getAttribute("userId");
             if (userId == null) {
-                return ResponseEntity.status(401).body(ApiResponse.error("Unauthorized"));
+                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
             Long activityId = Long.valueOf(requestBody.get("activity_id").toString());
@@ -171,22 +172,22 @@ public class HistoryController {
             response.put("id", favourite.getId());
             response.put("message", "Activity favourite saved successfully");
 
-            return ResponseEntity.ok(ApiResponse.success(response));
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Failed to save activity favourite: " + e.getMessage()));
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to save activity favourite: " + e.getMessage()));
         }
     }
 
     @PostMapping("/favourites/lesson-plans")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Save lesson plan favourite", description = "Save a lesson plan as favourite")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> saveLessonPlanFavourite(
+    public ResponseEntity<?>> saveLessonPlanFavourite(
             @RequestBody Map<String, Object> requestBody,
             HttpServletRequest request) {
         try {
             Long userId = (Long) request.getAttribute("userId");
             if (userId == null) {
-                return ResponseEntity.status(401).body(ApiResponse.error("Unauthorized"));
+                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
             @SuppressWarnings("unchecked")
@@ -202,34 +203,34 @@ public class HistoryController {
             response.put("id", favourite.getId());
             response.put("message", "Lesson plan favourite saved successfully");
 
-            return ResponseEntity.ok(ApiResponse.success(response));
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Failed to save lesson plan favourite: " + e.getMessage()));
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to save lesson plan favourite: " + e.getMessage()));
         }
     }
 
     @DeleteMapping("/favourites/{favouriteId}")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Delete favourite", description = "Delete a favourite (activity or lesson plan)")
-    public ResponseEntity<ApiResponse<Map<String, String>>> deleteFavourite(
+    public ResponseEntity<?>> deleteFavourite(
             @PathVariable Long favouriteId,
             HttpServletRequest request) {
         try {
             Long userId = (Long) request.getAttribute("userId");
             if (userId == null) {
-                return ResponseEntity.status(401).body(ApiResponse.error("Unauthorized"));
+                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
             boolean deleted = favouritesService.deleteFavourite(favouriteId, userId);
             if (!deleted) {
-                return ResponseEntity.status(404).body(ApiResponse.error("Favourite not found"));
+                return ResponseEntity.status(404).body(ErrorResponse.of("Favourite not found"));
             }
 
             Map<String, String> response = new HashMap<>();
             response.put("message", "Favourite deleted successfully");
-            return ResponseEntity.ok(ApiResponse.success(response));
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ApiResponse.error("Failed to delete favourite: " + e.getMessage()));
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to delete favourite: " + e.getMessage()));
         }
     }
 }
