@@ -6,7 +6,7 @@
 .idea/
 .DS_Store
 **.db
-pg-data
+pg_data/
 server/data
 .cursor
 
