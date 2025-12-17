@@ -7,7 +7,7 @@ CREATE TYPE userrole AS ENUM ('TEACHER', 'ADMIN');
 
 -- Create activities table
 CREATE TABLE activities (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description VARCHAR(1000) NOT NULL,
     source VARCHAR(255),
@@ -23,7 +23,7 @@ CREATE TABLE activities (
     cleanup_time_minutes INTEGER NOT NULL DEFAULT 5,
     resources_needed JSONB,
     topics JSONB,
-    document_id INTEGER NOT NULL,
+    document_id BIGINT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -34,7 +34,7 @@ CREATE INDEX ix_activities_bloom_level ON activities(bloom_level);
 
 -- Create users table
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     email VARCHAR NOT NULL UNIQUE,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
@@ -48,7 +48,7 @@ CREATE INDEX ix_users_id ON users(id);
 
 -- Create PDF documents table
 CREATE TABLE pdf_documents (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     filename VARCHAR(255) NOT NULL,
     file_path VARCHAR(500) NOT NULL,
     file_size BIGINT NOT NULL,
@@ -62,8 +62,8 @@ CREATE INDEX ix_pdf_documents_id ON pdf_documents(id);
 
 -- Create verification codes table
 CREATE TABLE verification_codes (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id),
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id),
     code VARCHAR(6) NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     attempts INTEGER NOT NULL DEFAULT 0,
@@ -75,8 +75,8 @@ CREATE INDEX ix_verification_codes_id ON verification_codes(id);
 
 -- Create user search history table
 CREATE TABLE user_search_history (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id),
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id),
     search_criteria JSONB NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -85,10 +85,10 @@ CREATE INDEX ix_user_search_history_id ON user_search_history(id);
 
 -- Create user favourites table
 CREATE TABLE user_favourites (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id),
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id),
     favourite_type VARCHAR(20) NOT NULL,
-    activity_id INTEGER,
+    activity_id BIGINT,
     activity_ids JSONB,
     lesson_plan_snapshot JSONB,
     name VARCHAR(255),
