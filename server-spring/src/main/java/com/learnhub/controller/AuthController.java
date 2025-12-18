@@ -189,15 +189,14 @@ public class AuthController {
     public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserRequest request) {
         try {
             UserResponse user = authService.createUser(
-                request.getEmail(),
-                request.getFirstName(),
-                request.getLastName(),
-                request.getRole(),
-                request.getPassword()
-            );
+                    request.getEmail(),
+                    request.getFirstName(),
+                    request.getLastName(),
+                    request.getRole(),
+                    request.getPassword());
             Map<String, Object> response = new HashMap<>();
             response.put("user", user);
-            return ResponseEntity.status(201).ok(response);
+            return ResponseEntity.status(201).body(response);
         } catch (RuntimeException e) {
             if (e.getMessage().contains("already exists")) {
                 return ResponseEntity.status(409).body(ErrorResponse.of(e.getMessage()));
@@ -215,13 +214,12 @@ public class AuthController {
     public ResponseEntity<?> updateUser(@PathVariable Long userId, @Valid @RequestBody UpdateUserRequest request) {
         try {
             UserResponse user = authService.updateUser(
-                userId,
-                request.getEmail(),
-                request.getFirstName(),
-                request.getLastName(),
-                request.getRole(),
-                request.getPassword()
-            );
+                    userId,
+                    request.getEmail(),
+                    request.getFirstName(),
+                    request.getLastName(),
+                    request.getRole(),
+                    request.getPassword());
             Map<String, Object> response = new HashMap<>();
             response.put("user", user);
             return ResponseEntity.ok(response);
@@ -264,19 +262,19 @@ public class AuthController {
     @PreAuthorize("isAuthenticated()")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Update profile", description = "Update current user's profile")
-    public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest request, HttpServletRequest httpRequest) {
+    public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest request,
+            HttpServletRequest httpRequest) {
         try {
             Long userId = (Long) httpRequest.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
             UserResponse user = authService.updateProfile(
-                userId,
-                request.getEmail(),
-                request.getFirstName(),
-                request.getLastName(),
-                request.getPassword()
-            );
+                    userId,
+                    request.getEmail(),
+                    request.getFirstName(),
+                    request.getLastName(),
+                    request.getPassword());
             return ResponseEntity.ok(user);
         } catch (RuntimeException e) {
             if (e.getMessage().contains("not found")) {
