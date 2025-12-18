@@ -2,6 +2,7 @@ package com.learnhub.controller;
 
 import com.learnhub.dto.request.CreateUserRequest;
 import com.learnhub.dto.request.LoginRequest;
+import com.learnhub.dto.request.PasswordResetRequest;
 import com.learnhub.dto.request.RefreshTokenRequest;
 import com.learnhub.dto.request.TeacherRegistrationRequest;
 import com.learnhub.dto.request.UpdateProfileRequest;
@@ -156,13 +157,18 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    @Operation(summary = "Reset password", description = "Request password reset")
-    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> request) {
+    @Operation(summary = "Reset password", description = "Reset password for a teacher")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
         try {
-            // TODO: Implement password reset
-            return ResponseEntity.ok(MessageResponse.of("Password reset email sent"));
-        } catch (Exception e) {
+            authService.resetPassword(request.getEmail());
+            return ResponseEntity.ok(MessageResponse.of("Password reset successfully. New credentials have been sent via email."));
+        } catch (RuntimeException e) {
+            if (e.getMessage().equals("Teacher not found")) {
+                return ResponseEntity.status(404).body(ErrorResponse.of("Teacher not found"));
+            }
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to reset password: " + e.getMessage()));
         }
     }
 

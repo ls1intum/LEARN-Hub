@@ -311,4 +311,60 @@ public class AuthService {
         
         return new LoginResponse(newAccessToken, newRefreshToken, mapToUserResponse(user));
     }
+    
+    @Transactional
+    public void resetPassword(String email) {
+        // Find user by email
+        User user = userRepository.findByEmail(email)
+            .orElseThrow(() -> new RuntimeException("Teacher not found"));
+        
+        // Verify user is a teacher (not admin)
+        if (user.getRole() != UserRole.TEACHER) {
+            throw new RuntimeException("Teacher not found");
+        }
+        
+        // Generate new secure password (similar to Flask's PasswordGenerator)
+        String newPassword = generateSecurePassword();
+        
+        // Set new password
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        
+        // Send password reset email
+        try {
+            emailService.sendPasswordReset(user.getEmail(), user.getFirstName(), newPassword);
+        } catch (Exception e) {
+            // Log warning but don't fail - password was already reset
+            System.err.println("Failed to send password reset email to " + email + ", but password was reset");
+        }
+    }
+    
+    private String generateSecurePassword() {
+        // Generate a secure random password similar to Flask's PasswordGenerator
+        // Format: 3 random words + 2 digits + 1 special character
+        String[] words = {
+            "happy", "sunny", "bright", "swift", "clear", "fresh", "quick", "smart",
+            "brave", "calm", "kind", "wise", "proud", "strong", "gentle", "bold"
+        };
+        
+        Random random = new Random();
+        StringBuilder password = new StringBuilder();
+        
+        // Add 3 random words with first letter capitalized
+        for (int i = 0; i < 3; i++) {
+            String word = words[random.nextInt(words.length)];
+            password.append(Character.toUpperCase(word.charAt(0)))
+                   .append(word.substring(1));
+        }
+        
+        // Add 2 random digits
+        password.append(random.nextInt(10));
+        password.append(random.nextInt(10));
+        
+        // Add 1 special character
+        char[] specialChars = {'!', '@', '#', '$', '%', '&', '*'};
+        password.append(specialChars[random.nextInt(specialChars.length)]);
+        
+        return password.toString();
+    }
 }

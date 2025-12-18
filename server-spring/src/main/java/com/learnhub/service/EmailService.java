@@ -73,4 +73,25 @@ public class EmailService {
         
         mailSender.send(message);
     }
+
+    public void sendPasswordReset(String to, String firstName, String newPassword) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(fromName + " <" + fromAddress + ">");
+        message.setTo(to);
+        message.setSubject("Your Password Has Been Reset - LEARN-Hub");
+        message.setText(String.format(
+            "Hello %s,\n\n" +
+            "Your password has been successfully reset.\n\n" +
+            "Your new login credentials are:\n" +
+            "Email: %s\n" +
+            "Password: %s\n\n" +
+            "Please keep this information secure and consider changing your password after logging in.\n\n" +
+            "If you didn't request this password reset, please contact support immediately.\n\n" +
+            "Best regards,\n" +
+            "The LEARN-Hub Team",
+            firstName, to, newPassword
+        ));
+        
+        mailSender.send(message);
+    }
 }
