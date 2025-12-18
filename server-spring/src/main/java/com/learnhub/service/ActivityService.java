@@ -2,6 +2,7 @@ package com.learnhub.service;
 
 import com.learnhub.dto.response.ActivityResponse;
 import com.learnhub.model.Activity;
+import com.learnhub.model.enums.*;
 import com.learnhub.repository.ActivityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -105,6 +107,62 @@ public class ActivityService {
 
     public void deleteActivity(Long id) {
         activityRepository.deleteById(id);
+    }
+
+    public Activity createActivityFromMap(Map<String, Object> data) {
+        Activity activity = new Activity();
+        
+        if (data.get("name") != null) activity.setName(data.get("name").toString());
+        if (data.get("description") != null) activity.setDescription(data.get("description").toString());
+        if (data.get("source") != null) activity.setSource(data.get("source").toString());
+        
+        if (data.get("age_min") != null) {
+            activity.setAgeMin(Integer.parseInt(data.get("age_min").toString()));
+        }
+        if (data.get("age_max") != null) {
+            activity.setAgeMax(Integer.parseInt(data.get("age_max").toString()));
+        }
+        
+        if (data.get("format") != null) {
+            activity.setFormat(ActivityFormat.fromValue(data.get("format").toString()));
+        }
+        if (data.get("bloom_level") != null) {
+            activity.setBloomLevel(BloomLevel.fromValue(data.get("bloom_level").toString()));
+        }
+        
+        if (data.get("duration_min_minutes") != null) {
+            activity.setDurationMinMinutes(Integer.parseInt(data.get("duration_min_minutes").toString()));
+        }
+        if (data.get("duration_max_minutes") != null) {
+            activity.setDurationMaxMinutes(Integer.parseInt(data.get("duration_max_minutes").toString()));
+        }
+        
+        if (data.get("mental_load") != null) {
+            activity.setMentalLoad(EnergyLevel.fromValue(data.get("mental_load").toString()));
+        }
+        if (data.get("physical_energy") != null) {
+            activity.setPhysicalEnergy(EnergyLevel.fromValue(data.get("physical_energy").toString()));
+        }
+        
+        if (data.get("prep_time_minutes") != null) {
+            activity.setPrepTimeMinutes(Integer.parseInt(data.get("prep_time_minutes").toString()));
+        }
+        if (data.get("cleanup_time_minutes") != null) {
+            activity.setCleanupTimeMinutes(Integer.parseInt(data.get("cleanup_time_minutes").toString()));
+        }
+        
+        if (data.get("resources_needed") != null) {
+            activity.setResourcesNeeded((List<String>) data.get("resources_needed"));
+        }
+        if (data.get("topics") != null) {
+            activity.setTopics((List<String>) data.get("topics"));
+        }
+        
+        if (data.get("document_id") != null) {
+            activity.setDocumentId(Long.parseLong(data.get("document_id").toString()));
+        }
+        
+        return activity;
     }
 
     private ActivityResponse mapToResponse(Activity activity) {

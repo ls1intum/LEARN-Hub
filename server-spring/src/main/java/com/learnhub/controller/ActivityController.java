@@ -1,15 +1,22 @@
 package com.learnhub.controller;
 
+import com.learnhub.dto.request.ActivityCreationRequest;
+import com.learnhub.dto.request.LessonPlanInfoRequest;
+import com.learnhub.dto.request.LessonPlanRequest;
 import com.learnhub.dto.response.ActivityResponse;
 import com.learnhub.dto.response.ErrorResponse;
+import com.learnhub.dto.response.LessonPlanInfoResponse;
+import com.learnhub.model.Activity;
 import com.learnhub.model.PDFDocument;
 import com.learnhub.service.ActivityService;
+import com.learnhub.service.LLMService;
 import com.learnhub.service.PDFService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,6 +37,9 @@ public class ActivityController {
 
     @Autowired
     private PDFService pdfService;
+
+    @Autowired
+    private LLMService llmService;
 
     @GetMapping("/")
     @Operation(summary = "Get activities", description = "Get a list of activities with optional filtering and pagination")
@@ -69,10 +79,38 @@ public class ActivityController {
     @Operation(summary = "Create activity", description = "Create a new activity (admin only)")
     public ResponseEntity<?> createActivity(@RequestBody Map<String, Object> request) {
         try {
-            // TODO: Implement create activity
-            return ResponseEntity.ok(ResponseEntity.ok(new HashMap<>()));
+            // Validate document_id
+            Object documentIdObj = request.get("document_id");
+            if (documentIdObj == null) {
+                return ResponseEntity.badRequest().body(ErrorResponse.of("document_id is required"));
+            }
+            
+            Long documentId = Long.parseLong(documentIdObj.toString());
+            if (documentId <= 0) {
+                return ResponseEntity.badRequest().body(ErrorResponse.of("Invalid document_id"));
+            }
+            
+            // Check if PDF exists
+            try {
+                byte[] pdfContent = pdfService.getPdfContent(documentId);
+                if (pdfContent == null || pdfContent.length == 0) {
+                    return ResponseEntity.badRequest()
+                        .body(ErrorResponse.of("PDF document with ID " + documentId + " does not exist"));
+                }
+            } catch (Exception e) {
+                return ResponseEntity.badRequest()
+                    .body(ErrorResponse.of("PDF document with ID " + documentId + " does not exist"));
+            }
+            
+            // Create activity from request
+            Activity activity = activityService.createActivityFromMap(request);
+            ActivityResponse saved = activityService.createActivity(activity);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("activity", saved);
+            return ResponseEntity.status(201).body(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to create activity: " + e.getMessage()));
         }
     }
 
@@ -106,14 +144,58 @@ public class ActivityController {
                 return ResponseEntity.badRequest().body(ErrorResponse.of("File must be a PDF"));
             }
 
-            // TODO: Implement full upload and create logic
+            // Store PDF
             byte[] pdfContent = pdfFile.getBytes();
+            if (pdfContent.length == 0) {
+                return ResponseEntity.badRequest().body(ErrorResponse.of("PDF file is empty"));
+            }
+            
             Long documentId = pdfService.storePdf(pdfContent, pdfFile.getOriginalFilename());
 
+            // Extract activity data using LLM
+            String pdfText = new String(pdfContent); // Simplified - should use PDF parser
+            Map<String, Object> extractionResult = llmService.extractActivityData(pdfText);
+            
+            Map<String, Object> extractedData = (Map<String, Object>) extractionResult.get("data");
+            Double confidence = extractionResult.get("confidence") != null ? 
+                (Double) extractionResult.get("confidence") : 0.0;
+            
+            String extractionQuality = "high";
+            if (confidence < 0.5) {
+                extractionQuality = "low";
+            } else if (confidence < 0.75) {
+                extractionQuality = "medium";
+            }
+            
+            // Update PDF with extraction results
+            String confidenceScore = String.format("%.3f", confidence);
+            pdfService.updatePdfExtractionResults(documentId, extractedData, confidenceScore, extractionQuality);
+            
+            // Create activity with extracted data and defaults
+            Map<String, Object> activityData = new HashMap<>(extractedData);
+            activityData.put("document_id", documentId);
+            
+            // Set defaults for missing fields
+            if (!activityData.containsKey("age_min")) activityData.put("age_min", 6);
+            if (!activityData.containsKey("age_max")) activityData.put("age_max", 12);
+            if (!activityData.containsKey("format")) activityData.put("format", "unplugged");
+            if (!activityData.containsKey("bloom_level")) activityData.put("bloom_level", "remember");
+            if (!activityData.containsKey("duration_min_minutes")) activityData.put("duration_min_minutes", 15);
+            if (!activityData.containsKey("mental_load")) activityData.put("mental_load", "medium");
+            if (!activityData.containsKey("physical_energy")) activityData.put("physical_energy", "medium");
+            if (!activityData.containsKey("prep_time_minutes")) activityData.put("prep_time_minutes", 5);
+            if (!activityData.containsKey("cleanup_time_minutes")) activityData.put("cleanup_time_minutes", 5);
+            
+            Activity activity = activityService.createActivityFromMap(activityData);
+            ActivityResponse saved = activityService.createActivity(activity);
+            
             Map<String, Object> response = new HashMap<>();
+            response.put("activity", saved);
             response.put("document_id", documentId);
-            response.put("message", "Activity created successfully");
-            return ResponseEntity.ok(response);
+            response.put("extraction_confidence", confidence);
+            response.put("extraction_quality", extractionQuality);
+            
+            return ResponseEntity.status(201).body(response);
         } catch (Exception e) {
             return ResponseEntity.status(500)
                     .body(ErrorResponse.of("Failed to upload and create activity: " + e.getMessage()));
@@ -156,10 +238,26 @@ public class ActivityController {
             @RequestParam(required = false) List<String> topics,
             @RequestParam(required = false, defaultValue = "10") Integer limit) {
         try {
-            // TODO: Implement recommendation logic
+            // For now, return filtered activities
+            // In a full implementation, this would use a recommendation engine with scoring
             List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
                     null, age_min, age_max, format, bloom_level, limit, 0);
-            return ResponseEntity.ok(activities);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("activities", activities);
+            response.put("total", activities.size());
+            response.put("generated_at", java.time.Instant.now().toString());
+            
+            Map<String, Object> searchCriteria = new HashMap<>();
+            if (age_min != null) searchCriteria.put("age_min", age_min);
+            if (age_max != null) searchCriteria.put("age_max", age_max);
+            if (format != null) searchCriteria.put("format", format);
+            if (bloom_level != null) searchCriteria.put("bloom_level", bloom_level);
+            if (resources_needed != null) searchCriteria.put("resources_needed", resources_needed);
+            if (topics != null) searchCriteria.put("topics", topics);
+            response.put("search_criteria", searchCriteria);
+            
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
         }
@@ -167,14 +265,65 @@ public class ActivityController {
 
     @PostMapping("/lesson-plan")
     @Operation(summary = "Generate lesson plan", description = "Generate a lesson plan from selected activities")
-    public ResponseEntity<?> generateLessonPlan(@RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> generateLessonPlan(@RequestBody LessonPlanRequest request) {
         try {
-            // TODO: Implement lesson plan generation
-            Map<String, Object> response = new HashMap<>();
-            response.put("lesson_plan", new HashMap<>());
-            return ResponseEntity.ok(response);
+            List<Map<String, Object>> activities = request.getActivities();
+            
+            // Check if PDFs are available
+            LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(activities);
+            if (!info.isCanGenerateLessonPlan()) {
+                return ResponseEntity.badRequest()
+                    .body(ErrorResponse.of("No PDFs available for the selected activities"));
+            }
+            
+            // Extract breaks
+            List<Map<String, Object>> breaks = request.getBreaks();
+            if (breaks == null) {
+                breaks = new java.util.ArrayList<>();
+                // Extract breaks from activities' break_after field
+                for (int i = 0; i < activities.size() - 1; i++) {
+                    Map<String, Object> activity = activities.get(i);
+                    if (activity.get("break_after") != null) {
+                        breaks.add((Map<String, Object>) activity.get("break_after"));
+                    }
+                }
+            }
+            
+            // SAFEGUARD: Maximum (n-1) breaks for n activities
+            int maxBreaks = Math.max(activities.size() - 1, 0);
+            if (breaks.size() > maxBreaks) {
+                breaks = breaks.subList(0, maxBreaks);
+            }
+            
+            // Generate lesson plan PDF
+            byte[] lessonPlanPdf = pdfService.generateLessonPlan(
+                activities,
+                request.getSearchCriteria(),
+                breaks,
+                request.getTotalDuration()
+            );
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "lesson_plan.pdf");
+            headers.setContentLength(lessonPlanPdf.length);
+            
+            return ResponseEntity.ok()
+                .headers(headers)
+                .body(lessonPlanPdf);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to generate lesson plan: " + e.getMessage()));
+        }
+    }
+
+    @PostMapping("/lesson-plan/info")
+    @Operation(summary = "Get lesson plan info", description = "Get lesson plan generation information")
+    public ResponseEntity<?> getLessonPlanInfo(@RequestBody LessonPlanInfoRequest request) {
+        try {
+            LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(request.getActivities());
+            return ResponseEntity.ok(info);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to get lesson plan info: " + e.getMessage()));
         }
     }
 }
