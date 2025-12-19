@@ -29,7 +29,7 @@ public class ActivityService {
 
     public List<ActivityResponse> getActivitiesWithFilters(
             String name, Integer ageMin, Integer ageMax, 
-            List<String> formats, List<String> bloomLevels,
+            List<String> formats, List<String> bloomLevels, Integer mentalLoad,
             Integer limit, Integer offset) {
         
         Specification<Activity> spec = Specification.where(null);
@@ -57,6 +57,11 @@ public class ActivityService {
         if (bloomLevels != null && !bloomLevels.isEmpty()) {
             spec = spec.and((root, query, cb) -> 
                 root.get("bloomLevel").as(String.class).in(bloomLevels));
+        }
+        
+        if (mentalLoad != null) {
+            spec = spec.and((root, query, cb) -> 
+                cb.equal(root.get("mentalLoad"), mentalLoad));
         }
         
         int pageSize = (limit != null && limit > 0) ? limit : Integer.MAX_VALUE;

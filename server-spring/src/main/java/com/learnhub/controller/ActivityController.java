@@ -54,13 +54,14 @@ public class ActivityController {
             @RequestParam(name = "age_max", required = false) Integer ageMax,
             @RequestParam(required = false) List<String> format,
             @RequestParam(name = "bloom_level", required = false) List<String> bloomLevel,
+            @RequestParam(name = "mental_load", required = false) Integer mentalLoad,
             @RequestParam(required = false) List<String> resources_needed,
             @RequestParam(required = false) List<String> topics,
             @RequestParam(required = false, defaultValue = "100") Integer limit,
             @RequestParam(required = false, defaultValue = "0") Integer offset) {
         try {
             List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
-                    name, ageMin, ageMax, format, bloomLevel, limit, offset);
+                    name, ageMin, ageMax, format, bloomLevel, mentalLoad, limit, offset);
             Map<String, Object> response = new HashMap<>();
             response.put("total", activities.size());
             response.put("activities", activities);
