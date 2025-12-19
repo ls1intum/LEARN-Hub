@@ -165,6 +165,10 @@ public class ActivityService {
         return activity;
     }
 
+    public ActivityResponse convertToResponse(Activity activity) {
+        return mapToResponse(activity);
+    }
+
     private ActivityResponse mapToResponse(Activity activity) {
         ActivityResponse response = new ActivityResponse();
         response.setId(activity.getId());

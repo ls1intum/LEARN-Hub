@@ -69,9 +69,9 @@ public class DatabaseSeeder implements CommandLineRunner {
         }
 
         // Try to load full dataset from CSV
-        Path datasetCsv = Paths.get("dataset/dataset.csv");
-        Path pdfDir = Paths.get("dataset/pdfs");
-        
+        Path datasetCsv = Paths.get("../dataset/dataset.csv");
+        Path pdfDir = Paths.get("../dataset/pdfs");
+
         if (Files.exists(datasetCsv) && Files.isDirectory(pdfDir)) {
             logger.info("Found dataset CSV and PDF directory. Loading full dataset...");
             loadDatasetFromCSV(datasetCsv, pdfDir);
@@ -81,7 +81,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             PDFDocument pdfDocument = createPlaceholderPDF();
             createDemoActivities(pdfDocument.getId());
         }
-        
+
         // Create admin user
         createAdminUser();
 
@@ -90,10 +90,10 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private void loadDatasetFromCSV(Path csvPath, Path pdfDir) {
         try (FileReader reader = new FileReader(csvPath.toFile());
-             CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.builder()
-                     .setHeader()
-                     .setSkipHeaderRecord(true)
-                     .build())) {
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.DEFAULT.builder()
+                        .setHeader()
+                        .setSkipHeaderRecord(true)
+                        .build())) {
 
             int count = 0;
             for (CSVRecord record : csvParser) {
@@ -146,14 +146,14 @@ public class DatabaseSeeder implements CommandLineRunner {
                     activity.setPhysicalEnergy(EnergyLevel.fromValue(record.get("physical_energy")));
                     activity.setPrepTimeMinutes(Integer.parseInt(record.get("prep_time_minutes")));
                     activity.setCleanupTimeMinutes(Integer.parseInt(record.get("cleanup_time_minutes")));
-                    
+
                     // Parse pipe-delimited resources and topics
                     String resourcesStr = record.get("resources_needed");
                     activity.setResourcesNeeded(parseDelimitedList(resourcesStr));
-                    
+
                     String topicsStr = record.get("topics");
                     activity.setTopics(parseDelimitedList(topicsStr));
-                    
+
                     activity.setDocumentId(pdfDocument.getId());
                     activity.setCreatedAt(LocalDateTime.now());
 
@@ -198,7 +198,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         document.setConfidenceScore("0.95");
         document.setExtractionQuality("high");
         document.setCreatedAt(LocalDateTime.now());
-        
+
         document = pdfDocumentRepository.save(document);
         logger.info("Created placeholder PDF document with ID: {}", document.getId());
         return document;
@@ -206,42 +206,41 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private void createDemoActivities(Long documentId) {
         List<Activity> activities = Arrays.asList(
-            createActivity("Binary Cards", "Learn binary number representation using cards", 
-                8, 12, ActivityFormat.UNPLUGGED, BloomLevel.UNDERSTAND, 30, 45, 
-                EnergyLevel.MEDIUM, EnergyLevel.LOW, Arrays.asList("handouts"), 
-                Arrays.asList("patterns", "abstraction"), documentId),
-            
-            createActivity("Robot Commands", "Program a 'robot' classmate using simple commands",
-                6, 10, ActivityFormat.UNPLUGGED, BloomLevel.APPLY, 20, 30,
-                EnergyLevel.LOW, EnergyLevel.HIGH, Arrays.asList("stationery"),
-                Arrays.asList("algorithms", "decomposition"), documentId),
-            
-            createActivity("Sorting Network", "Learn sorting algorithms through physical activity",
-                10, 14, ActivityFormat.UNPLUGGED, BloomLevel.ANALYZE, 45, 60,
-                EnergyLevel.MEDIUM, EnergyLevel.HIGH, Arrays.asList("handouts"),
-                Arrays.asList("algorithms", "patterns"), documentId),
-            
-            createActivity("Scratch Animation", "Create animated stories using block-based coding",
-                8, 13, ActivityFormat.DIGITAL, BloomLevel.CREATE, 60, 90,
-                EnergyLevel.MEDIUM, EnergyLevel.LOW, Arrays.asList("computers", "tablets"),
-                Arrays.asList("algorithms", "decomposition"), documentId),
-            
-            createActivity("Pixel Art", "Design images by coloring grid squares",
-                7, 11, ActivityFormat.HYBRID, BloomLevel.APPLY, 30, 45,
-                EnergyLevel.LOW, EnergyLevel.LOW, Arrays.asList("handouts", "tablets"),
-                Arrays.asList("abstraction", "patterns"), documentId)
-        );
+                createActivity("Binary Cards", "Learn binary number representation using cards",
+                        8, 12, ActivityFormat.UNPLUGGED, BloomLevel.UNDERSTAND, 30, 45,
+                        EnergyLevel.MEDIUM, EnergyLevel.LOW, Arrays.asList("handouts"),
+                        Arrays.asList("patterns", "abstraction"), documentId),
+
+                createActivity("Robot Commands", "Program a 'robot' classmate using simple commands",
+                        6, 10, ActivityFormat.UNPLUGGED, BloomLevel.APPLY, 20, 30,
+                        EnergyLevel.LOW, EnergyLevel.HIGH, Arrays.asList("stationery"),
+                        Arrays.asList("algorithms", "decomposition"), documentId),
+
+                createActivity("Sorting Network", "Learn sorting algorithms through physical activity",
+                        10, 14, ActivityFormat.UNPLUGGED, BloomLevel.ANALYZE, 45, 60,
+                        EnergyLevel.MEDIUM, EnergyLevel.HIGH, Arrays.asList("handouts"),
+                        Arrays.asList("algorithms", "patterns"), documentId),
+
+                createActivity("Scratch Animation", "Create animated stories using block-based coding",
+                        8, 13, ActivityFormat.DIGITAL, BloomLevel.CREATE, 60, 90,
+                        EnergyLevel.MEDIUM, EnergyLevel.LOW, Arrays.asList("computers", "tablets"),
+                        Arrays.asList("algorithms", "decomposition"), documentId),
+
+                createActivity("Pixel Art", "Design images by coloring grid squares",
+                        7, 11, ActivityFormat.HYBRID, BloomLevel.APPLY, 30, 45,
+                        EnergyLevel.LOW, EnergyLevel.LOW, Arrays.asList("handouts", "tablets"),
+                        Arrays.asList("abstraction", "patterns"), documentId));
 
         activityRepository.saveAll(activities);
         logger.info("Created {} demo activities", activities.size());
     }
 
     private Activity createActivity(String name, String description, int ageMin, int ageMax,
-                                   ActivityFormat format, BloomLevel bloomLevel,
-                                   int durationMin, int durationMax,
-                                   EnergyLevel mentalLoad, EnergyLevel physicalEnergy,
-                                   List<String> resources, List<String> topics,
-                                   Long documentId) {
+            ActivityFormat format, BloomLevel bloomLevel,
+            int durationMin, int durationMax,
+            EnergyLevel mentalLoad, EnergyLevel physicalEnergy,
+            List<String> resources, List<String> topics,
+            Long documentId) {
         Activity activity = new Activity();
         activity.setName(name);
         activity.setDescription(description);
@@ -265,29 +264,29 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     private void createAdminUser() {
         String adminEmail = "admin@learnhub.com";
-        
+
         if (userRepository.existsByEmail(adminEmail)) {
             logger.info("Admin user already exists");
             return;
         }
 
         String password = generateRandomPassword();
-        
+
         User admin = new User();
         admin.setEmail(adminEmail);
         admin.setFirstName("Admin");
         admin.setLastName("User");
         admin.setRole(UserRole.ADMIN);
         admin.setPasswordHash(passwordEncoder.encode(password));
-        
+
         userRepository.save(admin);
-        
-        logger.info("=" .repeat(60));
+
+        logger.info("=".repeat(60));
         logger.info("ADMIN CREDENTIALS");
-        logger.info("=" .repeat(60));
+        logger.info("=".repeat(60));
         logger.info("Email: {}", adminEmail);
         logger.info("Password: {}", password);
-        logger.info("=" .repeat(60));
+        logger.info("=".repeat(60));
     }
 
     private String generateRandomPassword() {

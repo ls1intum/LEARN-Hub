@@ -42,7 +42,7 @@ public class ActivityController {
 
     @Autowired
     private LLMService llmService;
-    
+
     @Autowired
     private RecommendationService recommendationService;
 
@@ -61,7 +61,10 @@ public class ActivityController {
         try {
             List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
                     name, ageMin, ageMax, format, bloomLevel, limit, offset);
-            return ResponseEntity.ok(activities);
+            Map<String, Object> response = new HashMap<>();
+            response.put("total", activities.size());
+            response.put("activities", activities);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
         }
@@ -89,28 +92,28 @@ public class ActivityController {
             if (documentIdObj == null) {
                 return ResponseEntity.badRequest().body(ErrorResponse.of("document_id is required"));
             }
-            
+
             Long documentId = Long.parseLong(documentIdObj.toString());
             if (documentId <= 0) {
                 return ResponseEntity.badRequest().body(ErrorResponse.of("Invalid document_id"));
             }
-            
+
             // Check if PDF exists
             try {
                 byte[] pdfContent = pdfService.getPdfContent(documentId);
                 if (pdfContent == null || pdfContent.length == 0) {
                     return ResponseEntity.badRequest()
-                        .body(ErrorResponse.of("PDF document with ID " + documentId + " does not exist"));
+                            .body(ErrorResponse.of("PDF document with ID " + documentId + " does not exist"));
                 }
             } catch (Exception e) {
                 return ResponseEntity.badRequest()
-                    .body(ErrorResponse.of("PDF document with ID " + documentId + " does not exist"));
+                        .body(ErrorResponse.of("PDF document with ID " + documentId + " does not exist"));
             }
-            
+
             // Create activity from request
             Activity activity = activityService.createActivityFromMap(request);
             ActivityResponse saved = activityService.createActivity(activity);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("activity", saved);
             return ResponseEntity.status(201).body(response);
@@ -154,52 +157,61 @@ public class ActivityController {
             if (pdfContent.length == 0) {
                 return ResponseEntity.badRequest().body(ErrorResponse.of("PDF file is empty"));
             }
-            
+
             Long documentId = pdfService.storePdf(pdfContent, pdfFile.getOriginalFilename());
 
             // Extract activity data using LLM
             String pdfText = new String(pdfContent); // Simplified - should use PDF parser
             Map<String, Object> extractionResult = llmService.extractActivityData(pdfText);
-            
+
             Map<String, Object> extractedData = (Map<String, Object>) extractionResult.get("data");
-            Double confidence = extractionResult.get("confidence") != null ? 
-                (Double) extractionResult.get("confidence") : 0.0;
-            
+            Double confidence = extractionResult.get("confidence") != null ? (Double) extractionResult.get("confidence")
+                    : 0.0;
+
             String extractionQuality = "high";
             if (confidence < 0.5) {
                 extractionQuality = "low";
             } else if (confidence < 0.75) {
                 extractionQuality = "medium";
             }
-            
+
             // Update PDF with extraction results
             String confidenceScore = String.format("%.3f", confidence);
             pdfService.updatePdfExtractionResults(documentId, extractedData, confidenceScore, extractionQuality);
-            
+
             // Create activity with extracted data and defaults
             Map<String, Object> activityData = new HashMap<>(extractedData);
             activityData.put("document_id", documentId);
-            
+
             // Set defaults for missing fields
-            if (!activityData.containsKey("age_min")) activityData.put("age_min", 6);
-            if (!activityData.containsKey("age_max")) activityData.put("age_max", 12);
-            if (!activityData.containsKey("format")) activityData.put("format", "unplugged");
-            if (!activityData.containsKey("bloom_level")) activityData.put("bloom_level", "remember");
-            if (!activityData.containsKey("duration_min_minutes")) activityData.put("duration_min_minutes", 15);
-            if (!activityData.containsKey("mental_load")) activityData.put("mental_load", "medium");
-            if (!activityData.containsKey("physical_energy")) activityData.put("physical_energy", "medium");
-            if (!activityData.containsKey("prep_time_minutes")) activityData.put("prep_time_minutes", 5);
-            if (!activityData.containsKey("cleanup_time_minutes")) activityData.put("cleanup_time_minutes", 5);
-            
+            if (!activityData.containsKey("age_min"))
+                activityData.put("age_min", 6);
+            if (!activityData.containsKey("age_max"))
+                activityData.put("age_max", 12);
+            if (!activityData.containsKey("format"))
+                activityData.put("format", "unplugged");
+            if (!activityData.containsKey("bloom_level"))
+                activityData.put("bloom_level", "remember");
+            if (!activityData.containsKey("duration_min_minutes"))
+                activityData.put("duration_min_minutes", 15);
+            if (!activityData.containsKey("mental_load"))
+                activityData.put("mental_load", "medium");
+            if (!activityData.containsKey("physical_energy"))
+                activityData.put("physical_energy", "medium");
+            if (!activityData.containsKey("prep_time_minutes"))
+                activityData.put("prep_time_minutes", 5);
+            if (!activityData.containsKey("cleanup_time_minutes"))
+                activityData.put("cleanup_time_minutes", 5);
+
             Activity activity = activityService.createActivityFromMap(activityData);
             ActivityResponse saved = activityService.createActivity(activity);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("activity", saved);
             response.put("document_id", documentId);
             response.put("extraction_confidence", confidence);
             response.put("extraction_quality", extractionQuality);
-            
+
             return ResponseEntity.status(201).body(response);
         } catch (Exception e) {
             return ResponseEntity.status(500)
@@ -249,35 +261,44 @@ public class ActivityController {
         try {
             // Build criteria map
             Map<String, Object> criteria = new HashMap<>();
-            if (name != null) criteria.put("name", name);
-            if (target_age != null) criteria.put("target_age", target_age);
-            if (format != null) criteria.put("format", format);
-            if (bloom_levels != null) criteria.put("bloom_levels", bloom_levels);
-            if (target_duration != null) criteria.put("target_duration", target_duration);
-            if (available_resources != null) criteria.put("available_resources", available_resources);
-            if (preferred_topics != null) criteria.put("preferred_topics", preferred_topics);
-            if (priority_categories != null) criteria.put("priority_categories", priority_categories);
-            
+            if (name != null)
+                criteria.put("name", name);
+            if (target_age != null)
+                criteria.put("target_age", target_age);
+            if (format != null)
+                criteria.put("format", format);
+            if (bloom_levels != null)
+                criteria.put("bloom_levels", bloom_levels);
+            if (target_duration != null)
+                criteria.put("target_duration", target_duration);
+            if (available_resources != null)
+                criteria.put("available_resources", available_resources);
+            if (preferred_topics != null)
+                criteria.put("preferred_topics", preferred_topics);
+            if (priority_categories != null)
+                criteria.put("priority_categories", priority_categories);
+
             // Get recommendations from service
             Map<String, Object> response = recommendationService.getRecommendations(
-                criteria, include_breaks, max_activity_count, limit);
-            
+                    criteria, include_breaks, max_activity_count, limit);
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to get recommendations: " + e.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to get recommendations: " + e.getMessage()));
         }
     }
-    
+
     @GetMapping("/scoring-insights")
     @Operation(summary = "Get scoring insights", description = "Get information about scoring categories and their weights")
     public ResponseEntity<?> getScoringInsights() {
         try {
             Map<String, ScoringEngine.ScoringCategory> categories = ScoringEngine.getScoringCategories();
-            
+
             Map<String, Object> response = new HashMap<>();
             Map<String, Map<String, Object>> categoriesMap = new HashMap<>();
-            
+
             for (Map.Entry<String, ScoringEngine.ScoringCategory> entry : categories.entrySet()) {
                 Map<String, Object> categoryInfo = new HashMap<>();
                 categoryInfo.put("name", entry.getValue().getName());
@@ -285,13 +306,14 @@ public class ActivityController {
                 categoryInfo.put("description", entry.getValue().getDescription());
                 categoriesMap.put(entry.getKey(), categoryInfo);
             }
-            
+
             response.put("categories", categoriesMap);
             response.put("description", "Scoring categories used to evaluate activity recommendations");
-            
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to get scoring insights: " + e.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to get scoring insights: " + e.getMessage()));
         }
     }
 
@@ -300,14 +322,14 @@ public class ActivityController {
     public ResponseEntity<?> generateLessonPlan(@RequestBody LessonPlanRequest request) {
         try {
             List<Map<String, Object>> activities = request.getActivities();
-            
+
             // Check if PDFs are available
             LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(activities);
             if (!info.isCanGenerateLessonPlan()) {
                 return ResponseEntity.badRequest()
-                    .body(ErrorResponse.of("No PDFs available for the selected activities"));
+                        .body(ErrorResponse.of("No PDFs available for the selected activities"));
             }
-            
+
             // Extract breaks
             List<Map<String, Object>> breaks = request.getBreaks();
             if (breaks == null) {
@@ -320,31 +342,31 @@ public class ActivityController {
                     }
                 }
             }
-            
+
             // SAFEGUARD: Maximum (n-1) breaks for n activities
             int maxBreaks = Math.max(activities.size() - 1, 0);
             if (breaks.size() > maxBreaks) {
                 breaks = breaks.subList(0, maxBreaks);
             }
-            
+
             // Generate lesson plan PDF
             byte[] lessonPlanPdf = pdfService.generateLessonPlan(
-                activities,
-                request.getSearchCriteria(),
-                breaks,
-                request.getTotalDuration()
-            );
-            
+                    activities,
+                    request.getSearchCriteria(),
+                    breaks,
+                    request.getTotalDuration());
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentDispositionFormData("attachment", "lesson_plan.pdf");
             headers.setContentLength(lessonPlanPdf.length);
-            
+
             return ResponseEntity.ok()
-                .headers(headers)
-                .body(lessonPlanPdf);
+                    .headers(headers)
+                    .body(lessonPlanPdf);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to generate lesson plan: " + e.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to generate lesson plan: " + e.getMessage()));
         }
     }
 
@@ -355,7 +377,8 @@ public class ActivityController {
             LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(request.getActivities());
             return ResponseEntity.ok(info);
         } catch (Exception e) {
-            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to get lesson plan info: " + e.getMessage()));
+            return ResponseEntity.status(500)
+                    .body(ErrorResponse.of("Failed to get lesson plan info: " + e.getMessage()));
         }
     }
 }
