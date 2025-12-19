@@ -29,7 +29,7 @@ public class ActivityService {
 
     public List<ActivityResponse> getActivitiesWithFilters(
             String name, Integer ageMin, Integer ageMax, 
-            List<String> formats, List<String> bloomLevels, Integer mentalLoad, Integer physicalEnergy,
+            List<String> formats, List<String> bloomLevels, String mentalLoad, String physicalEnergy,
             Integer limit, Integer offset) {
         
         Specification<Activity> spec = Specification.where(null);
@@ -59,16 +59,16 @@ public class ActivityService {
                 root.get("bloomLevel").as(String.class).in(bloomLevels));
         }
         
-        if (mentalLoad != null) {
-            // Convert Integer (1, 2, 3) to EnergyLevel enum (LOW, MEDIUM, HIGH)
-            EnergyLevel energyLevel = convertIntegerToEnergyLevel(mentalLoad);
+        if (mentalLoad != null && !mentalLoad.isEmpty()) {
+            // Convert String ("low", "medium", "high") to EnergyLevel enum (LOW, MEDIUM, HIGH)
+            EnergyLevel energyLevel = convertStringToEnergyLevel(mentalLoad);
             spec = spec.and((root, query, cb) -> 
                 cb.equal(root.get("mentalLoad"), energyLevel));
         }
         
-        if (physicalEnergy != null) {
-            // Convert Integer (1, 2, 3) to EnergyLevel enum (LOW, MEDIUM, HIGH)
-            EnergyLevel energyLevel = convertIntegerToEnergyLevel(physicalEnergy);
+        if (physicalEnergy != null && !physicalEnergy.isEmpty()) {
+            // Convert String ("low", "medium", "high") to EnergyLevel enum (LOW, MEDIUM, HIGH)
+            EnergyLevel energyLevel = convertStringToEnergyLevel(physicalEnergy);
             spec = spec.and((root, query, cb) -> 
                 cb.equal(root.get("physicalEnergy"), energyLevel));
         }
@@ -83,16 +83,16 @@ public class ActivityService {
             .collect(Collectors.toList());
     }
     
-    private EnergyLevel convertIntegerToEnergyLevel(Integer value) {
-        switch (value) {
-            case 1:
+    private EnergyLevel convertStringToEnergyLevel(String value) {
+        switch (value.toLowerCase()) {
+            case "low":
                 return EnergyLevel.LOW;
-            case 2:
+            case "medium":
                 return EnergyLevel.MEDIUM;
-            case 3:
+            case "high":
                 return EnergyLevel.HIGH;
             default:
-                throw new IllegalArgumentException("Invalid energy level: " + value + ". Must be 1 (low), 2 (medium), or 3 (high)");
+                throw new IllegalArgumentException("Invalid energy level: " + value + ". Must be 'low', 'medium', or 'high'");
         }
     }
 
