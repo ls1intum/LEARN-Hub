@@ -11,6 +11,8 @@ import com.learnhub.model.PDFDocument;
 import com.learnhub.service.ActivityService;
 import com.learnhub.service.LLMService;
 import com.learnhub.service.PDFService;
+import com.learnhub.service.RecommendationService;
+import com.learnhub.service.ScoringEngine;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,6 +42,9 @@ public class ActivityController {
 
     @Autowired
     private LLMService llmService;
+    
+    @Autowired
+    private RecommendationService recommendationService;
 
     @GetMapping("/")
     @Operation(summary = "Get activities", description = "Get a list of activities with optional filtering and pagination")
@@ -228,38 +233,65 @@ public class ActivityController {
     }
 
     @GetMapping("/recommendations")
-    @Operation(summary = "Get activity recommendations", description = "Get personalized activity recommendations")
+    @Operation(summary = "Get activity recommendations", description = "Get personalized activity recommendations with scoring")
     public ResponseEntity<?> getRecommendations(
-            @RequestParam(required = false) Integer age_min,
-            @RequestParam(required = false) Integer age_max,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Integer target_age,
             @RequestParam(required = false) List<String> format,
-            @RequestParam(required = false) List<String> bloom_level,
-            @RequestParam(required = false) List<String> resources_needed,
-            @RequestParam(required = false) List<String> topics,
+            @RequestParam(required = false) List<String> bloom_levels,
+            @RequestParam(required = false) Integer target_duration,
+            @RequestParam(required = false) List<String> available_resources,
+            @RequestParam(required = false) List<String> preferred_topics,
+            @RequestParam(required = false) List<String> priority_categories,
+            @RequestParam(required = false, defaultValue = "false") Boolean include_breaks,
+            @RequestParam(required = false, defaultValue = "2") Integer max_activity_count,
             @RequestParam(required = false, defaultValue = "10") Integer limit) {
         try {
-            // For now, return filtered activities
-            // In a full implementation, this would use a recommendation engine with scoring
-            List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
-                    null, age_min, age_max, format, bloom_level, limit, 0);
+            // Build criteria map
+            Map<String, Object> criteria = new HashMap<>();
+            if (name != null) criteria.put("name", name);
+            if (target_age != null) criteria.put("target_age", target_age);
+            if (format != null) criteria.put("format", format);
+            if (bloom_levels != null) criteria.put("bloom_levels", bloom_levels);
+            if (target_duration != null) criteria.put("target_duration", target_duration);
+            if (available_resources != null) criteria.put("available_resources", available_resources);
+            if (preferred_topics != null) criteria.put("preferred_topics", preferred_topics);
+            if (priority_categories != null) criteria.put("priority_categories", priority_categories);
             
-            Map<String, Object> response = new HashMap<>();
-            response.put("activities", activities);
-            response.put("total", activities.size());
-            response.put("generated_at", java.time.Instant.now().toString());
-            
-            Map<String, Object> searchCriteria = new HashMap<>();
-            if (age_min != null) searchCriteria.put("age_min", age_min);
-            if (age_max != null) searchCriteria.put("age_max", age_max);
-            if (format != null) searchCriteria.put("format", format);
-            if (bloom_level != null) searchCriteria.put("bloom_level", bloom_level);
-            if (resources_needed != null) searchCriteria.put("resources_needed", resources_needed);
-            if (topics != null) searchCriteria.put("topics", topics);
-            response.put("search_criteria", searchCriteria);
+            // Get recommendations from service
+            Map<String, Object> response = recommendationService.getRecommendations(
+                criteria, include_breaks, max_activity_count, limit);
             
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to get recommendations: " + e.getMessage()));
+        }
+    }
+    
+    @GetMapping("/scoring-insights")
+    @Operation(summary = "Get scoring insights", description = "Get information about scoring categories and their weights")
+    public ResponseEntity<?> getScoringInsights() {
+        try {
+            Map<String, ScoringEngine.ScoringCategory> categories = ScoringEngine.getScoringCategories();
+            
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Map<String, Object>> categoriesMap = new HashMap<>();
+            
+            for (Map.Entry<String, ScoringEngine.ScoringCategory> entry : categories.entrySet()) {
+                Map<String, Object> categoryInfo = new HashMap<>();
+                categoryInfo.put("name", entry.getValue().getName());
+                categoryInfo.put("impact", entry.getValue().getImpact());
+                categoryInfo.put("description", entry.getValue().getDescription());
+                categoriesMap.put(entry.getKey(), categoryInfo);
+            }
+            
+            response.put("categories", categoriesMap);
+            response.put("description", "Scoring categories used to evaluate activity recommendations");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to get scoring insights: " + e.getMessage()));
         }
     }
 

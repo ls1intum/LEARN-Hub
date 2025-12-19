@@ -90,4 +90,8 @@ public class Activity {
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+    
+    // Transient field for break information (not persisted to database)
+    @Transient
+    private Break breakAfter;
 }
