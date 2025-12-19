@@ -29,7 +29,7 @@ public class ActivityService {
 
     public List<ActivityResponse> getActivitiesWithFilters(
             String name, Integer ageMin, Integer ageMax, 
-            List<String> formats, List<String> bloomLevels, Integer mentalLoad,
+            List<String> formats, List<String> bloomLevels, Integer mentalLoad, Integer physicalEnergy,
             Integer limit, Integer offset) {
         
         Specification<Activity> spec = Specification.where(null);
@@ -60,8 +60,17 @@ public class ActivityService {
         }
         
         if (mentalLoad != null) {
+            // Convert Integer (1, 2, 3) to EnergyLevel enum (LOW, MEDIUM, HIGH)
+            EnergyLevel energyLevel = convertIntegerToEnergyLevel(mentalLoad);
             spec = spec.and((root, query, cb) -> 
-                cb.equal(root.get("mentalLoad"), mentalLoad));
+                cb.equal(root.get("mentalLoad"), energyLevel));
+        }
+        
+        if (physicalEnergy != null) {
+            // Convert Integer (1, 2, 3) to EnergyLevel enum (LOW, MEDIUM, HIGH)
+            EnergyLevel energyLevel = convertIntegerToEnergyLevel(physicalEnergy);
+            spec = spec.and((root, query, cb) -> 
+                cb.equal(root.get("physicalEnergy"), energyLevel));
         }
         
         int pageSize = (limit != null && limit > 0) ? limit : Integer.MAX_VALUE;
@@ -72,6 +81,19 @@ public class ActivityService {
         return page.getContent().stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
+    }
+    
+    private EnergyLevel convertIntegerToEnergyLevel(Integer value) {
+        switch (value) {
+            case 1:
+                return EnergyLevel.LOW;
+            case 2:
+                return EnergyLevel.MEDIUM;
+            case 3:
+                return EnergyLevel.HIGH;
+            default:
+                throw new IllegalArgumentException("Invalid energy level: " + value + ". Must be 1 (low), 2 (medium), or 3 (high)");
+        }
     }
 
     public ActivityResponse getActivityById(Long id) {
