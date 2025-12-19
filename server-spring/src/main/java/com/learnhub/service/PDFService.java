@@ -7,6 +7,7 @@ import com.learnhub.repository.PDFDocumentRepository;
 import com.learnhub.repository.ActivityRepository;
 
 import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -232,16 +233,12 @@ public class PDFService {
     }
 
     private void appendDocumentPages(PDDocument target, byte[] sourceBytes) throws IOException {
-        // Load source PDF and import pages while keeping source document open
+        // Use PDFMergerUtility for reliable page appending (PDFBox 3.x compatible)
         PDDocument source = Loader.loadPDF(sourceBytes);
         try {
-            // Import each page properly (PDFBox 3.x requires importing pages while source is open)
-            for (int i = 0; i < source.getNumberOfPages(); i++) {
-                PDPage page = source.getPage(i);
-                target.importPage(page);
-            }
+            org.apache.pdfbox.multipdf.PDFMergerUtility merger = new org.apache.pdfbox.multipdf.PDFMergerUtility();
+            merger.appendDocument(target, source);
         } finally {
-            // Close source after importing pages
             source.close();
         }
     }
@@ -251,7 +248,7 @@ public class PDFService {
             List<Map<String, Object>> breaks,
             Integer totalDuration) throws IOException {
         /**
-         * Generate a summary/cover page using PDFBox matching Flask's ReportLab output
+         * Generate a summary/cover page using PDFBox with table-based layout matching Flask's ReportLab output
          */
 
         PDDocument document = new PDDocument();
@@ -265,56 +262,46 @@ public class PDFService {
             try {
                 float margin = 50;
                 float yPosition = page.getMediaBox().getHeight() - margin;
-                float lineHeight = 15;
+                float pageWidth = page.getMediaBox().getWidth() - 2 * margin;
 
-                // Title
+                // Title - centered
                 contentStream.beginText();
                 contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 18);
-                contentStream.newLineAtOffset(margin, yPosition);
-                contentStream.showText("Lesson Plan Summary");
+                String title = "Lesson Plan Summary";
+                float titleWidth = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD).getStringWidth(title) / 1000 * 18;
+                contentStream.newLineAtOffset(margin + (pageWidth - titleWidth) / 2, yPosition);
+                contentStream.showText(title);
                 contentStream.endText();
 
-                yPosition -= 40;
+                yPosition -= 50;
 
-                // Search Criteria section
-                contentStream.beginText();
-                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14);
-                contentStream.newLineAtOffset(margin, yPosition);
-                contentStream.showText("Search Criteria:");
-                contentStream.endText();
-
-                yPosition -= 20;
-
-                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 10);
+                // Search Criteria Section with Table
+                yPosition = drawSectionHeader(contentStream, margin, yPosition, "Search Criteria:");
+                yPosition -= 10;
+                
                 if (searchCriteria != null && !searchCriteria.isEmpty()) {
+                    List<String[]> criteriaRows = new ArrayList<>();
                     for (Map.Entry<String, Object> entry : searchCriteria.entrySet()) {
                         if (entry.getValue() != null && !entry.getValue().toString().isEmpty()) {
                             String key = entry.getKey().replace("_", " ");
                             key = key.substring(0, 1).toUpperCase() + key.substring(1);
-                            String text = key + ": " + entry.getValue().toString();
-
-                            contentStream.beginText();
-                            contentStream.newLineAtOffset(margin + 10, yPosition);
-                            contentStream.showText(text);
-                            contentStream.endText();
-
-                            yPosition -= lineHeight;
+                            criteriaRows.add(new String[]{key, entry.getValue().toString()});
                         }
+                    }
+                    if (!criteriaRows.isEmpty()) {
+                        yPosition = drawTable(contentStream, margin, yPosition, 
+                            new float[]{150, 350}, criteriaRows, false);
                     }
                 }
 
                 yPosition -= 20;
 
-                // Activities section
-                contentStream.beginText();
-                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14);
-                contentStream.newLineAtOffset(margin, yPosition);
-                contentStream.showText("Activities:");
-                contentStream.endText();
-
-                yPosition -= 20;
-
-                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 10);
+                // Activities Section with Table
+                yPosition = drawSectionHeader(contentStream, margin, yPosition, "Activities:");
+                yPosition -= 10;
+                
+                List<String[]> activityRows = new ArrayList<>();
+                activityRows.add(new String[]{"#", "Name", "Duration", "Format", "Bloom Level"});
                 int activityNum = 1;
                 for (Map<String, Object> activity : activities) {
                     String name = activity.getOrDefault("name", "N/A").toString();
@@ -322,66 +309,50 @@ public class PDFService {
                     String duration = durationObj != null ? durationObj.toString() + " min" : "N/A";
                     String format = activity.getOrDefault("format", "N/A").toString();
                     String bloomLevel = activity.getOrDefault("bloom_level", "N/A").toString();
-
-                    String text = String.format("%d. %s (%s, %s, %s)",
-                            activityNum++, name, duration, format, bloomLevel);
-
-                    contentStream.beginText();
-                    contentStream.newLineAtOffset(margin + 10, yPosition);
-                    contentStream.showText(text);
-                    contentStream.endText();
-
-                    yPosition -= lineHeight;
-
-                    // Check if we need a new page
-                    if (yPosition < margin + 100) {
-                        break; // Stop adding activities if running out of space
-                    }
+                    
+                    activityRows.add(new String[]{
+                        String.valueOf(activityNum++),
+                        name,
+                        duration,
+                        format,
+                        bloomLevel
+                    });
                 }
+                yPosition = drawTable(contentStream, margin, yPosition, 
+                    new float[]{30, 200, 80, 80, 110}, activityRows, true);
 
-                // Breaks section
+                yPosition -= 20;
+
+                // Breaks Section with Table (if applicable)
                 if (breaks != null && !breaks.isEmpty()) {
-                    yPosition -= 20;
-
-                    contentStream.beginText();
-                    contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14);
-                    contentStream.newLineAtOffset(margin, yPosition);
-                    contentStream.showText("Breaks:");
-                    contentStream.endText();
-
-                    yPosition -= 20;
-
-                    contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 10);
+                    yPosition = drawSectionHeader(contentStream, margin, yPosition, "Breaks:");
+                    yPosition -= 10;
+                    
+                    List<String[]> breakRows = new ArrayList<>();
+                    breakRows.add(new String[]{"Duration", "Description"});
                     for (Map<String, Object> breakItem : breaks) {
                         Object durationObj = breakItem.get("duration");
                         String duration = durationObj != null ? durationObj.toString() + " min" : "N/A";
                         String description = breakItem.getOrDefault("description", "Break").toString();
-
-                        String text = duration + " - " + description;
-
-                        contentStream.beginText();
-                        contentStream.newLineAtOffset(margin + 10, yPosition);
-                        contentStream.showText(text);
-                        contentStream.endText();
-
-                        yPosition -= lineHeight;
+                        breakRows.add(new String[]{duration, description});
                     }
+                    yPosition = drawTable(contentStream, margin, yPosition, 
+                        new float[]{100, 400}, breakRows, true);
+                    
+                    yPosition -= 20;
                 }
 
-                // Total duration
-                yPosition -= 20;
-                contentStream.beginText();
-                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 14);
-                contentStream.newLineAtOffset(margin, yPosition);
-                contentStream.showText("Total Duration: " + (totalDuration != null ? totalDuration : 0) + " minutes");
-                contentStream.endText();
-
-                // Generated timestamp
+                // Total Duration
+                yPosition = drawSectionHeader(contentStream, margin, yPosition, 
+                    "Total Duration: " + (totalDuration != null ? totalDuration : 0) + " minutes");
+                
                 yPosition -= 30;
+
+                // Generated Timestamp
                 contentStream.beginText();
                 contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 10);
                 contentStream.newLineAtOffset(margin, yPosition);
-                String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:%M:%S"));
                 contentStream.showText("Generated: " + timestamp);
                 contentStream.endText();
 
@@ -397,5 +368,80 @@ public class PDFService {
         } finally {
             document.close();
         }
+    }
+    
+    private float drawSectionHeader(PDPageContentStream contentStream, float x, float y, String text) throws IOException {
+        contentStream.beginText();
+        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12);
+        contentStream.newLineAtOffset(x, y);
+        contentStream.showText(text);
+        contentStream.endText();
+        return y - 20;
+    }
+    
+    private float drawTable(PDPageContentStream contentStream, float x, float y, 
+            float[] columnWidths, List<String[]> rows, boolean hasHeader) throws IOException {
+        
+        float cellPadding = 5;
+        float rowHeight = 20;
+        float fontSize = 10;
+        
+        PDType1Font font = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
+        PDType1Font boldFont = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
+        
+        float tableWidth = 0;
+        for (float width : columnWidths) {
+            tableWidth += width;
+        }
+        
+        float currentY = y;
+        
+        for (int rowIdx = 0; rowIdx < rows.size(); rowIdx++) {
+            String[] row = rows.get(rowIdx);
+            boolean isHeader = hasHeader && rowIdx == 0;
+            
+            // Draw cell backgrounds and borders
+            float currentX = x;
+            for (int colIdx = 0; colIdx < row.length && colIdx < columnWidths.length; colIdx++) {
+                // Draw cell background (gray for headers)
+                if (isHeader) {
+                    contentStream.setNonStrokingColor(0.8f, 0.8f, 0.8f);
+                    contentStream.addRect(currentX, currentY - rowHeight, columnWidths[colIdx], rowHeight);
+                    contentStream.fill();
+                    contentStream.setNonStrokingColor(0f, 0f, 0f);
+                }
+                
+                // Draw cell border
+                contentStream.setStrokingColor(0f, 0f, 0f);
+                contentStream.addRect(currentX, currentY - rowHeight, columnWidths[colIdx], rowHeight);
+                contentStream.stroke();
+                
+                currentX += columnWidths[colIdx];
+            }
+            
+            // Draw cell text
+            currentX = x;
+            for (int colIdx = 0; colIdx < row.length && colIdx < columnWidths.length; colIdx++) {
+                String cellText = row[colIdx];
+                if (cellText == null) cellText = "";
+                
+                // Truncate text if too long
+                if (cellText.length() > 40) {
+                    cellText = cellText.substring(0, 37) + "...";
+                }
+                
+                contentStream.beginText();
+                contentStream.setFont(isHeader ? boldFont : font, fontSize);
+                contentStream.newLineAtOffset(currentX + cellPadding, currentY - rowHeight + cellPadding + 2);
+                contentStream.showText(cellText);
+                contentStream.endText();
+                
+                currentX += columnWidths[colIdx];
+            }
+            
+            currentY -= rowHeight;
+        }
+        
+        return currentY;
     }
 }
