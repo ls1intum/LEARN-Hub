@@ -232,8 +232,17 @@ public class PDFService {
     }
 
     private void appendDocumentPages(PDDocument target, byte[] sourceBytes) throws IOException {
-        try (PDDocument source = Loader.loadPDF(sourceBytes)) {
-            source.getPages().forEach(page -> target.addPage(page));
+        // Load source PDF and import pages while keeping source document open
+        PDDocument source = Loader.loadPDF(sourceBytes);
+        try {
+            // Import each page properly (PDFBox 3.x requires importing pages while source is open)
+            for (int i = 0; i < source.getNumberOfPages(); i++) {
+                PDPage page = source.getPage(i);
+                target.importPage(page);
+            }
+        } finally {
+            // Close source after importing pages
+            source.close();
         }
     }
 
