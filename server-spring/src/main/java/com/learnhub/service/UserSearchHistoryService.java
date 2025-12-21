@@ -33,7 +33,9 @@ public class UserSearchHistoryService {
     }
 
     public List<UserSearchHistory> getUserSearchHistory(Long userId, Integer limit, Integer offset) {
-        return userSearchHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                offset / limit, limit);
+        return userSearchHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
     }
 
     @Transactional

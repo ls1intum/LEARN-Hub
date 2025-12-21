@@ -50,8 +50,6 @@ public class HistoryController {
             List<UserSearchHistory> history = searchHistoryService.getUserSearchHistory(userId, limit, offset);
 
             List<Map<String, Object>> historyData = history.stream()
-                    .limit(limit)
-                    .skip(offset)
                     .map(entry -> {
                         Map<String, Object> data = new HashMap<>();
                         data.put("id", entry.getId());
