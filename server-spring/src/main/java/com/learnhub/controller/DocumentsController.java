@@ -98,4 +98,46 @@ public class DocumentsController {
             return ResponseEntity.status(404).body(ErrorResponse.of("Document not found: " + e.getMessage()));
         }
     }
+
+    @PostMapping("/{documentId}/process")
+    @PreAuthorize("hasRole('ADMIN')")
+    @SecurityRequirement(name = "BearerAuth")
+    @Operation(summary = "Process PDF document", description = "Extract activity data from PDF document using LLM")
+    public ResponseEntity<?> processPdf(@PathVariable Long documentId) {
+        try {
+            // Get PDF content
+            byte[] pdfContent = pdfService.getPdfContent(documentId);
+            if (pdfContent == null) {
+                return ResponseEntity.status(404).body(ErrorResponse.of("PDF document not found"));
+            }
+
+            // Extract activity data from PDF using LLM
+            Map<String, Object> extractionResult = pdfService.extractActivityFromPdf(pdfContent, documentId);
+
+            if (extractionResult.containsKey("error")) {
+                String errorMsg = (String) extractionResult.get("error");
+                return ResponseEntity.status(400).body(ErrorResponse.of("Failed to process PDF: " + errorMsg));
+            }
+
+            // Update PDF document with extraction results
+            Map<String, Object> data = (Map<String, Object>) extractionResult.get("data");
+            Double confidence = (Double) extractionResult.get("confidence");
+            String confidenceScore = confidence != null ? String.format("%.3f", confidence) : null;
+            String extractionQuality = (String) extractionResult.get("extraction_quality");
+            
+            pdfService.updatePdfExtractionResults(documentId, data, confidenceScore, extractionQuality);
+
+            // Prepare response matching Flask format
+            Map<String, Object> response = new HashMap<>();
+            response.put("document_id", documentId);
+            response.put("extracted_data", data);
+            response.put("confidence", confidence);
+            response.put("text_length", extractionResult.get("text_length"));
+            response.put("extraction_quality", extractionQuality);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to process PDF: " + e.getMessage()));
+        }
+    }
 }
