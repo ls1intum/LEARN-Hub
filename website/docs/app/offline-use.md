@@ -25,11 +25,16 @@ You can, however, download individual activities or complete recommendations as 
    - Required materials and duration  
    - Cognitive and physical activity levels (e.g., Bloom Level, Mental Effort, Physical Activity)  
 
-<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-  <img src={useBaseUrl('/img/app/Recom-Detail.png')} alt="Recommendation Detail" style={{ width: '35%', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+<div style={{ textAlign: 'center', marginTop: '2rem' }}>
+  <img
+    src={useBaseUrl('/img/app/Download-Flow.gif')}
+    alt="Downloading a recommendation as PDF and opening it offline"
+    style={{ width: '40%', maxWidth: '900px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+  />
   <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-    Recommendation Details
+    Animation of generating a recommendation, downloading it as a PDF, and opening the file locally on the device.
   </p>
 </div>
+
 
 Once downloaded, you can view these PDFs anytime during class or lesson preparation.

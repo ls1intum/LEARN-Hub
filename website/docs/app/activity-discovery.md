@@ -25,13 +25,15 @@ The **Activity Discovery** page allows teachers to explore pre-curated activitie
 > 💡 *Tips*: Start with broader filters to explore a wide range of activities.
 4. Tap any **activity card** to open the detailed activity view and access all related information.
 
-<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-  <img src={useBaseUrl('/img/app/Search.png')} alt="Search tab" style={{ width: '25%', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-  <img src={useBaseUrl('/img/app/Search-Filter.png')} alt="Browse and filter" style={{ width: '25%', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
-  <img src={useBaseUrl('/img/app/Search-Detail.png')} alt="Activity details" style={{ width: '25%', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+<div style={{ textAlign: 'center', marginTop: '2rem' }}>
+  <img
+    src={useBaseUrl('/img/app/Activity-Discovery-Flow.gif')}
+    alt="Activity discovery – browsing, filtering, and keyword search"
+    style={{ width: '40%', maxWidth: '900px', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+  />
   <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-    Activity Discovery Views: Search Tab (left), Browse and Filter (middle), and Activity Details (right)
-  </p>
+  Animation of browsing activities with applied filters (grade: Klasse 3, duration: &lt; 45 min, topic: Muster, materials: Schreibwaren) and keyword search “AI”.
+</p>
 </div>
 
 ## Detailed Activity Information
