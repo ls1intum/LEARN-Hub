@@ -53,7 +53,7 @@ public class DocumentsController {
             response.put("file_size", pdfContent.length);
             response.put("message", "PDF uploaded successfully");
 
-            return ResponseEntity.status(201).body(ResponseEntity.ok(response));
+            return ResponseEntity.status(201).body(response);
         } catch (Exception e) {
             return ResponseEntity.status(500).body(ErrorResponse.of("Failed to upload PDF: " + e.getMessage()));
         }
@@ -124,7 +124,7 @@ public class DocumentsController {
             Double confidence = (Double) extractionResult.get("confidence");
             String confidenceScore = confidence != null ? String.format("%.3f", confidence) : null;
             String extractionQuality = (String) extractionResult.get("extraction_quality");
-            
+
             pdfService.updatePdfExtractionResults(documentId, data, confidenceScore, extractionQuality);
 
             // Prepare response matching Flask format
