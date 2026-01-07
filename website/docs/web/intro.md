@@ -1,15 +1,29 @@
-# Web Documentation
+---
+sidebar_position: 1
+title: Introduction
+---
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+# Welcome to LEARN-Hub
 
-## Overview
+LEARN-Hub helps teachers discover and plan computer science activities for their classrooms. Find age-appropriate activities, generate complete lesson plans, and save your favorites for future use.
 
-Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+## Key Features
 
-## Features
+- **Create Recommendations** – Get personalized activity sets based on your classroom needs (duration, pupil ages, topics, available tools)
+- **Browse Activities** – Explore the complete library of curated computer science activities with detailed information
+- **Lesson Planning** – Combine multiple activities into structured lesson plans with automatic breaks
+- **Save & Reuse** – Mark activities and recommendations as favorites, access your search history
+- **Offline Materials** – Download lesson plans as PDFs
 
-- Lorem ipsum dolor sit amet
-- Consectetur adipiscing elit
-- Sed do eiusmod tempor incididunt
+## Quick Navigation
 
-Ut labore et dolore magna aliqua.
+- [Getting Started](./getting-started.md) – Create an account or log in
+- [Create Recommendations](./recommendations-and-lesson-plans.md) – Plan your lessons
+- [Browse Activities](./activity-discovery.md) – Explore the activity library
+- [Manage Favorites](./favorites-and-history.md) – Save and access your saved items
+- [Account Settings](./account-and-settings.md) – Update your profile
+- [Admin Guide](./admin-guide.md) – Manage users and content (admin only)
+
+---
+
+[SCREENSHOT: Main interface showing navigation and key features]
