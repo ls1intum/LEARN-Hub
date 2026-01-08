@@ -2,6 +2,7 @@
 sidebar_position: 4
 title: Browse & Search Activities
 ---
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Browse and Search Activities
 
@@ -58,4 +59,9 @@ Click any activity card to view detailed information.
 - **View PDF** – Download the full activity document
 - **Add to Favorites** – Save the activity for later (requires login)
 
-[SCREENSHOT: Activity detail page with all metadata fields]
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/activity.png')} alt="Activity Details page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    Activity Details page
+  </p>
+</div>

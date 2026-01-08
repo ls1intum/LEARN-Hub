@@ -2,6 +2,7 @@
 sidebar_position: 6
 title: Account & Settings
 ---
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Account Management and Offline Materials
 
@@ -9,7 +10,12 @@ title: Account & Settings
 
 Access your account dashboard by clicking your profile icon in the top menu.
 
-[SCREENSHOT: Account dashboard]
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/account.png')} alt="Account page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    Account page
+  </p>
+</div>
 
 ### Update Profile
 

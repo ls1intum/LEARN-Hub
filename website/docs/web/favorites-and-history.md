@@ -2,6 +2,7 @@
 sidebar_position: 5
 title: Favorites & History
 ---
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Favorites and Search History
 
@@ -29,7 +30,12 @@ Re-open any saved item with one click.
 
 Click the heart icon again to remove an item from favorites.
 
-[SCREENSHOT: Favorites page with activities and lesson plans tabs]
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/favourites.png')} alt="Favourites page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    Favourites page
+  </p>
+</div>
 
 ---
 
@@ -51,6 +57,11 @@ Click any history entry to re-run that exact search with the same criteria.
 
 Click **Delete** to remove individual entries from your history. Clear your entire history from account settings if desired.
 
-[SCREENSHOT: Search history page]
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/history.png')} alt="History page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    History page
+  </p>
+</div>
 
 > 💡 **Note**: Favorites and history are personal to your account. They're not visible to other users.

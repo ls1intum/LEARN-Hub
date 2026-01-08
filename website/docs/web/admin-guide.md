@@ -2,6 +2,7 @@
 sidebar_position: 7
 title: Admin Guide
 ---
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Administrator Guide
 
@@ -15,9 +16,12 @@ Manage teachers, admins, and the activity library.
 
 **Delete a User**: Select a user, click **Delete**, and confirm. This removes all their saved favorites and search history.
 
-[SCREENSHOT: User management page]
-
----
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/users.png')} alt="User Management page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    User Management page
+  </p>
+</div>
 
 ## Activity Management
 
@@ -25,4 +29,9 @@ Manage teachers, admins, and the activity library.
 
 **Review & Correct**: Check the extracted data and correct any errors before clicking **Confirm & Save**. The activity appears in the library immediately.
 
-[SCREENSHOT: Activity upload interface]
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/upload.png')} alt="Activity Upload page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    Activity Upload page
+  </p>
+</div>

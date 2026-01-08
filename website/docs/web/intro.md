@@ -2,6 +2,7 @@
 sidebar_position: 1
 title: Introduction
 ---
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Welcome to LEARN-Hub
 
@@ -24,6 +25,9 @@ LEARN-Hub helps teachers discover and plan computer science activities for their
 - [Account Settings](./account-and-settings.md) – Update your profile
 - [Admin Guide](./admin-guide.md) – Manage users and content (admin only)
 
----
-
-[SCREENSHOT: Main interface showing navigation and key features]
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/main.png')} alt="Recommendations (main) page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    Recommendations (main) page
+  </p>
+</div>

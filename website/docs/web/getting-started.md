@@ -2,6 +2,7 @@
 sidebar_position: 2
 title: Getting Started
 ---
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Getting Started with LEARN-Hub
 
@@ -30,7 +31,12 @@ Use **Guest mode** to explore without creating an account. **Teachers** can crea
 4. Check your email for your credentials
 5. Log in with your email and the password provided
 
-[SCREENSHOT: Registration form]
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/registration.png')} alt="Registration page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    Registration page
+  </p>
+</div>
 
 ## Logging In
 
@@ -42,7 +48,12 @@ Enter your email and password.
 2. Check your email for a 6-digit verification code
 3. Enter the code in the app (valid for 10 minutes)
 
-[SCREENSHOT: Login screen]
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/login.png')} alt="Login page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    Login page
+  </p>
+</div>
 
 ## Next Steps
 
