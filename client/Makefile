@@ -34,7 +34,7 @@ build:
 	npm run build
 
 # Run linter with fix
-lint-fix:
+lint:
 	npm run lint
 
 # Format code

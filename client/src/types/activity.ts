@@ -63,6 +63,8 @@ export interface FilterOptions {
   resources_available: string[];
   bloom_level: string[];
   topics: string[];
+  mental_load: string[];
+  physical_energy: string[];
 }
 
 export interface ActivitiesResponse {

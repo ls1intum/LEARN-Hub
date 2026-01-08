@@ -3,11 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
+import { BadgeSelector } from "@/components/ui/BadgeSelector";
 import { useAuth } from "@/hooks/useAuth";
 import { useDataFetch } from "@/hooks/useDataFetch";
 import { useForm } from "@/hooks/useForm";
@@ -25,6 +25,12 @@ import {
   BookOpen,
   Brain,
   Activity as ActivityIcon,
+  Users,
+  Clock,
+  Grid3x3,
+  GraduationCap,
+  Package,
+  Tag,
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 
@@ -44,16 +50,16 @@ interface FilterFormData {
 
 const initialFilterData: FilterFormData = {
   name: "",
-  age_min: 0,
-  age_max: 15,
+  age_min: ACTIVITY_CONSTANTS.AGE_RANGE.MIN,
+  age_max: ACTIVITY_CONSTANTS.AGE_RANGE.MAX,
   format: [],
   bloom_level: [],
   resources_needed: [],
   topics: [],
   mental_load: [],
   physical_energy: [],
-  duration_min: 0,
-  duration_max: 120,
+  duration_min: ACTIVITY_CONSTANTS.DURATION_RANGE.MIN,
+  duration_max: ACTIVITY_CONSTANTS.DURATION_RANGE.MAX,
 };
 
 export const LibraryPage: React.FC = () => {
@@ -76,6 +82,8 @@ export const LibraryPage: React.FC = () => {
       resources_available: fieldValues.resources_available,
       bloom_level: fieldValues.bloom_level,
       topics: fieldValues.topics,
+      mental_load: fieldValues.mental_load,
+      physical_energy: fieldValues.physical_energy,
     }),
     [fieldValues],
   );
@@ -93,11 +101,22 @@ export const LibraryPage: React.FC = () => {
     const filters = filterForm.values;
     return await apiService.getActivities({
       name: filters.name || undefined,
-      age_min: filters.age_min > 0 ? filters.age_min : undefined,
-      age_max: filters.age_max < 15 ? filters.age_max : undefined,
-      duration_min: filters.duration_min > 0 ? filters.duration_min : undefined,
+      age_min:
+        filters.age_min > ACTIVITY_CONSTANTS.AGE_RANGE.MIN
+          ? filters.age_min
+          : undefined,
+      age_max:
+        filters.age_max < ACTIVITY_CONSTANTS.AGE_RANGE.MAX
+          ? filters.age_max
+          : undefined,
+      duration_min:
+        filters.duration_min > ACTIVITY_CONSTANTS.DURATION_RANGE.MIN
+          ? filters.duration_min
+          : undefined,
       duration_max:
-        filters.duration_max < 120 ? filters.duration_max : undefined,
+        filters.duration_max < ACTIVITY_CONSTANTS.DURATION_RANGE.MAX
+          ? filters.duration_max
+          : undefined,
       format: filters.format.length > 0 ? filters.format : undefined,
       bloom_level:
         filters.bloom_level.length > 0 ? filters.bloom_level : undefined,
@@ -281,21 +300,34 @@ export const LibraryPage: React.FC = () => {
 
           {/* Advanced Filters */}
           {showFilters && (
-            <div className="mb-8 p-6 bg-muted/30 rounded-xl border border-border">
-              <div className="flex justify-between items-center mb-6">
+            <div className="mb-8 p-6 bg-gradient-to-br from-muted/20 to-muted/10 rounded-xl border border-border/50 shadow-sm">
+              <div className="flex justify-between items-center mb-8">
                 <h3 className="text-xl font-semibold text-foreground">
                   Advanced Filters
                 </h3>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {/* Age Range */}
-                <div>
-                  <Label>
-                    Age Range: {filterForm.values.age_min} -{" "}
-                    {filterForm.values.age_max}
-                  </Label>
-                  <div className="space-y-2">
+              {/* Range Filters Section */}
+              <div className="mb-8">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+                  Range Filters
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Age Range */}
+                  <div className="bg-card/50 border border-border/50 rounded-lg p-5 shadow-xs">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Users className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Age Range</Label>
+                    </div>
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-sm text-muted-foreground">
+                        Select age range for learners
+                      </span>
+                      <span className="text-lg font-bold text-primary">
+                        {filterForm.values.age_min} -{" "}
+                        {filterForm.values.age_max}
+                      </span>
+                    </div>
                     <Slider
                       value={[
                         filterForm.values.age_min,
@@ -311,15 +343,24 @@ export const LibraryPage: React.FC = () => {
                       className="w-full"
                     />
                   </div>
-                </div>
 
-                {/* Duration Range */}
-                <div>
-                  <Label>
-                    Duration (minutes): {filterForm.values.duration_min} -{" "}
-                    {filterForm.values.duration_max}
-                  </Label>
-                  <div className="space-y-2">
+                  {/* Duration Range */}
+                  <div className="bg-card/50 border border-border/50 rounded-lg p-5 shadow-xs">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">
+                        Duration (minutes)
+                      </Label>
+                    </div>
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-sm text-muted-foreground">
+                        Select activity duration
+                      </span>
+                      <span className="text-lg font-bold text-primary">
+                        {filterForm.values.duration_min} -{" "}
+                        {filterForm.values.duration_max}
+                      </span>
+                    </div>
                     <Slider
                       value={[
                         filterForm.values.duration_min,
@@ -336,174 +377,140 @@ export const LibraryPage: React.FC = () => {
                     />
                   </div>
                 </div>
+              </div>
 
-                {/* Format */}
-                <div>
-                  <Label>Format</Label>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {filterOptions.format.map((format) => (
-                      <div key={format} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`format-${format}`}
-                          checked={filterForm.values.format.includes(format)}
-                          onCheckedChange={(checked) =>
-                            handleMultiSelectFilter(
-                              "format",
-                              format,
-                              checked as boolean,
-                            )
-                          }
-                        />
-                        <Label htmlFor={`format-${format}`} className="text-sm">
-                          {format}
-                        </Label>
-                      </div>
-                    ))}
+              {/* Activity Characteristics Section */}
+              <div className="mb-8">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+                  Activity Characteristics
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Format */}
+                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Grid3x3 className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Format</Label>
+                    </div>
+                    <BadgeSelector
+                      label=""
+                      options={filterOptions.format}
+                      selectedValues={filterForm.values.format}
+                      onToggle={(value) =>
+                        handleMultiSelectFilter(
+                          "format",
+                          value,
+                          !filterForm.values.format.includes(value),
+                        )
+                      }
+                    />
+                  </div>
+
+                  {/* Bloom Level */}
+                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <GraduationCap className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Bloom's Level</Label>
+                    </div>
+                    <BadgeSelector
+                      label=""
+                      options={filterOptions.bloom_level}
+                      selectedValues={filterForm.values.bloom_level}
+                      onToggle={(value) =>
+                        handleMultiSelectFilter(
+                          "bloom_level",
+                          value,
+                          !filterForm.values.bloom_level.includes(value),
+                        )
+                      }
+                    />
+                  </div>
+
+                  {/* Resources */}
+                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Package className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Resources Needed</Label>
+                    </div>
+                    <BadgeSelector
+                      label=""
+                      options={filterOptions.resources_available}
+                      selectedValues={filterForm.values.resources_needed}
+                      onToggle={(value) =>
+                        handleMultiSelectFilter(
+                          "resources_needed",
+                          value,
+                          !filterForm.values.resources_needed.includes(value),
+                        )
+                      }
+                    />
+                  </div>
+
+                  {/* Topics */}
+                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Tag className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Topics</Label>
+                    </div>
+                    <BadgeSelector
+                      label=""
+                      options={filterOptions.topics}
+                      selectedValues={filterForm.values.topics}
+                      onToggle={(value) =>
+                        handleMultiSelectFilter(
+                          "topics",
+                          value,
+                          !filterForm.values.topics.includes(value),
+                        )
+                      }
+                    />
                   </div>
                 </div>
+              </div>
 
-                {/* Bloom Level */}
-                <div>
-                  <Label>Bloom's Taxonomy Level</Label>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {filterOptions.bloom_level.map((level) => (
-                      <div key={level} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`bloom-${level}`}
-                          checked={filterForm.values.bloom_level.includes(
-                            level,
-                          )}
-                          onCheckedChange={(checked) =>
-                            handleMultiSelectFilter(
-                              "bloom_level",
-                              level,
-                              checked as boolean,
-                            )
-                          }
-                        />
-                        <Label htmlFor={`bloom-${level}`} className="text-sm">
-                          {level}
-                        </Label>
-                      </div>
-                    ))}
+              {/* Teacher Context Section */}
+              <div>
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+                  Teacher Context
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Mental Load */}
+                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Brain className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Mental Load</Label>
+                    </div>
+                    <BadgeSelector
+                      label=""
+                      options={filterOptions.mental_load}
+                      selectedValues={filterForm.values.mental_load}
+                      onToggle={(value) =>
+                        handleMultiSelectFilter(
+                          "mental_load",
+                          value,
+                          !filterForm.values.mental_load.includes(value),
+                        )
+                      }
+                    />
                   </div>
-                </div>
 
-                {/* Resources */}
-                <div>
-                  <Label>Resources Needed</Label>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {filterOptions.resources_available.map((resource) => (
-                      <div
-                        key={resource}
-                        className="flex items-center space-x-2"
-                      >
-                        <Checkbox
-                          id={`resource-${resource}`}
-                          checked={filterForm.values.resources_needed.includes(
-                            resource,
-                          )}
-                          onCheckedChange={(checked) =>
-                            handleMultiSelectFilter(
-                              "resources_needed",
-                              resource,
-                              checked as boolean,
-                            )
-                          }
-                        />
-                        <Label
-                          htmlFor={`resource-${resource}`}
-                          className="text-sm"
-                        >
-                          {resource}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Topics */}
-                <div>
-                  <Label>Topics</Label>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
-                    {filterOptions.topics.map((topic) => (
-                      <div key={topic} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`topic-${topic}`}
-                          checked={filterForm.values.topics.includes(topic)}
-                          onCheckedChange={(checked) =>
-                            handleMultiSelectFilter(
-                              "topics",
-                              topic,
-                              checked as boolean,
-                            )
-                          }
-                        />
-                        <Label htmlFor={`topic-${topic}`} className="text-sm">
-                          {topic}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Mental Load */}
-                <div>
-                  <Label>Mental Load</Label>
-                  <div className="space-y-2">
-                    {ACTIVITY_CONSTANTS.ENERGY_LEVELS.map((level) => (
-                      <div key={level} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`mental-${level}`}
-                          checked={filterForm.values.mental_load.includes(
-                            level,
-                          )}
-                          onCheckedChange={(checked) =>
-                            handleMultiSelectFilter(
-                              "mental_load",
-                              level,
-                              checked as boolean,
-                            )
-                          }
-                        />
-                        <Label
-                          htmlFor={`mental-${level}`}
-                          className="text-sm capitalize"
-                        >
-                          {level}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Physical Energy */}
-                <div>
-                  <Label>Physical Energy</Label>
-                  <div className="space-y-2">
-                    {ACTIVITY_CONSTANTS.ENERGY_LEVELS.map((level) => (
-                      <div key={level} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`physical-${level}`}
-                          checked={filterForm.values.physical_energy.includes(
-                            level,
-                          )}
-                          onCheckedChange={(checked) =>
-                            handleMultiSelectFilter(
-                              "physical_energy",
-                              level,
-                              checked as boolean,
-                            )
-                          }
-                        />
-                        <Label
-                          htmlFor={`physical-${level}`}
-                          className="text-sm capitalize"
-                        >
-                          {level}
-                        </Label>
-                      </div>
-                    ))}
+                  {/* Physical Energy */}
+                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                      <ActivityIcon className="h-4 w-4 text-primary" />
+                      <Label className="font-semibold">Physical Energy</Label>
+                    </div>
+                    <BadgeSelector
+                      label=""
+                      options={filterOptions.physical_energy}
+                      selectedValues={filterForm.values.physical_energy}
+                      onToggle={(value) =>
+                        handleMultiSelectFilter(
+                          "physical_energy",
+                          value,
+                          !filterForm.values.physical_energy.includes(value),
+                        )
+                      }
+                    />
                   </div>
                 </div>
               </div>

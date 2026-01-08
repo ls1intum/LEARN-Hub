@@ -651,14 +651,20 @@ class ActivityListRequest(BaseModel):
     name: str | None = Field(None, description="Filter by activity name (partial match)")
     age_min: int | None = Field(None, ge=6, le=15, description="Minimum age filter")
     age_max: int | None = Field(None, ge=6, le=15, description="Maximum age filter")
+    duration_min: int | None = Field(None, ge=0, description="Minimum duration filter (minutes)")
+    duration_max: int | None = Field(None, ge=0, description="Maximum duration filter (minutes)")
     format: list[str] | str | None = Field(None, description="Filter by activity formats")
     bloom_level: list[str] | str | None = Field(None, description="Filter by Bloom's taxonomy levels")
     resources_needed: list[str] | str | None = Field(None, description="Filter by required resources")
     topics: list[str] | str | None = Field(None, description="Filter by CS topics")
+    mental_load: list[str] | str | None = Field(None, description="Filter by mental load level")
+    physical_energy: list[str] | str | None = Field(None, description="Filter by physical energy level")
     limit: int = Field(10, ge=1, le=100, description="Number of activities to return")
     offset: int = Field(0, ge=0, description="Number of activities to skip")
 
-    @field_validator("format", "bloom_level", "resources_needed", "topics", mode="before")
+    @field_validator(
+        "format", "bloom_level", "resources_needed", "topics", "mental_load", "physical_energy", mode="before"
+    )
     @classmethod
     def convert_to_list(cls, v):
         """Convert single strings to lists for consistency."""

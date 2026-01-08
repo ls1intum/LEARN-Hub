@@ -38,7 +38,7 @@ run: ## Run the main application
 format: ## Format code with Black
 	$(BLACK) $(PROJECT) $(TESTS) $(MAIN) $(SCRIPTS)
 
-lint-fix: ## Lint and auto-fix with Ruff
+lint: ## Lint and auto-fix with Ruff
 	$(RUFF) check --fix $(PROJECT) $(TESTS) $(MAIN) $(SCRIPTS)
 
 # Testing

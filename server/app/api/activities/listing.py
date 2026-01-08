@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from flask_openapi3 import Tag
-from sqlalchemy import or_
+from sqlalchemy import String, cast, or_
 
 from app.auth.decorators import admin_required
 from app.db.database import get_db_session
@@ -39,10 +39,14 @@ def register_activities_listing_routes(api):
             name_filter = query.name
             age_min_filter = query.age_min
             age_max_filter = query.age_max
+            duration_min_filter = query.duration_min
+            duration_max_filter = query.duration_max
             format_filters = query.format
             bloom_level_filters = query.bloom_level
             resources_filters = query.resources_needed
             topics_filters = query.topics
+            mental_load_filters = query.mental_load
+            physical_energy_filters = query.physical_energy
 
             # Pagination
             limit = query.limit
@@ -61,6 +65,12 @@ def register_activities_listing_routes(api):
             if age_max_filter is not None:
                 db_query = db_query.filter(Activity.age_max <= age_max_filter)
 
+            if duration_min_filter is not None:
+                db_query = db_query.filter(Activity.duration_min_minutes >= duration_min_filter)
+
+            if duration_max_filter is not None:
+                db_query = db_query.filter(Activity.duration_max_minutes <= duration_max_filter)
+
             if format_filters:
                 db_query = db_query.filter(Activity.format.in_(format_filters))
 
@@ -69,17 +79,25 @@ def register_activities_listing_routes(api):
 
             if resources_filters:
                 # Filter activities that have any of the specified resources
+                # Cast to string and use LIKE for database-agnostic filtering
                 resource_conditions = []
                 for resource in resources_filters:
-                    resource_conditions.append(Activity.resources_needed.contains([resource]))
+                    resource_conditions.append(cast(Activity.resources_needed, String).like(f'%"{resource}"%'))
                 db_query = db_query.filter(or_(*resource_conditions))
 
             if topics_filters:
                 # Filter activities that have any of the specified topics
+                # Cast to string and use LIKE for database-agnostic filtering
                 topic_conditions = []
                 for topic in topics_filters:
-                    topic_conditions.append(Activity.topics.contains([topic]))
+                    topic_conditions.append(cast(Activity.topics, String).like(f'%"{topic}"%'))
                 db_query = db_query.filter(or_(*topic_conditions))
+
+            if mental_load_filters:
+                db_query = db_query.filter(Activity.mental_load.in_(mental_load_filters))
+
+            if physical_energy_filters:
+                db_query = db_query.filter(Activity.physical_energy.in_(physical_energy_filters))
 
             # Get total count before pagination
             total_count = db_query.count()
