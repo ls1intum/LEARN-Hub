@@ -2,6 +2,7 @@
 sidebar_position: 3
 title: Recommendations & Lesson Plans
 ---
+import useBaseUrl from '@docusaurus/useBaseUrl';
 
 # Creating Lesson Plans
 
@@ -34,7 +35,12 @@ The system generates ranked lesson plan recommendations with scores for each seq
 
 Each category is scored on a **0-100 scale** (100 = perfect match), and the total score is calculated as a weighted average based on importance.
 
-[GIF: Complete lesson plan workflow from form to results]
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/recommendations.gif')} alt="Recommendations page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    Complete lesson plan workflow from form to results
+  </p>
+</div>
 
 Once generated, your lesson plan shows:
 - Complete activity sequence with timing

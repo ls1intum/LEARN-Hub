@@ -32,7 +32,12 @@ Each activity card shows:
 - Required materials
 - Topic and Bloom level
 
-[GIF: Browsing, searching, and filtering activities]
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/filtering.gif')} alt="Activity Library page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    Browsing, searching, and filtering activities
+  </p>
+</div>
 
 ---
 
