@@ -5,6 +5,7 @@ import com.learnhub.model.PDFDocument;
 import com.learnhub.model.Activity;
 import com.learnhub.repository.PDFDocumentRepository;
 import com.learnhub.repository.ActivityRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
@@ -38,6 +39,7 @@ import java.util.Map;
 public class PDFService {
 
     private static final Logger logger = LoggerFactory.getLogger(PDFService.class);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Autowired
     private PDFDocumentRepository pdfDocumentRepository;
@@ -91,14 +93,18 @@ public class PDFService {
     }
 
     @Transactional
-    public void updatePdfExtractionResults(Long documentId, Map<String, Object> extractedFields,
-            String confidenceScore, String extractionQuality) {
+    public void updatePdfExtractionResults(Long documentId, Map<String, Object> extractedFields, 
+                                           String confidenceScore, String extractionQuality) {
         PDFDocument document = pdfDocumentRepository.findById(documentId)
-                .orElseThrow(() -> new RuntimeException("PDF document not found"));
-
+            .orElseThrow(() -> new RuntimeException("PDF document not found"));
+        
         // Convert extracted fields to JSON string
-        // In a real implementation, use a JSON library like Jackson
-        document.setExtractedFields(extractedFields != null ? extractedFields.toString() : "{}");
+        try {
+            String json = extractedFields != null ? OBJECT_MAPPER.writeValueAsString(extractedFields) : "{}";
+            document.setExtractedFields(json);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to serialize extracted fields to JSON", e);
+        }
         document.setConfidenceScore(confidenceScore);
         document.setExtractionQuality(extractionQuality);
 
