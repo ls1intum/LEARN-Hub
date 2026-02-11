@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class UserFavouritesService {
@@ -18,15 +19,15 @@ public class UserFavouritesService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public List<UserFavourites> getUserFavourites(Long userId) {
+    public List<UserFavourites> getUserFavourites(UUID userId) {
         return userFavouritesRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
 
-    public List<UserFavourites> getUserFavourites(Long userId, String type) {
+    public List<UserFavourites> getUserFavourites(UUID userId, String type) {
         return userFavouritesRepository.findByUserIdAndFavouriteType(userId, type);
     }
 
-    public UserFavourites saveActivityFavourite(Long userId, Long activityId, String name) {
+    public UserFavourites saveActivityFavourite(UUID userId, UUID activityId, String name) {
         UserFavourites favourite = new UserFavourites();
         favourite.setUserId(userId);
         favourite.setFavouriteType("activity");
@@ -36,8 +37,8 @@ public class UserFavouritesService {
         return userFavouritesRepository.save(favourite);
     }
 
-    public UserFavourites saveLessonPlanFavourite(Long userId, List<Long> activityIds,
-            String lessonPlanSnapshot, String name) {
+    public UserFavourites saveLessonPlanFavourite(UUID userId, List<UUID> activityIds, 
+                                                    String lessonPlanSnapshot, String name) {
         try {
             UserFavourites favourite = new UserFavourites();
             favourite.setUserId(userId);
@@ -52,7 +53,7 @@ public class UserFavouritesService {
         }
     }
 
-    public boolean deleteFavourite(Long favouriteId, Long userId) {
+    public boolean deleteFavourite(UUID favouriteId, UUID userId) {
         return userFavouritesRepository.findById(favouriteId)
                 .filter(fav -> fav.getUserId().equals(userId))
                 .map(fav -> {
@@ -61,8 +62,8 @@ public class UserFavouritesService {
                 })
                 .orElse(false);
     }
-
-    public boolean deleteActivityFavourite(Long userId, Long activityId) {
+  
+    public boolean deleteActivityFavourite(UUID userId, UUID activityId) {
         List<UserFavourites> favourites = userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityId(
                 userId, "activity", activityId);
         if (!favourites.isEmpty()) {
@@ -72,7 +73,7 @@ public class UserFavouritesService {
         return false;
     }
 
-    public boolean isActivityFavourited(Long userId, Long activityId) {
+    public boolean isActivityFavourited(UUID userId, UUID activityId) {
         List<UserFavourites> favourites = userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityId(
                 userId, "activity", activityId);
         return !favourites.isEmpty();

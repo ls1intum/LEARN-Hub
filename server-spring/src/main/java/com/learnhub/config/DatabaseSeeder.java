@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.UUID;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -204,7 +205,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         return document;
     }
 
-    private void createDemoActivities(Long documentId) {
+    private void createDemoActivities(UUID documentId) {
         List<Activity> activities = Arrays.asList(
                 createActivity("Binary Cards", "Learn binary number representation using cards",
                         8, 12, ActivityFormat.UNPLUGGED, BloomLevel.UNDERSTAND, 30, 45,
@@ -240,7 +241,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             int durationMin, int durationMax,
             EnergyLevel mentalLoad, EnergyLevel physicalEnergy,
             List<String> resources, List<String> topics,
-            Long documentId) {
+            UUID documentId) {
         Activity activity = new Activity();
         activity.setName(name);
         activity.setDescription(description);

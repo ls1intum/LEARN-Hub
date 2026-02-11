@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "activities", indexes = {
@@ -28,8 +29,8 @@ import java.util.List;
 public class Activity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @Column(nullable = false, length = 255)
     private String name;
@@ -85,7 +86,7 @@ public class Activity {
     private List<String> topics;
 
     @Column(name = "document_id", nullable = false)
-    private Long documentId;
+    private UUID documentId;
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)

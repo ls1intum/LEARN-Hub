@@ -8,10 +8,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface UserSearchHistoryRepository extends JpaRepository<UserSearchHistory, Long> {
+public interface UserSearchHistoryRepository extends JpaRepository<UserSearchHistory, UUID> {
 
     @Query("SELECT h FROM UserSearchHistory h WHERE h.userId = :userId ORDER BY h.createdAt DESC")
-    List<UserSearchHistory> findByUserIdOrderByCreatedAtDesc(@Param("userId") Long userId, Pageable pageable);
+    List<UserSearchHistory> findByUserIdOrderByCreatedAtDesc(@Param("userId") UUID userId, Pageable pageable);
 }

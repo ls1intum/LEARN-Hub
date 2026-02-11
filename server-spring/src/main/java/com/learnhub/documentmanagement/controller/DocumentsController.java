@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/documents")
@@ -45,7 +46,7 @@ public class DocumentsController {
                 return ResponseEntity.badRequest().body(ErrorResponse.of("PDF file is empty"));
             }
 
-            Long documentId = pdfService.storePdf(pdfContent, pdfFile.getOriginalFilename());
+            UUID documentId = pdfService.storePdf(pdfContent, pdfFile.getOriginalFilename());
 
             Map<String, Object> response = new HashMap<>();
             response.put("document_id", documentId);
@@ -62,7 +63,7 @@ public class DocumentsController {
     @GetMapping("/{documentId}")
     @PreAuthorize("permitAll()")
     @Operation(summary = "Get document", description = "Retrieve PDF file content by document ID")
-    public ResponseEntity<?> getDocument(@PathVariable Long documentId) {
+    public ResponseEntity<?> getDocument(@PathVariable UUID documentId) {
         try {
             PDFDocument document = pdfService.getPdfDocument(documentId);
             byte[] pdfContent = pdfService.getPdfContent(documentId);
@@ -83,7 +84,7 @@ public class DocumentsController {
     @GetMapping("/{documentId}/info")
     @PreAuthorize("permitAll()")
     @Operation(summary = "Get document info", description = "Get PDF document metadata")
-    public ResponseEntity<?> getDocumentInfo(@PathVariable Long documentId) {
+    public ResponseEntity<?> getDocumentInfo(@PathVariable UUID documentId) {
         try {
             PDFDocument document = pdfService.getPdfDocument(documentId);
 
@@ -105,7 +106,7 @@ public class DocumentsController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Process PDF document", description = "Extract activity data from PDF document using LLM")
-    public ResponseEntity<?> processPdf(@PathVariable Long documentId) {
+    public ResponseEntity<?> processPdf(@PathVariable UUID documentId) {
         try {
             // Get PDF content
             byte[] pdfContent = pdfService.getPdfContent(documentId);

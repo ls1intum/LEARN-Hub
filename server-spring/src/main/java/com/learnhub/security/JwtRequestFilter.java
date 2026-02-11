@@ -14,6 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.UUID;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
@@ -42,7 +43,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (jwtUtil.validateToken(jwt)) {
                 String role = jwtUtil.extractRole(jwt);
-                Long userId = jwtUtil.extractUserId(jwt);
+                UUID userId = jwtUtil.extractUserId(jwt);
 
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         username, null, Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role)));

@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -121,7 +122,7 @@ public class AuthController {
     @Operation(summary = "Get current user", description = "Get information about the currently authenticated user")
     public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
         try {
-            Long userId = (Long) request.getAttribute("userId");
+            UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
@@ -224,7 +225,7 @@ public class AuthController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Update user", description = "Update user details (admin only)")
-    public ResponseEntity<?> updateUser(@PathVariable Long userId, @Valid @RequestBody UpdateUserRequest request) {
+    public ResponseEntity<?> updateUser(@PathVariable UUID userId, @Valid @RequestBody UpdateUserRequest request) {
         try {
             UserResponse user = authService.updateUser(
                     userId,
@@ -253,9 +254,9 @@ public class AuthController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Delete user", description = "Delete a user (admin only)")
-    public ResponseEntity<?> deleteUser(@PathVariable Long userId, HttpServletRequest httpRequest) {
+    public ResponseEntity<?> deleteUser(@PathVariable UUID userId, HttpServletRequest httpRequest) {
         try {
-            Long currentUserId = (Long) httpRequest.getAttribute("userId");
+            UUID currentUserId = (UUID) httpRequest.getAttribute("userId");
             boolean deleted = authService.deleteUser(userId, currentUserId);
             if (!deleted) {
                 return ResponseEntity.status(404).body(ErrorResponse.of("User not found"));
@@ -278,7 +279,7 @@ public class AuthController {
     public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest request,
             HttpServletRequest httpRequest) {
         try {
-            Long userId = (Long) httpRequest.getAttribute("userId");
+            UUID userId = (UUID) httpRequest.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
@@ -308,7 +309,7 @@ public class AuthController {
     @Operation(summary = "Delete account", description = "Delete current user's account")
     public ResponseEntity<?> deleteAccount(HttpServletRequest httpRequest) {
         try {
-            Long userId = (Long) httpRequest.getAttribute("userId");
+            UUID userId = (UUID) httpRequest.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }

@@ -10,6 +10,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "user_search_history", indexes = {
@@ -22,11 +23,11 @@ import java.time.LocalDateTime;
 public class UserSearchHistory {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "search_criteria", nullable = false, columnDefinition = "jsonb")

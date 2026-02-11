@@ -14,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Component
@@ -73,17 +74,17 @@ public class JwtUtil {
         return createToken(claims, userDetails.getUsername());
     }
 
-    public String generateToken(String username, Long userId, String role) {
+    public String generateToken(String username, UUID userId, String role) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
+        claims.put("userId", userId.toString());
         claims.put("role", role);
         claims.put("type", "access");
         return createToken(claims, username, expiration);
     }
     
-    public String generateRefreshToken(String username, Long userId, String role) {
+    public String generateRefreshToken(String username, UUID userId, String role) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", userId);
+        claims.put("userId", userId.toString());
         claims.put("role", role);
         claims.put("type", "refresh");
         return createToken(claims, username, refreshExpiration);
@@ -116,9 +117,10 @@ public class JwtUtil {
         }
     }
 
-    public Long extractUserId(String token) {
+    public UUID extractUserId(String token) {
         Claims claims = extractAllClaims(token);
-        return claims.get("userId", Long.class);
+        String userIdStr = claims.get("userId", String.class);
+        return userIdStr != null ? UUID.fromString(userIdStr) : null;
     }
 
     public String extractRole(String token) {

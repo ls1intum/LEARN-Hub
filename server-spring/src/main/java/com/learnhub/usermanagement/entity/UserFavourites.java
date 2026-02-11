@@ -10,6 +10,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "user_favourites", indexes = {
@@ -22,17 +23,17 @@ import java.time.LocalDateTime;
 public class UserFavourites {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @Column(name = "favourite_type", nullable = false, length = 20)
     private String favouriteType;
 
     @Column(name = "activity_id")
-    private Long activityId;
+    private UUID activityId;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "activity_ids", columnDefinition = "jsonb")

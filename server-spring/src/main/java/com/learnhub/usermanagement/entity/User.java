@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.util.UUID;
+
 @Entity
 @Table(name = "users", indexes = {
     @Index(name = "ix_users_email", columnList = "email", unique = true),
@@ -19,8 +21,8 @@ import org.hibernate.type.SqlTypes;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @Column(nullable = false, unique = true)
     private String email;

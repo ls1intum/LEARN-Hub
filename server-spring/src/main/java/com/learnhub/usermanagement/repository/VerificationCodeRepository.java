@@ -6,13 +6,14 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface VerificationCodeRepository extends JpaRepository<VerificationCode, Long> {
+public interface VerificationCodeRepository extends JpaRepository<VerificationCode, UUID> {
 
     Optional<VerificationCode> findByUserIdAndCodeAndUsedAndExpiresAtAfter(
-        Long userId, String code, String used, LocalDateTime currentTime
+        UUID userId, String code, String used, LocalDateTime currentTime
     );
 
-    void deleteByUserId(Long userId);
+    void deleteByUserId(UUID userId);
 }

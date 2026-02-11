@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/activities")
@@ -69,7 +70,7 @@ public class ActivityController {
     @GetMapping("/{id}")
     @PreAuthorize("permitAll()")
     @Operation(summary = "Get activity by ID", description = "Get a single activity by its ID")
-    public ResponseEntity<?> getActivity(@PathVariable Long id) {
+    public ResponseEntity<?> getActivity(@PathVariable UUID id) {
         try {
             ActivityResponse activity = activityService.getActivityById(id);
             return ResponseEntity.ok(activity);
@@ -99,7 +100,7 @@ public class ActivityController {
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Delete activity", description = "Delete an activity by its ID (admin only)")
-    public ResponseEntity<?> deleteActivity(@PathVariable Long id) {
+    public ResponseEntity<?> deleteActivity(@PathVariable UUID id) {
         try {
             activityService.deleteActivity(id);
             Map<String, String> response = new HashMap<>();
@@ -130,7 +131,7 @@ public class ActivityController {
     @GetMapping("/{activityId}/pdf")
     @PreAuthorize("permitAll()")
     @Operation(summary = "Get activity PDF", description = "Get PDF file for a specific activity")
-    public ResponseEntity<?> getActivityPdf(@PathVariable Long activityId) {
+    public ResponseEntity<?> getActivityPdf(@PathVariable UUID activityId) {
         try {
             ActivityResponse activity = activityService.getActivityById(activityId);
             if (activity.getDocumentId() == null) {

@@ -5,11 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserResponse {
-    private Long id;
+    private UUID id;
     private String email;
     
     @JsonProperty("first_name")

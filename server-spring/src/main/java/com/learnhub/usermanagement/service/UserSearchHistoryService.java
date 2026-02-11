@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class UserSearchHistoryService {
@@ -19,7 +20,7 @@ public class UserSearchHistoryService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public void saveSearchQuery(Long userId, Map<String, Object> searchCriteria) {
+    public void saveSearchQuery(UUID userId, Map<String, Object> searchCriteria) {
         try {
             UserSearchHistory history = new UserSearchHistory();
             history.setUserId(userId);
@@ -31,13 +32,13 @@ public class UserSearchHistoryService {
         }
     }
 
-    public List<UserSearchHistory> getUserSearchHistory(Long userId, Integer limit, Integer offset) {
+    public List<UserSearchHistory> getUserSearchHistory(UUID userId, Integer limit, Integer offset) {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
                 offset / limit, limit);
         return userSearchHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
     }
 
-    public boolean deleteSearchHistory(Long historyId, Long userId) {
+    public boolean deleteSearchHistory(UUID historyId, UUID userId) {
         return userSearchHistoryRepository.findById(historyId)
                 .filter(history -> history.getUserId().equals(userId))
                 .map(history -> {

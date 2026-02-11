@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -42,7 +43,7 @@ public class HistoryController {
             @RequestParam(required = false, defaultValue = "0") Integer offset,
             HttpServletRequest request) {
         try {
-            Long userId = (Long) request.getAttribute("userId");
+            UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
@@ -82,10 +83,10 @@ public class HistoryController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Delete search history entry", description = "Delete a specific search history entry")
     public ResponseEntity<?> deleteSearchHistory(
-            @PathVariable Long historyId,
+            @PathVariable UUID historyId,
             HttpServletRequest request) {
         try {
-            Long userId = (Long) request.getAttribute("userId");
+            UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
@@ -112,7 +113,7 @@ public class HistoryController {
             @RequestParam(required = false, defaultValue = "0") Integer offset,
             HttpServletRequest request) {
         try {
-            Long userId = (Long) request.getAttribute("userId");
+            UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
@@ -154,7 +155,7 @@ public class HistoryController {
             @RequestParam(required = false, defaultValue = "0") Integer offset,
             HttpServletRequest request) {
         try {
-            Long userId = (Long) request.getAttribute("userId");
+            UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
@@ -203,12 +204,17 @@ public class HistoryController {
             @RequestBody Map<String, Object> requestBody,
             HttpServletRequest request) {
         try {
-            Long userId = (Long) request.getAttribute("userId");
+            UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
-            Long activityId = Long.valueOf(requestBody.get("activity_id").toString());
+            UUID activityId;
+            try {
+                activityId = UUID.fromString(requestBody.get("activity_id").toString());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(ErrorResponse.of("Invalid activity_id format: must be a valid UUID"));
+            }
             String name = (String) requestBody.get("name");
 
             UserFavourites favourite = favouritesService.saveActivityFavourite(userId, activityId, name);
@@ -231,15 +237,26 @@ public class HistoryController {
             @RequestBody Map<String, Object> requestBody,
             HttpServletRequest request) {
         try {
-            Long userId = (Long) request.getAttribute("userId");
+            UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
             @SuppressWarnings("unchecked")
-            List<Long> activityIds = ((List<Object>) requestBody.get("activity_ids")).stream()
-                    .map(id -> Long.valueOf(id.toString()))
-                    .collect(Collectors.toList());
+            List<UUID> activityIds;
+            try {
+                activityIds = ((List<Object>) requestBody.get("activity_ids")).stream()
+                        .map(id -> {
+                            try {
+                                return UUID.fromString(id.toString());
+                            } catch (IllegalArgumentException e) {
+                                throw new RuntimeException("Invalid activity_id in list: " + id + ". Must be a valid UUID");
+                            }
+                        })
+                        .collect(Collectors.toList());
+            } catch (RuntimeException e) {
+                return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+            }
             String name = (String) requestBody.get("name");
             String lessonPlanSnapshot = objectMapper.writeValueAsString(requestBody.get("lesson_plan_snapshot"));
 
@@ -261,10 +278,10 @@ public class HistoryController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Delete favourite", description = "Delete a favourite (activity or lesson plan)")
     public ResponseEntity<?> deleteFavourite(
-            @PathVariable Long favouriteId,
+            @PathVariable UUID favouriteId,
             HttpServletRequest request) {
         try {
-            Long userId = (Long) request.getAttribute("userId");
+            UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
@@ -286,10 +303,10 @@ public class HistoryController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Remove activity favourite", description = "Remove an activity from favourites")
     public ResponseEntity<?> removeActivityFavourite(
-            @PathVariable Long activityId,
+            @PathVariable UUID activityId,
             HttpServletRequest request) {
         try {
-            Long userId = (Long) request.getAttribute("userId");
+            UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
@@ -312,10 +329,10 @@ public class HistoryController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Check activity favourite status", description = "Check if an activity is favourited by the user")
     public ResponseEntity<?> checkActivityFavouriteStatus(
-            @PathVariable Long activityId,
+            @PathVariable UUID activityId,
             HttpServletRequest request) {
         try {
-            Long userId = (Long) request.getAttribute("userId");
+            UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }

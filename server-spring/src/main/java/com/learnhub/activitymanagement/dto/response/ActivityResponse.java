@@ -6,12 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class ActivityResponse {
-    private Long id;
+    private UUID id;
     private String name;
     private String description;
     private String source;
@@ -51,5 +52,5 @@ public class ActivityResponse {
     private List<String> topics;
     
     @JsonProperty("document_id")
-    private Long documentId;
+    private UUID documentId;
 }
