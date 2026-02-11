@@ -53,7 +53,6 @@ public class PDFService {
     @Value("${pdf.storage.path:/app/data/pdfs}")
     private String pdfStoragePath;
 
-    @Transactional
     public Long storePdf(byte[] pdfContent, String filename) throws IOException {
         // Ensure storage directory exists
         Path storagePath = Paths.get(pdfStoragePath);
@@ -92,12 +91,11 @@ public class PDFService {
                 .orElseThrow(() -> new RuntimeException("PDF document not found"));
     }
 
-    @Transactional
-    public void updatePdfExtractionResults(Long documentId, Map<String, Object> extractedFields, 
-                                           String confidenceScore, String extractionQuality) {
+    public void updatePdfExtractionResults(Long documentId, Map<String, Object> extractedFields,
+            String confidenceScore, String extractionQuality) {
         PDFDocument document = pdfDocumentRepository.findById(documentId)
-            .orElseThrow(() -> new RuntimeException("PDF document not found"));
-        
+                .orElseThrow(() -> new RuntimeException("PDF document not found"));
+
         // Convert extracted fields to JSON string
         try {
             String json = extractedFields != null ? OBJECT_MAPPER.writeValueAsString(extractedFields) : "{}";

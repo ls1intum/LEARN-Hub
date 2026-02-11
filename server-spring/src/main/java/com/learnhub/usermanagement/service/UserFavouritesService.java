@@ -26,7 +26,6 @@ public class UserFavouritesService {
         return userFavouritesRepository.findByUserIdAndFavouriteType(userId, type);
     }
 
-    @Transactional
     public UserFavourites saveActivityFavourite(Long userId, Long activityId, String name) {
         UserFavourites favourite = new UserFavourites();
         favourite.setUserId(userId);
@@ -37,9 +36,8 @@ public class UserFavouritesService {
         return userFavouritesRepository.save(favourite);
     }
 
-    @Transactional
-    public UserFavourites saveLessonPlanFavourite(Long userId, List<Long> activityIds, 
-                                                    String lessonPlanSnapshot, String name) {
+    public UserFavourites saveLessonPlanFavourite(Long userId, List<Long> activityIds,
+            String lessonPlanSnapshot, String name) {
         try {
             UserFavourites favourite = new UserFavourites();
             favourite.setUserId(userId);
@@ -54,21 +52,19 @@ public class UserFavouritesService {
         }
     }
 
-    @Transactional
     public boolean deleteFavourite(Long favouriteId, Long userId) {
         return userFavouritesRepository.findById(favouriteId)
-            .filter(fav -> fav.getUserId().equals(userId))
-            .map(fav -> {
-                userFavouritesRepository.delete(fav);
-                return true;
-            })
-            .orElse(false);
+                .filter(fav -> fav.getUserId().equals(userId))
+                .map(fav -> {
+                    userFavouritesRepository.delete(fav);
+                    return true;
+                })
+                .orElse(false);
     }
 
-    @Transactional
     public boolean deleteActivityFavourite(Long userId, Long activityId) {
         List<UserFavourites> favourites = userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityId(
-            userId, "activity", activityId);
+                userId, "activity", activityId);
         if (!favourites.isEmpty()) {
             userFavouritesRepository.delete(favourites.get(0));
             return true;
@@ -78,7 +74,7 @@ public class UserFavouritesService {
 
     public boolean isActivityFavourited(Long userId, Long activityId) {
         List<UserFavourites> favourites = userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityId(
-            userId, "activity", activityId);
+                userId, "activity", activityId);
         return !favourites.isEmpty();
     }
 }
