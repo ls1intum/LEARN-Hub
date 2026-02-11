@@ -40,6 +40,7 @@ public class ActivityController {
     private RecommendationService recommendationService;
 
     @GetMapping("/")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get activities", description = "Get a list of activities with optional filtering and pagination")
     public ResponseEntity<?> getActivities(
             @RequestParam(required = false) String name,
@@ -66,6 +67,7 @@ public class ActivityController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get activity by ID", description = "Get a single activity by its ID")
     public ResponseEntity<?> getActivity(@PathVariable Long id) {
         try {
@@ -126,6 +128,7 @@ public class ActivityController {
     }
 
     @GetMapping("/{activityId}/pdf")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get activity PDF", description = "Get PDF file for a specific activity")
     public ResponseEntity<?> getActivityPdf(@PathVariable Long activityId) {
         try {
@@ -151,6 +154,7 @@ public class ActivityController {
     }
 
     @GetMapping("/recommendations")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get activity recommendations", description = "Get personalized activity recommendations with scoring")
     public ResponseEntity<?> getRecommendations(
             @RequestParam(required = false) String name,
@@ -183,6 +187,7 @@ public class ActivityController {
     }
 
     @GetMapping("/scoring-insights")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get scoring insights", description = "Get information about scoring categories and their weights")
     public ResponseEntity<?> getScoringInsights() {
         try {
@@ -210,6 +215,7 @@ public class ActivityController {
     }
 
     @PostMapping("/lesson-plan")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Generate lesson plan", description = "Generate a lesson plan from selected activities")
     public ResponseEntity<?> generateLessonPlan(@RequestBody LessonPlanRequest request) {
         try {
@@ -248,6 +254,7 @@ public class ActivityController {
     }
 
     @PostMapping("/lesson-plan/info")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get lesson plan info", description = "Get lesson plan generation information")
     public ResponseEntity<?> getLessonPlanInfo(@RequestBody LessonPlanInfoRequest request) {
         try {

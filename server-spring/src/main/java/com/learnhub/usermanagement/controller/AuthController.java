@@ -36,6 +36,7 @@ public class AuthController {
     private AuthService authService;
 
     @PostMapping("/register-teacher")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Register a new teacher", description = "Register a new teacher account and send verification code")
     public ResponseEntity<?> registerTeacher(@Valid @RequestBody TeacherRegistrationRequest request) {
         try {
@@ -47,6 +48,7 @@ public class AuthController {
     }
 
     @PostMapping("/verification-code")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Request verification code", description = "Send a verification code to the user's email address")
     public ResponseEntity<?> requestVerificationCode(@RequestBody Map<String, String> request) {
         try {
@@ -59,6 +61,7 @@ public class AuthController {
     }
 
     @PostMapping("/verify")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Verify code and login", description = "Verify the code and complete login process")
     public ResponseEntity<?> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
         try {
@@ -75,6 +78,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Login with password", description = "Login with email and password (admin or teacher)")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         try {
@@ -91,6 +95,7 @@ public class AuthController {
     }
 
     @PostMapping("/admin/login")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Admin login", description = "Login with admin credentials")
     public ResponseEntity<?> adminLogin(@Valid @RequestBody LoginRequest request) {
         try {
@@ -131,6 +136,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Refresh token", description = "Refresh the JWT access token using refresh token")
     public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
         try {
@@ -157,6 +163,7 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Reset password", description = "Reset password for a teacher")
     public ResponseEntity<?> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
         try {

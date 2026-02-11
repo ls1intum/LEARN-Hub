@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,6 +23,7 @@ public class MetaController {
     private String environment;
 
     @GetMapping("/api/hello")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Health check", description = "Simple health check endpoint")
     public ResponseEntity<Map<String, String>> hello() {
         Map<String, String> response = new HashMap<>();
@@ -30,12 +32,14 @@ public class MetaController {
     }
 
     @GetMapping("/hello")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Health check (alternative)", description = "Alternative health check endpoint")
     public ResponseEntity<Map<String, String>> helloAlt() {
         return hello();
     }
 
     @GetMapping("/api/meta/field-values")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get field values", description = "Get field values for enums used by client")
     public ResponseEntity<?> getFieldValues() {
         Map<String, Object> fieldValues = new HashMap<>();
@@ -50,6 +54,7 @@ public class MetaController {
     }
 
     @GetMapping("/api/meta/environment")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get current environment", description = "Get the current environment (local, staging, production)")
     public ResponseEntity<?> getEnvironment() {
         Map<String, String> response = new HashMap<>();

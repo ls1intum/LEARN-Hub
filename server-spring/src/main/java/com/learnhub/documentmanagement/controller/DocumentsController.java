@@ -60,6 +60,7 @@ public class DocumentsController {
     }
 
     @GetMapping("/{documentId}")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get document", description = "Retrieve PDF file content by document ID")
     public ResponseEntity<?> getDocument(@PathVariable Long documentId) {
         try {
@@ -80,6 +81,7 @@ public class DocumentsController {
     }
 
     @GetMapping("/{documentId}/info")
+    @PreAuthorize("permitAll()")
     @Operation(summary = "Get document info", description = "Get PDF document metadata")
     public ResponseEntity<?> getDocumentInfo(@PathVariable Long documentId) {
         try {
