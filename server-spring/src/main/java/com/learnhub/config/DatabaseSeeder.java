@@ -1,15 +1,15 @@
 package com.learnhub.config;
 
-import com.learnhub.model.Activity;
-import com.learnhub.model.PDFDocument;
-import com.learnhub.model.User;
-import com.learnhub.model.enums.ActivityFormat;
-import com.learnhub.model.enums.BloomLevel;
-import com.learnhub.model.enums.EnergyLevel;
-import com.learnhub.model.enums.UserRole;
-import com.learnhub.repository.ActivityRepository;
-import com.learnhub.repository.PDFDocumentRepository;
-import com.learnhub.repository.UserRepository;
+import com.learnhub.activitymanagement.entity.Activity;
+import com.learnhub.documentmanagement.entity.PDFDocument;
+import com.learnhub.usermanagement.entity.User;
+import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
+import com.learnhub.activitymanagement.entity.enums.BloomLevel;
+import com.learnhub.activitymanagement.entity.enums.EnergyLevel;
+import com.learnhub.usermanagement.entity.enums.UserRole;
+import com.learnhub.activitymanagement.repository.ActivityRepository;
+import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
+import com.learnhub.usermanagement.repository.UserRepository;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
