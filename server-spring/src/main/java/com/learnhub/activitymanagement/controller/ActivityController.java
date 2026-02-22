@@ -1,7 +1,9 @@
 package com.learnhub.activitymanagement.controller;
 
+import com.learnhub.activitymanagement.dto.request.ActivityFilterRequest;
 import com.learnhub.activitymanagement.dto.request.LessonPlanInfoRequest;
 import com.learnhub.activitymanagement.dto.request.LessonPlanRequest;
+import com.learnhub.activitymanagement.dto.request.RecommendationRequest;
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
 import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
@@ -9,7 +11,7 @@ import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.activitymanagement.service.ActivityService;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.activitymanagement.service.RecommendationService;
-import com.learnhub.activitymanagement.service.ScoringEngine;
+import com.learnhub.activitymanagement.service.ScoringEngineService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,21 +45,12 @@ public class ActivityController {
     @GetMapping("/")
     @PreAuthorize("permitAll()")
     @Operation(summary = "Get activities", description = "Get a list of activities with optional filtering and pagination")
-    public ResponseEntity<?> getActivities(
-            @RequestParam(required = false) String name,
-            @RequestParam(name = "age_min", required = false) Integer ageMin,
-            @RequestParam(name = "age_max", required = false) Integer ageMax,
-            @RequestParam(required = false) List<String> format,
-            @RequestParam(name = "bloom_level", required = false) List<String> bloomLevel,
-            @RequestParam(name = "mental_load", required = false) String mentalLoad,
-            @RequestParam(name = "physical_energy", required = false) String physicalEnergy,
-            @RequestParam(required = false) List<String> resources_needed,
-            @RequestParam(required = false) List<String> topics,
-            @RequestParam(required = false, defaultValue = "100") Integer limit,
-            @RequestParam(required = false, defaultValue = "0") Integer offset) {
+    public ResponseEntity<?> getActivities(@ModelAttribute ActivityFilterRequest request) {
         try {
             List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
-                    name, ageMin, ageMax, format, bloomLevel, mentalLoad, physicalEnergy, limit, offset);
+                    request.name(), request.ageMin(), request.ageMax(), request.format(),
+                    request.bloomLevel(), request.mentalLoad(), request.physicalEnergy(),
+                    request.resourcesNeeded(), request.topics(), request.limit(), request.offset());
             Map<String, Object> response = new HashMap<>();
             response.put("total", activities.size());
             response.put("activities", activities);
@@ -157,27 +150,17 @@ public class ActivityController {
     @GetMapping("/recommendations")
     @PreAuthorize("permitAll()")
     @Operation(summary = "Get activity recommendations", description = "Get personalized activity recommendations with scoring")
-    public ResponseEntity<?> getRecommendations(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) Integer target_age,
-            @RequestParam(required = false) List<String> format,
-            @RequestParam(required = false) List<String> bloom_levels,
-            @RequestParam(required = false) Integer target_duration,
-            @RequestParam(required = false) List<String> available_resources,
-            @RequestParam(required = false) List<String> preferred_topics,
-            @RequestParam(required = false) List<String> priority_categories,
-            @RequestParam(required = false, defaultValue = "false") Boolean include_breaks,
-            @RequestParam(required = false, defaultValue = "2") Integer max_activity_count,
-            @RequestParam(required = false, defaultValue = "10") Integer limit) {
+    public ResponseEntity<?> getRecommendations(@ModelAttribute RecommendationRequest request) {
         try {
             // Build criteria map using service
             Map<String, Object> criteria = activityService.buildRecommendationCriteria(
-                    name, target_age, format, bloom_levels, target_duration,
-                    available_resources, preferred_topics, priority_categories);
+                    request.name(), request.targetAge(), request.format(), request.bloomLevels(),
+                    request.targetDuration(), request.availableResources(), request.preferredTopics(),
+                    request.priorityCategories());
 
             // Get recommendations from service
             Map<String, Object> response = recommendationService.getRecommendations(
-                    criteria, include_breaks, max_activity_count, limit);
+                    criteria, request.includeBreaks(), request.maxActivityCount(), request.limit());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -192,12 +175,12 @@ public class ActivityController {
     @Operation(summary = "Get scoring insights", description = "Get information about scoring categories and their weights")
     public ResponseEntity<?> getScoringInsights() {
         try {
-            Map<String, ScoringEngine.ScoringCategory> categories = ScoringEngine.getScoringCategories();
+            Map<String, ScoringEngineService.ScoringCategory> categories = ScoringEngineService.getScoringCategories();
 
             Map<String, Object> response = new HashMap<>();
             Map<String, Map<String, Object>> categoriesMap = new HashMap<>();
 
-            for (Map.Entry<String, ScoringEngine.ScoringCategory> entry : categories.entrySet()) {
+            for (Map.Entry<String, ScoringEngineService.ScoringCategory> entry : categories.entrySet()) {
                 Map<String, Object> categoryInfo = new HashMap<>();
                 categoryInfo.put("name", entry.getValue().getName());
                 categoryInfo.put("impact", entry.getValue().getImpact());

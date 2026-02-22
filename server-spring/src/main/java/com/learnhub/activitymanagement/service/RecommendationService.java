@@ -9,7 +9,7 @@ import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.ActivityResource;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
-import com.learnhub.activitymanagement.service.ScoringEngine.SearchCriteria;
+import com.learnhub.activitymanagement.service.ScoringEngineService.SearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +44,7 @@ public class RecommendationService {
             List<Activity> filteredActivities = filterActivities(activities, criteria);
 
             // Create scoring engine
-            ScoringEngine scoringEngine = new ScoringEngine(priorityCategories);
+            ScoringEngineService scoringEngine = new ScoringEngineService(priorityCategories);
 
             // Generate recommendations
             List<Map<String, Object>> recommendations = new ArrayList<>();

@@ -13,7 +13,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class ScoringEngine {
+public class ScoringEngineService {
 
     // Scoring constants
     private static final int AGE_MAX_DISTANCE = 5;
@@ -40,11 +40,11 @@ public class ScoringEngine {
 
     private final List<String> priorityCategories;
 
-    public ScoringEngine() {
+    public ScoringEngineService() {
         this.priorityCategories = new ArrayList<>();
     }
 
-    public ScoringEngine(List<String> priorityCategories) {
+    public ScoringEngineService(List<String> priorityCategories) {
         this.priorityCategories = priorityCategories != null ? priorityCategories : new ArrayList<>();
     }
 
@@ -250,8 +250,8 @@ public class ScoringEngine {
         if (activities.size() > 1) {
             List<Integer> bloomIndices = new ArrayList<>();
             for (Activity activity : activities) {
-                String bloomStr = capitalize(activity.getBloomLevel().name());
-                int idx = BLOOM_ORDER.indexOf(bloomStr);
+                String bloomStr = activity.getBloomLevel() != null ? capitalize(activity.getBloomLevel().name()) : null;
+                int idx = bloomStr != null ? BLOOM_ORDER.indexOf(bloomStr) : -1;
                 bloomIndices.add(idx >= 0 ? idx : 0);
             }
 

@@ -7,9 +7,6 @@ import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.documentmanagement.service.LLMService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +14,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,57 +37,90 @@ public class ActivityService {
     }
 
     public List<ActivityResponse> getActivitiesWithFilters(
-            String name, Integer ageMin, Integer ageMax, 
+            String name, Integer ageMin, Integer ageMax,
             List<String> formats, List<String> bloomLevels, String mentalLoad, String physicalEnergy,
+            List<String> resourcesNeeded, List<String> topics,
             Integer limit, Integer offset) {
-        
+
         Specification<Activity> spec = Specification.where(null);
-        
+
         if (name != null && !name.isEmpty()) {
-            spec = spec.and((root, query, cb) -> 
+            spec = spec.and((root, query, cb) ->
                 cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
         }
-        
+
         if (ageMin != null) {
-            spec = spec.and((root, query, cb) -> 
+            spec = spec.and((root, query, cb) ->
                 cb.greaterThanOrEqualTo(root.get("ageMin"), ageMin));
         }
-        
+
         if (ageMax != null) {
-            spec = spec.and((root, query, cb) -> 
+            spec = spec.and((root, query, cb) ->
                 cb.lessThanOrEqualTo(root.get("ageMax"), ageMax));
         }
-        
+
         if (formats != null && !formats.isEmpty()) {
-            spec = spec.and((root, query, cb) -> 
-                root.get("format").as(String.class).in(formats));
+            List<ActivityFormat> formatEnums = formats.stream()
+                .map(ActivityFormat::fromValue)
+                .collect(Collectors.toList());
+            spec = spec.and((root, query, cb) ->
+                root.get("format").in(formatEnums));
         }
-        
+
         if (bloomLevels != null && !bloomLevels.isEmpty()) {
-            spec = spec.and((root, query, cb) -> 
-                root.get("bloomLevel").as(String.class).in(bloomLevels));
+            List<BloomLevel> bloomEnums = bloomLevels.stream()
+                .map(BloomLevel::fromValue)
+                .collect(Collectors.toList());
+            spec = spec.and((root, query, cb) ->
+                root.get("bloomLevel").in(bloomEnums));
         }
-        
+
         if (mentalLoad != null && !mentalLoad.isEmpty()) {
-            // Convert String ("low", "medium", "high") to EnergyLevel enum (LOW, MEDIUM, HIGH)
             EnergyLevel energyLevel = convertStringToEnergyLevel(mentalLoad);
-            spec = spec.and((root, query, cb) -> 
+            spec = spec.and((root, query, cb) ->
                 cb.equal(root.get("mentalLoad"), energyLevel));
         }
-        
+
         if (physicalEnergy != null && !physicalEnergy.isEmpty()) {
-            // Convert String ("low", "medium", "high") to EnergyLevel enum (LOW, MEDIUM, HIGH)
             EnergyLevel energyLevel = convertStringToEnergyLevel(physicalEnergy);
-            spec = spec.and((root, query, cb) -> 
+            spec = spec.and((root, query, cb) ->
                 cb.equal(root.get("physicalEnergy"), energyLevel));
         }
-        
-        int pageSize = (limit != null && limit > 0) ? limit : Integer.MAX_VALUE;
-        int pageNumber = (offset != null && offset > 0) ? offset / pageSize : 0;
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        
-        Page<Activity> page = activityRepository.findAll(spec, pageable);
-        return page.getContent().stream()
+
+        List<Activity> allMatching = activityRepository.findAll(spec);
+
+        // Apply in-memory filtering for JSONB-backed list fields
+        if (resourcesNeeded != null && !resourcesNeeded.isEmpty()) {
+            Set<String> neededLower = resourcesNeeded.stream()
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+            allMatching = allMatching.stream()
+                .filter(a -> a.getResourcesNeeded() != null &&
+                    a.getResourcesNeeded().stream()
+                        .filter(r -> r != null)
+                        .map(String::toLowerCase)
+                        .anyMatch(neededLower::contains))
+                .collect(Collectors.toList());
+        }
+
+        if (topics != null && !topics.isEmpty()) {
+            Set<String> topicsLower = topics.stream()
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
+            allMatching = allMatching.stream()
+                .filter(a -> a.getTopics() != null &&
+                    a.getTopics().stream()
+                        .filter(t -> t != null)
+                        .map(String::toLowerCase)
+                        .anyMatch(topicsLower::contains))
+                .collect(Collectors.toList());
+        }
+
+        int start = Math.min((offset != null && offset > 0) ? offset : 0, allMatching.size());
+        int pageSize = (limit != null && limit > 0) ? limit : allMatching.size();
+        int end = Math.min(start + pageSize, allMatching.size());
+
+        return allMatching.subList(start, end).stream()
             .map(this::mapToResponse)
             .collect(Collectors.toList());
     }
