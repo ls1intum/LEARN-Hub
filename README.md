@@ -16,7 +16,7 @@ The system implements a three-tier containerised web application architecture fo
 
 **Client Subsystem**: A React single-page application provides an interactive user interface for teachers and administrators. The client implements role-based access control, supports both light and dark themes, and maintains session-based authentication using sessionStorage for enhanced security on shared school computers.
 
-**Server Subsystem**: A Flask REST API server orchestrates the core application logic through specialised internal systems. The Recommendation System encapsulates the algorithmic intelligence. The User System manages identity through user, history, and favourites services. The Document System oversees content ingestion via PDF processing and LLM-assisted metadata extraction.
+**Server Subsystem**: A Spring Boot REST API server orchestrates the core application logic through specialised internal systems. The Recommendation System encapsulates the algorithmic intelligence. The User System manages identity through user, history, and favourites services. The Document System oversees content ingestion via PDF processing and LLM-assisted metadata extraction using Spring AI.
 
 **Data Layer**: PostgreSQL serves as the primary data store, managing activities, user accounts, search history, and favourites. The database schema supports complex relationships between activities, topics, and user preferences whilst maintaining referential integrity.
 
@@ -42,7 +42,24 @@ The `docs/figures/` directory contains UML diagrams documenting the system archi
 ![Subsystem Decomposition](docs/figures/final-lucid-subsystem.svg)
 
 ## Quick Start
-See [`docs/dev-setup.md`](docs/dev-setup.md)
+
+### Spring Boot (Current Implementation)
+See [`docs/dev-setup-spring.md`](docs/dev-setup-spring.md)
+
+**Quick start**:
+```bash
+# Start PostgreSQL
+docker compose -f compose-spring.yml up postgres -d
+
+# Run migrations
+cd server-spring && make db-migrate
+
+# Start server
+make dev
+```
+
+### Flask (Legacy - Deprecated)
+See [`docs/dev-setup.md`](docs/dev-setup.md) for the legacy Flask setup.
 
 ## Services
 
@@ -63,7 +80,6 @@ cp example.env .env
 
 Key configuration variables:
 - `LLM_API_KEY` - API key for automated content processing
-- `FLASK_SECRET_KEY` - Flask session security
 - `JWT_SECRET_KEY` - JWT token signing
 - `SQLALCHEMY_DATABASE_URI` - PostgreSQL connection string
 - `SMTP_*` - Email service configuration for teacher verification
@@ -95,11 +111,15 @@ See `example.env` for a complete list of configurable variables.
 ## Technology Stack
 
 **Server**:
-- Python 3.13 with modern type hints and performance improvements
-- Flask 3.0 with Flask-OpenAPI3 for automatic API documentation
-- SQLAlchemy ORM with Alembic migrations
-- PostgreSQL 17+ for relational data persistence
-- Gunicorn WSGI server for production deployment
+- **Java 21** with Spring Boot 3.4.1
+- **Spring Data JPA** with Hibernate ORM
+- **Flyway** for database migrations
+- **PostgreSQL 17+** for relational data persistence
+- **Spring AI** with Ollama for LLM integration
+- **Spring Security** with JWT authentication
+- Maven for dependency management
+
+> **Migration Note**: The server has been migrated from Flask/Python to Spring Boot/Java. The legacy Flask implementation is available in the `server/` directory. All API endpoints maintain full backward compatibility.
 
 **Client**:
 - React 19 with TypeScript for type safety
@@ -114,20 +134,26 @@ See `example.env` for a complete list of configurable variables.
 - GitHub Container Registry for image distribution
 
 **Development Tools**:
-- `uv` for Python dependency management
-- pytest for server testing
+- Maven for Java dependency management
+- JUnit for server testing
 - Vitest for client testing
-- ESLint and Ruff for code quality
 
 ## Development Commands
 
-### Server
+### Server (Spring Boot)
+```bash
+cd server-spring/
+make dev          # Start development server
+make test         # Run tests
+make build        # Build the application
+make db-migrate   # Run Flyway migrations
+```
+
+### Legacy Server (Flask - Deprecated)
 ```bash
 cd server/
 make dev          # Start development server
 make test         # Run tests with coverage
-make lint-fix     # Check and fix code quality
-make format       # Format code
 make db-setup     # Run database migrations
 ```
 
