@@ -4,6 +4,8 @@ import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.dto.response.MessageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,6 +21,8 @@ import java.util.Map;
 @Tag(name = "Meta", description = "Metadata and system information endpoints")
 public class MetaController {
 
+    private static final Logger logger = LoggerFactory.getLogger(MetaController.class);
+
     @Value("${app.environment:local}")
     private String environment;
 
@@ -26,6 +30,7 @@ public class MetaController {
     @PreAuthorize("permitAll()")
     @Operation(summary = "Health check", description = "Simple health check endpoint")
     public ResponseEntity<Map<String, String>> hello() {
+        logger.info("GET /api/hello - Health check endpoint called");
         Map<String, String> response = new HashMap<>();
         response.put("message", "Hello, world!");
         return ResponseEntity.ok(response);
@@ -35,6 +40,7 @@ public class MetaController {
     @PreAuthorize("permitAll()")
     @Operation(summary = "Health check (alternative)", description = "Alternative health check endpoint")
     public ResponseEntity<Map<String, String>> helloAlt() {
+        logger.info("GET /hello - Health check (alternative) endpoint called");
         return hello();
     }
 
@@ -42,6 +48,7 @@ public class MetaController {
     @PreAuthorize("permitAll()")
     @Operation(summary = "Get field values", description = "Get field values for enums used by client")
     public ResponseEntity<?> getFieldValues() {
+        logger.info("GET /api/meta/field-values - Field values endpoint called");
         Map<String, Object> fieldValues = new HashMap<>();
         fieldValues.put("format", Arrays.asList("unplugged", "digital", "hybrid"));
         fieldValues.put("resources_available", Arrays.asList("computers", "tablets", "handouts", "blocks", "electronics", "stationery"));
@@ -57,6 +64,7 @@ public class MetaController {
     @PreAuthorize("permitAll()")
     @Operation(summary = "Get current environment", description = "Get the current environment (local, staging, production)")
     public ResponseEntity<?> getEnvironment() {
+        logger.info("GET /api/meta/environment - Environment endpoint called, environment={}", environment);
         Map<String, String> response = new HashMap<>();
         response.put("environment", environment);
         return ResponseEntity.ok(response);

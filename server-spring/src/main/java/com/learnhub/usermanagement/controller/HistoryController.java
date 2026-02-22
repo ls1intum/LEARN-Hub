@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -27,6 +29,8 @@ import java.util.stream.Collectors;
 @SecurityRequirement(name = "BearerAuth")
 public class HistoryController {
 
+    private static final Logger logger = LoggerFactory.getLogger(HistoryController.class);
+
     @Autowired
     private UserSearchHistoryService searchHistoryService;
 
@@ -42,9 +46,11 @@ public class HistoryController {
             @RequestParam(required = false, defaultValue = "10") Integer limit,
             @RequestParam(required = false, defaultValue = "0") Integer offset,
             HttpServletRequest request) {
+        logger.info("GET /api/history/search - Get search history called with limit={}, offset={}", limit, offset);
         try {
             UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
+                logger.error("GET /api/history/search - Unauthorized: userId not found in request");
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
@@ -74,6 +80,7 @@ public class HistoryController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("GET /api/history/search - Failed to retrieve search history: {}", e.getMessage());
             return ResponseEntity.status(500)
                     .body(ErrorResponse.of("Failed to retrieve search history: " + e.getMessage()));
         }
@@ -85,21 +92,26 @@ public class HistoryController {
     public ResponseEntity<?> deleteSearchHistory(
             @PathVariable UUID historyId,
             HttpServletRequest request) {
+        logger.info("DELETE /api/history/search/{} - Delete search history entry called", historyId);
         try {
             UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
+                logger.error("DELETE /api/history/search/{} - Unauthorized: userId not found in request", historyId);
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
             boolean deleted = searchHistoryService.deleteSearchHistory(historyId, userId);
             if (!deleted) {
+                logger.error("DELETE /api/history/search/{} - Search history entry not found", historyId);
                 return ResponseEntity.status(404).body(ErrorResponse.of("Search history entry not found"));
             }
 
+            logger.info("DELETE /api/history/search/{} - Search history entry deleted successfully", historyId);
             Map<String, String> response = new HashMap<>();
             response.put("message", "Search history entry deleted successfully");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("DELETE /api/history/search/{} - Failed to delete search history: {}", historyId, e.getMessage());
             return ResponseEntity.status(500)
                     .body(ErrorResponse.of("Failed to delete search history: " + e.getMessage()));
         }
@@ -112,9 +124,11 @@ public class HistoryController {
             @RequestParam(required = false, defaultValue = "10") Integer limit,
             @RequestParam(required = false, defaultValue = "0") Integer offset,
             HttpServletRequest request) {
+        logger.info("GET /api/history/favourites/activities - Get activity favourites called with limit={}, offset={}", limit, offset);
         try {
             UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
+                logger.error("GET /api/history/favourites/activities - Unauthorized: userId not found in request");
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
@@ -142,6 +156,7 @@ public class HistoryController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("GET /api/history/favourites/activities - Failed to retrieve activity favourites: {}", e.getMessage());
             return ResponseEntity.status(500)
                     .body(ErrorResponse.of("Failed to retrieve activity favourites: " + e.getMessage()));
         }
@@ -154,9 +169,11 @@ public class HistoryController {
             @RequestParam(required = false, defaultValue = "10") Integer limit,
             @RequestParam(required = false, defaultValue = "0") Integer offset,
             HttpServletRequest request) {
+        logger.info("GET /api/history/favourites/lesson-plans - Get lesson plan favourites called with limit={}, offset={}", limit, offset);
         try {
             UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
+                logger.error("GET /api/history/favourites/lesson-plans - Unauthorized: userId not found in request");
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
@@ -192,6 +209,7 @@ public class HistoryController {
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("GET /api/history/favourites/lesson-plans - Failed to retrieve lesson plan favourites: {}", e.getMessage());
             return ResponseEntity.status(500)
                     .body(ErrorResponse.of("Failed to retrieve lesson plan favourites: " + e.getMessage()));
         }
@@ -203,9 +221,11 @@ public class HistoryController {
     public ResponseEntity<?> saveActivityFavourite(
             @RequestBody Map<String, Object> requestBody,
             HttpServletRequest request) {
+        logger.info("POST /api/history/favourites/activities - Save activity favourite called");
         try {
             UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
+                logger.error("POST /api/history/favourites/activities - Unauthorized: userId not found in request");
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
@@ -213,18 +233,21 @@ public class HistoryController {
             try {
                 activityId = UUID.fromString(requestBody.get("activity_id").toString());
             } catch (IllegalArgumentException e) {
+                logger.error("POST /api/history/favourites/activities - Invalid activity_id format");
                 return ResponseEntity.badRequest().body(ErrorResponse.of("Invalid activity_id format: must be a valid UUID"));
             }
             String name = (String) requestBody.get("name");
 
             UserFavourites favourite = favouritesService.saveActivityFavourite(userId, activityId, name);
 
+            logger.info("POST /api/history/favourites/activities - Activity favourite saved with id={}", favourite.getId());
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Activity favourite saved successfully");
             response.put("favourite_id", favourite.getId());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("POST /api/history/favourites/activities - Failed to save activity favourite: {}", e.getMessage());
             return ResponseEntity.status(500)
                     .body(ErrorResponse.of("Failed to save activity favourite: " + e.getMessage()));
         }
@@ -236,9 +259,11 @@ public class HistoryController {
     public ResponseEntity<?> saveLessonPlanFavourite(
             @RequestBody Map<String, Object> requestBody,
             HttpServletRequest request) {
+        logger.info("POST /api/history/favourites/lesson-plans - Save lesson plan favourite called");
         try {
             UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
+                logger.error("POST /api/history/favourites/lesson-plans - Unauthorized: userId not found in request");
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
@@ -255,6 +280,7 @@ public class HistoryController {
                         })
                         .collect(Collectors.toList());
             } catch (RuntimeException e) {
+                logger.error("POST /api/history/favourites/lesson-plans - Invalid activity_ids: {}", e.getMessage());
                 return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
             }
             String name = (String) requestBody.get("name");
@@ -263,12 +289,14 @@ public class HistoryController {
             UserFavourites favourite = favouritesService.saveLessonPlanFavourite(userId, activityIds,
                     lessonPlanSnapshot, name);
 
+            logger.info("POST /api/history/favourites/lesson-plans - Lesson plan favourite saved with id={}", favourite.getId());
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Lesson plan favourite saved successfully");
             response.put("favourite_id", favourite.getId());
 
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("POST /api/history/favourites/lesson-plans - Failed to save lesson plan favourite: {}", e.getMessage());
             return ResponseEntity.status(500)
                     .body(ErrorResponse.of("Failed to save lesson plan favourite: " + e.getMessage()));
         }
@@ -280,21 +308,26 @@ public class HistoryController {
     public ResponseEntity<?> deleteFavourite(
             @PathVariable UUID favouriteId,
             HttpServletRequest request) {
+        logger.info("DELETE /api/history/favourites/{} - Delete favourite called", favouriteId);
         try {
             UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
+                logger.error("DELETE /api/history/favourites/{} - Unauthorized: userId not found in request", favouriteId);
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
             boolean deleted = favouritesService.deleteFavourite(favouriteId, userId);
             if (!deleted) {
+                logger.error("DELETE /api/history/favourites/{} - Favourite not found", favouriteId);
                 return ResponseEntity.status(404).body(ErrorResponse.of("Favourite not found"));
             }
 
+            logger.info("DELETE /api/history/favourites/{} - Favourite deleted successfully", favouriteId);
             Map<String, String> response = new HashMap<>();
             response.put("message", "Favourite deleted successfully");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("DELETE /api/history/favourites/{} - Failed to delete favourite: {}", favouriteId, e.getMessage());
             return ResponseEntity.status(500).body(ErrorResponse.of("Failed to delete favourite: " + e.getMessage()));
         }
     }
@@ -305,21 +338,26 @@ public class HistoryController {
     public ResponseEntity<?> removeActivityFavourite(
             @PathVariable UUID activityId,
             HttpServletRequest request) {
+        logger.info("DELETE /api/history/favourites/activities/{} - Remove activity favourite called", activityId);
         try {
             UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
+                logger.error("DELETE /api/history/favourites/activities/{} - Unauthorized: userId not found in request", activityId);
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
             boolean deleted = favouritesService.deleteActivityFavourite(userId, activityId);
             if (!deleted) {
+                logger.error("DELETE /api/history/favourites/activities/{} - Activity favourite not found", activityId);
                 return ResponseEntity.status(404).body(ErrorResponse.of("Activity favourite not found"));
             }
 
+            logger.info("DELETE /api/history/favourites/activities/{} - Activity favourite removed successfully", activityId);
             Map<String, String> response = new HashMap<>();
             response.put("message", "Activity favourite removed successfully");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("DELETE /api/history/favourites/activities/{} - Failed to remove activity favourite: {}", activityId, e.getMessage());
             return ResponseEntity.status(500)
                     .body(ErrorResponse.of("Failed to remove activity favourite: " + e.getMessage()));
         }
@@ -331,9 +369,11 @@ public class HistoryController {
     public ResponseEntity<?> checkActivityFavouriteStatus(
             @PathVariable UUID activityId,
             HttpServletRequest request) {
+        logger.info("GET /api/history/favourites/activities/{}/status - Check activity favourite status called", activityId);
         try {
             UUID userId = (UUID) request.getAttribute("userId");
             if (userId == null) {
+                logger.error("GET /api/history/favourites/activities/{}/status - Unauthorized: userId not found in request", activityId);
                 return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
             }
 
@@ -343,6 +383,7 @@ public class HistoryController {
             response.put("is_favourited", isFavourited);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            logger.error("GET /api/history/favourites/activities/{}/status - Failed to check activity favourite status: {}", activityId, e.getMessage());
             return ResponseEntity.status(500)
                     .body(ErrorResponse.of("Failed to check activity favourite status: " + e.getMessage()));
         }

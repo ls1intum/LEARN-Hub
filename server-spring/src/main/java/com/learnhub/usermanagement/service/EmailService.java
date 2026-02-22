@@ -4,10 +4,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class EmailService {
+
+    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
     @Autowired
     private JavaMailSender mailSender;
@@ -19,6 +23,7 @@ public class EmailService {
     private String fromName;
 
     public void sendVerificationCode(String to, String code, String firstName) {
+        logger.debug("Sending verification code to email={}", to);
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromName + " <" + fromAddress + ">");
         message.setTo(to);
@@ -37,6 +42,7 @@ public class EmailService {
     }
 
     public void sendPasswordResetCode(String to, String code, String firstName) {
+        logger.debug("Sending password reset code to email={}", to);
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromName + " <" + fromAddress + ">");
         message.setTo(to);
@@ -55,6 +61,7 @@ public class EmailService {
     }
 
     public void sendTeacherCredentials(String to, String firstName, String password) {
+        logger.debug("Sending teacher credentials to email={}", to);
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromName + " <" + fromAddress + ">");
         message.setTo(to);
@@ -75,6 +82,7 @@ public class EmailService {
     }
 
     public void sendPasswordReset(String to, String firstName, String newPassword) {
+        logger.debug("Sending password reset email to email={}", to);
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromName + " <" + fromAddress + ">");
         message.setTo(to);

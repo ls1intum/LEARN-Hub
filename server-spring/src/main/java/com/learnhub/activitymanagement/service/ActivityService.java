@@ -6,6 +6,8 @@ import com.learnhub.activitymanagement.entity.enums.*;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.documentmanagement.service.LLMService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class ActivityService {
+
+    private static final Logger logger = LoggerFactory.getLogger(ActivityService.class);
 
     @Autowired
     private ActivityRepository activityRepository;
@@ -139,13 +143,16 @@ public class ActivityService {
     }
 
     public ActivityResponse getActivityById(UUID id) {
+        logger.debug("Fetching activity by id={}", id);
         Activity activity = activityRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Activity not found"));
         return mapToResponse(activity);
     }
 
     public ActivityResponse createActivity(Activity activity) {
+        logger.debug("Saving new activity: name={}", activity.getName());
         Activity saved = activityRepository.save(activity);
+        logger.debug("Activity saved with id={}", saved.getId());
         return mapToResponse(saved);
     }
 
@@ -175,6 +182,7 @@ public class ActivityService {
     }
 
     public void deleteActivity(UUID id) {
+        logger.debug("Deleting activity with id={}", id);
         activityRepository.deleteById(id);
     }
 

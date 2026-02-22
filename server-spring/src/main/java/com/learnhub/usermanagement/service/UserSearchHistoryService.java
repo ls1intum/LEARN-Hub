@@ -3,6 +3,8 @@ package com.learnhub.usermanagement.service;
 import com.learnhub.usermanagement.entity.UserSearchHistory;
 import com.learnhub.usermanagement.repository.UserSearchHistoryRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +16,8 @@ import java.util.UUID;
 
 @Service
 public class UserSearchHistoryService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserSearchHistoryService.class);
 
     @Autowired
     private UserSearchHistoryRepository userSearchHistoryRepository;
@@ -29,6 +33,7 @@ public class UserSearchHistoryService {
             userSearchHistoryRepository.save(history);
         } catch (Exception e) {
             // Log but don't fail if search history saving fails
+            logger.debug("Failed to save search history for userId={}: {}", userId, e.getMessage());
         }
     }
 

@@ -3,6 +3,8 @@ package com.learnhub.usermanagement.service;
 import com.learnhub.usermanagement.entity.UserFavourites;
 import com.learnhub.usermanagement.repository.UserFavouritesRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,6 +15,8 @@ import java.util.UUID;
 
 @Service
 public class UserFavouritesService {
+
+    private static final Logger logger = LoggerFactory.getLogger(UserFavouritesService.class);
 
     @Autowired
     private UserFavouritesRepository userFavouritesRepository;
@@ -49,6 +53,7 @@ public class UserFavouritesService {
             favourite.setCreatedAt(LocalDateTime.now());
             return userFavouritesRepository.save(favourite);
         } catch (Exception e) {
+            logger.warn("Failed to save lesson plan favourite: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to save lesson plan favourite", e);
         }
     }

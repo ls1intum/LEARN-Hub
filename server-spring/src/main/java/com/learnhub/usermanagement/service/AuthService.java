@@ -11,6 +11,8 @@ import com.learnhub.usermanagement.entity.enums.UserRole;
 import com.learnhub.usermanagement.repository.UserRepository;
 import com.learnhub.usermanagement.repository.VerificationCodeRepository;
 import com.learnhub.security.JwtUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,6 +26,8 @@ import java.util.UUID;
 
 @Service
 public class AuthService {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     @Autowired
     private UserRepository userRepository;
@@ -326,7 +330,7 @@ public class AuthService {
             emailService.sendPasswordReset(user.getEmail(), user.getFirstName(), newPassword);
         } catch (Exception e) {
             // Log warning but don't fail - password was already reset
-            System.err.println("Failed to send password reset email to " + email + ", but password was reset");
+            logger.warn("Failed to send password reset email to {}, but password was reset", email);
         }
     }
 

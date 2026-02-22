@@ -10,6 +10,8 @@ import com.learnhub.activitymanagement.entity.enums.ActivityResource;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.activitymanagement.service.ScoringEngineService.SearchCriteria;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class RecommendationService {
+
+    private static final Logger logger = LoggerFactory.getLogger(RecommendationService.class);
 
     @Autowired
     private ActivityRepository activityRepository;
@@ -108,7 +112,7 @@ public class RecommendationService {
             return response;
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Failed to generate recommendations: {}", e.getMessage(), e);
             Map<String, Object> response = new HashMap<>();
             response.put("activities", new ArrayList<>());
             response.put("total", 0);

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- Read verbose-logging flag from application properties / VERBOSE_LOGGING env var -->
+    <springProperty scope="context" name="verboseLogging" source="app.verbose-logging" defaultValue="false"/>
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+
+    <!-- Root level: INFO -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- Controllers: always INFO so every endpoint call is visible -->
+    <logger name="com.learnhub.controller" level="INFO"/>
+    <logger name="com.learnhub.activitymanagement.controller" level="INFO"/>
+    <logger name="com.learnhub.usermanagement.controller" level="INFO"/>
+    <logger name="com.learnhub.documentmanagement.controller" level="INFO"/>
+
+    <!-- Config / seeder: INFO for startup visibility -->
+    <logger name="com.learnhub.config" level="INFO"/>
+
+    <!-- Services: WARN by default, DEBUG when verbose=true -->
+    <!-- Framework internals: WARN by default, DEBUG when verbose=true -->
+    <if condition='p("verboseLogging").equals("true")'>
+        <then>
+            <logger name="com.learnhub.activitymanagement.service" level="DEBUG"/>
+            <logger name="com.learnhub.usermanagement.service" level="DEBUG"/>
+            <logger name="com.learnhub.documentmanagement.service" level="DEBUG"/>
+            <logger name="org.hibernate.SQL" level="DEBUG"/>
+            <logger name="org.hibernate.type.descriptor.sql.BasicBinder" level="TRACE"/>
+            <logger name="org.springframework.security" level="DEBUG"/>
+            <logger name="org.springframework.mail" level="DEBUG"/>
+            <logger name="org.springframework.ai" level="DEBUG"/>
+            <logger name="org.springframework.web.client.RestClient" level="DEBUG"/>
+        </then>
+        <else>
+            <logger name="com.learnhub.activitymanagement.service" level="WARN"/>
+            <logger name="com.learnhub.usermanagement.service" level="WARN"/>
+            <logger name="com.learnhub.documentmanagement.service" level="WARN"/>
+            <logger name="org.hibernate.SQL" level="WARN"/>
+            <logger name="org.springframework.security" level="WARN"/>
+            <logger name="org.springframework.security.web.FilterChainProxy" level="WARN"/>
+            <logger name="org.springframework.mail" level="WARN"/>
+            <logger name="org.springframework.ai" level="WARN"/>
+            <logger name="org.springframework.web.client.RestClient" level="WARN"/>
+            <logger name="org.springframework.http.client" level="WARN"/>
+        </else>
+    </if>
+</configuration>
