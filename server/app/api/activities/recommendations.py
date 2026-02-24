@@ -53,7 +53,7 @@ def register_activities_recommendations_routes(api):
             if user_id and hasattr(user_id, "id"):
                 search_history_service = UserSearchHistoryService(db=get_db_session())
                 search_history_service.save_search_query(
-                    user_id=user_id.id, search_criteria=query.model_dump(exclude_none=True)
+                    user_id=user_id.id, search_criteria=request.args.to_dict(flat=True)
                 )
 
             from app.core.engine import get_recommendations as core_get_recommendations
