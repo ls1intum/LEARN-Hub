@@ -160,10 +160,10 @@ public class PDFService {
         try {
             // 1. Generate summary page
             byte[] summaryPdf = generateSummaryPage(activities, searchCriteria, breaks, totalDuration);
-            logger.info("Generated summary page for lesson plan PDF.");
+            logger.debug("Generated summary page for lesson plan PDF.");
             // 2. Get activity PDFs
             List<byte[]> activityPdfs = getActivityPdfs(activities);
-            logger.info("Retrieved {} activity PDFs for lesson plan.", activityPdfs.size());
+            logger.debug("Retrieved {} activity PDFs for lesson plan.", activityPdfs.size());
             // 3. Merge all PDFs
             return mergePdfs(summaryPdf, activityPdfs);
 
@@ -475,7 +475,7 @@ public class PDFService {
 
             // Check if text is sufficient
             if (text == null || text.trim().length() < 10) {
-                logger.warn("PDF contains insufficient text for extraction");
+                logger.debug("PDF contains insufficient text for extraction");
                 result.put("error", "PDF contains insufficient text for extraction");
                 result.put("confidence", null);
                 return result;

@@ -100,6 +100,12 @@
             <version>2.7.0</version>
         </dependency>
 
+        <!-- Logback conditional logging support (janino) -->
+        <dependency>
+            <groupId>org.codehaus.janino</groupId>
+            <artifactId>janino</artifactId>
+        </dependency>
+
         <!-- Utilities -->
         <dependency>
             <groupId>org.projectlombok</groupId>

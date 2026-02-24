@@ -1,7 +1,6 @@
 package com.learnhub.documentmanagement.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.learnhub.config.OllamaConfig;
 
 import org.springframework.ai.ollama.OllamaChatModel;
 import org.slf4j.Logger;
@@ -16,7 +15,7 @@ import java.util.Map;
 @Service
 public class LLMService {
 
-    private static final Logger logger = LoggerFactory.getLogger(OllamaConfig.class);
+    private static final Logger logger = LoggerFactory.getLogger(LLMService.class);
 
     @Autowired
     private OllamaChatModel ollamaChatModel;
@@ -31,8 +30,8 @@ public class LLMService {
             ChatResponse response = ollamaChatModel.call(prompt);
             String responseText = response.getResult().getOutput().getContent();
 
-            logger.info("LLM Response: {}", responseText);
-            logger.info("LLM Metadata: {}", response.getMetadata());
+            logger.debug("LLM Response: {}", responseText);
+            logger.debug("LLM Metadata: {}", response.getMetadata());
 
             // Parse JSON response
             return objectMapper.readValue(responseText, Map.class);
