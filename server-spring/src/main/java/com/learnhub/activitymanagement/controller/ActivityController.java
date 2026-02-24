@@ -12,6 +12,7 @@ import com.learnhub.activitymanagement.service.ActivityService;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.activitymanagement.service.RecommendationService;
 import com.learnhub.activitymanagement.service.ScoringEngineService;
+import com.learnhub.usermanagement.service.UserSearchHistoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,6 +46,9 @@ public class ActivityController {
 
     @Autowired
     private RecommendationService recommendationService;
+
+    @Autowired
+    private UserSearchHistoryService searchHistoryService;
 
     @GetMapping("/")
     @PreAuthorize("permitAll()")
@@ -174,7 +178,8 @@ public class ActivityController {
     @GetMapping("/recommendations")
     @PreAuthorize("permitAll()")
     @Operation(summary = "Get activity recommendations", description = "Get personalized activity recommendations with scoring")
-    public ResponseEntity<?> getRecommendations(@ModelAttribute RecommendationRequest request) {
+    public ResponseEntity<?> getRecommendations(@ModelAttribute RecommendationRequest request,
+            jakarta.servlet.http.HttpServletRequest httpRequest) {
         logger.info("GET /api/activities/recommendations - Get recommendations called with targetAge={}, format={}, maxActivityCount={}, limit={}",
                 request.targetAge(), request.format(), request.maxActivityCount(), request.limit());
         try {
@@ -183,6 +188,12 @@ public class ActivityController {
                     request.name(), request.targetAge(), request.format(), request.bloomLevels(),
                     request.targetDuration(), request.availableResources(), request.preferredTopics(),
                     request.priorityCategories());
+
+            // Save search history if user is authenticated
+            UUID userId = (UUID) httpRequest.getAttribute("userId");
+            if (userId != null) {
+                searchHistoryService.saveSearchQuery(userId, criteria);
+            }
 
             // Get recommendations from service
             Map<String, Object> response = recommendationService.getRecommendations(
