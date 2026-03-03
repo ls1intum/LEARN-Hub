@@ -57,7 +57,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Value("${pdf.storage.path:/app/data/pdfs}")
     private String pdfStoragePath;
 
-    @Value("${INITIAL_ADMIN_PWD:}")
+    @Value("${app.initial-admin-pwd:}")
     private String initialAdminPassword;
 
     @Override
