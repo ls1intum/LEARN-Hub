@@ -29,6 +29,7 @@ class DatabaseSeederTest {
         ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
         ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
         ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
+        ReflectionTestUtils.setField(seeder, "initialAdminEmail", "admin@learnhub.com");
         ReflectionTestUtils.setField(seeder, "initialAdminPassword", "seeded-admin-pwd");
 
         when(userRepository.existsByEmail("admin@learnhub.com")).thenReturn(false);
@@ -54,6 +55,7 @@ class DatabaseSeederTest {
         ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
         ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
         ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
+        ReflectionTestUtils.setField(seeder, "initialAdminEmail", "admin@learnhub.com");
         ReflectionTestUtils.setField(seeder, "initialAdminPassword", " ");
 
         when(userRepository.existsByEmail("admin@learnhub.com")).thenReturn(false);
@@ -67,6 +69,29 @@ class DatabaseSeederTest {
     }
 
     @Test
+    void createAdminUserUsesInitialAdminEmailWhenSet() {
+        DatabaseSeeder seeder = new DatabaseSeeder();
+        UserRepository userRepository = mock(UserRepository.class);
+        PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
+
+        ReflectionTestUtils.setField(seeder, "userRepository", userRepository);
+        ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
+        ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
+        ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
+        ReflectionTestUtils.setField(seeder, "initialAdminEmail", "ops-admin@learnhub.com");
+        ReflectionTestUtils.setField(seeder, "initialAdminPassword", "seeded-admin-pwd");
+
+        when(userRepository.existsByEmail("ops-admin@learnhub.com")).thenReturn(false);
+        when(passwordEncoder.encode(anyString())).thenReturn("encoded");
+
+        ReflectionTestUtils.invokeMethod(seeder, "createAdminUser");
+
+        ArgumentCaptor<User> savedUser = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(savedUser.capture());
+        assertThat(savedUser.getValue().getEmail()).isEqualTo("ops-admin@learnhub.com");
+    }
+
+    @Test
     void createAdminUserSkipsCreationWhenAdminAlreadyExists() {
         DatabaseSeeder seeder = new DatabaseSeeder();
         UserRepository userRepository = mock(UserRepository.class);
@@ -76,6 +101,7 @@ class DatabaseSeederTest {
         ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
         ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
         ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
+        ReflectionTestUtils.setField(seeder, "initialAdminEmail", "admin@learnhub.com");
         ReflectionTestUtils.setField(seeder, "initialAdminPassword", "seeded-admin-pwd");
 
         when(userRepository.existsByEmail("admin@learnhub.com")).thenReturn(true);

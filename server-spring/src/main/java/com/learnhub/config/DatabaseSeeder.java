@@ -57,7 +57,10 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Value("${pdf.storage.path:/app/data/pdfs}")
     private String pdfStoragePath;
 
-    @Value("${app.initial-admin-pwd:}")
+    @Value("${app.initial-admin-email:}")
+    private String initialAdminEmail;
+
+    @Value("${app.initial-admin-password:}")
     private String initialAdminPassword;
 
     @Override
@@ -267,7 +270,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     }
 
     private void createAdminUser() {
-        String adminEmail = "admin@learnhub.com";
+        String adminEmail = initialAdminEmail != null && !initialAdminEmail.isBlank()
+                ? initialAdminEmail
+                : "admin@learnhub.com";
 
         if (userRepository.existsByEmail(adminEmail)) {
             logger.info("Admin user already exists");
@@ -291,7 +296,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         logger.info("=".repeat(60));
         logger.info("Email: {}", adminEmail);
         if (usesInitialPassword) {
-            logger.info("Password: [from INITIAL_ADMIN_PWD]");
+            logger.info("Password: [from INITIAL_ADMIN_PASSWORD]");
         } else {
             logger.info("Password: {}", password);
         }
