@@ -236,7 +236,7 @@ spring.jpa.hibernate.ddl-auto=validate
 spring.flyway.enabled=true
 spring.flyway.baseline-on-migrate=true
 
-# Spring AI (OpenAI-compatible)
+# Spring AI OpenAI-compatible
 spring.ai.openai.base-url=${LLM_BASE_URL}
 spring.ai.openai.api-key=${LLM_API_KEY}
 spring.ai.openai.chat.options.model=${LLM_MODEL_NAME}
