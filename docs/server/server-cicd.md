@@ -127,7 +127,7 @@ Pydantic Settings maps environment variables to strongly-typed configuration:
 - `FLASK_SECRET_KEY`, `JWT_SECRET_KEY` - Security keys
 - `SQLALCHEMY_DATABASE_URI` - PostgreSQL connection
 - `SMTP_*` - Email service configuration
-- `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` - Bootstrap admin
+- `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PWD` - Bootstrap admin
 
 The `ENVIRONMENT` variable enables runtime behavior adaptation without code changes.
 

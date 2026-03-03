@@ -57,6 +57,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Value("${pdf.storage.path:/app/data/pdfs}")
     private String pdfStoragePath;
 
+    @Value("${INITIAL_ADMIN_PWD:}")
+    private String initialAdminPassword;
+
     @Override
     public void run(String... args) throws Exception {
         logger.info("Starting database seeding...");
@@ -271,7 +274,8 @@ public class DatabaseSeeder implements CommandLineRunner {
             return;
         }
 
-        String password = generateRandomPassword();
+        boolean usesInitialPassword = initialAdminPassword != null && !initialAdminPassword.isBlank();
+        String password = usesInitialPassword ? initialAdminPassword : generateRandomPassword();
 
         User admin = new User();
         admin.setEmail(adminEmail);
@@ -286,7 +290,11 @@ public class DatabaseSeeder implements CommandLineRunner {
         logger.info("ADMIN CREDENTIALS");
         logger.info("=".repeat(60));
         logger.info("Email: {}", adminEmail);
-        logger.info("Password: {}", password);
+        if (usesInitialPassword) {
+            logger.info("Password: [from INITIAL_ADMIN_PWD]");
+        } else {
+            logger.info("Password: {}", password);
+        }
         logger.info("=".repeat(60));
     }
 
