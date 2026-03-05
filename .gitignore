@@ -8,6 +8,7 @@
 **.db
 pg_data/
 server/data
+cached-pdfs/
 .cursor
 
 # Spring Boot / Maven

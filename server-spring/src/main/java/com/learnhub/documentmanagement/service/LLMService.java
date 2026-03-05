@@ -2,12 +2,10 @@ package com.learnhub.documentmanagement.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.springframework.ai.ollama.OllamaChatModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -17,21 +15,28 @@ public class LLMService {
 
     private static final Logger logger = LoggerFactory.getLogger(LLMService.class);
 
-    @Autowired
-    private OllamaChatModel ollamaChatModel;
-
+    private final ChatClient chatClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    public LLMService(ObjectProvider<ChatClient.Builder> chatClientBuilderProvider) {
+        ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
+        this.chatClient = builder != null ? builder.build() : null;
+    }
+
     public Map<String, Object> extractActivityData(String pdfText) {
+        if (chatClient == null) {
+            throw new IllegalStateException("ChatClient is not available. Please configure a ChatModel.");
+        }
+
         String promptText = buildExtractionPrompt(pdfText);
 
         try {
-            Prompt prompt = new Prompt(promptText);
-            ChatResponse response = ollamaChatModel.call(prompt);
-            String responseText = response.getResult().getOutput().getContent();
+            String responseText = chatClient.prompt()
+                    .user(promptText)
+                    .call()
+                    .content();
 
             logger.debug("LLM Response: {}", responseText);
-            logger.debug("LLM Metadata: {}", response.getMetadata());
 
             // Parse JSON response
             return objectMapper.readValue(responseText, Map.class);

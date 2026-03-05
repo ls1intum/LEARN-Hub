@@ -55,15 +55,17 @@ public class ActivityController {
     @PreAuthorize("permitAll()")
     @Operation(summary = "Get activities", description = "Get a list of activities with optional filtering and pagination")
     public ResponseEntity<?> getActivities(@ModelAttribute ActivityFilterRequest request) {
-        logger.info("GET /api/activities/ - Get activities called with filters: name={}, ageMin={}, ageMax={}, format={}, limit={}, offset={}",
-                request.name(), request.ageMin(), request.ageMax(), request.format(), request.limit(), request.offset());
+        logger.info(
+                "GET /api/activities/ - Get activities called with filters: name={}, ageMin={}, ageMax={}, format={}, limit={}, offset={}",
+                request.name(), request.ageMin(), request.ageMax(), request.format(), request.limit(),
+                request.offset());
         try {
             List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
                     request.name(), request.ageMin(), request.ageMax(), request.format(),
                     request.bloomLevel(), request.mentalLoad(), request.physicalEnergy(),
                     request.resourcesNeeded(), request.topics(), request.limit(), request.offset());
             Map<String, Object> response = new HashMap<>();
-            response.put("total", activities.size());
+            response.put("total", activityService.countAllActivities());
             response.put("activities", activities);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -86,23 +88,23 @@ public class ActivityController {
         }
     }
 
-    @PostMapping("/")
+    @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
     @SecurityRequirement(name = "BearerAuth")
     @Operation(summary = "Create activity", description = "Create a new activity (admin only)")
     public ResponseEntity<?> createActivity(@RequestBody Map<String, Object> request) {
-        logger.info("POST /api/activities/ - Create activity called");
+        logger.info("POST /api/activities/create - Create activity called");
         try {
             ActivityResponse saved = activityService.createActivityWithValidation(request);
-            logger.info("POST /api/activities/ - Activity created with id={}", saved.getId());
+            logger.info("POST /api/activities/create - Activity created with id={}", saved.getId());
             Map<String, Object> response = new HashMap<>();
             response.put("activity", saved);
             return ResponseEntity.status(201).body(response);
         } catch (IllegalArgumentException e) {
-            logger.error("POST /api/activities/ - Invalid activity data: {}", e.getMessage());
+            logger.error("POST /api/activities/create - Invalid activity data: {}", e.getMessage());
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
         } catch (Exception e) {
-            logger.error("POST /api/activities/ - Failed to create activity: {}", e.getMessage());
+            logger.error("POST /api/activities/create - Failed to create activity: {}", e.getMessage());
             return ResponseEntity.status(500).body(ErrorResponse.of("Failed to create activity: " + e.getMessage()));
         }
     }
@@ -141,7 +143,8 @@ public class ActivityController {
             logger.error("POST /api/activities/upload-and-create - Invalid input: {}", e.getMessage());
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
         } catch (Exception e) {
-            logger.error("POST /api/activities/upload-and-create - Failed to upload and create activity: {}", e.getMessage());
+            logger.error("POST /api/activities/upload-and-create - Failed to upload and create activity: {}",
+                    e.getMessage());
             return ResponseEntity.status(500)
                     .body(ErrorResponse.of("Failed to upload and create activity: " + e.getMessage()));
         }
@@ -181,7 +184,8 @@ public class ActivityController {
     @Operation(summary = "Get activity recommendations", description = "Get personalized activity recommendations with scoring")
     public ResponseEntity<?> getRecommendations(@ModelAttribute RecommendationRequest request,
             HttpServletRequest httpRequest) {
-        logger.info("GET /api/activities/recommendations - Get recommendations called with targetAge={}, format={}, maxActivityCount={}, limit={}",
+        logger.info(
+                "GET /api/activities/recommendations - Get recommendations called with targetAge={}, format={}, maxActivityCount={}, limit={}",
                 request.targetAge(), request.format(), request.maxActivityCount(), request.limit());
         try {
             // Build criteria map using service
