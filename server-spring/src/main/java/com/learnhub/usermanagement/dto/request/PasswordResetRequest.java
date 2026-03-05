@@ -7,8 +7,8 @@ import lombok.Data;
 
 @Data
 public class PasswordResetRequest {
-    @NotBlank(message = "Email is required")
-    @Email(message = "Invalid email format")
-    @JsonProperty("email")
-    private String email;
+	@NotBlank(message = "Email is required")
+	@Email(message = "Invalid email format")
+	@JsonProperty("email")
+	private String email;
 }

@@ -7,15 +7,15 @@ import lombok.Data;
 
 @Data
 public class TeacherRegistrationRequest {
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email must be valid")
-    private String email;
+	@NotBlank(message = "Email is required")
+	@Email(message = "Email must be valid")
+	private String email;
 
-    @NotBlank(message = "First name is required")
-    @JsonProperty("first_name")
-    private String firstName;
+	@NotBlank(message = "First name is required")
+	@JsonProperty("first_name")
+	private String firstName;
 
-    @NotBlank(message = "Last name is required")
-    @JsonProperty("last_name")
-    private String lastName;
+	@NotBlank(message = "Last name is required")
+	@JsonProperty("last_name")
+	private String lastName;
 }

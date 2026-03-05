@@ -9,20 +9,20 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LoginResponse {
-    @JsonProperty("access_token")
-    private String accessToken;
-    
-    @JsonProperty("refresh_token")
-    private String refreshToken;
-    
-    @JsonProperty("token_type")
-    private String tokenType = "Bearer";
-    
-    private UserResponse user;
+	@JsonProperty("access_token")
+	private String accessToken;
 
-    public LoginResponse(String accessToken, String refreshToken, UserResponse user) {
-        this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
-        this.user = user;
-    }
+	@JsonProperty("refresh_token")
+	private String refreshToken;
+
+	@JsonProperty("token_type")
+	private String tokenType = "Bearer";
+
+	private UserResponse user;
+
+	public LoginResponse(String accessToken, String refreshToken, UserResponse user) {
+		this.accessToken = accessToken;
+		this.refreshToken = refreshToken;
+		this.user = user;
+	}
 }

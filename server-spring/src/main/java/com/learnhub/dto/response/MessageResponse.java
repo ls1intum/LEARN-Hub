@@ -8,9 +8,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MessageResponse {
-    private String message;
-    
-    public static MessageResponse of(String message) {
-        return new MessageResponse(message);
-    }
+	private String message;
+
+	public static MessageResponse of(String message) {
+		return new MessageResponse(message);
+	}
 }
