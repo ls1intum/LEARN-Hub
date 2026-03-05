@@ -40,7 +40,7 @@ dev: ## Run both server and client locally for development
 	$(MAKE) -j2 dev-server dev-client
 
 dev-server: ## Run Flask server locally
-	cd server-spring && $(MAKE) dev
+	cd server && $(MAKE) dev
 
 dev-client: ## Run client server locally
 	cd client && $(MAKE) dev
