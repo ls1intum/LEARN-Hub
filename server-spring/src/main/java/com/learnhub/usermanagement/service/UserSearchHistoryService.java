@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +17,16 @@ public class UserSearchHistoryService {
 
 	private static final Logger logger = LoggerFactory.getLogger(UserSearchHistoryService.class);
 
-	@Autowired
-	private UserSearchHistoryRepository userSearchHistoryRepository;
+	private final UserSearchHistoryRepository userSearchHistoryRepository;
+	private final ObjectMapper objectMapper;
 
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	public UserSearchHistoryService(UserSearchHistoryRepository userSearchHistoryRepository,
+			ObjectMapper objectMapper) {
+		this.userSearchHistoryRepository = userSearchHistoryRepository;
+		this.objectMapper = objectMapper;
+	}
 
+	@Transactional
 	public void saveSearchQuery(UUID userId, Map<String, Object> searchCriteria) {
 		try {
 			UserSearchHistory history = new UserSearchHistory();
@@ -42,6 +46,7 @@ public class UserSearchHistoryService {
 		return userSearchHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
 	}
 
+	@Transactional
 	public boolean deleteSearchHistory(UUID historyId, UUID userId) {
 		return userSearchHistoryRepository.findById(historyId).filter(history -> history.getUserId().equals(userId))
 				.map(history -> {

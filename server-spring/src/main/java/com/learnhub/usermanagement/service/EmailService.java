@@ -2,7 +2,6 @@ package com.learnhub.usermanagement.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -13,8 +12,11 @@ public class EmailService {
 
 	private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
 
-	@Autowired
-	private JavaMailSender mailSender;
+	private final JavaMailSender mailSender;
+
+	public EmailService(JavaMailSender mailSender) {
+		this.mailSender = mailSender;
+	}
 
 	@Value("${email.from-address}")
 	private String fromAddress;
