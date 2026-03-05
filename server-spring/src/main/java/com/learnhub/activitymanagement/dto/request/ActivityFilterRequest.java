@@ -8,6 +8,8 @@ public record ActivityFilterRequest(
         String name,
         @BindParam("age_min") Integer ageMin,
         @BindParam("age_max") Integer ageMax,
+        @BindParam("duration_min") Integer durationMin,
+        @BindParam("duration_max") Integer durationMax,
         List<String> format,
         @BindParam("bloom_level") List<String> bloomLevel,
         @BindParam("mental_load") String mentalLoad,
@@ -18,7 +20,7 @@ public record ActivityFilterRequest(
         Integer offset) {
 
     public ActivityFilterRequest {
-        if (limit == null) limit = 100;
+        if (limit == null) limit = 10;
         if (offset == null) offset = 0;
     }
 }

@@ -48,7 +48,10 @@ public class AuthController {
         try {
             UserResponse user = authService.registerTeacher(request);
             logger.info("POST /api/auth/register-teacher - Teacher registered successfully with id={}", user.getId());
-            return ResponseEntity.ok(user);
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Teacher registered successfully. Credentials have been sent via email.");
+            response.put("user", user);
+            return ResponseEntity.status(201).body(response);
         } catch (Exception e) {
             logger.error("POST /api/auth/register-teacher - Registration failed: {}", e.getMessage());
             return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
@@ -82,7 +85,6 @@ public class AuthController {
             result.put("user", response.getUser());
             result.put("access_token", response.getAccessToken());
             result.put("refresh_token", response.getRefreshToken());
-            result.put("token_type", "Bearer");
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             logger.error("POST /api/auth/verify - Verification failed for email={}: {}", request.getEmail(), e.getMessage());
@@ -102,7 +104,6 @@ public class AuthController {
             result.put("user", response.getUser());
             result.put("access_token", response.getAccessToken());
             result.put("refresh_token", response.getRefreshToken());
-            result.put("token_type", "Bearer");
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             logger.error("POST /api/auth/login - Login failed for email={}: {}", request.getEmail(), e.getMessage());
@@ -127,7 +128,6 @@ public class AuthController {
             result.put("user", response.getUser());
             result.put("access_token", response.getAccessToken());
             result.put("refresh_token", response.getRefreshToken());
-            result.put("token_type", "Bearer");
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             logger.error("POST /api/auth/admin/login - Admin login failed: {}", e.getMessage());

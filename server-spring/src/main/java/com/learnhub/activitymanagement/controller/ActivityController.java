@@ -61,12 +61,16 @@ public class ActivityController {
                 request.offset());
         try {
             List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
-                    request.name(), request.ageMin(), request.ageMax(), request.format(),
+                    request.name(), request.ageMin(), request.ageMax(),
+                    request.durationMin(), request.durationMax(),
+                    request.format(),
                     request.bloomLevel(), request.mentalLoad(), request.physicalEnergy(),
                     request.resourcesNeeded(), request.topics(), request.limit(), request.offset());
             Map<String, Object> response = new HashMap<>();
             response.put("total", activityService.countAllActivities());
             response.put("activities", activities);
+            response.put("limit", request.limit());
+            response.put("offset", request.offset());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("GET /api/activities/ - Failed to retrieve activities: {}", e.getMessage());
@@ -84,7 +88,7 @@ public class ActivityController {
             return ResponseEntity.ok(activity);
         } catch (Exception e) {
             logger.error("GET /api/activities/{} - Activity not found: {}", id, e.getMessage());
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+            return ResponseEntity.status(404).body(ErrorResponse.of(e.getMessage()));
         }
     }
 
@@ -123,7 +127,7 @@ public class ActivityController {
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("DELETE /api/activities/{} - Failed to delete activity: {}", id, e.getMessage());
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+            return ResponseEntity.status(404).body(ErrorResponse.of(e.getMessage()));
         }
     }
 

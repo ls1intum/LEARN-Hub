@@ -36,14 +36,6 @@ public class MetaController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/hello")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Health check (alternative)", description = "Alternative health check endpoint")
-    public ResponseEntity<Map<String, String>> helloAlt() {
-        logger.info("GET /hello - Health check (alternative) endpoint called");
-        return hello();
-    }
-
     @GetMapping("/api/meta/field-values")
     @PreAuthorize("permitAll()")
     @Operation(summary = "Get field values", description = "Get field values for enums used by client")
@@ -56,7 +48,7 @@ public class MetaController {
         fieldValues.put("topics", Arrays.asList("decomposition", "patterns", "abstraction", "algorithms"));
         fieldValues.put("mental_load", Arrays.asList("low", "medium", "high"));
         fieldValues.put("physical_energy", Arrays.asList("low", "medium", "high"));
-        fieldValues.put("priority_categories", Arrays.asList("high_priority", "medium_priority", "low_priority"));
+        fieldValues.put("priority_categories", Arrays.asList("age_appropriateness", "bloom_level_match", "topic_relevance", "duration_fit"));
         return ResponseEntity.ok(fieldValues);
     }
 
