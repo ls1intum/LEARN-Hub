@@ -1,8 +1,12 @@
-.PHONY: build run clean test help
+.PHONY: build run clean test help setup dev format lint
 
 # Variables
 MVN := ./mvnw
 PROJECT := learn-hub-server
+# Java 21 is required. Override on the command line if needed: make JAVA_HOME=/path/to/java21
+JAVA_HOME := /usr/lib/jvm/temurin-21-jdk-amd64
+export JAVA_HOME
+export PATH := $(JAVA_HOME)/bin:$(PATH)
 
 # Default target
 .DEFAULT_GOAL := help
@@ -14,6 +18,10 @@ help: ## Show server-specific commands
 	@echo ""
 	@echo "Targets:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+# Setup
+setup: ## Download dependencies and compile the project
+	$(MVN) dependency:resolve compile -q
 
 # Development
 dev: ## Run Spring Boot application in development mode
@@ -37,10 +45,10 @@ test-integration: ## Run integration tests
 	$(MVN) verify -P integration-tests
 
 # Code quality
-format: ## Format code
+format: ## Format code with Spotless
 	$(MVN) spotless:apply
 
-lint: ## Check code quality
+lint: ## Check code style with Spotless
 	$(MVN) spotless:check
 
 # Database operations

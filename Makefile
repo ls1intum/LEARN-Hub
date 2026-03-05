@@ -1,4 +1,4 @@
-.PHONY: help setup dev dev-server dev-client docker-up docker-down docker-build clean format lint test install
+.PHONY: help setup dev dev-server dev-client dev-spring docker-up docker-down docker-build clean format lint test install spring-setup spring-lint spring-format spring-test spring-build spring-clean
 
 # Default target
 .DEFAULT_GOAL := help
@@ -20,7 +20,11 @@ help: ## Show this help
 	@echo "Database:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(db-setup|db-migrate|db-check|db-mock|db-dataset|db-reset|backup|restore)" | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo ""
+	@echo "Spring Server:"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "^(spring-|dev-spring)" | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@echo ""
 	@echo "Server-specific commands: cd server && make help"
+	@echo "Spring server commands:   cd server-spring && make help"
 	@echo "Client-specific commands: cd client && make help"
 
 # Setup targets
@@ -31,6 +35,9 @@ server-setup: ## Install server dependencies
 
 client-setup: ## Install client dependencies  
 	cd client && $(MAKE) setup
+
+spring-setup: ## Install Spring server dependencies
+	cd server-spring && $(MAKE) setup
 
 # Development targets
 dev: ## Run both server and client locally for development
@@ -44,6 +51,9 @@ dev-server: ## Run Flask server locally
 
 dev-client: ## Run client server locally
 	cd client && $(MAKE) dev
+
+dev-spring: ## Run Spring Boot server locally
+	cd server-spring && $(MAKE) dev
 
 # Docker targets
 docker-up: ## Start services with Docker Compose
@@ -87,3 +97,19 @@ db-dataset: ## Import real dataset (requires migrations applied)
 
 db-reset: ## Reset database (delete and recreate)
 	cd server && $(MAKE) db-reset
+
+# Spring server targets
+spring-build: ## Build the Spring server
+	cd server-spring && $(MAKE) build
+
+spring-lint: ## Check code style in the Spring server
+	cd server-spring && $(MAKE) lint
+
+spring-format: ## Format code in the Spring server
+	cd server-spring && $(MAKE) format
+
+spring-test: ## Run tests for the Spring server
+	cd server-spring && $(MAKE) test
+
+spring-clean: ## Clean build artifacts for the Spring server
+	cd server-spring && $(MAKE) clean
