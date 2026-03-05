@@ -65,6 +65,18 @@ public class ScoringEngineService {
         return new ScoreResponse(totalScore, categoryScores, false, 1);
     }
 
+    public ScoreResponse scoreActivityWithoutDuration(Activity activity, SearchCriteria criteria) {
+        Map<String, CategoryScoreResponse> categoryScores = new HashMap<>();
+
+        categoryScores.put("age_appropriateness", scoreAgeAppropriateness(activity, criteria));
+        categoryScores.put("bloom_level_match", scoreBloomLevelMatch(activity, criteria));
+        categoryScores.put("topic_relevance", scoreTopicRelevance(activity, criteria));
+
+        int totalScore = calculateWeightedTotal(categoryScores);
+
+        return new ScoreResponse(totalScore, categoryScores, false, 1);
+    }
+
     public ScoreResponse scoreSequence(List<Activity> activities, SearchCriteria criteria) {
         Map<String, CategoryScoreResponse> categoryScores = new HashMap<>();
 
@@ -79,6 +91,25 @@ public class ScoringEngineService {
         // Add series-specific scores
         categoryScores.put("series_cohesion", scoreSeriesCohesion(activities));
         categoryScores.put("duration_fit", scoreDurationFit(activities, criteria));
+
+        int totalScore = calculateWeightedTotal(categoryScores);
+
+        return new ScoreResponse(totalScore, categoryScores, true, activities.size());
+    }
+
+    public ScoreResponse scoreSequenceWithoutDuration(List<Activity> activities, SearchCriteria criteria) {
+        Map<String, CategoryScoreResponse> categoryScores = new HashMap<>();
+
+        // Calculate average of individual scores without duration
+        List<ScoreResponse> activityScores = activities.stream()
+                .map(activity -> scoreActivityWithoutDuration(activity, criteria))
+                .collect(Collectors.toList());
+
+        Map<String, CategoryScoreResponse> avgIndividualScores = calculateAverageIndividualScores(activityScores);
+        categoryScores.putAll(avgIndividualScores);
+
+        // Add series cohesion but no duration_fit
+        categoryScores.put("series_cohesion", scoreSeriesCohesion(activities));
 
         int totalScore = calculateWeightedTotal(categoryScores);
 

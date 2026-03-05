@@ -1,13 +1,13 @@
 package com.learnhub.activitymanagement.service;
 
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
-import com.learnhub.activitymanagement.dto.response.CategoryScoreResponse;
 import com.learnhub.activitymanagement.dto.response.ScoreResponse;
 import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.Break;
 import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.ActivityResource;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
+import com.learnhub.activitymanagement.entity.enums.EnergyLevel;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.activitymanagement.service.ScoringEngineService.SearchCriteria;
 import org.slf4j.Logger;
@@ -23,6 +23,16 @@ import java.util.stream.Collectors;
 public class RecommendationService {
 
     private static final Logger logger = LoggerFactory.getLogger(RecommendationService.class);
+
+    // Matches Flask's AGE_FILTER_TOLERANCE = 2
+    private static final int AGE_FILTER_TOLERANCE = 2;
+
+    // Matches Flask's LESSON_PLAN_TOP_ACTIVITIES_LIMIT = 25
+    private static final int LESSON_PLAN_TOP_ACTIVITIES_LIMIT = 25;
+
+    // Upper bound (exclusive) for lesson plan combination size: k ranges from 2 to MAX_LESSON_PLAN_SIZE-1
+    // Matches Flask's range(2, min(max_activity_count + 1, 6))
+    private static final int MAX_LESSON_PLAN_SIZE = 6;
 
     @Autowired
     private ActivityRepository activityRepository;
@@ -50,59 +60,97 @@ public class RecommendationService {
             // Create scoring engine
             ScoringEngineService scoringEngine = new ScoringEngineService(priorityCategories);
 
-            // Generate recommendations
-            List<Map<String, Object>> recommendations = new ArrayList<>();
+            // Phase 1: Score all activities without duration
+            // Each entry is a pair: [List<Activity>, ScoreResponse]
+            List<Object[]> results = new ArrayList<>();
 
-            if (maxActivityCount == 1) {
-                // Single activity recommendations
-                for (Activity activity : filteredActivities) {
-                    ScoreResponse score = scoringEngine.scoreActivity(activity, criteria);
+            for (Activity activity : filteredActivities) {
+                ScoreResponse score = scoringEngine.scoreActivityWithoutDuration(activity, criteria);
+                results.add(new Object[]{Collections.singletonList(activity), score});
+            }
 
-                    Map<String, Object> recommendation = new HashMap<>();
-                    recommendation.put("activities", Arrays.asList(convertToResponse(activity)));
-                    recommendation.put("score", score.getTotalScore());
-                    recommendation.put("score_breakdown", score.getCategoryScores());
+            // Generate lesson plans if maxActivityCount > 1
+            if (maxActivityCount > 1 && filteredActivities.size() > 1) {
+                // Take first LESSON_PLAN_TOP_ACTIVITIES_LIMIT activities for lesson plan generation
+                List<Activity> topActivities = filteredActivities.stream()
+                        .limit(LESSON_PLAN_TOP_ACTIVITIES_LIMIT)
+                        .collect(Collectors.toList());
 
-                    recommendations.add(recommendation);
-                }
-            } else {
-                // Multi-activity recommendations (sequences/lesson plans)
-                List<List<Activity>> sequences = generateSequences(filteredActivities, maxActivityCount);
-
-                for (List<Activity> sequence : sequences) {
-                    ScoreResponse score = scoringEngine.scoreSequence(sequence, criteria);
-
-                    // Add breaks if requested
-                    if (includeBreaks) {
-                        addBreaksToSequence(sequence, criteria);
+                // Generate combinations of k = 2 to min(maxActivityCount, 5) inclusive
+                for (int k = 2; k < Math.min(maxActivityCount + 1, MAX_LESSON_PLAN_SIZE); k++) {
+                    if (k <= topActivities.size()) {
+                        List<List<Activity>> combos = new ArrayList<>();
+                        generateCombinations(topActivities, k, combos);
+                        for (List<Activity> combo : combos) {
+                            ScoreResponse score = scoringEngine.scoreSequenceWithoutDuration(combo, criteria);
+                            results.add(new Object[]{combo, score});
+                        }
                     }
-
-                    List<Map<String, Object>> activityResponses = sequence.stream()
-                            .map(this::convertToResponse)
-                            .collect(Collectors.toList());
-
-                    Map<String, Object> recommendation = new HashMap<>();
-                    recommendation.put("activities", activityResponses);
-                    recommendation.put("score", score.getTotalScore());
-                    recommendation.put("score_breakdown", score.getCategoryScores());
-
-                    recommendations.add(recommendation);
                 }
             }
 
-            // Sort by score descending
-            recommendations.sort((a, b) -> {
-                int scoreA = (int) a.get("score");
-                int scoreB = (int) b.get("score");
+            // Sort by pre-duration score descending
+            results.sort((a, b) -> {
+                int scoreA = ((ScoreResponse) a[1]).getTotalScore();
+                int scoreB = ((ScoreResponse) b[1]).getTotalScore();
                 return Integer.compare(scoreB, scoreA);
             });
 
-            // Limit results
-            if (recommendations.size() > limit) {
-                recommendations = recommendations.subList(0, limit);
+            // Add breaks to multi-activity results if requested
+            if (includeBreaks) {
+                for (Object[] result : results) {
+                    @SuppressWarnings("unchecked")
+                    List<Activity> activityList = (List<Activity>) result[0];
+                    if (activityList.size() > 1) {
+                        assignBreaksToActivities(activityList);
+                    }
+                }
+            }
+
+            // Phase 2: Re-score with duration and re-rank
+            List<Object[]> rescored = new ArrayList<>();
+            for (Object[] result : results) {
+                @SuppressWarnings("unchecked")
+                List<Activity> activityList = (List<Activity>) result[0];
+                ScoreResponse newScore;
+                if (activityList.size() == 1) {
+                    newScore = scoringEngine.scoreActivity(activityList.get(0), criteria);
+                } else {
+                    newScore = scoringEngine.scoreSequence(activityList, criteria);
+                }
+                rescored.add(new Object[]{activityList, newScore});
+            }
+
+            rescored.sort((a, b) -> {
+                int scoreA = ((ScoreResponse) a[1]).getTotalScore();
+                int scoreB = ((ScoreResponse) b[1]).getTotalScore();
+                return Integer.compare(scoreB, scoreA);
+            });
+
+            // Apply limit
+            if (rescored.size() > limit) {
+                rescored = rescored.subList(0, limit);
             }
 
             // Build response
+            List<Map<String, Object>> recommendations = new ArrayList<>();
+            for (Object[] result : rescored) {
+                @SuppressWarnings("unchecked")
+                List<Activity> activityList = (List<Activity>) result[0];
+                ScoreResponse score = (ScoreResponse) result[1];
+
+                List<Map<String, Object>> activityResponses = activityList.stream()
+                        .map(this::convertToResponse)
+                        .collect(Collectors.toList());
+
+                Map<String, Object> recommendation = new HashMap<>();
+                recommendation.put("activities", activityResponses);
+                recommendation.put("score", score.getTotalScore());
+                recommendation.put("score_breakdown", score.getCategoryScores());
+
+                recommendations.add(recommendation);
+            }
+
             Map<String, Object> response = new HashMap<>();
             response.put("activities", recommendations);
             response.put("total", recommendations.size());
@@ -124,10 +172,6 @@ public class RecommendationService {
 
     private SearchCriteria convertCriteria(Map<String, Object> criteriaMap) {
         SearchCriteria criteria = new SearchCriteria();
-
-        if (criteriaMap.containsKey("name")) {
-            criteria.setName((String) criteriaMap.get("name"));
-        }
 
         if (criteriaMap.containsKey("target_age")) {
             criteria.setTargetAge(toInt(criteriaMap.get("target_age")));
@@ -172,15 +216,28 @@ public class RecommendationService {
     }
 
     private List<Activity> filterActivities(List<Activity> activities, SearchCriteria criteria) {
+        // Precompute the preferred topic set once to avoid recreating it for every activity
+        Set<String> preferredTopicSet = (criteria.getPreferredTopics() != null)
+                ? criteria.getPreferredTopics().stream()
+                        .filter(Objects::nonNull)
+                        .map(String::toLowerCase)
+                        .collect(Collectors.toSet())
+                : Collections.emptySet();
+
         return activities.stream()
-                .filter(activity -> matchesCriteria(activity, criteria))
+                .filter(activity -> matchesCriteria(activity, criteria, preferredTopicSet))
                 .collect(Collectors.toList());
     }
 
-    private boolean matchesCriteria(Activity activity, SearchCriteria criteria) {
-        // Name filter
-        if (criteria.getName() != null && !criteria.getName().isEmpty()) {
-            if (!activity.getName().toLowerCase().contains(criteria.getName().toLowerCase())) {
+    private boolean matchesCriteria(Activity activity, SearchCriteria criteria, Set<String> preferredTopicSet) {
+        // Age filter with tolerance (matches Flask's AGE_FILTER_TOLERANCE = 2)
+        if (criteria.getTargetAge() != null) {
+            if (activity.getAgeMin() == null || activity.getAgeMax() == null) {
+                return false;
+            }
+            boolean ageMinOk = activity.getAgeMin() <= criteria.getTargetAge() + AGE_FILTER_TOLERANCE;
+            boolean ageMaxOk = activity.getAgeMax() >= criteria.getTargetAge() - AGE_FILTER_TOLERANCE;
+            if (!(ageMinOk && ageMaxOk)) {
                 return false;
             }
         }
@@ -192,14 +249,15 @@ public class RecommendationService {
             }
         }
 
-        // Bloom level filter
-        if (criteria.getBloomLevels() != null && !criteria.getBloomLevels().isEmpty()) {
-            if (!criteria.getBloomLevels().contains(activity.getBloomLevel())) {
+        // Duration filter: exclude activities whose minimum duration exceeds the target
+        if (criteria.getTargetDuration() != null) {
+            if (activity.getDurationMinMinutes() != null
+                    && activity.getDurationMinMinutes() > criteria.getTargetDuration()) {
                 return false;
             }
         }
 
-        // Resources filter
+        // Resources filter: all required resources must be available
         if (criteria.getAvailableResources() != null && !criteria.getAvailableResources().isEmpty()) {
             List<String> activityResources = activity.getResourcesNeeded();
             if (activityResources != null && !activityResources.isEmpty()) {
@@ -218,8 +276,15 @@ public class RecommendationService {
             }
         }
 
-        // Topics filter
-        if (criteria.getPreferredTopics() != null && !criteria.getPreferredTopics().isEmpty()) {
+        // Bloom level filter (exact match only)
+        if (criteria.getBloomLevels() != null && !criteria.getBloomLevels().isEmpty()) {
+            if (!criteria.getBloomLevels().contains(activity.getBloomLevel())) {
+                return false;
+            }
+        }
+
+        // Topics filter: at least one activity topic must match a preferred topic
+        if (!preferredTopicSet.isEmpty()) {
             List<String> activityTopics = activity.getTopics();
             if (activityTopics == null || activityTopics.isEmpty()) {
                 return false;
@@ -228,10 +293,7 @@ public class RecommendationService {
             boolean hasAnyTopic = activityTopics.stream()
                     .filter(Objects::nonNull)
                     .map(String::toLowerCase)
-                    .anyMatch(topic -> criteria.getPreferredTopics().stream()
-                            .filter(Objects::nonNull)
-                            .map(String::toLowerCase)
-                            .anyMatch(pref -> pref.equals(topic)));
+                    .anyMatch(preferredTopicSet::contains);
             if (!hasAnyTopic) {
                 return false;
             }
@@ -240,94 +302,110 @@ public class RecommendationService {
         return true;
     }
 
-    private List<List<Activity>> generateSequences(List<Activity> activities, int maxActivityCount) {
-        List<List<Activity>> sequences = new ArrayList<>();
-
-        // Generate all combinations up to maxActivityCount
-        for (int i = 1; i <= maxActivityCount && i <= activities.size(); i++) {
-            generateCombinations(activities, i, sequences);
-        }
-
-        return sequences;
-    }
-
-    private void generateCombinations(List<Activity> activities, int size, List<List<Activity>> result) {
-        if (size == 1) {
-            for (Activity activity : activities) {
-                result.add(Arrays.asList(activity));
-            }
+    /**
+     * Generate all combinations of exactly {@code k} activities from the given list.
+     * Equivalent to Python's itertools.combinations(activities, k).
+     */
+    private void generateCombinations(List<Activity> activities, int k, List<List<Activity>> result) {
+        int n = activities.size();
+        if (k > n || k <= 0) {
             return;
         }
 
-        // For size > 1, generate combinations
-        // Limit to prevent combinatorial explosion
-        int maxCombinations = 100;
-        for (int i = 0; i <= activities.size() - size && result.size() < maxCombinations; i++) {
-            for (int j = i + 1; j <= activities.size() - size + 1 && result.size() < maxCombinations; j++) {
-                List<Activity> combination = new ArrayList<>();
-                combination.add(activities.get(i));
-                combination.add(activities.get(j));
+        int[] indices = new int[k];
+        for (int i = 0; i < k; i++) {
+            indices[i] = i;
+        }
 
-                if (size > 2) {
-                    for (int k = j + 1; k < activities.size() && combination.size() < size; k++) {
-                        combination.add(activities.get(k));
-                    }
-                }
+        while (true) {
+            List<Activity> combo = new ArrayList<>(k);
+            for (int idx : indices) {
+                combo.add(activities.get(idx));
+            }
+            result.add(combo);
 
-                if (combination.size() == size) {
-                    result.add(combination);
-                }
+            // Find rightmost index that can be incremented
+            int i = k - 1;
+            while (i >= 0 && indices[i] == i + n - k) {
+                i--;
+            }
+            if (i < 0) {
+                break;
+            }
+            indices[i]++;
+            for (int j = i + 1; j < k; j++) {
+                indices[j] = indices[j - 1] + 1;
             }
         }
     }
 
-    private void addBreaksToSequence(List<Activity> sequence, SearchCriteria criteria) {
-        // Add break_after to activities where appropriate
-        for (int i = 0; i < sequence.size() - 1; i++) {
-            Activity activity = sequence.get(i);
-            Activity nextActivity = sequence.get(i + 1);
+    /**
+     * Assign breaks between activities in a multi-activity sequence.
+     * Matches Flask's _assign_breaks_to_activities logic exactly:
+     *   - cleanup_time_minutes of the current activity
+     *   - 10 min for HIGH mental load
+     *   - 5 min for HIGH physical energy
+     *   - 5 min for a format change to the next activity
+     * Duration is rounded up to the nearest 5-minute increment.
+     * No break is assigned after the last activity.
+     */
+    private void assignBreaksToActivities(List<Activity> activities) {
+        if (activities.size() <= 1) {
+            return;
+        }
 
-            // Calculate recommended break duration (simple heuristic)
-            int breakDuration = calculateBreakDuration(activity, nextActivity);
+        for (int i = 0; i < activities.size() - 1; i++) {
+            Activity activity = activities.get(i);
+            Activity nextActivity = activities.get(i + 1);
 
-            if (breakDuration > 0) {
-                Break breakInfo = new Break(
-                        "break-" + activity.getId(),
-                        breakDuration,
-                        "Break between activities",
-                        Arrays.asList("energy_level_change", "topic_transition"));
+            List<String> breakReasons = new ArrayList<>();
+            int breakDuration = 0;
+
+            // Cleanup time at end of activity
+            if (activity.getCleanupTimeMinutes() != null && activity.getCleanupTimeMinutes() > 0) {
+                breakDuration += activity.getCleanupTimeMinutes();
+                breakReasons.add("Cleanup time for " + activity.getName());
+            }
+
+            // Mental rest break for high mental load
+            if (EnergyLevel.HIGH.equals(activity.getMentalLoad())) {
+                breakDuration += 10;
+                breakReasons.add("Mental rest break after high cognitive load");
+            }
+
+            // Physical rest break for high physical energy
+            if (EnergyLevel.HIGH.equals(activity.getPhysicalEnergy())) {
+                breakDuration += 5;
+                breakReasons.add("Physical rest break after high energy activity");
+            }
+
+            // Transition break for format change
+            if (activity.getFormat() != null && nextActivity.getFormat() != null
+                    && !activity.getFormat().equals(nextActivity.getFormat())) {
+                breakDuration += 5;
+                breakReasons.add("Transition break from " + activity.getFormat().getValue()
+                        + " to " + nextActivity.getFormat().getValue());
+            }
+
+            // Only assign a break when there are reasons and a positive duration
+            if (!breakReasons.isEmpty() && breakDuration > 0) {
+                int roundedDuration = roundUpToNearest5Minutes(breakDuration);
+                Break breakInfo = new Break(null, roundedDuration,
+                        String.join("; ", breakReasons), breakReasons);
                 activity.setBreakAfter(breakInfo);
             }
         }
     }
 
-    private int calculateBreakDuration(Activity current, Activity next) {
-        // Simple heuristic: 5 minutes for topic changes, 10 minutes for energy level
-        // changes
-        int breakDuration = 0;
-
-        // Check topic change
-        Set<String> currentTopics = current.getTopics() != null
-                ? current.getTopics().stream().filter(Objects::nonNull).map(String::toLowerCase)
-                        .collect(Collectors.toSet())
-                : new HashSet<>();
-        Set<String> nextTopics = next.getTopics() != null
-                ? next.getTopics().stream().filter(Objects::nonNull).map(String::toLowerCase)
-                        .collect(Collectors.toSet())
-                : new HashSet<>();
-        currentTopics.retainAll(nextTopics);
-        if (currentTopics.isEmpty()) {
-            breakDuration += 5;
+    /**
+     * Round up a duration (in minutes) to the nearest 5-minute increment.
+     * Matches Flask's round_up_to_nearest_5_minutes utility.
+     */
+    private int roundUpToNearest5Minutes(int duration) {
+        if (duration <= 0) {
+            return 0;
         }
-
-        // Check energy level change
-        if (current.getPhysicalEnergy() != null && next.getPhysicalEnergy() != null) {
-            if (!current.getPhysicalEnergy().equals(next.getPhysicalEnergy())) {
-                breakDuration += 5;
-            }
-        }
-
-        return Math.min(breakDuration, 10); // Cap at 10 minutes
+        return ((duration - 1) / 5 + 1) * 5;
     }
 
     private Map<String, Object> convertToResponse(Activity activity) {
