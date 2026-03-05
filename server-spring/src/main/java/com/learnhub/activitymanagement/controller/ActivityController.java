@@ -5,18 +5,22 @@ import com.learnhub.activitymanagement.dto.request.LessonPlanInfoRequest;
 import com.learnhub.activitymanagement.dto.request.LessonPlanRequest;
 import com.learnhub.activitymanagement.dto.request.RecommendationRequest;
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
-import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
-import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.activitymanagement.service.ActivityService;
-import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.activitymanagement.service.RecommendationService;
 import com.learnhub.activitymanagement.service.ScoringEngineService;
+import com.learnhub.documentmanagement.entity.PDFDocument;
+import com.learnhub.documentmanagement.service.PDFService;
+import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.usermanagement.service.UserSearchHistoryService;
-import jakarta.servlet.http.HttpServletRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,280 +31,265 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 @RestController
 @RequestMapping("/api/activities")
 @Tag(name = "Activities", description = "Activity management and recommendations endpoints")
 public class ActivityController {
 
-    private static final Logger logger = LoggerFactory.getLogger(ActivityController.class);
+	private static final Logger logger = LoggerFactory.getLogger(ActivityController.class);
 
-    @Autowired
-    private ActivityService activityService;
+	@Autowired
+	private ActivityService activityService;
 
-    @Autowired
-    private PDFService pdfService;
+	@Autowired
+	private PDFService pdfService;
 
-    @Autowired
-    private RecommendationService recommendationService;
+	@Autowired
+	private RecommendationService recommendationService;
 
-    @Autowired
-    private UserSearchHistoryService searchHistoryService;
+	@Autowired
+	private UserSearchHistoryService searchHistoryService;
 
-    @GetMapping("/")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Get activities", description = "Get a list of activities with optional filtering and pagination")
-    public ResponseEntity<?> getActivities(@ModelAttribute ActivityFilterRequest request) {
-        logger.info(
-                "GET /api/activities/ - Get activities called with filters: name={}, ageMin={}, ageMax={}, format={}, limit={}, offset={}",
-                request.name(), request.ageMin(), request.ageMax(), request.format(), request.limit(),
-                request.offset());
-        try {
-            List<ActivityResponse> activities = activityService.getActivitiesWithFilters(
-                    request.name(), request.ageMin(), request.ageMax(), request.format(),
-                    request.bloomLevel(), request.mentalLoad(), request.physicalEnergy(),
-                    request.resourcesNeeded(), request.topics(), request.limit(), request.offset());
-            Map<String, Object> response = new HashMap<>();
-            response.put("total", activityService.countAllActivities());
-            response.put("activities", activities);
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("GET /api/activities/ - Failed to retrieve activities: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-        }
-    }
+	@GetMapping("/")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Get activities", description = "Get a list of activities with optional filtering and pagination")
+	public ResponseEntity<?> getActivities(@ModelAttribute ActivityFilterRequest request) {
+		logger.info(
+				"GET /api/activities/ - Get activities called with filters: name={}, ageMin={}, ageMax={}, format={}, limit={}, offset={}",
+				request.name(), request.ageMin(), request.ageMax(), request.format(), request.limit(),
+				request.offset());
+		try {
+			List<ActivityResponse> activities = activityService.getActivitiesWithFilters(request.name(),
+					request.ageMin(), request.ageMax(), request.format(), request.bloomLevel(), request.mentalLoad(),
+					request.physicalEnergy(), request.resourcesNeeded(), request.topics(), request.limit(),
+					request.offset());
+			Map<String, Object> response = new HashMap<>();
+			response.put("total", activityService.countAllActivities());
+			response.put("activities", activities);
+			return ResponseEntity.ok(response);
+		} catch (Exception e) {
+			logger.error("GET /api/activities/ - Failed to retrieve activities: {}", e.getMessage());
+			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+		}
+	}
 
-    @GetMapping("/{id}")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Get activity by ID", description = "Get a single activity by its ID")
-    public ResponseEntity<?> getActivity(@PathVariable UUID id) {
-        logger.info("GET /api/activities/{} - Get activity by ID called", id);
-        try {
-            ActivityResponse activity = activityService.getActivityById(id);
-            return ResponseEntity.ok(activity);
-        } catch (Exception e) {
-            logger.error("GET /api/activities/{} - Activity not found: {}", id, e.getMessage());
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-        }
-    }
+	@GetMapping("/{id}")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Get activity by ID", description = "Get a single activity by its ID")
+	public ResponseEntity<?> getActivity(@PathVariable UUID id) {
+		logger.info("GET /api/activities/{} - Get activity by ID called", id);
+		try {
+			ActivityResponse activity = activityService.getActivityById(id);
+			return ResponseEntity.ok(activity);
+		} catch (Exception e) {
+			logger.error("GET /api/activities/{} - Activity not found: {}", id, e.getMessage());
+			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+		}
+	}
 
-    @PostMapping("/create")
-    @PreAuthorize("hasRole('ADMIN')")
-    @SecurityRequirement(name = "BearerAuth")
-    @Operation(summary = "Create activity", description = "Create a new activity (admin only)")
-    public ResponseEntity<?> createActivity(@RequestBody Map<String, Object> request) {
-        logger.info("POST /api/activities/create - Create activity called");
-        try {
-            ActivityResponse saved = activityService.createActivityWithValidation(request);
-            logger.info("POST /api/activities/create - Activity created with id={}", saved.getId());
-            Map<String, Object> response = new HashMap<>();
-            response.put("activity", saved);
-            return ResponseEntity.status(201).body(response);
-        } catch (IllegalArgumentException e) {
-            logger.error("POST /api/activities/create - Invalid activity data: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-        } catch (Exception e) {
-            logger.error("POST /api/activities/create - Failed to create activity: {}", e.getMessage());
-            return ResponseEntity.status(500).body(ErrorResponse.of("Failed to create activity: " + e.getMessage()));
-        }
-    }
+	@PostMapping("/create")
+	@PreAuthorize("hasRole('ADMIN')")
+	@SecurityRequirement(name = "BearerAuth")
+	@Operation(summary = "Create activity", description = "Create a new activity (admin only)")
+	public ResponseEntity<?> createActivity(@RequestBody Map<String, Object> request) {
+		logger.info("POST /api/activities/create - Create activity called");
+		try {
+			ActivityResponse saved = activityService.createActivityWithValidation(request);
+			logger.info("POST /api/activities/create - Activity created with id={}", saved.getId());
+			Map<String, Object> response = new HashMap<>();
+			response.put("activity", saved);
+			return ResponseEntity.status(201).body(response);
+		} catch (IllegalArgumentException e) {
+			logger.error("POST /api/activities/create - Invalid activity data: {}", e.getMessage());
+			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+		} catch (Exception e) {
+			logger.error("POST /api/activities/create - Failed to create activity: {}", e.getMessage());
+			return ResponseEntity.status(500).body(ErrorResponse.of("Failed to create activity: " + e.getMessage()));
+		}
+	}
 
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    @SecurityRequirement(name = "BearerAuth")
-    @Operation(summary = "Delete activity", description = "Delete an activity by its ID (admin only)")
-    public ResponseEntity<?> deleteActivity(@PathVariable UUID id) {
-        logger.info("DELETE /api/activities/{} - Delete activity called", id);
-        try {
-            activityService.deleteActivity(id);
-            logger.info("DELETE /api/activities/{} - Activity deleted successfully", id);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Activity deleted successfully");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("DELETE /api/activities/{} - Failed to delete activity: {}", id, e.getMessage());
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-        }
-    }
+	@DeleteMapping("/{id}")
+	@PreAuthorize("hasRole('ADMIN')")
+	@SecurityRequirement(name = "BearerAuth")
+	@Operation(summary = "Delete activity", description = "Delete an activity by its ID (admin only)")
+	public ResponseEntity<?> deleteActivity(@PathVariable UUID id) {
+		logger.info("DELETE /api/activities/{} - Delete activity called", id);
+		try {
+			activityService.deleteActivity(id);
+			logger.info("DELETE /api/activities/{} - Activity deleted successfully", id);
+			Map<String, String> response = new HashMap<>();
+			response.put("message", "Activity deleted successfully");
+			return ResponseEntity.ok(response);
+		} catch (Exception e) {
+			logger.error("DELETE /api/activities/{} - Failed to delete activity: {}", id, e.getMessage());
+			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+		}
+	}
 
-    @PostMapping("/upload-and-create")
-    @PreAuthorize("hasRole('ADMIN')")
-    @SecurityRequirement(name = "BearerAuth")
-    @Operation(summary = "Upload PDF and create activity", description = "Upload PDF, extract data, and create activity in one step (admin only)")
-    public ResponseEntity<?> uploadAndCreateActivity(
-            @RequestParam("pdf_file") MultipartFile pdfFile) {
-        logger.info("POST /api/activities/upload-and-create - Upload and create activity called with file={}",
-                pdfFile.getOriginalFilename());
-        try {
-            Map<String, Object> response = activityService.uploadAndCreateActivity(pdfFile);
-            logger.info("POST /api/activities/upload-and-create - Activity created from PDF successfully");
-            return ResponseEntity.status(201).body(response);
-        } catch (IllegalArgumentException e) {
-            logger.error("POST /api/activities/upload-and-create - Invalid input: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-        } catch (Exception e) {
-            logger.error("POST /api/activities/upload-and-create - Failed to upload and create activity: {}",
-                    e.getMessage());
-            return ResponseEntity.status(500)
-                    .body(ErrorResponse.of("Failed to upload and create activity: " + e.getMessage()));
-        }
-    }
+	@PostMapping("/upload-and-create")
+	@PreAuthorize("hasRole('ADMIN')")
+	@SecurityRequirement(name = "BearerAuth")
+	@Operation(summary = "Upload PDF and create activity", description = "Upload PDF, extract data, and create activity in one step (admin only)")
+	public ResponseEntity<?> uploadAndCreateActivity(@RequestParam("pdf_file") MultipartFile pdfFile) {
+		logger.info("POST /api/activities/upload-and-create - Upload and create activity called with file={}",
+				pdfFile.getOriginalFilename());
+		try {
+			Map<String, Object> response = activityService.uploadAndCreateActivity(pdfFile);
+			logger.info("POST /api/activities/upload-and-create - Activity created from PDF successfully");
+			return ResponseEntity.status(201).body(response);
+		} catch (IllegalArgumentException e) {
+			logger.error("POST /api/activities/upload-and-create - Invalid input: {}", e.getMessage());
+			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+		} catch (Exception e) {
+			logger.error("POST /api/activities/upload-and-create - Failed to upload and create activity: {}",
+					e.getMessage());
+			return ResponseEntity.status(500)
+					.body(ErrorResponse.of("Failed to upload and create activity: " + e.getMessage()));
+		}
+	}
 
-    @GetMapping("/{activityId}/pdf")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Get activity PDF", description = "Get PDF file for a specific activity")
-    public ResponseEntity<?> getActivityPdf(@PathVariable UUID activityId) {
-        logger.info("GET /api/activities/{}/pdf - Get activity PDF called", activityId);
-        try {
-            ActivityResponse activity = activityService.getActivityById(activityId);
-            if (activity.getDocumentId() == null) {
-                logger.error("GET /api/activities/{}/pdf - No PDF associated with this activity", activityId);
-                return ResponseEntity.status(404).body(ErrorResponse.of("PDF not found for this activity"));
-            }
+	@GetMapping("/{activityId}/pdf")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Get activity PDF", description = "Get PDF file for a specific activity")
+	public ResponseEntity<?> getActivityPdf(@PathVariable UUID activityId) {
+		logger.info("GET /api/activities/{}/pdf - Get activity PDF called", activityId);
+		try {
+			ActivityResponse activity = activityService.getActivityById(activityId);
+			if (activity.getDocumentId() == null) {
+				logger.error("GET /api/activities/{}/pdf - No PDF associated with this activity", activityId);
+				return ResponseEntity.status(404).body(ErrorResponse.of("PDF not found for this activity"));
+			}
 
-            byte[] pdfContent = pdfService.getPdfContent(activity.getDocumentId());
-            PDFDocument document = pdfService.getPdfDocument(activity.getDocumentId());
+			byte[] pdfContent = pdfService.getPdfContent(activity.getDocumentId());
+			PDFDocument document = pdfService.getPdfDocument(activity.getDocumentId());
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("inline", document.getFilename());
-            headers.setContentLength(pdfContent.length);
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_PDF);
+			headers.setContentDispositionFormData("inline", document.getFilename());
+			headers.setContentLength(pdfContent.length);
 
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(pdfContent);
-        } catch (Exception e) {
-            logger.error("GET /api/activities/{}/pdf - PDF not found: {}", activityId, e.getMessage());
-            return ResponseEntity.status(404).body(ErrorResponse.of("PDF not found: " + e.getMessage()));
-        }
-    }
+			return ResponseEntity.ok().headers(headers).body(pdfContent);
+		} catch (Exception e) {
+			logger.error("GET /api/activities/{}/pdf - PDF not found: {}", activityId, e.getMessage());
+			return ResponseEntity.status(404).body(ErrorResponse.of("PDF not found: " + e.getMessage()));
+		}
+	}
 
-    @GetMapping("/recommendations")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Get activity recommendations", description = "Get personalized activity recommendations with scoring")
-    public ResponseEntity<?> getRecommendations(@ModelAttribute RecommendationRequest request,
-            HttpServletRequest httpRequest) {
-        logger.info(
-                "GET /api/activities/recommendations - Get recommendations called with targetAge={}, format={}, maxActivityCount={}, limit={}",
-                request.targetAge(), request.format(), request.maxActivityCount(), request.limit());
-        try {
-            // Build criteria map using service
-            Map<String, Object> criteria = activityService.buildRecommendationCriteria(
-                    request.name(), request.targetAge(), request.format(), request.bloomLevels(),
-                    request.targetDuration(), request.availableResources(), request.preferredTopics(),
-                    request.priorityCategories());
+	@GetMapping("/recommendations")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Get activity recommendations", description = "Get personalized activity recommendations with scoring")
+	public ResponseEntity<?> getRecommendations(@ModelAttribute RecommendationRequest request,
+			HttpServletRequest httpRequest) {
+		logger.info(
+				"GET /api/activities/recommendations - Get recommendations called with targetAge={}, format={}, maxActivityCount={}, limit={}",
+				request.targetAge(), request.format(), request.maxActivityCount(), request.limit());
+		try {
+			// Build criteria map using service
+			Map<String, Object> criteria = activityService.buildRecommendationCriteria(request.name(),
+					request.targetAge(), request.format(), request.bloomLevels(), request.targetDuration(),
+					request.availableResources(), request.preferredTopics(), request.priorityCategories());
 
-            // Save search history if user is authenticated
-            UUID userId = (UUID) httpRequest.getAttribute("userId");
-            if (userId != null) {
-                searchHistoryService.saveSearchQuery(userId, criteria);
-            }
+			// Save search history if user is authenticated
+			UUID userId = (UUID) httpRequest.getAttribute("userId");
+			if (userId != null) {
+				searchHistoryService.saveSearchQuery(userId, criteria);
+			}
 
-            // Get recommendations from service
-            Map<String, Object> response = recommendationService.getRecommendations(
-                    criteria, request.includeBreaks(), request.maxActivityCount(), request.limit());
+			// Get recommendations from service
+			Map<String, Object> response = recommendationService.getRecommendations(criteria, request.includeBreaks(),
+					request.maxActivityCount(), request.limit());
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("GET /api/activities/recommendations - Failed to get recommendations: {}", e.getMessage());
-            return ResponseEntity.status(500)
-                    .body(ErrorResponse.of("Failed to get recommendations: " + e.getMessage()));
-        }
-    }
+			return ResponseEntity.ok(response);
+		} catch (Exception e) {
+			logger.error("GET /api/activities/recommendations - Failed to get recommendations: {}", e.getMessage());
+			return ResponseEntity.status(500)
+					.body(ErrorResponse.of("Failed to get recommendations: " + e.getMessage()));
+		}
+	}
 
-    @GetMapping("/scoring-insights")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Get scoring insights", description = "Get information about scoring categories and their weights")
-    public ResponseEntity<?> getScoringInsights() {
-        logger.info("GET /api/activities/scoring-insights - Get scoring insights called");
-        try {
-            Map<String, ScoringEngineService.ScoringCategory> categories = ScoringEngineService.getScoringCategories();
+	@GetMapping("/scoring-insights")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Get scoring insights", description = "Get information about scoring categories and their weights")
+	public ResponseEntity<?> getScoringInsights() {
+		logger.info("GET /api/activities/scoring-insights - Get scoring insights called");
+		try {
+			Map<String, ScoringEngineService.ScoringCategory> categories = ScoringEngineService.getScoringCategories();
 
-            Map<String, Object> response = new HashMap<>();
-            Map<String, Map<String, Object>> categoriesMap = new HashMap<>();
+			Map<String, Object> response = new HashMap<>();
+			Map<String, Map<String, Object>> categoriesMap = new HashMap<>();
 
-            for (Map.Entry<String, ScoringEngineService.ScoringCategory> entry : categories.entrySet()) {
-                Map<String, Object> categoryInfo = new HashMap<>();
-                categoryInfo.put("name", entry.getValue().getName());
-                categoryInfo.put("impact", entry.getValue().getImpact());
-                categoryInfo.put("description", entry.getValue().getDescription());
-                categoriesMap.put(entry.getKey(), categoryInfo);
-            }
+			for (Map.Entry<String, ScoringEngineService.ScoringCategory> entry : categories.entrySet()) {
+				Map<String, Object> categoryInfo = new HashMap<>();
+				categoryInfo.put("name", entry.getValue().getName());
+				categoryInfo.put("impact", entry.getValue().getImpact());
+				categoryInfo.put("description", entry.getValue().getDescription());
+				categoriesMap.put(entry.getKey(), categoryInfo);
+			}
 
-            response.put("categories", categoriesMap);
-            response.put("description", "Scoring categories used to evaluate activity recommendations");
+			response.put("categories", categoriesMap);
+			response.put("description", "Scoring categories used to evaluate activity recommendations");
 
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            logger.error("GET /api/activities/scoring-insights - Failed to get scoring insights: {}", e.getMessage());
-            return ResponseEntity.status(500)
-                    .body(ErrorResponse.of("Failed to get scoring insights: " + e.getMessage()));
-        }
-    }
+			return ResponseEntity.ok(response);
+		} catch (Exception e) {
+			logger.error("GET /api/activities/scoring-insights - Failed to get scoring insights: {}", e.getMessage());
+			return ResponseEntity.status(500)
+					.body(ErrorResponse.of("Failed to get scoring insights: " + e.getMessage()));
+		}
+	}
 
-    @PostMapping("/lesson-plan")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Generate lesson plan", description = "Generate a lesson plan from selected activities")
-    public ResponseEntity<?> generateLessonPlan(@RequestBody LessonPlanRequest request) {
-        logger.info("POST /api/activities/lesson-plan - Generate lesson plan called with {} activities",
-                request.getActivities() != null ? request.getActivities().size() : 0);
-        try {
-            List<Map<String, Object>> activities = request.getActivities();
+	@PostMapping("/lesson-plan")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Generate lesson plan", description = "Generate a lesson plan from selected activities")
+	public ResponseEntity<?> generateLessonPlan(@RequestBody LessonPlanRequest request) {
+		logger.info("POST /api/activities/lesson-plan - Generate lesson plan called with {} activities",
+				request.getActivities() != null ? request.getActivities().size() : 0);
+		try {
+			List<Map<String, Object>> activities = request.getActivities();
 
-            // Check if PDFs are available
-            LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(activities);
-            if (!info.isCanGenerateLessonPlan()) {
-                logger.error("POST /api/activities/lesson-plan - No PDFs available for the selected activities");
-                return ResponseEntity.badRequest()
-                        .body(ErrorResponse.of("No PDFs available for the selected activities"));
-            }
+			// Check if PDFs are available
+			LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(activities);
+			if (!info.isCanGenerateLessonPlan()) {
+				logger.error("POST /api/activities/lesson-plan - No PDFs available for the selected activities");
+				return ResponseEntity.badRequest()
+						.body(ErrorResponse.of("No PDFs available for the selected activities"));
+			}
 
-            // Process breaks using service
-            List<Map<String, Object>> breaks = activityService.processLessonPlanBreaks(
-                    activities, request.getBreaks());
+			// Process breaks using service
+			List<Map<String, Object>> breaks = activityService.processLessonPlanBreaks(activities, request.getBreaks());
 
-            // Generate lesson plan PDF
-            byte[] lessonPlanPdf = pdfService.generateLessonPlan(
-                    activities,
-                    request.getSearchCriteria(),
-                    breaks,
-                    request.getTotalDuration());
+			// Generate lesson plan PDF
+			byte[] lessonPlanPdf = pdfService.generateLessonPlan(activities, request.getSearchCriteria(), breaks,
+					request.getTotalDuration());
 
-            logger.info("POST /api/activities/lesson-plan - Lesson plan PDF generated successfully, size={} bytes",
-                    lessonPlanPdf.length);
+			logger.info("POST /api/activities/lesson-plan - Lesson plan PDF generated successfully, size={} bytes",
+					lessonPlanPdf.length);
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("attachment", "lesson_plan.pdf");
-            headers.setContentLength(lessonPlanPdf.length);
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_PDF);
+			headers.setContentDispositionFormData("attachment", "lesson_plan.pdf");
+			headers.setContentLength(lessonPlanPdf.length);
 
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(lessonPlanPdf);
-        } catch (Exception e) {
-            logger.error("POST /api/activities/lesson-plan - Failed to generate lesson plan: {}", e.getMessage());
-            return ResponseEntity.status(500)
-                    .body(ErrorResponse.of("Failed to generate lesson plan: " + e.getMessage()));
-        }
-    }
+			return ResponseEntity.ok().headers(headers).body(lessonPlanPdf);
+		} catch (Exception e) {
+			logger.error("POST /api/activities/lesson-plan - Failed to generate lesson plan: {}", e.getMessage());
+			return ResponseEntity.status(500)
+					.body(ErrorResponse.of("Failed to generate lesson plan: " + e.getMessage()));
+		}
+	}
 
-    @PostMapping("/lesson-plan/info")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Get lesson plan info", description = "Get lesson plan generation information")
-    public ResponseEntity<?> getLessonPlanInfo(@RequestBody LessonPlanInfoRequest request) {
-        logger.info("POST /api/activities/lesson-plan/info - Get lesson plan info called with {} activities",
-                request.getActivities() != null ? request.getActivities().size() : 0);
-        try {
-            LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(request.getActivities());
-            return ResponseEntity.ok(info);
-        } catch (Exception e) {
-            logger.error("POST /api/activities/lesson-plan/info - Failed to get lesson plan info: {}", e.getMessage());
-            return ResponseEntity.status(500)
-                    .body(ErrorResponse.of("Failed to get lesson plan info: " + e.getMessage()));
-        }
-    }
+	@PostMapping("/lesson-plan/info")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Get lesson plan info", description = "Get lesson plan generation information")
+	public ResponseEntity<?> getLessonPlanInfo(@RequestBody LessonPlanInfoRequest request) {
+		logger.info("POST /api/activities/lesson-plan/info - Get lesson plan info called with {} activities",
+				request.getActivities() != null ? request.getActivities().size() : 0);
+		try {
+			LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(request.getActivities());
+			return ResponseEntity.ok(info);
+		} catch (Exception e) {
+			logger.error("POST /api/activities/lesson-plan/info - Failed to get lesson plan info: {}", e.getMessage());
+			return ResponseEntity.status(500)
+					.body(ErrorResponse.of("Failed to get lesson plan info: " + e.getMessage()));
+		}
+	}
 }
