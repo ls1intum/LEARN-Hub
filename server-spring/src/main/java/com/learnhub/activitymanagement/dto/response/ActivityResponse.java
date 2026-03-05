@@ -52,4 +52,6 @@ public class ActivityResponse {
 
 	@JsonProperty("document_id")
 	private UUID documentId;
+
+	private String type = "activity";
 }

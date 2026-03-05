@@ -61,7 +61,6 @@ public class DocumentsController {
 			response.put("document_id", documentId);
 			response.put("filename", pdfFile.getOriginalFilename());
 			response.put("file_size", pdfContent.length);
-			response.put("message", "PDF uploaded successfully");
 
 			return ResponseEntity.status(201).body(response);
 		} catch (Exception e) {

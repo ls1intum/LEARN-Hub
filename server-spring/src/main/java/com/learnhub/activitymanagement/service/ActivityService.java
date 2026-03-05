@@ -42,8 +42,8 @@ public class ActivityService {
 	}
 
 	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
-			List<String> formats, List<String> bloomLevels, String mentalLoad, String physicalEnergy,
-			List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset) {
+			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
+			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset) {
 
 		Specification<Activity> spec = Specification.where(null);
 
@@ -68,6 +68,14 @@ public class ActivityService {
 		if (bloomLevels != null && !bloomLevels.isEmpty()) {
 			List<BloomLevel> bloomEnums = bloomLevels.stream().map(BloomLevel::fromValue).collect(Collectors.toList());
 			spec = spec.and((root, query, cb) -> root.get("bloomLevel").in(bloomEnums));
+		}
+
+		if (durationMin != null) {
+			spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("durationMinMinutes"), durationMin));
+		}
+
+		if (durationMax != null) {
+			spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("durationMaxMinutes"), durationMax));
 		}
 
 		if (mentalLoad != null && !mentalLoad.isEmpty()) {

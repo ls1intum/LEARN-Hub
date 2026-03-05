@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
@@ -118,7 +117,7 @@ public class AuthService {
 
 	private void saveVerificationCode(UUID userId, String code) {
 		// Delete old codes for this user
-		verificationCodeRepository.deleteByUserId(userId);
+		deleteAllVerificationCodesForUser(userId);
 
 		VerificationCode verificationCode = new VerificationCode();
 		verificationCode.setUserId(userId);
@@ -227,7 +226,7 @@ public class AuthService {
 		}
 
 		// Delete related data
-		verificationCodeRepository.deleteByUserId(userId);
+		deleteAllVerificationCodesForUser(userId);
 
 		userRepository.delete(user);
 		return true;
@@ -272,7 +271,7 @@ public class AuthService {
 		}
 
 		// Delete related data
-		verificationCodeRepository.deleteByUserId(userId);
+		deleteAllVerificationCodesForUser(userId);
 
 		userRepository.delete(user);
 		return true;
@@ -348,5 +347,12 @@ public class AuthService {
 		password.append(specialChars[random.nextInt(specialChars.length)]);
 
 		return password.toString();
+	}
+
+	private void deleteAllVerificationCodesForUser(UUID userId) {
+		List<VerificationCode> existingCodes = verificationCodeRepository.findByUserId(userId);
+		if (!existingCodes.isEmpty()) {
+			verificationCodeRepository.deleteAll(existingCodes);
+		}
 	}
 }

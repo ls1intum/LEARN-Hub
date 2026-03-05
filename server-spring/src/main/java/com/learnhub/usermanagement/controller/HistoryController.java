@@ -41,7 +41,7 @@ public class HistoryController {
 	@GetMapping("/search")
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Get search history", description = "Get user's search history")
-	public ResponseEntity<?> getSearchHistory(@RequestParam(required = false, defaultValue = "10") Integer limit,
+	public ResponseEntity<?> getSearchHistory(@RequestParam(required = false, defaultValue = "50") Integer limit,
 			@RequestParam(required = false, defaultValue = "0") Integer offset, HttpServletRequest request) {
 		logger.info("GET /api/history/search - Get search history called with limit={}, offset={}", limit, offset);
 		try {
@@ -114,7 +114,7 @@ public class HistoryController {
 	@GetMapping("/favourites/activities")
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Get activity favourites", description = "Get user's favourite activities")
-	public ResponseEntity<?> getActivityFavourites(@RequestParam(required = false, defaultValue = "10") Integer limit,
+	public ResponseEntity<?> getActivityFavourites(@RequestParam(required = false, defaultValue = "50") Integer limit,
 			@RequestParam(required = false, defaultValue = "0") Integer offset, HttpServletRequest request) {
 		logger.info("GET /api/history/favourites/activities - Get activity favourites called with limit={}, offset={}",
 				limit, offset);
@@ -157,7 +157,7 @@ public class HistoryController {
 	@GetMapping("/favourites/lesson-plans")
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Get lesson plan favourites", description = "Get user's favourite lesson plans")
-	public ResponseEntity<?> getLessonPlanFavourites(@RequestParam(required = false, defaultValue = "10") Integer limit,
+	public ResponseEntity<?> getLessonPlanFavourites(@RequestParam(required = false, defaultValue = "50") Integer limit,
 			@RequestParam(required = false, defaultValue = "0") Integer offset, HttpServletRequest request) {
 		logger.info(
 				"GET /api/history/favourites/lesson-plans - Get lesson plan favourites called with limit={}, offset={}",
@@ -274,7 +274,7 @@ public class HistoryController {
 				return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
 			}
 			String name = (String) requestBody.get("name");
-			String lessonPlanSnapshot = objectMapper.writeValueAsString(requestBody.get("lesson_plan_snapshot"));
+			String lessonPlanSnapshot = objectMapper.writeValueAsString(requestBody.get("lesson_plan"));
 
 			UserFavourites favourite = favouritesService.saveLessonPlanFavourite(userId, activityIds,
 					lessonPlanSnapshot, name);
