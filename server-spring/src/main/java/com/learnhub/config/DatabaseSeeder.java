@@ -121,7 +121,6 @@ public class DatabaseSeeder implements CommandLineRunner {
                     // Store PDF document
                     PDFDocument pdfDocument = new PDFDocument();
                     pdfDocument.setFilename(filename);
-                    pdfDocument.setFilePath(Paths.get(pdfStoragePath, filename).toString());
                     pdfDocument.setFileSize((long) pdfContent.length);
                     pdfDocument.setExtractedFields("{}");
                     pdfDocument.setConfidenceScore("1.0");
@@ -129,13 +128,19 @@ public class DatabaseSeeder implements CommandLineRunner {
                     pdfDocument.setCreatedAt(LocalDateTime.now());
                     pdfDocument = pdfDocumentRepository.save(pdfDocument);
 
-                    // Optionally save PDF to storage path
+                    // Store PDF under a UUID-based filename to avoid collisions.
                     try {
                         Path storagePath = Paths.get(pdfStoragePath);
                         Files.createDirectories(storagePath);
-                        Files.write(storagePath.resolve(filename), pdfContent);
+                        String storedFilename = pdfDocument.getId() + ".pdf";
+                        Path destPath = storagePath.resolve(storedFilename);
+                        Files.write(destPath, pdfContent);
+                        pdfDocument.setFilePath(destPath.toString());
+                        pdfDocument = pdfDocumentRepository.save(pdfDocument);
                     } catch (IOException e) {
                         logger.warn("Could not save PDF to storage path: {}", e.getMessage());
+                        pdfDocument.setFilePath(pdfPath.toString());
+                        pdfDocument = pdfDocumentRepository.save(pdfDocument);
                     }
 
                     // Parse and create activity

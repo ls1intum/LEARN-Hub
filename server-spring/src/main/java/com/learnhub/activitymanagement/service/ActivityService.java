@@ -293,21 +293,21 @@ public class ActivityService {
             throw new IllegalArgumentException("Invalid document_id format: must be a valid UUID");
         }
 
-        // Check if PDF exists
+        // Finalize the PDF: persist from cache to disk + DB (or verify it is already persisted).
+        // The returned document carries the definitive database UUID, which may differ from the
+        // temporary cache ID supplied by the client.
+        UUID persistedDocumentId;
         try {
-            byte[] pdfContent = pdfService.getPdfContent(documentId);
-            if (pdfContent == null || pdfContent.length == 0) {
-                throw new IllegalArgumentException("PDF document with ID " + documentId + " does not exist");
-            }
-        } catch (IllegalArgumentException e) {
-            // Re-throw our custom exceptions
-            throw e;
+            persistedDocumentId = pdfService.finalizePdf(documentId).getId();
         } catch (Exception e) {
-            throw new IllegalArgumentException("PDF document with ID " + documentId + " does not exist");
+            throw new IllegalArgumentException("PDF document with ID " + documentId + " does not exist: " + e.getMessage());
         }
 
-        // Create activity from request
-        Activity activity = createActivityFromMap(request);
+        // Build the activity, replacing the (possibly temporary) document_id with the real one.
+        Map<String, Object> activityData = new HashMap<>(request);
+        activityData.put("document_id", persistedDocumentId.toString());
+
+        Activity activity = createActivityFromMap(activityData);
         return createActivity(activity);
     }
     
@@ -324,13 +324,13 @@ public class ActivityService {
                 throw new IllegalArgumentException("File must be a PDF");
             }
 
-            // Store PDF
+            // Cache the PDF in memory (not yet on disk or in the database).
             byte[] pdfContent = pdfFile.getBytes();
             if (pdfContent.length == 0) {
                 throw new IllegalArgumentException("PDF file is empty");
             }
 
-            UUID documentId = pdfService.storePdf(pdfContent, pdfFile.getOriginalFilename());
+            UUID cacheId = pdfService.storePdf(pdfContent, pdfFile.getOriginalFilename());
 
             // Extract activity data using LLM
             String pdfText = new String(pdfContent); // Simplified - should use PDF parser
@@ -342,9 +342,12 @@ public class ActivityService {
 
             String extractionQuality = determineExtractionQuality(confidence);
 
-            // Update PDF with extraction results
+            // Store extraction results in the cache.
             String confidenceScore = String.format("%.3f", confidence);
-            pdfService.updatePdfExtractionResults(documentId, extractedData, confidenceScore, extractionQuality);
+            pdfService.updatePdfExtractionResults(cacheId, extractedData, confidenceScore, extractionQuality);
+
+            // Persist the PDF (cache → filesystem + database).
+            UUID documentId = pdfService.finalizePdf(cacheId).getId();
 
             // Create activity with extracted data and defaults
             Map<String, Object> activityData = applyActivityDefaults(extractedData);

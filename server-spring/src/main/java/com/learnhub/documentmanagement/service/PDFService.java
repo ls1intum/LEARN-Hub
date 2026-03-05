@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,12 +36,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class PDFService {
 
     private static final Logger logger = LoggerFactory.getLogger(PDFService.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    /**
+     * Temporary in-memory cache for uploaded PDFs.
+     * PDFs are cached here after upload and only persisted to disk and the database
+     * once the linked activity is created ({@link #finalizePdf(UUID)}).
+     * Stale entries (older than 1 hour) are evicted every 30 minutes.
+     */
+    private final ConcurrentHashMap<UUID, CachedPDF> pdfCache = new ConcurrentHashMap<>();
+
+    /** Holds a transiently cached PDF before its activity is created. */
+    private record CachedPDF(
+            byte[] content,
+            String filename,
+            LocalDateTime cachedAt,
+            Map<String, Object> extractedFields,
+            String confidenceScore,
+            String extractionQuality) {}
 
     @Autowired
     private PDFDocumentRepository pdfDocumentRepository;
@@ -54,28 +73,79 @@ public class PDFService {
     @Value("${pdf.storage.path:/app/data/pdfs}")
     private String pdfStoragePath;
 
-    public UUID storePdf(byte[] pdfContent, String filename) throws IOException {
-        // Ensure storage directory exists
-        Path storagePath = Paths.get(pdfStoragePath);
-        Files.createDirectories(storagePath);
-
-        // Save PDF to filesystem
-        Path filePath = storagePath.resolve(filename);
-        Files.write(filePath, pdfContent);
-
-        // Create database record
-        PDFDocument document = new PDFDocument();
-        document.setFilename(filename);
-        document.setFilePath(filePath.toString());
-        document.setFileSize((long) pdfContent.length);
-        document.setExtractedFields("{}");
-        document.setCreatedAt(LocalDateTime.now());
-
-        document = pdfDocumentRepository.save(document);
-        return document.getId();
+    /**
+     * Cache a PDF in memory and return a temporary cache ID.
+     * The PDF is NOT written to the filesystem or the database here.
+     * Call {@link #finalizePdf(UUID)} to persist it once the activity is ready.
+     */
+    public UUID storePdf(byte[] pdfContent, String filename) {
+        UUID cacheId = UUID.randomUUID();
+        pdfCache.put(cacheId, new CachedPDF(pdfContent, filename, LocalDateTime.now(), null, null, null));
+        logger.debug("PDF '{}' cached with temporary id={}", filename, cacheId);
+        return cacheId;
     }
 
+    /**
+     * Persist a cached PDF to the filesystem and the database.
+     * If the PDF is already in the database (previously finalized), this is a no-op.
+     * Files are stored under a UUID-based name to avoid collisions between documents
+     * that share the same original filename.
+     *
+     * @return the persisted {@link PDFDocument} (with its definitive database UUID)
+     */
+    public PDFDocument finalizePdf(UUID cacheId) throws IOException {
+        // Already persisted – nothing to do.
+        if (pdfDocumentRepository.existsById(cacheId)) {
+            return pdfDocumentRepository.findById(cacheId).orElseThrow();
+        }
+
+        CachedPDF cached = pdfCache.get(cacheId);
+        if (cached == null) {
+            throw new RuntimeException("PDF document not found in cache or database: " + cacheId);
+        }
+
+        // Write to filesystem using a UUID-based filename to avoid collisions.
+        Path storagePath = Paths.get(pdfStoragePath);
+        Files.createDirectories(storagePath);
+        String storedFilename = cacheId + ".pdf";
+        Path filePath = storagePath.resolve(storedFilename);
+        Files.write(filePath, cached.content());
+
+        // Create the database record.
+        PDFDocument document = new PDFDocument();
+        document.setFilename(cached.filename());
+        document.setFilePath(filePath.toString());
+        document.setFileSize((long) cached.content().length);
+        document.setCreatedAt(cached.cachedAt());
+
+        if (cached.extractedFields() != null) {
+            try {
+                document.setExtractedFields(OBJECT_MAPPER.writeValueAsString(cached.extractedFields()));
+            } catch (Exception e) {
+                document.setExtractedFields("{}");
+            }
+        } else {
+            document.setExtractedFields("{}");
+        }
+        document.setConfidenceScore(cached.confidenceScore());
+        document.setExtractionQuality(cached.extractionQuality());
+
+        document = pdfDocumentRepository.save(document);
+        pdfCache.remove(cacheId);
+        logger.info("PDF '{}' finalized: cacheId={} -> dbId={}", cached.filename(), cacheId, document.getId());
+        return document;
+    }
+
+    /**
+     * Retrieve the raw PDF bytes.  The cache is checked first; falls back to the filesystem
+     * for already-persisted documents.
+     */
     public byte[] getPdfContent(UUID documentId) throws IOException {
+        CachedPDF cached = pdfCache.get(documentId);
+        if (cached != null) {
+            return cached.content();
+        }
+
         PDFDocument document = pdfDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("PDF document not found"));
 
@@ -87,13 +157,49 @@ public class PDFService {
         return Files.readAllBytes(filePath);
     }
 
+    /**
+     * Return metadata for a document.  If the document is still in the cache (not yet
+     * finalized), a transient {@link PDFDocument} is returned without a database ID.
+     */
     public PDFDocument getPdfDocument(UUID documentId) {
+        CachedPDF cached = pdfCache.get(documentId);
+        if (cached != null) {
+            PDFDocument doc = new PDFDocument();
+            doc.setFilename(cached.filename());
+            doc.setFileSize((long) cached.content().length);
+            doc.setCreatedAt(cached.cachedAt());
+            doc.setConfidenceScore(cached.confidenceScore());
+            doc.setExtractionQuality(cached.extractionQuality());
+            if (cached.extractedFields() != null) {
+                try {
+                    doc.setExtractedFields(OBJECT_MAPPER.writeValueAsString(cached.extractedFields()));
+                } catch (Exception e) {
+                    doc.setExtractedFields("{}");
+                }
+            } else {
+                doc.setExtractedFields("{}");
+            }
+            return doc;
+        }
+
         return pdfDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("PDF document not found"));
     }
 
-    public void updatePdfExtractionResults(UUID documentId, Map<String, Object> extractedFields, 
+    /**
+     * Store LLM extraction results.  Updates the cache entry if the document has not yet
+     * been finalized; otherwise updates the database record directly.
+     */
+    public void updatePdfExtractionResults(UUID documentId, Map<String, Object> extractedFields,
                                            String confidenceScore, String extractionQuality) {
+        CachedPDF cached = pdfCache.get(documentId);
+        if (cached != null) {
+            pdfCache.put(documentId, new CachedPDF(
+                    cached.content(), cached.filename(), cached.cachedAt(),
+                    extractedFields, confidenceScore, extractionQuality));
+            return;
+        }
+
         PDFDocument document = pdfDocumentRepository.findById(documentId)
                 .orElseThrow(() -> new RuntimeException("PDF document not found"));
 
@@ -108,6 +214,22 @@ public class PDFService {
         document.setExtractionQuality(extractionQuality);
 
         pdfDocumentRepository.save(document);
+    }
+
+    /**
+     * Evict cache entries older than one hour to avoid unbounded memory growth.
+     * Runs automatically every 30 minutes.
+     */
+    @Scheduled(fixedRate = 30 * 60 * 1000)
+    public void evictStaleCacheEntries() {
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(1);
+        long removed = pdfCache.entrySet().stream()
+                .filter(e -> e.getValue().cachedAt().isBefore(cutoff))
+                .map(e -> { pdfCache.remove(e.getKey()); return 1; })
+                .count();
+        if (removed > 0) {
+            logger.info("Evicted {} stale PDF cache entries", removed);
+        }
     }
 
     public LessonPlanInfoResponse getLessonPlanInfo(List<Map<String, Object>> activities) {

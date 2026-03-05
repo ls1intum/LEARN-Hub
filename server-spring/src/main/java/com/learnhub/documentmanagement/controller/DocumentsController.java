@@ -56,7 +56,7 @@ public class DocumentsController {
 
             UUID documentId = pdfService.storePdf(pdfContent, pdfFile.getOriginalFilename());
 
-            logger.info("POST /api/documents/upload_pdf - PDF uploaded successfully with documentId={}, size={} bytes",
+            logger.info("POST /api/documents/upload_pdf - PDF cached with documentId={}, size={} bytes",
                     documentId, pdfContent.length);
             Map<String, Object> response = new HashMap<>();
             response.put("document_id", documentId);
@@ -103,7 +103,9 @@ public class DocumentsController {
             PDFDocument document = pdfService.getPdfDocument(documentId);
 
             Map<String, Object> response = new HashMap<>();
-            response.put("id", document.getId());
+            // For cached (not yet finalized) documents the entity has no database id yet;
+            // return the request path id so callers always get a consistent value.
+            response.put("id", document.getId() != null ? document.getId() : documentId);
             response.put("filename", document.getFilename());
             response.put("file_size", document.getFileSize());
             response.put("confidence_score", document.getConfidenceScore());
