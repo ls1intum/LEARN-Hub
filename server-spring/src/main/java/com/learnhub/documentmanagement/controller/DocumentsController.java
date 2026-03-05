@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +25,11 @@ public class DocumentsController {
 
 	private static final Logger logger = LoggerFactory.getLogger(DocumentsController.class);
 
-	@Autowired
-	private PDFService pdfService;
+	private final PDFService pdfService;
+
+	public DocumentsController(PDFService pdfService) {
+		this.pdfService = pdfService;
+	}
 
 	@PostMapping("/upload_pdf")
 	@PreAuthorize("hasRole('ADMIN')")
@@ -42,8 +44,9 @@ public class DocumentsController {
 				return ResponseEntity.badRequest().body(ErrorResponse.of("No PDF file provided"));
 			}
 
-			if (!pdfFile.getOriginalFilename().toLowerCase().endsWith(".pdf")) {
-				logger.error("POST /api/documents/upload_pdf - File is not a PDF: {}", pdfFile.getOriginalFilename());
+			String filename = pdfFile.getOriginalFilename();
+			if (filename == null || !filename.toLowerCase().endsWith(".pdf")) {
+				logger.error("POST /api/documents/upload_pdf - File is not a PDF: {}", filename);
 				return ResponseEntity.badRequest().body(ErrorResponse.of("File must be a PDF"));
 			}
 

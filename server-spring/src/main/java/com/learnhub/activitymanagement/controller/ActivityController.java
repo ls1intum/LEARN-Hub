@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -38,17 +37,18 @@ public class ActivityController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivityController.class);
 
-	@Autowired
-	private ActivityService activityService;
+	private final ActivityService activityService;
+	private final PDFService pdfService;
+	private final RecommendationService recommendationService;
+	private final UserSearchHistoryService searchHistoryService;
 
-	@Autowired
-	private PDFService pdfService;
-
-	@Autowired
-	private RecommendationService recommendationService;
-
-	@Autowired
-	private UserSearchHistoryService searchHistoryService;
+	public ActivityController(ActivityService activityService, PDFService pdfService,
+			RecommendationService recommendationService, UserSearchHistoryService searchHistoryService) {
+		this.activityService = activityService;
+		this.pdfService = pdfService;
+		this.recommendationService = recommendationService;
+		this.searchHistoryService = searchHistoryService;
+	}
 
 	@GetMapping("/")
 	@PreAuthorize("permitAll()")
