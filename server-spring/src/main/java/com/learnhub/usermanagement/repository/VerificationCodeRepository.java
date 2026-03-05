@@ -2,6 +2,7 @@ package com.learnhub.usermanagement.repository;
 
 import com.learnhub.usermanagement.entity.VerificationCode;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,5 +14,5 @@ public interface VerificationCodeRepository extends JpaRepository<VerificationCo
 	Optional<VerificationCode> findByUserIdAndCodeAndUsedAndExpiresAtAfter(UUID userId, String code, String used,
 			LocalDateTime currentTime);
 
-	void deleteByUserId(UUID userId);
+	List<VerificationCode> findByUserId(UUID userId);
 }
