@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -18,9 +18,9 @@ public class LLMService {
     private final ChatClient chatClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Autowired(required = false)
-    public LLMService(ChatClient chatClient) {
-        this.chatClient = chatClient;
+    public LLMService(ObjectProvider<ChatClient.Builder> chatClientBuilderProvider) {
+        ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
+        this.chatClient = builder != null ? builder.build() : null;
     }
 
     public Map<String, Object> extractActivityData(String pdfText) {
