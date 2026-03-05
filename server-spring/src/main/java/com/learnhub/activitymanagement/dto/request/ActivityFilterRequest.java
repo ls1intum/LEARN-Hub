@@ -1,8 +1,7 @@
 package com.learnhub.activitymanagement.dto.request;
 
-import org.springframework.web.bind.annotation.BindParam;
-
 import java.util.List;
+import org.springframework.web.bind.annotation.BindParam;
 
 public record ActivityFilterRequest(
         String name,

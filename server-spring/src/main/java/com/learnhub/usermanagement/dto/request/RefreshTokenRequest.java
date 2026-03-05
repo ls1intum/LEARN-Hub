@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RefreshTokenRequest {
-    @JsonProperty("refresh_token")
-    private String refreshToken;
+	@JsonProperty("refresh_token")
+	private String refreshToken;
 }
