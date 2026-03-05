@@ -39,23 +39,23 @@ public class AuthController {
 	@Autowired
 	private AuthService authService;
 
-    @PostMapping("/register-teacher")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Register a new teacher", description = "Register a new teacher account and send verification code")
-    public ResponseEntity<?> registerTeacher(@Valid @RequestBody TeacherRegistrationRequest request) {
-        logger.info("POST /api/auth/register-teacher - Register teacher called with email={}", request.getEmail());
-        try {
-            UserResponse user = authService.registerTeacher(request);
-            logger.info("POST /api/auth/register-teacher - Teacher registered successfully with id={}", user.getId());
-            Map<String, Object> response = new HashMap<>();
-            response.put("message", "Teacher registered successfully. Credentials have been sent via email.");
-            response.put("user", user);
-            return ResponseEntity.status(201).body(response);
-        } catch (Exception e) {
-            logger.error("POST /api/auth/register-teacher - Registration failed: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-        }
-    }
+	@PostMapping("/register-teacher")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Register a new teacher", description = "Register a new teacher account and send verification code")
+	public ResponseEntity<?> registerTeacher(@Valid @RequestBody TeacherRegistrationRequest request) {
+		logger.info("POST /api/auth/register-teacher - Register teacher called with email={}", request.getEmail());
+		try {
+			UserResponse user = authService.registerTeacher(request);
+			logger.info("POST /api/auth/register-teacher - Teacher registered successfully with id={}", user.getId());
+			Map<String, Object> response = new HashMap<>();
+			response.put("message", "Teacher registered successfully. Credentials have been sent via email.");
+			response.put("user", user);
+			return ResponseEntity.status(201).body(response);
+		} catch (Exception e) {
+			logger.error("POST /api/auth/register-teacher - Registration failed: {}", e.getMessage());
+			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+		}
+	}
 
 	@PostMapping("/verification-code")
 	@PreAuthorize("permitAll()")
@@ -72,67 +72,68 @@ public class AuthController {
 		}
 	}
 
-    @PostMapping("/verify")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Verify code and login", description = "Verify the code and complete login process")
-    public ResponseEntity<?> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
-        logger.info("POST /api/auth/verify - Verify code called for email={}", request.getEmail());
-        try {
-            LoginResponse response = authService.verifyCode(request);
-            logger.info("POST /api/auth/verify - Verification successful for email={}", request.getEmail());
-            Map<String, Object> result = new HashMap<>();
-            result.put("user", response.getUser());
-            result.put("access_token", response.getAccessToken());
-            result.put("refresh_token", response.getRefreshToken());
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            logger.error("POST /api/auth/verify - Verification failed for email={}: {}", request.getEmail(), e.getMessage());
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-        }
-    }
+	@PostMapping("/verify")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Verify code and login", description = "Verify the code and complete login process")
+	public ResponseEntity<?> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
+		logger.info("POST /api/auth/verify - Verify code called for email={}", request.getEmail());
+		try {
+			LoginResponse response = authService.verifyCode(request);
+			logger.info("POST /api/auth/verify - Verification successful for email={}", request.getEmail());
+			Map<String, Object> result = new HashMap<>();
+			result.put("user", response.getUser());
+			result.put("access_token", response.getAccessToken());
+			result.put("refresh_token", response.getRefreshToken());
+			return ResponseEntity.ok(result);
+		} catch (Exception e) {
+			logger.error("POST /api/auth/verify - Verification failed for email={}: {}", request.getEmail(),
+					e.getMessage());
+			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+		}
+	}
 
-    @PostMapping("/login")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Login with password", description = "Login with email and password (admin or teacher)")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        logger.info("POST /api/auth/login - Login called for email={}", request.getEmail());
-        try {
-            LoginResponse response = authService.login(request);
-            logger.info("POST /api/auth/login - Login successful for email={}", request.getEmail());
-            Map<String, Object> result = new HashMap<>();
-            result.put("user", response.getUser());
-            result.put("access_token", response.getAccessToken());
-            result.put("refresh_token", response.getRefreshToken());
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            logger.error("POST /api/auth/login - Login failed for email={}: {}", request.getEmail(), e.getMessage());
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-        }
-    }
+	@PostMapping("/login")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Login with password", description = "Login with email and password (admin or teacher)")
+	public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+		logger.info("POST /api/auth/login - Login called for email={}", request.getEmail());
+		try {
+			LoginResponse response = authService.login(request);
+			logger.info("POST /api/auth/login - Login successful for email={}", request.getEmail());
+			Map<String, Object> result = new HashMap<>();
+			result.put("user", response.getUser());
+			result.put("access_token", response.getAccessToken());
+			result.put("refresh_token", response.getRefreshToken());
+			return ResponseEntity.ok(result);
+		} catch (Exception e) {
+			logger.error("POST /api/auth/login - Login failed for email={}: {}", request.getEmail(), e.getMessage());
+			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+		}
+	}
 
-    @PostMapping("/admin/login")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Admin login", description = "Login with admin credentials")
-    public ResponseEntity<?> adminLogin(@Valid @RequestBody LoginRequest request) {
-        logger.info("POST /api/auth/admin/login - Admin login called for email={}", request.getEmail());
-        try {
-            LoginResponse response = authService.login(request);
-            // Verify user is admin
-            if (!"ADMIN".equals(response.getUser().getRole())) {
-                logger.error("POST /api/auth/admin/login - Non-admin login attempt for email={}", request.getEmail());
-                return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
-            }
-            logger.info("POST /api/auth/admin/login - Admin login successful for email={}", request.getEmail());
-            Map<String, Object> result = new HashMap<>();
-            result.put("user", response.getUser());
-            result.put("access_token", response.getAccessToken());
-            result.put("refresh_token", response.getRefreshToken());
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            logger.error("POST /api/auth/admin/login - Admin login failed: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-        }
-    }
+	@PostMapping("/admin/login")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Admin login", description = "Login with admin credentials")
+	public ResponseEntity<?> adminLogin(@Valid @RequestBody LoginRequest request) {
+		logger.info("POST /api/auth/admin/login - Admin login called for email={}", request.getEmail());
+		try {
+			LoginResponse response = authService.login(request);
+			// Verify user is admin
+			if (!"ADMIN".equals(response.getUser().getRole())) {
+				logger.error("POST /api/auth/admin/login - Non-admin login attempt for email={}", request.getEmail());
+				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
+			}
+			logger.info("POST /api/auth/admin/login - Admin login successful for email={}", request.getEmail());
+			Map<String, Object> result = new HashMap<>();
+			result.put("user", response.getUser());
+			result.put("access_token", response.getAccessToken());
+			result.put("refresh_token", response.getRefreshToken());
+			return ResponseEntity.ok(result);
+		} catch (Exception e) {
+			logger.error("POST /api/auth/admin/login - Admin login failed: {}", e.getMessage());
+			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
+		}
+	}
 
 	@GetMapping("/me")
 	@PreAuthorize("isAuthenticated()")

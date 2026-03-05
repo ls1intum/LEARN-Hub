@@ -35,21 +35,24 @@ public class MetaController {
 		return ResponseEntity.ok(response);
 	}
 
-    @GetMapping("/api/meta/field-values")
-    @PreAuthorize("permitAll()")
-    @Operation(summary = "Get field values", description = "Get field values for enums used by client")
-    public ResponseEntity<?> getFieldValues() {
-        logger.info("GET /api/meta/field-values - Field values endpoint called");
-        Map<String, Object> fieldValues = new HashMap<>();
-        fieldValues.put("format", Arrays.asList("unplugged", "digital", "hybrid"));
-        fieldValues.put("resources_available", Arrays.asList("computers", "tablets", "handouts", "blocks", "electronics", "stationery"));
-        fieldValues.put("bloom_level", Arrays.asList("remember", "understand", "apply", "analyze", "evaluate", "create"));
-        fieldValues.put("topics", Arrays.asList("decomposition", "patterns", "abstraction", "algorithms"));
-        fieldValues.put("mental_load", Arrays.asList("low", "medium", "high"));
-        fieldValues.put("physical_energy", Arrays.asList("low", "medium", "high"));
-        fieldValues.put("priority_categories", Arrays.asList("age_appropriateness", "bloom_level_match", "topic_relevance", "duration_fit"));
-        return ResponseEntity.ok(fieldValues);
-    }
+	@GetMapping("/api/meta/field-values")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Get field values", description = "Get field values for enums used by client")
+	public ResponseEntity<?> getFieldValues() {
+		logger.info("GET /api/meta/field-values - Field values endpoint called");
+		Map<String, Object> fieldValues = new HashMap<>();
+		fieldValues.put("format", Arrays.asList("unplugged", "digital", "hybrid"));
+		fieldValues.put("resources_available",
+				Arrays.asList("computers", "tablets", "handouts", "blocks", "electronics", "stationery"));
+		fieldValues.put("bloom_level",
+				Arrays.asList("remember", "understand", "apply", "analyze", "evaluate", "create"));
+		fieldValues.put("topics", Arrays.asList("decomposition", "patterns", "abstraction", "algorithms"));
+		fieldValues.put("mental_load", Arrays.asList("low", "medium", "high"));
+		fieldValues.put("physical_energy", Arrays.asList("low", "medium", "high"));
+		fieldValues.put("priority_categories",
+				Arrays.asList("age_appropriateness", "bloom_level_match", "topic_relevance", "duration_fit"));
+		return ResponseEntity.ok(fieldValues);
+	}
 
 	@GetMapping("/api/meta/environment")
 	@PreAuthorize("permitAll()")
