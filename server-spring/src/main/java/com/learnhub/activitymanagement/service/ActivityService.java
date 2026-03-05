@@ -14,9 +14,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.learnhub.exception.BadRequestException;
+import com.learnhub.exception.EntityNotFoundException;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -24,14 +26,15 @@ public class ActivityService {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivityService.class);
 
-	@Autowired
-	private ActivityRepository activityRepository;
+	private final ActivityRepository activityRepository;
+	private final PDFService pdfService;
+	private final LLMService llmService;
 
-	@Autowired
-	private PDFService pdfService;
-
-	@Autowired
-	private LLMService llmService;
+	public ActivityService(ActivityRepository activityRepository, PDFService pdfService, LLMService llmService) {
+		this.activityRepository = activityRepository;
+		this.pdfService = pdfService;
+		this.llmService = llmService;
+	}
 
 	public List<ActivityResponse> getAllActivities() {
 		return activityRepository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
@@ -122,7 +125,7 @@ public class ActivityService {
 			case "high" :
 				return EnergyLevel.HIGH;
 			default :
-				throw new IllegalArgumentException(
+				throw new BadRequestException(
 						"Invalid energy level: " + value + ". Must be 'low', 'medium', or 'high'");
 		}
 	}
@@ -130,10 +133,11 @@ public class ActivityService {
 	public ActivityResponse getActivityById(UUID id) {
 		logger.debug("Fetching activity by id={}", id);
 		Activity activity = activityRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Activity not found"));
+				.orElseThrow(() -> new EntityNotFoundException("Activity not found"));
 		return mapToResponse(activity);
 	}
 
+	@Transactional
 	public ActivityResponse createActivity(Activity activity) {
 		logger.debug("Saving new activity: name={}", activity.getName());
 		Activity saved = activityRepository.save(activity);
@@ -141,9 +145,10 @@ public class ActivityService {
 		return mapToResponse(saved);
 	}
 
+	@Transactional
 	public ActivityResponse updateActivity(UUID id, Activity activityUpdate) {
 		Activity activity = activityRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Activity not found"));
+				.orElseThrow(() -> new EntityNotFoundException("Activity not found"));
 
 		// Update fields
 		activity.setName(activityUpdate.getName());
@@ -166,6 +171,7 @@ public class ActivityService {
 		return mapToResponse(saved);
 	}
 
+	@Transactional
 	public void deleteActivity(UUID id) {
 		logger.debug("Deleting activity with id={}", id);
 		activityRepository.deleteById(id);
@@ -227,7 +233,7 @@ public class ActivityService {
 			try {
 				activity.setDocumentId(UUID.fromString(data.get("document_id").toString()));
 			} catch (IllegalArgumentException e) {
-				throw new IllegalArgumentException("Invalid document_id format: must be a valid UUID");
+				throw new BadRequestException("Invalid document_id format: must be a valid UUID");
 			}
 		}
 
@@ -264,31 +270,32 @@ public class ActivityService {
 	/**
 	 * Create activity with validation
 	 */
+	@Transactional
 	public ActivityResponse createActivityWithValidation(Map<String, Object> request) {
 		// Validate document_id
 		Object documentIdObj = request.get("document_id");
 		if (documentIdObj == null) {
-			throw new IllegalArgumentException("document_id is required");
+			throw new BadRequestException("document_id is required");
 		}
 
 		UUID documentId;
 		try {
 			documentId = UUID.fromString(documentIdObj.toString());
 		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException("Invalid document_id format: must be a valid UUID");
+			throw new BadRequestException("Invalid document_id format: must be a valid UUID");
 		}
 
 		// Check if PDF exists
 		try {
 			byte[] pdfContent = pdfService.getPdfContent(documentId);
 			if (pdfContent == null || pdfContent.length == 0) {
-				throw new IllegalArgumentException("PDF document with ID " + documentId + " does not exist");
+				throw new BadRequestException("PDF document with ID " + documentId + " does not exist");
 			}
-		} catch (IllegalArgumentException e) {
+		} catch (BadRequestException e) {
 			// Re-throw our custom exceptions
 			throw e;
 		} catch (Exception e) {
-			throw new IllegalArgumentException("PDF document with ID " + documentId + " does not exist");
+			throw new BadRequestException("PDF document with ID " + documentId + " does not exist");
 		}
 
 		// Create activity from request
@@ -299,20 +306,25 @@ public class ActivityService {
 	/**
 	 * Upload PDF and create activity with extracted data
 	 */
+	@Transactional
 	public Map<String, Object> uploadAndCreateActivity(MultipartFile pdfFile) {
 		try {
 			if (pdfFile.isEmpty()) {
-				throw new IllegalArgumentException("No PDF file provided");
+				throw new BadRequestException("No PDF file provided");
 			}
 
-			if (!pdfFile.getOriginalFilename().toLowerCase().endsWith(".pdf")) {
-				throw new IllegalArgumentException("File must be a PDF");
+			String originalFilename = pdfFile.getOriginalFilename();
+			if (originalFilename == null) {
+				throw new BadRequestException("Filename is missing");
+			}
+			if (!originalFilename.toLowerCase().endsWith(".pdf")) {
+				throw new BadRequestException("File must be a PDF");
 			}
 
 			// Store PDF
 			byte[] pdfContent = pdfFile.getBytes();
 			if (pdfContent.length == 0) {
-				throw new IllegalArgumentException("PDF file is empty");
+				throw new BadRequestException("PDF file is empty");
 			}
 
 			UUID documentId = pdfService.storePdf(pdfContent, pdfFile.getOriginalFilename());
@@ -346,8 +358,10 @@ public class ActivityService {
 			response.put("extraction_quality", extractionQuality);
 
 			return response;
+		} catch (BadRequestException e) {
+			throw e;
 		} catch (Exception e) {
-			throw new RuntimeException("Failed to upload and create activity: " + e.getMessage(), e);
+			throw new BadRequestException("Failed to upload and create activity: " + e.getMessage());
 		}
 	}
 
