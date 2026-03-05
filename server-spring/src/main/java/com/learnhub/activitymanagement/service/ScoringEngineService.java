@@ -238,7 +238,10 @@ public class ScoringEngineService {
 		ScoringCategory category = SCORING_CATEGORIES.get("series_cohesion");
 
 		if (activities.size() == 1) {
-			return createCategoryScore(category, category.getImpact() * 20); // 3 * 20 = 60
+			// Single activity gets perfect cohesion score
+			// Series cohesion is never a priority category (matches Flask behavior)
+			int score = Math.max(0, Math.min(category.getImpact() * 20, 100)); // 3 * 20 = 60
+			return new CategoryScoreResponse(category.getName(), score, category.getImpact(), 1.0, false);
 		}
 
 		// Topic overlap score
@@ -289,7 +292,9 @@ public class ScoringEngineService {
 		}
 
 		int cohesionScore = Math.min((int) (topicOverlapScore + bloomProgressionScore), 100);
-		return createCategoryScore(category, Math.max(0, Math.min(cohesionScore, 100)));
+		int finalScore = Math.max(0, Math.min(cohesionScore, 100));
+		// Series cohesion is never a priority category (matches Flask behavior)
+		return new CategoryScoreResponse(category.getName(), finalScore, category.getImpact(), 1.0, false);
 	}
 
 	private Map<String, CategoryScoreResponse> calculateAverageIndividualScores(List<ScoreResponse> activityScores) {

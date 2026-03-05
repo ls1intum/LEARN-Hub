@@ -8,6 +8,7 @@ import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.ActivityResource;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.entity.enums.EnergyLevel;
+import com.learnhub.activitymanagement.entity.enums.PriorityCategory;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.activitymanagement.service.ScoringEngineService.SearchCriteria;
 import java.time.Instant;
@@ -203,7 +204,18 @@ public class RecommendationService {
 		}
 
 		if (priorityObj instanceof List) {
-			return ((List<?>) priorityObj).stream().map(Object::toString).collect(Collectors.toList());
+			List<String> validCategories = new ArrayList<>();
+			for (Object item : (List<?>) priorityObj) {
+				String categoryValue = item.toString();
+				try {
+					PriorityCategory.fromValue(categoryValue);
+					validCategories.add(categoryValue);
+				} catch (IllegalArgumentException e) {
+					// Skip invalid priority category but continue processing
+					// (matches Flask behavior)
+				}
+			}
+			return validCategories;
 		}
 
 		return new ArrayList<>();
