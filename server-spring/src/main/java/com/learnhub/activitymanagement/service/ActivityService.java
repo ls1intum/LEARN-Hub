@@ -40,6 +40,10 @@ public class ActivityService {
             .collect(Collectors.toList());
     }
 
+    public long countAllActivities() {
+        return activityRepository.count();
+    }
+
     public List<ActivityResponse> getActivitiesWithFilters(
             String name, Integer ageMin, Integer ageMax,
             List<String> formats, List<String> bloomLevels, String mentalLoad, String physicalEnergy,
