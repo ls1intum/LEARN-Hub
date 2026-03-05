@@ -21,14 +21,10 @@ class DatabaseSeederTest {
 
 	@Test
 	void createAdminUserUsesInitialAdminPasswordWhenSet() {
-		DatabaseSeeder seeder = new DatabaseSeeder();
 		UserRepository userRepository = mock(UserRepository.class);
 		PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
-
-		ReflectionTestUtils.setField(seeder, "userRepository", userRepository);
-		ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
-		ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
-		ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
+		DatabaseSeeder seeder = new DatabaseSeeder(userRepository, mock(ActivityRepository.class),
+				mock(PDFDocumentRepository.class), passwordEncoder);
 		ReflectionTestUtils.setField(seeder, "initialAdminEmail", "admin@learnhub.com");
 		ReflectionTestUtils.setField(seeder, "initialAdminPassword", "seeded-admin-pwd");
 
@@ -47,14 +43,10 @@ class DatabaseSeederTest {
 
 	@Test
 	void createAdminUserGeneratesRandomPasswordWhenInitialPasswordBlank() {
-		DatabaseSeeder seeder = new DatabaseSeeder();
 		UserRepository userRepository = mock(UserRepository.class);
 		PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
-
-		ReflectionTestUtils.setField(seeder, "userRepository", userRepository);
-		ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
-		ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
-		ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
+		DatabaseSeeder seeder = new DatabaseSeeder(userRepository, mock(ActivityRepository.class),
+				mock(PDFDocumentRepository.class), passwordEncoder);
 		ReflectionTestUtils.setField(seeder, "initialAdminEmail", "admin@learnhub.com");
 		ReflectionTestUtils.setField(seeder, "initialAdminPassword", " ");
 
@@ -70,14 +62,10 @@ class DatabaseSeederTest {
 
 	@Test
 	void createAdminUserUsesInitialAdminEmailWhenSet() {
-		DatabaseSeeder seeder = new DatabaseSeeder();
 		UserRepository userRepository = mock(UserRepository.class);
 		PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
-
-		ReflectionTestUtils.setField(seeder, "userRepository", userRepository);
-		ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
-		ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
-		ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
+		DatabaseSeeder seeder = new DatabaseSeeder(userRepository, mock(ActivityRepository.class),
+				mock(PDFDocumentRepository.class), passwordEncoder);
 		ReflectionTestUtils.setField(seeder, "initialAdminEmail", "ops-admin@learnhub.com");
 		ReflectionTestUtils.setField(seeder, "initialAdminPassword", "seeded-admin-pwd");
 
@@ -93,14 +81,10 @@ class DatabaseSeederTest {
 
 	@Test
 	void createAdminUserSkipsCreationWhenAdminAlreadyExists() {
-		DatabaseSeeder seeder = new DatabaseSeeder();
 		UserRepository userRepository = mock(UserRepository.class);
 		PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
-
-		ReflectionTestUtils.setField(seeder, "userRepository", userRepository);
-		ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
-		ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
-		ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
+		DatabaseSeeder seeder = new DatabaseSeeder(userRepository, mock(ActivityRepository.class),
+				mock(PDFDocumentRepository.class), passwordEncoder);
 		ReflectionTestUtils.setField(seeder, "initialAdminEmail", "admin@learnhub.com");
 		ReflectionTestUtils.setField(seeder, "initialAdminPassword", "seeded-admin-pwd");
 
