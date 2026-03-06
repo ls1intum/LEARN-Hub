@@ -109,24 +109,31 @@ class PDFServiceTest {
 		byte[] content = "finalize-me".getBytes(StandardCharsets.UTF_8);
 		UUID key = pdfService.cachePdf(content, "activity.pdf");
 
-		when(pdfDocumentRepository.save(any(PDFDocument.class))).thenAnswer(inv -> inv.getArgument(0));
+		UUID generatedId = UUID.randomUUID();
+		when(pdfDocumentRepository.save(any(PDFDocument.class))).thenAnswer(inv -> {
+			PDFDocument doc = inv.getArgument(0);
+			doc.setId(generatedId); // simulate JPA auto-generation
+			return doc;
+		});
 
 		UUID docId = pdfService.finalizePdf(key);
 
-		assertThat(docId).isEqualTo(key);
+		// Returned ID is the JPA-generated one, not the cache key
+		assertThat(docId).isEqualTo(generatedId);
+		assertThat(docId).isNotEqualTo(key);
 
 		// Verify DB save
 		ArgumentCaptor<PDFDocument> captor = ArgumentCaptor.forClass(PDFDocument.class);
 		verify(pdfDocumentRepository).save(captor.capture());
 		PDFDocument saved = captor.getValue();
-		assertThat(saved.getId()).isEqualTo(key);
 		assertThat(saved.getFilename()).isEqualTo("activity.pdf");
 		assertThat(saved.getFileSize()).isEqualTo(content.length);
 
-		// Verify file written to filesystem with UUID-prefixed name
-		Path expectedFile = tempDir.resolve(key + "_activity.pdf");
-		assertThat(Files.exists(expectedFile)).isTrue();
-		assertThat(Files.readAllBytes(expectedFile)).isEqualTo(content);
+		// Verify file written to filesystem (UUID prefix differs from cache key)
+		assertThat(Files.list(tempDir).count()).isEqualTo(1);
+		Path writtenFile = Files.list(tempDir).findFirst().get();
+		assertThat(writtenFile.getFileName().toString()).endsWith("_activity.pdf");
+		assertThat(Files.readAllBytes(writtenFile)).isEqualTo(content);
 
 		// Cache should be empty after finalization
 		assertThat(pdfService.getPdfCache()).doesNotContainKey(key);
@@ -169,18 +176,23 @@ class PDFServiceTest {
 		assertThat(pdfService.getPdfContent(key1)).isEqualTo(content1);
 		assertThat(pdfService.getPdfContent(key2)).isEqualTo(content2);
 
-		// Finalize both
-		when(pdfDocumentRepository.save(any(PDFDocument.class))).thenAnswer(inv -> inv.getArgument(0));
-		pdfService.finalizePdf(key1);
-		pdfService.finalizePdf(key2);
+		// Finalize both — JPA generates distinct document IDs
+		UUID genId1 = UUID.randomUUID();
+		UUID genId2 = UUID.randomUUID();
+		when(pdfDocumentRepository.save(any(PDFDocument.class)))
+				.thenAnswer(inv -> { PDFDocument d = inv.getArgument(0); d.setId(genId1); return d; })
+				.thenAnswer(inv -> { PDFDocument d = inv.getArgument(0); d.setId(genId2); return d; });
+		UUID docId1 = pdfService.finalizePdf(key1);
+		UUID docId2 = pdfService.finalizePdf(key2);
+
+		assertThat(docId1).isNotEqualTo(docId2);
 
 		// Both files should exist with UUID-prefixed names (no collision)
-		Path file1 = tempDir.resolve(key1 + "_activity.pdf");
-		Path file2 = tempDir.resolve(key2 + "_activity.pdf");
-		assertThat(Files.exists(file1)).isTrue();
-		assertThat(Files.exists(file2)).isTrue();
-		assertThat(Files.readAllBytes(file1)).isEqualTo(content1);
-		assertThat(Files.readAllBytes(file2)).isEqualTo(content2);
+		long fileCount = Files.list(tempDir).count();
+		assertThat(fileCount).isEqualTo(2);
+		// All files end with _activity.pdf
+		Files.list(tempDir).forEach(path ->
+				assertThat(path.getFileName().toString()).endsWith("_activity.pdf"));
 	}
 
 	@Test
@@ -239,8 +251,15 @@ class PDFServiceTest {
 		fields.put("name", "My Activity");
 		pdfService.updatePdfExtractionResults(key, fields, "0.900", "high");
 
-		when(pdfDocumentRepository.save(any(PDFDocument.class))).thenAnswer(inv -> inv.getArgument(0));
-		pdfService.finalizePdf(key);
+		UUID generatedId = UUID.randomUUID();
+		when(pdfDocumentRepository.save(any(PDFDocument.class))).thenAnswer(inv -> {
+			PDFDocument doc = inv.getArgument(0);
+			doc.setId(generatedId);
+			return doc;
+		});
+		UUID docId = pdfService.finalizePdf(key);
+
+		assertThat(docId).isEqualTo(generatedId);
 
 		ArgumentCaptor<PDFDocument> captor = ArgumentCaptor.forClass(PDFDocument.class);
 		verify(pdfDocumentRepository).save(captor.capture());

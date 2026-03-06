@@ -20,6 +20,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 public class PDFDocument {
 
 	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	private UUID id;
 
 	@Column(nullable = false, length = 255)
