@@ -53,7 +53,7 @@ public class DocumentsController {
 				return ResponseEntity.badRequest().body(ErrorResponse.of("PDF file is empty"));
 			}
 
-			UUID documentId = pdfService.storePdf(pdfContent, pdfFile.getOriginalFilename());
+			UUID documentId = pdfService.cachePdf(pdfContent, pdfFile.getOriginalFilename());
 
 			logger.info("POST /api/documents/upload_pdf - PDF uploaded successfully with documentId={}, size={} bytes",
 					documentId, pdfContent.length);

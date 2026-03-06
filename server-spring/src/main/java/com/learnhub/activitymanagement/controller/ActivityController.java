@@ -9,7 +9,6 @@ import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
 import com.learnhub.activitymanagement.service.ActivityService;
 import com.learnhub.activitymanagement.service.RecommendationService;
 import com.learnhub.activitymanagement.service.ScoringEngineService;
-import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.usermanagement.service.UserSearchHistoryService;
@@ -163,11 +162,14 @@ public class ActivityController {
 			}
 
 			byte[] pdfContent = pdfService.getPdfContent(activity.getDocumentId());
-			PDFDocument document = pdfService.getPdfDocument(activity.getDocumentId());
+
+			// Use activity name as download filename, sanitized for safety
+			String activityName = activity.getName() != null ? activity.getName() : "activity";
+			String downloadName = sanitizeDownloadFilename(activityName) + ".pdf";
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_PDF);
-			headers.setContentDispositionFormData("inline", document.getFilename());
+			headers.setContentDispositionFormData("inline", downloadName);
 			headers.setContentLength(pdfContent.length);
 
 			return ResponseEntity.ok().headers(headers).body(pdfContent);
@@ -293,5 +295,13 @@ public class ActivityController {
 			return ResponseEntity.status(500)
 					.body(ErrorResponse.of("Failed to get lesson plan info: " + e.getMessage()));
 		}
+	}
+
+	private String sanitizeDownloadFilename(String name) {
+		if (name == null || name.isBlank()) {
+			return "activity";
+		}
+		String sanitized = name.replaceAll("[^a-zA-Z0-9._\\- ]", "_").trim();
+		return sanitized.isEmpty() ? "activity" : sanitized;
 	}
 }
