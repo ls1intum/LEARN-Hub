@@ -278,17 +278,23 @@ public class ActivityService {
 			throw new IllegalArgumentException("Invalid document_id format: must be a valid UUID");
 		}
 
-		// Check if PDF exists
+		// Finalize the cached PDF (persist to filesystem + DB)
 		try {
-			byte[] pdfContent = pdfService.getPdfContent(documentId);
-			if (pdfContent == null || pdfContent.length == 0) {
+			pdfService.finalizePdf(documentId);
+		} catch (RuntimeException e) {
+			// PDF was not in the cache – check if it already exists in the database
+			try {
+				byte[] pdfContent = pdfService.getPdfContent(documentId);
+				if (pdfContent == null || pdfContent.length == 0) {
+					throw new IllegalArgumentException("PDF document with ID " + documentId + " does not exist");
+				}
+			} catch (IllegalArgumentException ie) {
+				throw ie;
+			} catch (Exception ex) {
 				throw new IllegalArgumentException("PDF document with ID " + documentId + " does not exist");
 			}
-		} catch (IllegalArgumentException e) {
-			// Re-throw our custom exceptions
-			throw e;
 		} catch (Exception e) {
-			throw new IllegalArgumentException("PDF document with ID " + documentId + " does not exist");
+			throw new RuntimeException("Failed to finalize PDF: " + e.getMessage(), e);
 		}
 
 		// Create activity from request
@@ -309,13 +315,13 @@ public class ActivityService {
 				throw new IllegalArgumentException("File must be a PDF");
 			}
 
-			// Store PDF
+			// Cache PDF in memory first
 			byte[] pdfContent = pdfFile.getBytes();
 			if (pdfContent.length == 0) {
 				throw new IllegalArgumentException("PDF file is empty");
 			}
 
-			UUID documentId = pdfService.storePdf(pdfContent, pdfFile.getOriginalFilename());
+			UUID documentId = pdfService.cachePdf(pdfContent, pdfFile.getOriginalFilename());
 
 			// Extract activity data using LLM
 			String pdfText = new String(pdfContent); // Simplified - should use PDF parser
@@ -328,9 +334,12 @@ public class ActivityService {
 
 			String extractionQuality = determineExtractionQuality(confidence);
 
-			// Update PDF with extraction results
+			// Update cached PDF with extraction results
 			String confidenceScore = String.format("%.3f", confidence);
 			pdfService.updatePdfExtractionResults(documentId, extractedData, confidenceScore, extractionQuality);
+
+			// Finalize: persist PDF to filesystem + DB
+			pdfService.finalizePdf(documentId);
 
 			// Create activity with extracted data and defaults
 			Map<String, Object> activityData = applyActivityDefaults(extractedData);
