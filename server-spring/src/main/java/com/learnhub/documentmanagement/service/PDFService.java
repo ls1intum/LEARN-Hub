@@ -86,7 +86,7 @@ public class PDFService {
 	 */
 	public UUID cachePdf(byte[] pdfContent, String filename) {
 		if (pdfCache.size() >= MAX_CACHE_SIZE) {
-			evictOldestCacheEntries();
+			evictOldestCacheEntry();
 		}
 
 		UUID cacheKey = UUID.randomUUID();
@@ -215,7 +215,7 @@ public class PDFService {
 		}
 	}
 
-	private void evictOldestCacheEntries() {
+	private void evictOldestCacheEntry() {
 		pdfCache.entrySet().stream().min(Comparator.comparing(e -> e.getValue().uploadedAt))
 				.ifPresent(oldest -> {
 					pdfCache.remove(oldest.getKey());

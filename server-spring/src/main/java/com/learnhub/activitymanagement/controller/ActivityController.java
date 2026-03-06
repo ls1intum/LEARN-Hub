@@ -163,8 +163,9 @@ public class ActivityController {
 
 			byte[] pdfContent = pdfService.getPdfContent(activity.getDocumentId());
 
-			// Use activity name as download filename
-			String downloadName = (activity.getName() != null ? activity.getName() : "activity") + ".pdf";
+			// Use activity name as download filename, sanitized for safety
+			String activityName = activity.getName() != null ? activity.getName() : "activity";
+			String downloadName = sanitizeDownloadFilename(activityName) + ".pdf";
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_PDF);
@@ -294,5 +295,13 @@ public class ActivityController {
 			return ResponseEntity.status(500)
 					.body(ErrorResponse.of("Failed to get lesson plan info: " + e.getMessage()));
 		}
+	}
+
+	private String sanitizeDownloadFilename(String name) {
+		if (name == null || name.isBlank()) {
+			return "activity";
+		}
+		String sanitized = name.replaceAll("[^a-zA-Z0-9._\\- ]", "_").trim();
+		return sanitized.isEmpty() ? "activity" : sanitized;
 	}
 }

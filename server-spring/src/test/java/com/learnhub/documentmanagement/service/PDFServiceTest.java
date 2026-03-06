@@ -188,7 +188,7 @@ class PDFServiceTest {
 		byte[] content = "old-pdf".getBytes(StandardCharsets.UTF_8);
 		UUID key = pdfService.cachePdf(content, "old.pdf");
 
-		// Manually set upload time to past
+		// Set upload time to well past the 60-minute cache TTL
 		PDFService.CachedPdf cached = pdfService.getPdfCache().get(key);
 		ReflectionTestUtils.setField(cached, "uploadedAt", LocalDateTime.now().minusMinutes(120));
 
