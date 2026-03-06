@@ -15,7 +15,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,11 +33,13 @@ public class RecommendationService {
 	// Matches Flask's range(2, min(max_activity_count + 1, 6))
 	private static final int MAX_LESSON_PLAN_SIZE = 6;
 
-	@Autowired
-	private ActivityRepository activityRepository;
+	private final ActivityRepository activityRepository;
+	private final ActivityService activityService;
 
-	@Autowired
-	private ActivityService activityService;
+	public RecommendationService(ActivityRepository activityRepository, ActivityService activityService) {
+		this.activityRepository = activityRepository;
+		this.activityService = activityService;
+	}
 
 	public Map<String, Object> getRecommendations(Map<String, Object> criteriaMap, boolean includeBreaks,
 			int maxActivityCount, int limit) {

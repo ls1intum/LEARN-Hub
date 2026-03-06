@@ -1,5 +1,8 @@
 package com.learnhub.usermanagement.service;
 
+import com.learnhub.exception.BadRequestException;
+import com.learnhub.exception.ConflictException;
+import com.learnhub.exception.EntityNotFoundException;
 import com.learnhub.security.JwtUtil;
 import com.learnhub.usermanagement.dto.request.LoginRequest;
 import com.learnhub.usermanagement.dto.request.TeacherRegistrationRequest;
@@ -11,40 +14,42 @@ import com.learnhub.usermanagement.entity.VerificationCode;
 import com.learnhub.usermanagement.entity.enums.UserRole;
 import com.learnhub.usermanagement.repository.UserRepository;
 import com.learnhub.usermanagement.repository.VerificationCodeRepository;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthService {
 
 	private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
+	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-	@Autowired
-	private UserRepository userRepository;
+	private final UserRepository userRepository;
+	private final VerificationCodeRepository verificationCodeRepository;
+	private final PasswordEncoder passwordEncoder;
+	private final JwtUtil jwtUtil;
+	private final EmailService emailService;
 
-	@Autowired
-	private VerificationCodeRepository verificationCodeRepository;
+	public AuthService(UserRepository userRepository, VerificationCodeRepository verificationCodeRepository,
+			PasswordEncoder passwordEncoder, JwtUtil jwtUtil, EmailService emailService) {
+		this.userRepository = userRepository;
+		this.verificationCodeRepository = verificationCodeRepository;
+		this.passwordEncoder = passwordEncoder;
+		this.jwtUtil = jwtUtil;
+		this.emailService = emailService;
+	}
 
-	@Autowired
-	private PasswordEncoder passwordEncoder;
-
-	@Autowired
-	private JwtUtil jwtUtil;
-
-	@Autowired
-	private EmailService emailService;
-
+	@Transactional
 	public UserResponse registerTeacher(TeacherRegistrationRequest request) {
 		if (userRepository.existsByEmail(request.getEmail())) {
-			throw new RuntimeException("Email already registered");
+			throw new BadRequestException("Email already registered");
 		}
 
 		User user = new User();
@@ -64,14 +69,14 @@ public class AuthService {
 
 	public LoginResponse login(LoginRequest request) {
 		User user = userRepository.findByEmail(request.getEmail())
-				.orElseThrow(() -> new RuntimeException("User not found"));
+				.orElseThrow(() -> new EntityNotFoundException("User not found"));
 
 		// For teachers without password, generate and send verification code
 		if (user.getPasswordHash() == null) {
 			String code = generateVerificationCode();
 			saveVerificationCode(user.getId(), code);
 			emailService.sendVerificationCode(user.getEmail(), code, user.getFirstName());
-			throw new RuntimeException("Verification code sent to your email");
+			throw new BadRequestException("Verification code sent to your email");
 		}
 
 		// For admin users with password
@@ -81,16 +86,17 @@ public class AuthService {
 			return new LoginResponse(accessToken, refreshToken, mapToUserResponse(user));
 		}
 
-		throw new RuntimeException("Invalid credentials");
+		throw new BadRequestException("Invalid credentials");
 	}
 
+	@Transactional
 	public LoginResponse verifyCode(VerifyCodeRequest request) {
 		User user = userRepository.findByEmail(request.getEmail())
-				.orElseThrow(() -> new RuntimeException("User not found"));
+				.orElseThrow(() -> new EntityNotFoundException("User not found"));
 
 		VerificationCode verificationCode = verificationCodeRepository
 				.findByUserIdAndCodeAndUsedAndExpiresAtAfter(user.getId(), request.getCode(), "N", LocalDateTime.now())
-				.orElseThrow(() -> new RuntimeException("Invalid or expired verification code"));
+				.orElseThrow(() -> new BadRequestException("Invalid or expired verification code"));
 
 		// Mark code as used
 		verificationCode.setUsed("Y");
@@ -103,7 +109,7 @@ public class AuthService {
 	}
 
 	public void requestVerificationCode(String email) {
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("User not found"));
 
 		String code = generateVerificationCode();
 		saveVerificationCode(user.getId(), code);
@@ -111,10 +117,10 @@ public class AuthService {
 	}
 
 	private String generateVerificationCode() {
-		Random random = new Random();
-		return String.format("%06d", random.nextInt(1000000));
+		return String.format("%06d", SECURE_RANDOM.nextInt(1000000));
 	}
 
+	@Transactional
 	private void saveVerificationCode(UUID userId, String code) {
 		// Delete old codes for this user
 		deleteAllVerificationCodesForUser(userId);
@@ -139,7 +145,7 @@ public class AuthService {
 	}
 
 	public UserResponse getUserById(UUID userId) {
-		User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+		User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
 		return mapToUserResponse(user);
 	}
 
@@ -147,10 +153,11 @@ public class AuthService {
 		return userRepository.findAll().stream().map(this::mapToUserResponse).toList();
 	}
 
+	@Transactional
 	public UserResponse createUser(String email, String firstName, String lastName, String roleStr, String password) {
 		// Check if user already exists
 		if (userRepository.existsByEmail(email)) {
-			throw new RuntimeException("User with this email already exists");
+			throw new ConflictException("User with this email already exists");
 		}
 
 		UserRole role = UserRole.valueOf(roleStr);
@@ -176,16 +183,17 @@ public class AuthService {
 		return mapToUserResponse(user);
 	}
 
+	@Transactional
 	public UserResponse updateUser(UUID userId, String email, String firstName, String lastName, String roleStr,
 			String password) {
-		User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+		User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
 
 		// Update email if provided
 		if (email != null && !email.isEmpty() && !email.equals(user.getEmail())) {
 			// Check if email is already taken by another user
 			Optional<User> existingUser = userRepository.findByEmail(email);
 			if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
-				throw new RuntimeException("Email already exists");
+				throw new ConflictException("Email already exists");
 			}
 			user.setEmail(email);
 		}
@@ -214,10 +222,11 @@ public class AuthService {
 		return mapToUserResponse(user);
 	}
 
+	@Transactional
 	public boolean deleteUser(UUID userId, UUID currentUserId) {
 		// Prevent admin from deleting themselves
 		if (userId.equals(currentUserId)) {
-			throw new RuntimeException("Cannot delete your own account");
+			throw new BadRequestException("Cannot delete your own account");
 		}
 
 		User user = userRepository.findById(userId).orElse(null);
@@ -232,15 +241,16 @@ public class AuthService {
 		return true;
 	}
 
+	@Transactional
 	public UserResponse updateProfile(UUID userId, String email, String firstName, String lastName, String password) {
-		User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+		User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
 
 		// Update email if provided
 		if (email != null && !email.isEmpty() && !email.equals(user.getEmail())) {
 			// Check if email is already taken by another user
 			Optional<User> existingUser = userRepository.findByEmail(email);
 			if (existingUser.isPresent() && !existingUser.get().getId().equals(userId)) {
-				throw new RuntimeException("Email already exists");
+				throw new ConflictException("Email already exists");
 			}
 			user.setEmail(email);
 		}
@@ -264,6 +274,7 @@ public class AuthService {
 		return mapToUserResponse(user);
 	}
 
+	@Transactional
 	public boolean deleteAccount(UUID userId) {
 		User user = userRepository.findById(userId).orElse(null);
 		if (user == null) {
@@ -280,7 +291,7 @@ public class AuthService {
 	public LoginResponse refreshToken(String refreshToken) {
 		// Validate refresh token
 		if (!jwtUtil.validateRefreshToken(refreshToken)) {
-			throw new RuntimeException("Invalid or expired refresh token");
+			throw new BadRequestException("Invalid or expired refresh token");
 		}
 
 		// Extract user information from refresh token
@@ -289,7 +300,7 @@ public class AuthService {
 		String role = jwtUtil.extractRole(refreshToken);
 
 		// Verify user still exists
-		User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+		User user = userRepository.findById(userId).orElseThrow(() -> new EntityNotFoundException("User not found"));
 
 		// Generate new tokens
 		String newAccessToken = jwtUtil.generateToken(email, userId, role);
@@ -298,13 +309,14 @@ public class AuthService {
 		return new LoginResponse(newAccessToken, newRefreshToken, mapToUserResponse(user));
 	}
 
+	@Transactional
 	public void resetPassword(String email) {
 		// Find user by email
-		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Teacher not found"));
+		User user = userRepository.findByEmail(email).orElseThrow(() -> new EntityNotFoundException("Teacher not found"));
 
 		// Verify user is a teacher (not admin)
 		if (user.getRole() != UserRole.TEACHER) {
-			throw new RuntimeException("Teacher not found");
+			throw new EntityNotFoundException("Teacher not found");
 		}
 
 		// Generate new secure password (similar to Flask's PasswordGenerator)
@@ -329,26 +341,26 @@ public class AuthService {
 		String[] words = {"happy", "sunny", "bright", "swift", "clear", "fresh", "quick", "smart", "brave", "calm",
 				"kind", "wise", "proud", "strong", "gentle", "bold"};
 
-		Random random = new Random();
 		StringBuilder password = new StringBuilder();
 
 		// Add 3 random words with first letter capitalized
 		for (int i = 0; i < 3; i++) {
-			String word = words[random.nextInt(words.length)];
+			String word = words[SECURE_RANDOM.nextInt(words.length)];
 			password.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
 		}
 
 		// Add 2 random digits
-		password.append(random.nextInt(10));
-		password.append(random.nextInt(10));
+		password.append(SECURE_RANDOM.nextInt(10));
+		password.append(SECURE_RANDOM.nextInt(10));
 
 		// Add 1 special character
 		char[] specialChars = {'!', '@', '#', '$', '%', '&', '*'};
-		password.append(specialChars[random.nextInt(specialChars.length)]);
+		password.append(specialChars[SECURE_RANDOM.nextInt(specialChars.length)]);
 
 		return password.toString();
 	}
 
+	@Transactional
 	private void deleteAllVerificationCodesForUser(UUID userId) {
 		List<VerificationCode> existingCodes = verificationCodeRepository.findByUserId(userId);
 		if (!existingCodes.isEmpty()) {

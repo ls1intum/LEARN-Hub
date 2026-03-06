@@ -17,7 +17,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -30,13 +29,16 @@ public class HistoryController {
 
 	private static final Logger logger = LoggerFactory.getLogger(HistoryController.class);
 
-	@Autowired
-	private UserSearchHistoryService searchHistoryService;
+	private final UserSearchHistoryService searchHistoryService;
+	private final UserFavouritesService favouritesService;
+	private final ObjectMapper objectMapper;
 
-	@Autowired
-	private UserFavouritesService favouritesService;
-
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	public HistoryController(UserSearchHistoryService searchHistoryService, UserFavouritesService favouritesService,
+			ObjectMapper objectMapper) {
+		this.searchHistoryService = searchHistoryService;
+		this.favouritesService = favouritesService;
+		this.objectMapper = objectMapper;
+	}
 
 	@GetMapping("/search")
 	@PreAuthorize("isAuthenticated()")

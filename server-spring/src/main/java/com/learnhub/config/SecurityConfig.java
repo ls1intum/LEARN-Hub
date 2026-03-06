@@ -1,7 +1,6 @@
 package com.learnhub.config;
 
 import com.learnhub.security.JwtRequestFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,11 +21,13 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-	@Autowired
-	private JwtRequestFilter jwtRequestFilter;
+	private final JwtRequestFilter jwtRequestFilter;
+	private final CorsConfigurationSource corsConfigurationSource;
 
-	@Autowired
-	private CorsConfigurationSource corsConfigurationSource;
+	public SecurityConfig(JwtRequestFilter jwtRequestFilter, CorsConfigurationSource corsConfigurationSource) {
+		this.jwtRequestFilter = jwtRequestFilter;
+		this.corsConfigurationSource = corsConfigurationSource;
+	}
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

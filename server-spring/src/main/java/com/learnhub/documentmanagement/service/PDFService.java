@@ -6,7 +6,8 @@ import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
-import java.io.ByteArrayInputStream;
+import com.learnhub.exception.BadRequestException;
+import com.learnhub.exception.EntityNotFoundException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -29,7 +30,6 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,25 +40,35 @@ public class PDFService {
 	private static final Logger logger = LoggerFactory.getLogger(PDFService.class);
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-	@Autowired
-	private PDFDocumentRepository pdfDocumentRepository;
-
-	@Autowired
-	private ActivityRepository activityRepository;
-
-	@Autowired
-	private LLMService llmService;
+	private final PDFDocumentRepository pdfDocumentRepository;
+	private final ActivityRepository activityRepository;
+	private final LLMService llmService;
 
 	@Value("${pdf.storage.path:/app/data/pdfs}")
 	private String pdfStoragePath;
 
+	public PDFService(PDFDocumentRepository pdfDocumentRepository, ActivityRepository activityRepository,
+			LLMService llmService) {
+		this.pdfDocumentRepository = pdfDocumentRepository;
+		this.activityRepository = activityRepository;
+		this.llmService = llmService;
+	}
+
+	@Transactional
 	public UUID storePdf(byte[] pdfContent, String filename) throws IOException {
 		// Ensure storage directory exists
 		Path storagePath = Paths.get(pdfStoragePath);
 		Files.createDirectories(storagePath);
 
+		// Sanitize filename to prevent path traversal
+		String sanitizedFilename = Paths.get(filename).getFileName().toString();
+		String storedFilename = UUID.randomUUID() + "_" + sanitizedFilename;
+
 		// Save PDF to filesystem
-		Path filePath = storagePath.resolve(filename);
+		Path filePath = storagePath.resolve(storedFilename);
+		if (!filePath.normalize().startsWith(storagePath.normalize())) {
+			throw new IOException("File path traversal detected");
+		}
 		Files.write(filePath, pdfContent);
 
 		// Create database record
@@ -75,11 +85,11 @@ public class PDFService {
 
 	public byte[] getPdfContent(UUID documentId) throws IOException {
 		PDFDocument document = pdfDocumentRepository.findById(documentId)
-				.orElseThrow(() -> new RuntimeException("PDF document not found"));
+				.orElseThrow(() -> new EntityNotFoundException("PDF document not found"));
 
 		Path filePath = Paths.get(document.getFilePath());
 		if (!Files.exists(filePath)) {
-			throw new RuntimeException("PDF file not found on filesystem");
+			throw new EntityNotFoundException("PDF file not found on filesystem");
 		}
 
 		return Files.readAllBytes(filePath);
@@ -87,20 +97,21 @@ public class PDFService {
 
 	public PDFDocument getPdfDocument(UUID documentId) {
 		return pdfDocumentRepository.findById(documentId)
-				.orElseThrow(() -> new RuntimeException("PDF document not found"));
+				.orElseThrow(() -> new EntityNotFoundException("PDF document not found"));
 	}
 
+	@Transactional
 	public void updatePdfExtractionResults(UUID documentId, Map<String, Object> extractedFields, String confidenceScore,
 			String extractionQuality) {
 		PDFDocument document = pdfDocumentRepository.findById(documentId)
-				.orElseThrow(() -> new RuntimeException("PDF document not found"));
+				.orElseThrow(() -> new EntityNotFoundException("PDF document not found"));
 
 		// Convert extracted fields to JSON string
 		try {
 			String json = extractedFields != null ? OBJECT_MAPPER.writeValueAsString(extractedFields) : "{}";
 			document.setExtractedFields(json);
 		} catch (Exception e) {
-			throw new RuntimeException("Failed to serialize extracted fields to JSON", e);
+			throw new BadRequestException("Failed to serialize extracted fields to JSON");
 		}
 		document.setConfidenceScore(confidenceScore);
 		document.setExtractionQuality(extractionQuality);
@@ -150,7 +161,7 @@ public class PDFService {
 		 */
 
 		if (activities == null || activities.isEmpty()) {
-			throw new RuntimeException("No activities provided for lesson plan");
+			throw new EntityNotFoundException("No activities provided for lesson plan");
 		}
 
 		try {
@@ -164,7 +175,6 @@ public class PDFService {
 			return mergePdfs(summaryPdf, activityPdfs);
 
 		} catch (Exception e) {
-			e.printStackTrace();
 			logger.error("Error generating lesson plan PDF: {}", e.toString());
 			throw new IOException("Failed to generate lesson plan: " + e.getMessage(), e);
 		}

@@ -16,10 +16,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
@@ -27,7 +27,6 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -39,21 +38,23 @@ import org.springframework.stereotype.Component;
 public class DatabaseSeeder implements CommandLineRunner {
 
 	private static final Logger logger = LoggerFactory.getLogger(DatabaseSeeder.class);
+	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-	@Autowired
-	private UserRepository userRepository;
-
-	@Autowired
-	private ActivityRepository activityRepository;
-
-	@Autowired
-	private PDFDocumentRepository pdfDocumentRepository;
-
-	@Autowired
-	private PasswordEncoder passwordEncoder;
+	private final UserRepository userRepository;
+	private final ActivityRepository activityRepository;
+	private final PDFDocumentRepository pdfDocumentRepository;
+	private final PasswordEncoder passwordEncoder;
 
 	@Value("${pdf.storage.path:/app/data/pdfs}")
 	private String pdfStoragePath;
+
+	public DatabaseSeeder(UserRepository userRepository, ActivityRepository activityRepository,
+			PDFDocumentRepository pdfDocumentRepository, PasswordEncoder passwordEncoder) {
+		this.userRepository = userRepository;
+		this.activityRepository = activityRepository;
+		this.pdfDocumentRepository = pdfDocumentRepository;
+		this.passwordEncoder = passwordEncoder;
+	}
 
 	@Value("${app.initial-admin-email:}")
 	private String initialAdminEmail;
@@ -293,9 +294,8 @@ public class DatabaseSeeder implements CommandLineRunner {
 	private String generateRandomPassword() {
 		String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
 		StringBuilder password = new StringBuilder();
-		Random random = new Random();
 		for (int i = 0; i < 12; i++) {
-			password.append(chars.charAt(random.nextInt(chars.length())));
+			password.append(chars.charAt(SECURE_RANDOM.nextInt(chars.length())));
 		}
 		return password.toString();
 	}

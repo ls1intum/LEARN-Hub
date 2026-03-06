@@ -7,7 +7,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,8 +19,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-	@Autowired
-	private JwtUtil jwtUtil;
+	private static final Logger logger = LoggerFactory.getLogger(JwtRequestFilter.class);
+
+	private final JwtUtil jwtUtil;
+
+	public JwtRequestFilter(JwtUtil jwtUtil) {
+		this.jwtUtil = jwtUtil;
+	}
 
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -35,7 +41,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 			try {
 				username = jwtUtil.extractUsername(jwt);
 			} catch (Exception e) {
-				// Invalid token
+				logger.warn("Invalid JWT token: {}", e.getMessage());
 			}
 		}
 
