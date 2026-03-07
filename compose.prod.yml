@@ -39,7 +39,7 @@ services:
     env_file:
       - .env
     environment:
-      - SQLALCHEMY_DATABASE_URI=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-learn_hub_activities}?user=${POSTGRES_USER:-postgres}&password=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB_URI=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-learn_hub_activities}
       - PDF_PATH=/app/data/pdfs
     volumes:
       - ${PDF_PATH}:/app/data/pdfs
