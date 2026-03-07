@@ -25,7 +25,6 @@ jobs:
         image:
           - ghcr.io/ls1intum/learn-hub/client
           - ghcr.io/ls1intum/learn-hub/spring-server
-          - ghcr.io/ls1intum/learn-hub/postgres
     permissions:
       packages: read
     env:
