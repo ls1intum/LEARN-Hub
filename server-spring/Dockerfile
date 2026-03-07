@@ -35,7 +35,7 @@ EXPOSE 5001
 
 # Health check using curl
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:5001/hello || exit 1
+    CMD curl -f http://localhost:5001/api/hello || exit 1
 
 # Run the application
 ENTRYPOINT ["java", "-jar", "app.jar"]
