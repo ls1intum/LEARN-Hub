@@ -3,7 +3,8 @@ name: Deploy Prebuilt Containers
 on:
   workflow_run:
     workflows:
-      - Build and Push Docker Images
+      - Build and Push Client Docker Image
+      - Build and Push Server Docker Image
     branches:
       - main
     types:
@@ -16,15 +17,23 @@ on:
         required: false
         default: latest
 
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   verify-images:
+    name: Verify ${{ matrix.label }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        image:
-          - ghcr.io/ls1intum/learn-hub/client
-          - ghcr.io/ls1intum/learn-hub/spring-server
+        include:
+          - label: client image
+            image: ghcr.io/ls1intum/learn-hub/client
+          - label: server image
+            image: ghcr.io/ls1intum/learn-hub/spring-server
     permissions:
       packages: read
     env:
