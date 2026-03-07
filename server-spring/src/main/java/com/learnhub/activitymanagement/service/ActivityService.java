@@ -41,9 +41,29 @@ public class ActivityService {
 		return activityRepository.count();
 	}
 
+	public long countActivitiesWithFilters(String name, Integer ageMin, Integer ageMax, Integer durationMin,
+			Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
+			String physicalEnergy, List<String> resourcesNeeded, List<String> topics) {
+		return getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels, mentalLoad,
+				physicalEnergy, resourcesNeeded, topics).size();
+	}
+
 	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
 			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset) {
+		List<Activity> allMatching = getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats,
+				bloomLevels, mentalLoad, physicalEnergy, resourcesNeeded, topics);
+
+		int start = Math.min((offset != null && offset > 0) ? offset : 0, allMatching.size());
+		int pageSize = (limit != null && limit > 0) ? limit : allMatching.size();
+		int end = Math.min(start + pageSize, allMatching.size());
+
+		return allMatching.subList(start, end).stream().map(this::mapToResponse).collect(Collectors.toList());
+	}
+
+	private List<Activity> getFilteredActivities(String name, Integer ageMin, Integer ageMax, Integer durationMin,
+			Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
+			String physicalEnergy, List<String> resourcesNeeded, List<String> topics) {
 
 		Specification<Activity> spec = Specification.where(null);
 
@@ -105,12 +125,7 @@ public class ActivityService {
 					.filter(t -> t != null).map(String::toLowerCase).anyMatch(topicsLower::contains))
 					.collect(Collectors.toList());
 		}
-
-		int start = Math.min((offset != null && offset > 0) ? offset : 0, allMatching.size());
-		int pageSize = (limit != null && limit > 0) ? limit : allMatching.size();
-		int end = Math.min(start + pageSize, allMatching.size());
-
-		return allMatching.subList(start, end).stream().map(this::mapToResponse).collect(Collectors.toList());
+		return allMatching;
 	}
 
 	private EnergyLevel convertStringToEnergyLevel(String value) {

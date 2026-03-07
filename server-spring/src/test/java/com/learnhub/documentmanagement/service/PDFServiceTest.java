@@ -179,9 +179,15 @@ class PDFServiceTest {
 		// Finalize both — JPA generates distinct document IDs
 		UUID genId1 = UUID.randomUUID();
 		UUID genId2 = UUID.randomUUID();
-		when(pdfDocumentRepository.save(any(PDFDocument.class)))
-				.thenAnswer(inv -> { PDFDocument d = inv.getArgument(0); d.setId(genId1); return d; })
-				.thenAnswer(inv -> { PDFDocument d = inv.getArgument(0); d.setId(genId2); return d; });
+		when(pdfDocumentRepository.save(any(PDFDocument.class))).thenAnswer(inv -> {
+			PDFDocument d = inv.getArgument(0);
+			d.setId(genId1);
+			return d;
+		}).thenAnswer(inv -> {
+			PDFDocument d = inv.getArgument(0);
+			d.setId(genId2);
+			return d;
+		});
 		UUID docId1 = pdfService.finalizePdf(key1);
 		UUID docId2 = pdfService.finalizePdf(key2);
 
@@ -191,8 +197,7 @@ class PDFServiceTest {
 		long fileCount = Files.list(tempDir).count();
 		assertThat(fileCount).isEqualTo(2);
 		// All files end with _activity.pdf
-		Files.list(tempDir).forEach(path ->
-				assertThat(path.getFileName().toString()).endsWith("_activity.pdf"));
+		Files.list(tempDir).forEach(path -> assertThat(path.getFileName().toString()).endsWith("_activity.pdf"));
 	}
 
 	@Test

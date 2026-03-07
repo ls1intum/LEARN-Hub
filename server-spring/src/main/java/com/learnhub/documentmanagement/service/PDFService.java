@@ -205,7 +205,8 @@ public class PDFService {
 	}
 
 	/**
-	 * Periodically evict expired cache entries (older than {@link #CACHE_TTL_MINUTES}).
+	 * Periodically evict expired cache entries (older than
+	 * {@link #CACHE_TTL_MINUTES}).
 	 */
 	@Scheduled(fixedRate = 300_000) // every 5 minutes
 	public void evictExpiredCacheEntries() {
@@ -219,11 +220,10 @@ public class PDFService {
 	}
 
 	private void evictOldestCacheEntry() {
-		pdfCache.entrySet().stream().min(Comparator.comparing(e -> e.getValue().uploadedAt))
-				.ifPresent(oldest -> {
-					pdfCache.remove(oldest.getKey());
-					logger.info("Evicted oldest PDF cache entry key={} to stay under max size", oldest.getKey());
-				});
+		pdfCache.entrySet().stream().min(Comparator.comparing(e -> e.getValue().uploadedAt)).ifPresent(oldest -> {
+			pdfCache.remove(oldest.getKey());
+			logger.info("Evicted oldest PDF cache entry key={} to stay under max size", oldest.getKey());
+		});
 	}
 
 	/**

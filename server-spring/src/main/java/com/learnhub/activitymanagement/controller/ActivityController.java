@@ -63,7 +63,11 @@ public class ActivityController {
 					request.bloomLevel(), request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(),
 					request.topics(), request.limit(), request.offset());
 			Map<String, Object> response = new HashMap<>();
-			response.put("total", activityService.countAllActivities());
+			response.put("total",
+					activityService.countActivitiesWithFilters(request.name(), request.ageMin(), request.ageMax(),
+							request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
+							request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(),
+							request.topics()));
 			response.put("activities", activities);
 			response.put("limit", request.limit());
 			response.put("offset", request.offset());
