@@ -3,8 +3,7 @@ name: Deploy Prebuilt Containers
 on:
   workflow_run:
     workflows:
-      - Build and Push Client Docker Image
-      - Build and Push Server Docker Image
+      - Build and Push Docker Images
     branches:
       - main
     types:

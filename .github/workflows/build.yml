@@ -1,0 +1,69 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "client/**"
+      - "server-spring/**"
+      - ".github/workflows/build.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: build-images-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      client: ${{ steps.filter.outputs.client }}
+      server: ${{ steps.filter.outputs.server }}
+    steps:
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            client:
+              - "client/**"
+              - ".github/workflows/build.yml"
+            server:
+              - "server-spring/**"
+              - ".github/workflows/build.yml"
+
+  build-client:
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.client == 'true' }}
+    permissions:
+      contents: read
+      packages: write
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@main
+    with:
+      image-name: ls1intum/learn-hub/client
+      docker-file: client/Dockerfile
+      docker-context: ./client
+      tags: |
+        type=sha,format=short,prefix=main-
+        latest
+    secrets: inherit
+
+  build-server:
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.server == 'true' }}
+    permissions:
+      contents: read
+      packages: write
+    uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@main
+    with:
+      image-name: ls1intum/learn-hub/spring-server
+      docker-file: server-spring/Dockerfile
+      docker-context: ./server-spring
+      tags: |
+        type=sha,format=short,prefix=main-
+        latest
+    secrets: inherit
