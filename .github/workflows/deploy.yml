@@ -20,6 +20,9 @@ concurrency:
   group: deploy-production
   cancel-in-progress: false
 
+env:
+  DEPLOYMENT_BASE_PATH: ${{ vars.DEPLOYMENT_BASE_PATH }}
+
 jobs:
   verify-images:
     name: Verify ${{ matrix.label }}
@@ -67,5 +70,5 @@ jobs:
       docker-compose-file: ./docker/compose.prod.yml
       main-image-name: ls1intum/learn-hub/spring-server
       image-tag: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.image-tag || 'latest' }}
-      deployment-base-path: /home/ge85han/LEARN-Hub-Deployment
+      deployment-base-path: ${{ env.DEPLOYMENT_BASE_PATH }}
     secrets: inherit
