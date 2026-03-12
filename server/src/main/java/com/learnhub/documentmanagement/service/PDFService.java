@@ -284,7 +284,7 @@ public class PDFService {
 		/**
 		 * Generate a complete lesson plan PDF matching Flask implementation: 1.
 		 * Generate summary/cover page with search criteria, activities list, breaks 2.
-		 * Get activity PDFs based on document_id (or fallback to ID 999) 3. Merge
+		 * Get activity PDFs based on activity_documents table 3. Merge
 		 * summary page + activity PDFs using PDFBox
 		 */
 
@@ -334,10 +334,14 @@ public class PDFService {
 
 				byte[] pdfContent = null;
 
-				// Try to get PDF via document_id
-				if (activity.getDocumentId() != null) {
+				// Try to get PDF via the first SOURCE_PDF document
+				UUID docId = activity.getDocuments().stream()
+						.filter(d -> d.getType() == com.learnhub.activitymanagement.entity.enums.DocumentType.SOURCE_PDF)
+						.findFirst().map(com.learnhub.activitymanagement.entity.ActivityDocument::getDocumentId)
+						.orElse(null);
+				if (docId != null) {
 					try {
-						pdfContent = getPdfContent(activity.getDocumentId());
+						pdfContent = getPdfContent(docId);
 					} catch (Exception e) {
 						// PDF not available for this activity
 					}

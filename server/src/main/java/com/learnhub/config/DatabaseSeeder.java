@@ -1,8 +1,10 @@
 package com.learnhub.config;
 
 import com.learnhub.activitymanagement.entity.Activity;
+import com.learnhub.activitymanagement.entity.ActivityDocument;
 import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
+import com.learnhub.activitymanagement.entity.enums.DocumentType;
 import com.learnhub.activitymanagement.entity.enums.EnergyLevel;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
@@ -157,8 +159,14 @@ public class DatabaseSeeder implements CommandLineRunner {
 					String topicsStr = record.get("topics");
 					activity.setTopics(parseDelimitedList(topicsStr));
 
-					activity.setDocumentId(pdfDocument.getId());
 					activity.setCreatedAt(LocalDateTime.now());
+
+					ActivityDocument actDoc = new ActivityDocument();
+					actDoc.setActivity(activity);
+					actDoc.setDocumentId(pdfDocument.getId());
+					actDoc.setType(DocumentType.SOURCE_PDF);
+					actDoc.setCreatedAt(LocalDateTime.now());
+					activity.getDocuments().add(actDoc);
 
 					activityRepository.save(activity);
 					count++;
@@ -251,8 +259,15 @@ public class DatabaseSeeder implements CommandLineRunner {
 		activity.setCleanupTimeMinutes(5);
 		activity.setResourcesNeeded(resources);
 		activity.setTopics(topics);
-		activity.setDocumentId(documentId);
 		activity.setCreatedAt(LocalDateTime.now());
+
+		ActivityDocument actDoc = new ActivityDocument();
+		actDoc.setActivity(activity);
+		actDoc.setDocumentId(documentId);
+		actDoc.setType(DocumentType.SOURCE_PDF);
+		actDoc.setCreatedAt(LocalDateTime.now());
+		activity.getDocuments().add(actDoc);
+
 		return activity;
 	}
 
