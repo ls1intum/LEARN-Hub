@@ -9,7 +9,7 @@ import { BadgeSelector } from "@/components/ui/BadgeSelector";
 import { useFieldValues } from "@/hooks/useFieldValues";
 import type { FormFieldData } from "@/types/api";
 
-interface ActivityFormData extends FormFieldData {
+export interface ActivityFormData extends FormFieldData {
   name: string;
   description: string;
   source: string;
