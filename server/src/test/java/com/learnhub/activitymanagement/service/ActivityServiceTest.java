@@ -56,6 +56,7 @@ class ActivityServiceTest {
 		UUID docId = UUID.randomUUID();
 		PDFDocument doc = createTestDocument(docId);
 		when(pdfDocumentRepository.findById(docId)).thenReturn(Optional.of(doc));
+		when(pdfDocumentRepository.save(any(PDFDocument.class))).thenAnswer(inv -> inv.getArgument(0));
 
 		Map<String, Object> data = new HashMap<>();
 		data.put("name", "Test Activity");
@@ -237,6 +238,7 @@ class ActivityServiceTest {
 
 		when(pdfService.finalizePdf(cacheKey)).thenReturn(finalizedDocId);
 		when(pdfDocumentRepository.findById(finalizedDocId)).thenReturn(Optional.of(finalizedDoc));
+		when(pdfDocumentRepository.save(any(PDFDocument.class))).thenAnswer(inv -> inv.getArgument(0));
 		when(activityRepository.save(any(Activity.class))).thenAnswer(inv -> {
 			Activity a = inv.getArgument(0);
 			a.setId(UUID.randomUUID());

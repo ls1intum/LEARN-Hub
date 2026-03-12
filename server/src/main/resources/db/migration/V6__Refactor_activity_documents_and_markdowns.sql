@@ -5,7 +5,8 @@
 ALTER TABLE pdf_documents ADD COLUMN activity_id UUID;
 ALTER TABLE pdf_documents ADD COLUMN type VARCHAR(50);
 
--- Migrate data: set activity_id and type from the old activities.document_id FK
+-- Migrate data: set activity_id and type from the old activities.document_id FK.
+-- Note: assumes each document belongs to at most one activity (1:1 in practice).
 UPDATE pdf_documents SET activity_id = a.id, type = 'SOURCE_PDF'
 FROM activities a WHERE a.document_id = pdf_documents.id;
 

@@ -281,6 +281,7 @@ public class ActivityService {
 				PDFDocument doc = pdfDocumentRepository.findById(docId).orElse(null);
 				if (doc != null) {
 					doc.setType(DocumentType.SOURCE_PDF);
+					pdfDocumentRepository.save(doc);
 					activity.getDocuments().add(doc);
 				}
 			} catch (IllegalArgumentException e) {

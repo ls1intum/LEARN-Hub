@@ -86,6 +86,8 @@ public class Activity {
 	@Column(columnDefinition = "jsonb")
 	private List<String> topics;
 
+	// Documents relationship: FK and ON DELETE CASCADE managed at DB level.
+	// PDFDocument lifecycle is independent (created by PDFService before Activity exists).
 	@OneToMany
 	@JoinColumn(name = "activity_id")
 	@ToString.Exclude
