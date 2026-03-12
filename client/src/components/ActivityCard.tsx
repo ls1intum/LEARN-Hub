@@ -38,11 +38,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 
   const handleViewDetails = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (
-      activity.id &&
-      activity.type === "activity" &&
-      typeof activity.id === "number"
-    ) {
+    if (activity.id && activity.type === "activity") {
       navigate(`/activity-details/${activity.id}`, {
         state: { activity },
       });

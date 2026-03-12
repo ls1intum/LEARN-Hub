@@ -668,4 +668,29 @@ public class PDFService {
 			return "low";
 		}
 	}
+
+	/**
+	 * Extract text from a cached or persisted PDF identified by its ID/cache key.
+	 */
+	public String extractTextFromPdf(UUID documentIdOrCacheKey) {
+		try {
+			byte[] pdfContent;
+
+			// First try the in-memory cache
+			CachedPdf cached = pdfCache.get(documentIdOrCacheKey);
+			if (cached != null) {
+				pdfContent = cached.content;
+			} else {
+				// Fall back to persisted PDF
+				pdfContent = getPdfContent(documentIdOrCacheKey);
+			}
+			try (PDDocument document = Loader.loadPDF(pdfContent)) {
+			org.apache.pdfbox.text.PDFTextStripper stripper = new org.apache.pdfbox.text.PDFTextStripper();
+			return stripper.getText(document);
+			}
+		} catch (Exception e) {
+			logger.error("Failed to extract text from PDF {}: {}", documentIdOrCacheKey, e.getMessage());
+			throw new RuntimeException("Failed to extract text from PDF: " + e.getMessage(), e);
+		}
+	}
 }

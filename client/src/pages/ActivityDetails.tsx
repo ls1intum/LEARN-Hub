@@ -5,9 +5,10 @@ import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { useDataFetch } from "@/hooks/useDataFetch";
 import { useApi } from "@/hooks/useApi";
-import { Brain, Activity as ActivityIcon, FileText } from "lucide-react";
+import { Brain, Activity as ActivityIcon, FileText, BookOpen, Edit3 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
+import { useAuth } from "@/hooks/useAuth";
 import type { Activity } from "@/types/activity";
 
 // Note: PDFInfo interface is defined but not currently used in the refactored version
@@ -17,6 +18,8 @@ export const ActivityDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "ADMIN";
 
   // Get activity data from navigation state or fetch from API
   const stateActivity = location.state?.activity as Activity | undefined;
@@ -24,6 +27,7 @@ export const ActivityDetails: React.FC = () => {
 
   // API hooks for data fetching
   const downloadApi = useApi();
+  const artikulationsschemaApi = useApi();
 
   // Data fetching for activity details
   const fetchActivity = useCallback(async () => {
@@ -31,7 +35,7 @@ export const ActivityDetails: React.FC = () => {
       return stateActivity;
     }
     if (id) {
-      const fetchedActivity = await apiService.getActivity(parseInt(id));
+      const fetchedActivity = await apiService.getActivity(id);
       if (!fetchedActivity) {
         throw new Error("Activity not found");
       }
@@ -82,7 +86,7 @@ export const ActivityDetails: React.FC = () => {
     if (!activity?.id) return;
 
     await downloadApi.call(async () => {
-      const blob = await apiService.getActivityPdf(activity.id as number);
+      const blob = await apiService.getActivityPdf(activity.id);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -91,6 +95,16 @@ export const ActivityDetails: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
+    });
+  };
+
+  const handleViewArtikulationsschema = async () => {
+    if (!activity?.id) return;
+
+    await artikulationsschemaApi.call(async () => {
+      const blob = await apiService.getArtikulationsschemaPdf(activity.id);
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, "_blank");
     });
   };
 
@@ -163,6 +177,16 @@ export const ActivityDetails: React.FC = () => {
           </div>
           <div className="flex gap-2 sm:gap-4">
             <FavouriteButton activityId={activity.id} size="default" />
+            {isAdmin && (
+              <Button
+                onClick={() => navigate(`/activity-edit/${activity.id}`)}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Edit3 className="h-4 w-4" />
+                Edit
+              </Button>
+            )}
             <Button
               onClick={handleDownloadPDF}
               disabled={downloadApi.isLoading}
@@ -171,6 +195,18 @@ export const ActivityDetails: React.FC = () => {
               <FileText className="h-4 w-4" />
               {downloadApi.isLoading ? "Loading..." : "View PDF"}
             </Button>
+            {activity.artikulationsschema_markdown && (
+              <Button
+                onClick={handleViewArtikulationsschema}
+                disabled={artikulationsschemaApi.isLoading}
+                className="bg-blue-500 hover:bg-blue-700 flex items-center gap-2"
+              >
+                <BookOpen className="h-4 w-4" />
+                {artikulationsschemaApi.isLoading
+                  ? "Loading..."
+                  : "View Artikulationsschema"}
+              </Button>
+            )}
             <Button onClick={handleBack} variant="outline">
               {fromBrowser ? "Back to Library" : "Back to Form"}
             </Button>

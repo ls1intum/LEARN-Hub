@@ -15,7 +15,8 @@ import { ActivityDetails } from "@/pages/ActivityDetails";
 import { UserManagementPage } from "@/pages/UserManagementPage";
 import { SearchHistoryPage } from "@/pages/SearchHistoryPage";
 import { FavouritesPage } from "@/pages/FavouritesPage";
-import { UploadTab } from "@/components/UploadTab";
+import { ActivitySetupPage } from "@/pages/ActivitySetupPage";
+import { ActivityEditPage } from "@/pages/ActivityEditPage";
 import { AccountDashboardPage } from "@/pages/AccountDashboardPage";
 
 // Simple wrapper for protected routes with layout
@@ -95,7 +96,15 @@ function App() {
                   path="/upload"
                   element={
                     <ProtectedLayout requiredRole="ADMIN">
-                      <UploadTab />
+                      <ActivitySetupPage />
+                    </ProtectedLayout>
+                  }
+                />
+                <Route
+                  path="/activity-edit/:id"
+                  element={
+                    <ProtectedLayout requiredRole="ADMIN">
+                      <ActivityEditPage />
                     </ProtectedLayout>
                   }
                 />

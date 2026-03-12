@@ -8,10 +8,10 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Activity } from "@/types/activity";
 
 interface LessonPlanFavourite {
-  id: number;
+  id: string;
   favourite_type: string;
   name: string | null;
-  activity_ids: number[];
+  activity_ids: string[];
   lesson_plan?: import("@/types/activity").LessonPlanData;
   created_at: string;
 }
@@ -19,12 +19,12 @@ interface LessonPlanFavourite {
 export const LessonPlanFavouritesTab: React.FC = () => {
   const { user } = useAuth();
   const [favourites, setFavourites] = useState<LessonPlanFavourite[]>([]);
-  const [activitiesMap, setActivitiesMap] = useState<Map<number, Activity>>(
+  const [activitiesMap, setActivitiesMap] = useState<Map<string, Activity>>(
     new Map(),
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [removingIds, setRemovingIds] = useState<Set<number>>(new Set());
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
 
   const loadFavourites = useCallback(async () => {
     if (!user) return;
@@ -55,7 +55,7 @@ export const LessonPlanFavouritesTab: React.FC = () => {
     }
   }, [user]);
 
-  const removeFavourite = async (favouriteId: number) => {
+  const removeFavourite = async (favouriteId: string) => {
     if (!user) return;
 
     try {

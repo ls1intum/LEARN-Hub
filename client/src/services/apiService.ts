@@ -10,9 +10,10 @@ import type {
   FieldValues,
 } from "@/types/activity";
 import type {
-  PdfProcessingResponse,
-  UploadCreateResponse,
+  UploadPdfDraftResponse,
+  ArtikulationsschemaResponse,
   CreateActivityRequest,
+  UpdateActivityRequest,
   UserRequest,
   FavoriteActivityRequest,
   FavoriteLessonPlanRequest,
@@ -97,14 +98,14 @@ export class ApiService {
   /**
    * Get activity by ID
    */
-  static async getActivity(id: number) {
+  static async getActivity(id: string) {
     return this.request<Activity>(`/api/activities/${id}`);
   }
 
   /**
    * Get multiple activities by IDs
    */
-  static async getActivitiesByIds(ids: number[]) {
+  static async getActivitiesByIds(ids: string[]) {
     const promises = ids.map((id) => this.getActivity(id));
     const results = await Promise.all(promises);
     return results;
@@ -180,7 +181,7 @@ export class ApiService {
   /**
    * Remove activity favourite
    */
-  static async removeActivityFavourite(activityId: number) {
+  static async removeActivityFavourite(activityId: string) {
     return this.request(`/api/history/favourites/activities/${activityId}`, {
       method: "DELETE",
     });
@@ -189,7 +190,7 @@ export class ApiService {
   /**
    * Delete favourite (by favourite ID)
    */
-  static async deleteFavourite(favouriteId: number) {
+  static async deleteFavourite(favouriteId: string) {
     return this.request(`/api/history/favourites/${favouriteId}`, {
       method: "DELETE",
     });
@@ -198,7 +199,7 @@ export class ApiService {
   /**
    * Check if activity is favourited
    */
-  static async checkActivityFavouriteStatus(activityId: number) {
+  static async checkActivityFavouriteStatus(activityId: string) {
     return this.request<FavoriteStatusResponse>(
       `/api/history/favourites/activities/${activityId}/status`,
     );
@@ -272,41 +273,6 @@ export class ApiService {
   }
 
   /**
-   * Upload PDF
-   */
-  static async uploadPdf(file: File) {
-    const formData = new FormData();
-    formData.append("pdf_file", file);
-
-    return this.request("/api/documents/upload_pdf", {
-      method: "POST",
-      body: formData,
-    });
-  }
-
-  /**
-   * Get PDF info
-   */
-  static async getPdfInfo(documentId: number) {
-    return this.request(`/api/documents/${documentId}/info`);
-  }
-
-  /**
-   * Download PDF
-   */
-  static async downloadPdf(documentId: number) {
-    const response = await authService.makeAuthenticatedRequest(
-      `/api/documents/${documentId}`,
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.blob();
-  }
-
-  /**
    * Create activity
    */
   static async createActivity(data: CreateActivityRequest) {
@@ -320,9 +286,20 @@ export class ApiService {
   /**
    * Delete activity (admin only)
    */
-  static async deleteActivity(activityId: number) {
+  static async deleteActivity(activityId: string) {
     return this.request(`/api/activities/${activityId}`, {
       method: "DELETE",
+    });
+  }
+
+  /**
+   * Update activity (admin only)
+   */
+  static async updateActivity(activityId: string, data: UpdateActivityRequest) {
+    return this.request<Activity>(`/api/activities/${activityId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
     });
   }
 
@@ -363,7 +340,7 @@ export class ApiService {
   /**
    * Get PDF by activity ID
    */
-  static async getActivityPdf(activityId: number) {
+  static async getActivityPdf(activityId: string) {
     const response = await authService.makeAuthenticatedRequest(
       `/api/activities/${activityId}/pdf`,
     );
@@ -376,11 +353,11 @@ export class ApiService {
   }
 
   /**
-   * Get PDF by document ID
+   * Get Artikulationsschema PDF by activity ID
    */
-  static async getDocumentPdf(documentId: number) {
+  static async getArtikulationsschemaPdf(activityId: string) {
     const response = await authService.makeAuthenticatedRequest(
-      `/api/documents/${documentId}`,
+      `/api/activities/${activityId}/artikulationsschema-pdf`,
     );
 
     if (!response.ok) {
@@ -393,36 +370,8 @@ export class ApiService {
   /**
    * Get PDF document info by document ID
    */
-  static async getDocumentInfo(documentId: number) {
+  static async getDocumentInfo(documentId: string) {
     return this.request<Document>(`/api/documents/${documentId}/info`);
-  }
-
-  /**
-   * Process PDF document and extract activity data
-   */
-  static async processPdf(documentId: number) {
-    return this.request<PdfProcessingResponse>(
-      `/api/documents/${documentId}/process`,
-      {
-        method: "POST",
-      },
-    );
-  }
-
-  /**
-   * Upload PDF and create activity in one step
-   */
-  static async uploadAndCreateActivity(file: File) {
-    const formData = new FormData();
-    formData.append("pdf_file", file);
-
-    return this.request<UploadCreateResponse>(
-      "/api/activities/upload-and-create",
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
   }
 
   /**
@@ -446,6 +395,62 @@ export class ApiService {
     return this.request<ScoringInsightsResponse>(
       "/api/activities/scoring-insights",
     );
+  }
+
+  /**
+   * Upload PDF for the 2-step activity creation flow.
+   * Caches the PDF and extracts metadata without creating an activity.
+   */
+  static async uploadPdfDraft(file: File) {
+    const formData = new FormData();
+    formData.append("pdf_file", file);
+
+    return this.request<UploadPdfDraftResponse>(
+      "/api/activities/upload-pdf-draft",
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
+  }
+
+  /**
+   * Generate Artikulationsschema markdown from an uploaded PDF.
+   */
+  static async generateArtikulationsschema(documentId: string) {
+    return this.request<ArtikulationsschemaResponse>(
+      "/api/activities/generate-artikulationsschema",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ document_id: documentId }),
+      },
+    );
+  }
+
+  /**
+   * Render Artikulationsschema markdown to a preview PDF.
+   * Returns a Blob containing the PDF bytes.
+   */
+  static async previewArtikulationsschemaPdf(markdown: string) {
+    const response = await authService.makeAuthenticatedRequest(
+      "/api/activities/preview-artikulationsschema-pdf",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markdown }),
+      },
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        (errorData as Record<string, string>).error ||
+          `HTTP error! status: ${response.status}`,
+      );
+    }
+
+    return response.blob();
   }
 }
 

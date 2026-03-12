@@ -32,21 +32,18 @@ export interface FormFieldData {
   [key: string]: string | number | boolean | string[] | null | undefined;
 }
 
-// PDF processing response
-export interface PdfProcessingResponse {
-  document_id: number;
+// Upload PDF draft response (2-step flow)
+export interface UploadPdfDraftResponse {
+  document_id: string;
   extracted_data: FormFieldData;
-  confidence: number;
-  text_length: number;
+  extraction_confidence: number;
   extraction_quality: string;
 }
 
-// Upload and create activity response
-export interface UploadCreateResponse {
-  activity: FormFieldData;
-  document_id: number;
-  extraction_confidence: number;
-  extraction_quality: string;
+// Artikulationsschema generation response
+export interface ArtikulationsschemaResponse {
+  markdown: string;
+  document_id: string;
 }
 
 // Activity creation request
@@ -66,7 +63,28 @@ export interface CreateActivityRequest {
   mental_load?: string;
   physical_energy?: string;
   topics: string[];
-  document_id?: number;
+  document_id?: number | string;
+  artikulationsschema_markdown?: string;
+}
+
+// Activity update request
+export interface UpdateActivityRequest {
+  name: string;
+  description: string;
+  source?: string;
+  age_min: number;
+  age_max: number;
+  format: string;
+  resources_needed: string[];
+  bloom_level: string;
+  duration_min_minutes: number;
+  duration_max_minutes?: number;
+  prep_time_minutes?: number;
+  cleanup_time_minutes?: number;
+  mental_load?: string;
+  physical_energy?: string;
+  topics: string[];
+  artikulationsschema_markdown?: string;
 }
 
 // User creation/update request
@@ -88,13 +106,13 @@ export interface UpdateProfileRequest {
 
 // Favorite activity request
 export interface FavoriteActivityRequest {
-  activity_id: number;
+  activity_id: string;
   name?: string;
 }
 
 // Favorite lesson plan request
 export interface FavoriteLessonPlanRequest {
-  activity_ids: number[];
+  activity_ids: string[];
   name?: string;
   lesson_plan: import("./activity").LessonPlanData;
 }
@@ -102,7 +120,7 @@ export interface FavoriteLessonPlanRequest {
 // Lesson plan generation request
 export interface LessonPlanRequest {
   activities: Array<{
-    id: number;
+    id: string;
     name: string;
     description: string;
     source?: string;
@@ -118,7 +136,7 @@ export interface LessonPlanRequest {
     mental_load?: string;
     physical_energy?: string;
     topics: string[];
-    document_id?: number;
+    document_id?: string;
     created_at?: string;
     type: "activity";
   }>;
@@ -154,9 +172,9 @@ export interface SearchCriteria {
 // Activity favorites response
 export interface ActivityFavoritesResponse {
   favourites: Array<{
-    id: number;
+    id: string;
     favourite_type: string;
-    activity_id: number;
+    activity_id: string;
     name: string | null;
     created_at: string;
   }>;
@@ -170,10 +188,10 @@ export interface ActivityFavoritesResponse {
 // Lesson plan favorites response
 export interface LessonPlanFavoritesResponse {
   favourites: Array<{
-    id: number;
+    id: string;
     favourite_type: string;
     name: string | null;
-    activity_ids: number[];
+    activity_ids: string[];
     lesson_plan?: import("./activity").LessonPlanData;
     created_at: string;
   }>;

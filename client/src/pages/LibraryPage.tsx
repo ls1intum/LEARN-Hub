@@ -69,7 +69,7 @@ export const LibraryPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [favouritedActivityIds, setFavouritedActivityIds] = useState<
-    Set<number>
+    Set<string>
   >(new Set());
 
   const itemsPerPage = ACTIVITY_CONSTANTS.ITEMS_PER_PAGE;

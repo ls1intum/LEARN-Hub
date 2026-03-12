@@ -17,10 +17,10 @@ import type { Activity } from "@/types/activity";
 import { BreakCard } from "@/components/BreakCard";
 
 interface LessonPlanFavourite {
-  id: number;
+  id: string;
   favourite_type: string;
   name: string | null;
-  activity_ids: number[];
+  activity_ids: string[];
   lesson_plan?: import("@/types/activity").LessonPlanData;
   created_at: string;
 }
@@ -28,7 +28,7 @@ interface LessonPlanFavourite {
 interface LessonPlanCardProps {
   favourite: LessonPlanFavourite;
   activities: Activity[];
-  onRemove: (favouriteId: number) => void;
+  onRemove: (favouriteId: string) => void;
   isRemoving: boolean;
 }
 
@@ -57,11 +57,7 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
   const maxAge = Math.max(...activities.map((activity) => activity.age_max));
 
   const handleViewActivityDetails = (activity: Activity) => {
-    if (
-      activity.id &&
-      activity.type === "activity" &&
-      typeof activity.id === "number"
-    ) {
+    if (activity.id && activity.type === "activity") {
       navigate(`/activity-details/${activity.id}`, {
         state: { activity, fromBrowser: true },
       });

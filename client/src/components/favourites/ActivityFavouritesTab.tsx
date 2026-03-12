@@ -11,9 +11,9 @@ import { useAuth } from "@/hooks/useAuth";
 import type { Activity } from "@/types/activity";
 
 interface ActivityFavourite {
-  id: number;
+  id: string;
   favourite_type: string;
-  activity_id: number;
+  activity_id: string;
   name: string | null;
   created_at: string;
 }
@@ -25,7 +25,7 @@ export const ActivityFavouritesTab: React.FC = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [removingIds, setRemovingIds] = useState<Set<number>>(new Set());
+  const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
 
   const loadFavourites = useCallback(async () => {
     if (!user) return;
@@ -53,7 +53,7 @@ export const ActivityFavouritesTab: React.FC = () => {
     }
   }, [user]);
 
-  const removeFavourite = async (activityId: number) => {
+  const removeFavourite = async (activityId: string) => {
     if (!user) return;
 
     try {
