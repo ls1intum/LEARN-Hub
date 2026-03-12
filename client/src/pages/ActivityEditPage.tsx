@@ -17,8 +17,6 @@ import {
 import {
   FileText,
   Loader2,
-  ArrowLeft,
-  ArrowRight,
   Save,
   Eye,
   Edit3,
@@ -287,6 +285,30 @@ export const ActivityEditPage: React.FC = () => {
         <StepIndicator
           steps={steps}
           currentStepIndex={currentStepIndex}
+          onBack={
+            currentStep === "metadata"
+              ? () => navigate(`/activity-details/${id}`)
+              : currentStep === "artikulationsschema"
+                ? () => setCurrentStep("metadata")
+                : undefined
+          }
+          onForward={
+            currentStep === "metadata"
+              ? {
+                  label: "Next: Artikulationsschema",
+                  formId: "activity-edit-form",
+                }
+              : currentStep === "artikulationsschema"
+                ? {
+                    label: "Save Changes",
+                    onClick: handleSave,
+                    icon: <Save className="h-4 w-4" />,
+                    disabled: isSaving,
+                    loading: isSaving,
+                    loadingLabel: "Saving...",
+                  }
+                : undefined
+          }
         />
       </div>
 
@@ -331,9 +353,8 @@ export const ActivityEditPage: React.FC = () => {
                 onSubmit={handleMetadataNext}
                 onCancel={() => navigate(`/activity-details/${id}`)}
                 isLoading={false}
-                submitLabel="Next: Artikulationsschema"
-                cancelLabel="Cancel"
-                submitIcon={<ArrowRight className="h-4 w-4 ml-1.5" />}
+                hideButtons
+                formId="activity-edit-form"
               />
             </CardContent>
           </Card>
@@ -343,30 +364,6 @@ export const ActivityEditPage: React.FC = () => {
       {/* Step: Artikulationsschema */}
       {currentStep === "artikulationsschema" && (
         <div className="space-y-4">
-          {/* Back / Save header */}
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentStep("metadata")}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Metadata
-            </Button>
-            <Button onClick={handleSave} disabled={isSaving} className="gap-2">
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </div>
 
           {saveError && (
             <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">

@@ -21,7 +21,6 @@ import {
   FileText,
   AlertCircle,
   Loader2,
-  ArrowLeft,
   ArrowRight,
   Save,
   Eye,
@@ -302,6 +301,30 @@ export const ActivitySetupPage: React.FC = () => {
         <StepIndicator
           steps={steps}
           currentStepIndex={currentStepIndex}
+          onBack={
+            currentStep === "metadata"
+              ? () => setCurrentStep("upload")
+              : currentStep === "artikulationsschema"
+                ? () => setCurrentStep("metadata")
+                : undefined
+          }
+          onForward={
+            currentStep === "metadata"
+              ? {
+                  label: "Next: Artikulationsschema",
+                  formId: "activity-setup-form",
+                }
+              : currentStep === "artikulationsschema"
+                ? {
+                    label: "Save Activity",
+                    onClick: handleSave,
+                    icon: <Save className="h-4 w-4" />,
+                    disabled: isSaving,
+                    loading: isSaving,
+                    loadingLabel: "Saving...",
+                  }
+                : undefined
+          }
         />
       </div>
 
@@ -436,10 +459,8 @@ export const ActivitySetupPage: React.FC = () => {
                 onSubmit={handleMetadataNext}
                 onCancel={() => setCurrentStep("upload")}
                 isLoading={false}
-                submitLabel="Next: Artikulationsschema"
-                cancelLabel="Back"
-                cancelIcon={<ArrowLeft className="h-4 w-4 mr-1.5" />}
-                submitIcon={<ArrowRight className="h-4 w-4 ml-1.5" />}
+                hideButtons
+                formId="activity-setup-form"
               />
             </CardContent>
           </Card>
@@ -449,31 +470,6 @@ export const ActivitySetupPage: React.FC = () => {
       {/* Step: Artikulationsschema */}
       {currentStep === "artikulationsschema" && (
         <div className="space-y-4">
-          {/* Back / Save header */}
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentStep("metadata")}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Metadata
-            </Button>
-            <Button onClick={handleSave} disabled={isSaving} className="gap-2">
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Save Activity
-                </>
-              )}
-            </Button>
-          </div>
-
           {isGeneratingSchema ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">

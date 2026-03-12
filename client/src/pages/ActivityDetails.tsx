@@ -11,6 +11,7 @@ import {
   FileText,
   BookOpen,
   Edit3,
+  ArrowLeft,
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
@@ -174,10 +175,21 @@ export const ActivityDetails: React.FC = () => {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
-              Activity Details
-            </h2>
-            <p className="text-sm sm:text-base text-muted-foreground">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleBack}
+                aria-label={fromBrowser ? "Back to Library" : "Back to Form"}
+                className="h-9 w-9 flex-shrink-0"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                Activity Details
+              </h2>
+            </div>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1.5 ml-12">
               Detailed information about this educational activity.
             </p>
           </div>
@@ -213,9 +225,6 @@ export const ActivityDetails: React.FC = () => {
                   : "View Artikulationsschema"}
               </Button>
             )}
-            <Button onClick={handleBack} variant="outline">
-              {fromBrowser ? "Back to Library" : "Back to Form"}
-            </Button>
           </div>
         </div>
       </div>

@@ -160,15 +160,32 @@ export const RecommendationsPage: React.FC = () => {
     if (searchParams.toString()) setSearchParams({});
   };
 
+  const showResults = !!(results || (isLoading && !!searchParams.toString()));
+
   return (
     <div className="py-6">
       <div className="space-y-8">
         <div className="flex items-start gap-4 sm:gap-6">
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
-              Activity Recommendations
-            </h1>
-            <p className="text-muted-foreground text-sm sm:text-base">
+            <div className="flex items-center gap-3">
+              {showResults && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleBackToForm}
+                  aria-label="Back to form"
+                  className="h-9 w-9 flex-shrink-0"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              )}
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                Activity Recommendations
+              </h1>
+            </div>
+            <p
+              className={`text-muted-foreground mt-1.5 text-sm sm:text-base${showResults ? " ml-12" : ""}`}
+            >
               Get personalized activity recommendations for your teaching needs
             </p>
           </div>
@@ -176,14 +193,8 @@ export const RecommendationsPage: React.FC = () => {
 
         <ErrorDisplay error={error} onRetry={refetch} />
 
-        {results || (isLoading && !!searchParams.toString()) ? (
-          <div className="mt-8 space-y-6">
-            <div>
-              <Button variant="ghost" onClick={handleBackToForm}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to form
-              </Button>
-            </div>
+        {showResults ? (
+          <div className="space-y-6">
             <LoadingState isLoading={isLoading} fallback={<SkeletonGrid />}>
               {results && <ResultsDisplay results={results} />}
             </LoadingState>

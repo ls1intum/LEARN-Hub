@@ -37,6 +37,10 @@ interface ActivityFormProps {
   cancelLabel?: string;
   submitIcon?: React.ReactNode;
   cancelIcon?: React.ReactNode;
+  /** When true, the built-in footer buttons are hidden (navigation is handled externally) */
+  hideButtons?: boolean;
+  /** HTML id for the <form> element, allowing external submit buttons via form="" attribute */
+  formId?: string;
 }
 
 const defaultFormData: ActivityFormData = {
@@ -67,6 +71,8 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
   cancelLabel = "Cancel",
   submitIcon,
   cancelIcon,
+  hideButtons = false,
+  formId,
 }) => {
   const { fieldValues } = useFieldValues();
   const [formData, setFormData] = useState<ActivityFormData>({
@@ -168,7 +174,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form id={formId} onSubmit={handleSubmit} className="space-y-6">
       {error && (
         <div className="p-3 bg-destructive/10 border border-destructive text-destructive rounded">
           {error}
@@ -372,16 +378,18 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
         onToggle={(value) => toggleArrayValue("topics", value)}
       />
 
-      <div className="flex gap-2 justify-end pt-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          {cancelIcon}
-          {cancelLabel}
-        </Button>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Creating..." : submitLabel}
-          {!isLoading && submitIcon}
-        </Button>
-      </div>
+      {!hideButtons && (
+        <div className="flex gap-2 justify-end pt-2">
+          <Button type="button" variant="outline" onClick={onCancel}>
+            {cancelIcon}
+            {cancelLabel}
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Creating..." : submitLabel}
+            {!isLoading && submitIcon}
+          </Button>
+        </div>
+      )}
     </form>
   );
 };
