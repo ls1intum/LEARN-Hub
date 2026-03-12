@@ -120,6 +120,37 @@ export const ActivityEditPage: React.FC = () => {
     };
   }, [previewPdfUrl]);
 
+  useEffect(() => {
+    if (!isPreviewModalOpen) return;
+
+    const html = document.documentElement;
+    const appScrollContainer = document.querySelector("main");
+    const previousHtmlOverflow = html.style.overflow;
+    const previousOverflow = document.body.style.overflow;
+    const previousBodyTouchAction = document.body.style.touchAction;
+    const previousAppOverflowY =
+      appScrollContainer instanceof HTMLElement
+        ? appScrollContainer.style.overflowY
+        : "";
+
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    if (appScrollContainer instanceof HTMLElement) {
+      appScrollContainer.style.overflowY = "hidden";
+    }
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousBodyTouchAction;
+      if (appScrollContainer instanceof HTMLElement) {
+        appScrollContainer.style.overflowY = previousAppOverflowY;
+      }
+    };
+  }, [isPreviewModalOpen]);
+
   // ─── Metadata Step Handlers ─────────────────────────────────────
 
   const handleMetadataNext = async (formData: ActivityFormData) => {
@@ -452,7 +483,7 @@ export const ActivityEditPage: React.FC = () => {
             open={isPreviewModalOpen}
             onOpenChange={setIsPreviewModalOpen}
           >
-            <DialogContent className="max-w-[95vw] w-full h-[85vh] flex flex-col p-0">
+            <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] h-[85vh] overflow-x-hidden flex flex-col p-0">
               <DialogHeader className="px-6 pt-6 pb-2 flex-shrink-0">
                 <DialogTitle className="flex items-center gap-2">
                   <Eye className="h-4 w-4" />
@@ -462,7 +493,7 @@ export const ActivityEditPage: React.FC = () => {
                   )}
                 </DialogTitle>
               </DialogHeader>
-              <div className="flex-1 min-h-0 px-6 pb-6">
+              <div className="flex-1 min-h-0 min-w-0 px-6 pb-6">
                 {previewPdfUrl ? (
                   <iframe
                     src={previewPdfUrl}
