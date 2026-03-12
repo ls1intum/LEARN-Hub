@@ -9,13 +9,14 @@ import static org.mockito.Mockito.when;
 
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
 import com.learnhub.activitymanagement.entity.Activity;
-import com.learnhub.activitymanagement.entity.ActivityDocument;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.entity.enums.DocumentType;
 import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
+import com.learnhub.documentmanagement.entity.PDFDocument;
+import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
 import java.time.LocalDateTime;
@@ -32,6 +33,7 @@ class ActivityServiceTest {
 
 	private ActivityService activityService;
 	private ActivityRepository activityRepository;
+	private PDFDocumentRepository pdfDocumentRepository;
 	private PDFService pdfService;
 	private LLMService llmService;
 
@@ -39,16 +41,22 @@ class ActivityServiceTest {
 	void setUp() {
 		activityService = new ActivityService();
 		activityRepository = mock(ActivityRepository.class);
+		pdfDocumentRepository = mock(PDFDocumentRepository.class);
 		pdfService = mock(PDFService.class);
 		llmService = mock(LLMService.class);
 
 		ReflectionTestUtils.setField(activityService, "activityRepository", activityRepository);
+		ReflectionTestUtils.setField(activityService, "pdfDocumentRepository", pdfDocumentRepository);
 		ReflectionTestUtils.setField(activityService, "pdfService", pdfService);
 		ReflectionTestUtils.setField(activityService, "llmService", llmService);
 	}
 
 	@Test
 	void createActivityFromMapCreatesDocumentRelationship() {
+		UUID docId = UUID.randomUUID();
+		PDFDocument doc = createTestDocument(docId);
+		when(pdfDocumentRepository.findById(docId)).thenReturn(Optional.of(doc));
+
 		Map<String, Object> data = new HashMap<>();
 		data.put("name", "Test Activity");
 		data.put("description", "A test activity description");
@@ -57,16 +65,14 @@ class ActivityServiceTest {
 		data.put("format", "unplugged");
 		data.put("bloomLevel", "apply");
 		data.put("durationMinMinutes", 30);
-		UUID docId = UUID.randomUUID();
 		data.put("documentId", docId.toString());
 
 		Activity activity = activityService.createActivityFromMap(data);
 
 		assertThat(activity.getDocuments()).hasSize(1);
-		ActivityDocument actDoc = activity.getDocuments().get(0);
-		assertThat(actDoc.getDocumentId()).isEqualTo(docId);
+		PDFDocument actDoc = activity.getDocuments().get(0);
+		assertThat(actDoc.getId()).isEqualTo(docId);
 		assertThat(actDoc.getType()).isEqualTo(DocumentType.SOURCE_PDF);
-		assertThat(actDoc.getActivity()).isSameAs(activity);
 	}
 
 	@Test
@@ -128,12 +134,8 @@ class ActivityServiceTest {
 		Activity activity = createTestActivity();
 		UUID docId = UUID.randomUUID();
 
-		ActivityDocument actDoc = new ActivityDocument();
-		actDoc.setActivity(activity);
-		actDoc.setDocumentId(docId);
-		actDoc.setType(DocumentType.SOURCE_PDF);
-		actDoc.setCreatedAt(LocalDateTime.now());
-		activity.getDocuments().add(actDoc);
+		PDFDocument doc = createTestDocument(docId);
+		activity.getDocuments().add(doc);
 
 		ActivityResponse response = activityService.convertToResponse(activity);
 
@@ -231,8 +233,10 @@ class ActivityServiceTest {
 	void createActivityWithValidationCreatesDocumentRelationship() throws Exception {
 		UUID cacheKey = UUID.randomUUID();
 		UUID finalizedDocId = UUID.randomUUID();
+		PDFDocument finalizedDoc = createTestDocument(finalizedDocId);
 
 		when(pdfService.finalizePdf(cacheKey)).thenReturn(finalizedDocId);
+		when(pdfDocumentRepository.findById(finalizedDocId)).thenReturn(Optional.of(finalizedDoc));
 		when(activityRepository.save(any(Activity.class))).thenAnswer(inv -> {
 			Activity a = inv.getArgument(0);
 			a.setId(UUID.randomUUID());
@@ -259,7 +263,7 @@ class ActivityServiceTest {
 		verify(activityRepository).save(captor.capture());
 		Activity saved = captor.getValue();
 		assertThat(saved.getDocuments()).hasSize(1);
-		assertThat(saved.getDocuments().get(0).getDocumentId()).isEqualTo(finalizedDocId);
+		assertThat(saved.getDocuments().get(0).getId()).isEqualTo(finalizedDocId);
 		assertThat(saved.getDocuments().get(0).getType()).isEqualTo(DocumentType.SOURCE_PDF);
 	}
 
@@ -275,5 +279,16 @@ class ActivityServiceTest {
 		activity.setDurationMinMinutes(30);
 		activity.setCreatedAt(LocalDateTime.now());
 		return activity;
+	}
+
+	private PDFDocument createTestDocument(UUID docId) {
+		PDFDocument doc = new PDFDocument();
+		doc.setId(docId);
+		doc.setFilename("test.pdf");
+		doc.setFilePath("/tmp/test.pdf");
+		doc.setFileSize(1024L);
+		doc.setType(DocumentType.SOURCE_PDF);
+		doc.setCreatedAt(LocalDateTime.now());
+		return doc;
 	}
 }

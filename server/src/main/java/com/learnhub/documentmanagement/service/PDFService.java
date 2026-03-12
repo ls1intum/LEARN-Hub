@@ -123,6 +123,7 @@ public class PDFService {
 		document.setExtractedFields(cached.extractedFields);
 		document.setConfidenceScore(cached.confidenceScore);
 		document.setExtractionQuality(cached.extractionQuality);
+		document.setType(com.learnhub.activitymanagement.entity.enums.DocumentType.SOURCE_PDF);
 		document.setCreatedAt(LocalDateTime.now());
 
 		document = pdfDocumentRepository.save(document);
@@ -337,7 +338,7 @@ public class PDFService {
 				// Try to get PDF via the first SOURCE_PDF document
 				UUID docId = activity.getDocuments().stream()
 						.filter(d -> d.getType() == com.learnhub.activitymanagement.entity.enums.DocumentType.SOURCE_PDF)
-						.findFirst().map(com.learnhub.activitymanagement.entity.ActivityDocument::getDocumentId)
+						.findFirst().map(com.learnhub.documentmanagement.entity.PDFDocument::getId)
 						.orElse(null);
 				if (docId != null) {
 					try {

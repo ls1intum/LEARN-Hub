@@ -2,10 +2,11 @@ package com.learnhub.activitymanagement.service;
 
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
 import com.learnhub.activitymanagement.entity.Activity;
-import com.learnhub.activitymanagement.entity.ActivityDocument;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.*;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
+import com.learnhub.documentmanagement.entity.PDFDocument;
+import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
 import java.time.LocalDateTime;
@@ -30,6 +31,9 @@ public class ActivityService {
 
 	@Autowired
 	private ActivityRepository activityRepository;
+
+	@Autowired
+	private PDFDocumentRepository pdfDocumentRepository;
 
 	@Autowired
 	private PDFService pdfService;
@@ -274,12 +278,11 @@ public class ActivityService {
 		if (data.get("documentId") != null) {
 			try {
 				UUID docId = UUID.fromString(data.get("documentId").toString());
-				ActivityDocument actDoc = new ActivityDocument();
-				actDoc.setActivity(activity);
-				actDoc.setDocumentId(docId);
-				actDoc.setType(DocumentType.SOURCE_PDF);
-				actDoc.setCreatedAt(LocalDateTime.now());
-				activity.getDocuments().add(actDoc);
+				PDFDocument doc = pdfDocumentRepository.findById(docId).orElse(null);
+				if (doc != null) {
+					doc.setType(DocumentType.SOURCE_PDF);
+					activity.getDocuments().add(doc);
+				}
 			} catch (IllegalArgumentException e) {
 				throw new IllegalArgumentException("Invalid documentId format: must be a valid UUID");
 			}
@@ -325,7 +328,7 @@ public class ActivityService {
 		UUID documentId = activity.getDocuments().stream()
 				.filter(d -> d.getType() == DocumentType.SOURCE_PDF)
 				.findFirst()
-				.map(ActivityDocument::getDocumentId)
+				.map(PDFDocument::getId)
 				.orElse(null);
 		response.setDocumentId(documentId);
 

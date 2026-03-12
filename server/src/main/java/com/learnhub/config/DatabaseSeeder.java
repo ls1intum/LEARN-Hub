@@ -1,7 +1,6 @@
 package com.learnhub.config;
 
 import com.learnhub.activitymanagement.entity.Activity;
-import com.learnhub.activitymanagement.entity.ActivityDocument;
 import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.entity.enums.DocumentType;
@@ -85,8 +84,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 		} else {
 			logger.warn("Dataset CSV or PDF directory not found. Creating demo data instead.");
 			// Fallback to demo data
-			PDFDocument pdfDocument = createPlaceholderPDF();
-			createDemoActivities(pdfDocument.getId());
+			createDemoActivities();
 		}
 
 		// Create admin user
@@ -124,6 +122,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 					pdfDocument.setExtractedFields("{}");
 					pdfDocument.setConfidenceScore("1.0");
 					pdfDocument.setExtractionQuality("manual");
+					pdfDocument.setType(DocumentType.SOURCE_PDF);
 					pdfDocument.setCreatedAt(LocalDateTime.now());
 					pdfDocument = pdfDocumentRepository.save(pdfDocument);
 
@@ -161,12 +160,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
 					activity.setCreatedAt(LocalDateTime.now());
 
-					ActivityDocument actDoc = new ActivityDocument();
-					actDoc.setActivity(activity);
-					actDoc.setDocumentId(pdfDocument.getId());
-					actDoc.setType(DocumentType.SOURCE_PDF);
-					actDoc.setCreatedAt(LocalDateTime.now());
-					activity.getDocuments().add(actDoc);
+					activity.getDocuments().add(pdfDocument);
 
 					activityRepository.save(activity);
 					count++;
@@ -192,57 +186,49 @@ public class DatabaseSeeder implements CommandLineRunner {
 				.collect(Collectors.toList());
 	}
 
-	private PDFDocument createPlaceholderPDF() {
-		long existingDocuments = pdfDocumentRepository.count();
-		if (existingDocuments > 0) {
-			logger.info("PDF documents already exist. Using existing document.");
-			return pdfDocumentRepository.findAll().get(0);
-		}
-
-		PDFDocument document = new PDFDocument();
-		document.setFilename("demo_activities_placeholder.pdf");
-		document.setFilePath(Paths.get(pdfStoragePath, "demo_activities_placeholder.pdf").toString());
-		document.setFileSize(1024L);
-		document.setExtractedFields("{}");
-		document.setConfidenceScore("0.95");
-		document.setExtractionQuality("high");
-		document.setCreatedAt(LocalDateTime.now());
-
-		document = pdfDocumentRepository.save(document);
-		logger.info("Created placeholder PDF document with ID: {}", document.getId());
-		return document;
-	}
-
-	private void createDemoActivities(UUID documentId) {
+	private void createDemoActivities() {
 		List<Activity> activities = Arrays.asList(
 				createActivity("Binary Cards", "Learn binary number representation using cards", 8, 12,
 						ActivityFormat.UNPLUGGED, BloomLevel.UNDERSTAND, 30, 45, EnergyLevel.MEDIUM, EnergyLevel.LOW,
-						Arrays.asList("handouts"), Arrays.asList("patterns", "abstraction"), documentId),
+						Arrays.asList("handouts"), Arrays.asList("patterns", "abstraction")),
 
 				createActivity("Robot Commands", "Program a 'robot' classmate using simple commands", 6, 10,
 						ActivityFormat.UNPLUGGED, BloomLevel.APPLY, 20, 30, EnergyLevel.LOW, EnergyLevel.HIGH,
-						Arrays.asList("stationery"), Arrays.asList("algorithms", "decomposition"), documentId),
+						Arrays.asList("stationery"), Arrays.asList("algorithms", "decomposition")),
 
 				createActivity("Sorting Network", "Learn sorting algorithms through physical activity", 10, 14,
 						ActivityFormat.UNPLUGGED, BloomLevel.ANALYZE, 45, 60, EnergyLevel.MEDIUM, EnergyLevel.HIGH,
-						Arrays.asList("handouts"), Arrays.asList("algorithms", "patterns"), documentId),
+						Arrays.asList("handouts"), Arrays.asList("algorithms", "patterns")),
 
 				createActivity("Scratch Animation", "Create animated stories using block-based coding", 8, 13,
 						ActivityFormat.DIGITAL, BloomLevel.CREATE, 60, 90, EnergyLevel.MEDIUM, EnergyLevel.LOW,
-						Arrays.asList("computers", "tablets"), Arrays.asList("algorithms", "decomposition"),
-						documentId),
+						Arrays.asList("computers", "tablets"), Arrays.asList("algorithms", "decomposition")),
 
 				createActivity("Pixel Art", "Design images by coloring grid squares", 7, 11, ActivityFormat.HYBRID,
 						BloomLevel.APPLY, 30, 45, EnergyLevel.LOW, EnergyLevel.LOW,
-						Arrays.asList("handouts", "tablets"), Arrays.asList("abstraction", "patterns"), documentId));
+						Arrays.asList("handouts", "tablets"), Arrays.asList("abstraction", "patterns")));
 
+		// Save activities and link each to its own placeholder document
+		for (Activity activity : activities) {
+			PDFDocument doc = new PDFDocument();
+			doc.setFilename("demo_activities_placeholder.pdf");
+			doc.setFilePath(Paths.get(pdfStoragePath, "demo_activities_placeholder.pdf").toString());
+			doc.setFileSize(1024L);
+			doc.setExtractedFields("{}");
+			doc.setConfidenceScore("0.95");
+			doc.setExtractionQuality("high");
+			doc.setType(DocumentType.SOURCE_PDF);
+			doc.setCreatedAt(LocalDateTime.now());
+			doc = pdfDocumentRepository.save(doc);
+			activity.getDocuments().add(doc);
+		}
 		activityRepository.saveAll(activities);
 		logger.info("Created {} demo activities", activities.size());
 	}
 
 	private Activity createActivity(String name, String description, int ageMin, int ageMax, ActivityFormat format,
 			BloomLevel bloomLevel, int durationMin, int durationMax, EnergyLevel mentalLoad, EnergyLevel physicalEnergy,
-			List<String> resources, List<String> topics, UUID documentId) {
+			List<String> resources, List<String> topics) {
 		Activity activity = new Activity();
 		activity.setName(name);
 		activity.setDescription(description);
@@ -260,14 +246,6 @@ public class DatabaseSeeder implements CommandLineRunner {
 		activity.setResourcesNeeded(resources);
 		activity.setTopics(topics);
 		activity.setCreatedAt(LocalDateTime.now());
-
-		ActivityDocument actDoc = new ActivityDocument();
-		actDoc.setActivity(activity);
-		actDoc.setDocumentId(documentId);
-		actDoc.setType(DocumentType.SOURCE_PDF);
-		actDoc.setCreatedAt(LocalDateTime.now());
-		activity.getDocuments().add(actDoc);
-
 		return activity;
 	}
 

@@ -3,6 +3,7 @@ package com.learnhub.activitymanagement.entity;
 import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.entity.enums.EnergyLevel;
+import com.learnhub.documentmanagement.entity.PDFDocument;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -85,10 +86,11 @@ public class Activity {
 	@Column(columnDefinition = "jsonb")
 	private List<String> topics;
 
-	@OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany
+	@JoinColumn(name = "activity_id")
 	@ToString.Exclude
 	@EqualsAndHashCode.Exclude
-	private List<ActivityDocument> documents = new ArrayList<>();
+	private List<PDFDocument> documents = new ArrayList<>();
 
 	@OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
 	@ToString.Exclude

@@ -1,5 +1,6 @@
 package com.learnhub.documentmanagement.entity;
 
+import com.learnhub.activitymanagement.entity.enums.DocumentType;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -41,6 +42,10 @@ public class PDFDocument {
 
 	@Column(name = "extraction_quality", length = 20)
 	private String extractionQuality;
+
+	@Column(length = 50)
+	@Enumerated(EnumType.STRING)
+	private DocumentType type;
 
 	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)
