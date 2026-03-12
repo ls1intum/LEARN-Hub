@@ -1,0 +1,279 @@
+package com.learnhub.activitymanagement.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.learnhub.activitymanagement.dto.response.ActivityResponse;
+import com.learnhub.activitymanagement.entity.Activity;
+import com.learnhub.activitymanagement.entity.ActivityDocument;
+import com.learnhub.activitymanagement.entity.ActivityMarkdown;
+import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
+import com.learnhub.activitymanagement.entity.enums.BloomLevel;
+import com.learnhub.activitymanagement.entity.enums.DocumentType;
+import com.learnhub.activitymanagement.entity.enums.MarkdownType;
+import com.learnhub.activitymanagement.repository.ActivityRepository;
+import com.learnhub.documentmanagement.service.LLMService;
+import com.learnhub.documentmanagement.service.PDFService;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.test.util.ReflectionTestUtils;
+
+class ActivityServiceTest {
+
+	private ActivityService activityService;
+	private ActivityRepository activityRepository;
+	private PDFService pdfService;
+	private LLMService llmService;
+
+	@BeforeEach
+	void setUp() {
+		activityService = new ActivityService();
+		activityRepository = mock(ActivityRepository.class);
+		pdfService = mock(PDFService.class);
+		llmService = mock(LLMService.class);
+
+		ReflectionTestUtils.setField(activityService, "activityRepository", activityRepository);
+		ReflectionTestUtils.setField(activityService, "pdfService", pdfService);
+		ReflectionTestUtils.setField(activityService, "llmService", llmService);
+	}
+
+	@Test
+	void createActivityFromMapCreatesDocumentRelationship() {
+		Map<String, Object> data = new HashMap<>();
+		data.put("name", "Test Activity");
+		data.put("description", "A test activity description");
+		data.put("ageMin", 8);
+		data.put("ageMax", 12);
+		data.put("format", "unplugged");
+		data.put("bloomLevel", "apply");
+		data.put("durationMinMinutes", 30);
+		UUID docId = UUID.randomUUID();
+		data.put("documentId", docId.toString());
+
+		Activity activity = activityService.createActivityFromMap(data);
+
+		assertThat(activity.getDocuments()).hasSize(1);
+		ActivityDocument actDoc = activity.getDocuments().get(0);
+		assertThat(actDoc.getDocumentId()).isEqualTo(docId);
+		assertThat(actDoc.getType()).isEqualTo(DocumentType.SOURCE_PDF);
+		assertThat(actDoc.getActivity()).isSameAs(activity);
+	}
+
+	@Test
+	void createActivityFromMapCreatesMarkdownRelationship() {
+		Map<String, Object> data = new HashMap<>();
+		data.put("name", "Test Activity");
+		data.put("description", "A test activity description");
+		data.put("ageMin", 8);
+		data.put("ageMax", 12);
+		data.put("format", "unplugged");
+		data.put("bloomLevel", "apply");
+		data.put("durationMinMinutes", 30);
+		data.put("artikulationsschemaMarkdown", "# Schema\n\nSome markdown content");
+
+		Activity activity = activityService.createActivityFromMap(data);
+
+		assertThat(activity.getMarkdowns()).hasSize(1);
+		ActivityMarkdown actMd = activity.getMarkdowns().get(0);
+		assertThat(actMd.getContent()).isEqualTo("# Schema\n\nSome markdown content");
+		assertThat(actMd.getType()).isEqualTo(MarkdownType.ARTIKULATIONSSCHEMA);
+		assertThat(actMd.getActivity()).isSameAs(activity);
+	}
+
+	@Test
+	void createActivityFromMapCreatesNeitherWhenNotProvided() {
+		Map<String, Object> data = new HashMap<>();
+		data.put("name", "Test Activity");
+		data.put("description", "A test activity description");
+		data.put("ageMin", 8);
+		data.put("ageMax", 12);
+		data.put("format", "unplugged");
+		data.put("bloomLevel", "apply");
+		data.put("durationMinMinutes", 30);
+
+		Activity activity = activityService.createActivityFromMap(data);
+
+		assertThat(activity.getDocuments()).isEmpty();
+		assertThat(activity.getMarkdowns()).isEmpty();
+	}
+
+	@Test
+	void createActivityFromMapThrowsOnInvalidDocumentId() {
+		Map<String, Object> data = new HashMap<>();
+		data.put("name", "Test Activity");
+		data.put("description", "A test activity description");
+		data.put("ageMin", 8);
+		data.put("ageMax", 12);
+		data.put("format", "unplugged");
+		data.put("bloomLevel", "apply");
+		data.put("durationMinMinutes", 30);
+		data.put("documentId", "not-a-uuid");
+
+		assertThatThrownBy(() -> activityService.createActivityFromMap(data))
+				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Invalid documentId format");
+	}
+
+	@Test
+	void mapToResponseExtractsDocumentIdFromDocuments() {
+		Activity activity = createTestActivity();
+		UUID docId = UUID.randomUUID();
+
+		ActivityDocument actDoc = new ActivityDocument();
+		actDoc.setActivity(activity);
+		actDoc.setDocumentId(docId);
+		actDoc.setType(DocumentType.SOURCE_PDF);
+		actDoc.setCreatedAt(LocalDateTime.now());
+		activity.getDocuments().add(actDoc);
+
+		ActivityResponse response = activityService.convertToResponse(activity);
+
+		assertThat(response.getDocumentId()).isEqualTo(docId);
+	}
+
+	@Test
+	void mapToResponseExtractsMarkdownFromMarkdowns() {
+		Activity activity = createTestActivity();
+
+		ActivityMarkdown actMd = new ActivityMarkdown();
+		actMd.setActivity(activity);
+		actMd.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+		actMd.setContent("# Test Schema");
+		actMd.setCreatedAt(LocalDateTime.now());
+		activity.getMarkdowns().add(actMd);
+
+		ActivityResponse response = activityService.convertToResponse(activity);
+
+		assertThat(response.getArtikulationsschemaMarkdown()).isEqualTo("# Test Schema");
+	}
+
+	@Test
+	void mapToResponseReturnsNullsWhenNoDocumentsOrMarkdowns() {
+		Activity activity = createTestActivity();
+
+		ActivityResponse response = activityService.convertToResponse(activity);
+
+		assertThat(response.getDocumentId()).isNull();
+		assertThat(response.getArtikulationsschemaMarkdown()).isNull();
+	}
+
+	@Test
+	void updateActivityUpdatesExistingMarkdown() {
+		Activity existingActivity = createTestActivity();
+		existingActivity.setId(UUID.randomUUID());
+
+		ActivityMarkdown existingMd = new ActivityMarkdown();
+		existingMd.setId(UUID.randomUUID());
+		existingMd.setActivity(existingActivity);
+		existingMd.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+		existingMd.setContent("Old content");
+		existingMd.setCreatedAt(LocalDateTime.now());
+		existingActivity.getMarkdowns().add(existingMd);
+
+		when(activityRepository.findById(existingActivity.getId())).thenReturn(Optional.of(existingActivity));
+		when(activityRepository.save(any(Activity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+		Map<String, Object> updateData = new HashMap<>();
+		updateData.put("name", "Updated Activity");
+		updateData.put("description", existingActivity.getDescription());
+		updateData.put("ageMin", existingActivity.getAgeMin());
+		updateData.put("ageMax", existingActivity.getAgeMax());
+		updateData.put("format", "unplugged");
+		updateData.put("bloomLevel", "apply");
+		updateData.put("durationMinMinutes", 30);
+		updateData.put("artikulationsschemaMarkdown", "New content");
+
+		ActivityResponse response = activityService.updateActivityFromMap(existingActivity.getId(), updateData);
+
+		// Existing markdown should be updated, not a new one created
+		assertThat(existingActivity.getMarkdowns()).hasSize(1);
+		assertThat(existingActivity.getMarkdowns().get(0).getContent()).isEqualTo("New content");
+		assertThat(response.getArtikulationsschemaMarkdown()).isEqualTo("New content");
+	}
+
+	@Test
+	void updateActivityCreatesMarkdownWhenNonExistent() {
+		Activity existingActivity = createTestActivity();
+		existingActivity.setId(UUID.randomUUID());
+		// No existing markdown
+
+		when(activityRepository.findById(existingActivity.getId())).thenReturn(Optional.of(existingActivity));
+		when(activityRepository.save(any(Activity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+		Map<String, Object> updateData = new HashMap<>();
+		updateData.put("name", "Updated Activity");
+		updateData.put("description", existingActivity.getDescription());
+		updateData.put("ageMin", existingActivity.getAgeMin());
+		updateData.put("ageMax", existingActivity.getAgeMax());
+		updateData.put("format", "unplugged");
+		updateData.put("bloomLevel", "apply");
+		updateData.put("durationMinMinutes", 30);
+		updateData.put("artikulationsschemaMarkdown", "New schema");
+
+		ActivityResponse response = activityService.updateActivityFromMap(existingActivity.getId(), updateData);
+
+		assertThat(existingActivity.getMarkdowns()).hasSize(1);
+		assertThat(existingActivity.getMarkdowns().get(0).getContent()).isEqualTo("New schema");
+		assertThat(existingActivity.getMarkdowns().get(0).getType()).isEqualTo(MarkdownType.ARTIKULATIONSSCHEMA);
+		assertThat(response.getArtikulationsschemaMarkdown()).isEqualTo("New schema");
+	}
+
+	@Test
+	void createActivityWithValidationCreatesDocumentRelationship() throws Exception {
+		UUID cacheKey = UUID.randomUUID();
+		UUID finalizedDocId = UUID.randomUUID();
+
+		when(pdfService.finalizePdf(cacheKey)).thenReturn(finalizedDocId);
+		when(activityRepository.save(any(Activity.class))).thenAnswer(inv -> {
+			Activity a = inv.getArgument(0);
+			a.setId(UUID.randomUUID());
+			return a;
+		});
+
+		Map<String, Object> request = new HashMap<>();
+		request.put("name", "Test Activity");
+		request.put("description", "A test activity description");
+		request.put("ageMin", 8);
+		request.put("ageMax", 12);
+		request.put("format", "unplugged");
+		request.put("bloomLevel", "apply");
+		request.put("durationMinMinutes", 30);
+		request.put("documentId", cacheKey.toString());
+
+		ActivityResponse response = activityService.createActivityWithValidation(request);
+
+		assertThat(response).isNotNull();
+		assertThat(response.getDocumentId()).isEqualTo(finalizedDocId);
+
+		// Verify the saved activity has the document relationship
+		ArgumentCaptor<Activity> captor = ArgumentCaptor.forClass(Activity.class);
+		verify(activityRepository).save(captor.capture());
+		Activity saved = captor.getValue();
+		assertThat(saved.getDocuments()).hasSize(1);
+		assertThat(saved.getDocuments().get(0).getDocumentId()).isEqualTo(finalizedDocId);
+		assertThat(saved.getDocuments().get(0).getType()).isEqualTo(DocumentType.SOURCE_PDF);
+	}
+
+	private Activity createTestActivity() {
+		Activity activity = new Activity();
+		activity.setId(UUID.randomUUID());
+		activity.setName("Test Activity");
+		activity.setDescription("A test activity");
+		activity.setAgeMin(8);
+		activity.setAgeMax(12);
+		activity.setFormat(ActivityFormat.UNPLUGGED);
+		activity.setBloomLevel(BloomLevel.APPLY);
+		activity.setDurationMinMinutes(30);
+		activity.setCreatedAt(LocalDateTime.now());
+		return activity;
+	}
+}
