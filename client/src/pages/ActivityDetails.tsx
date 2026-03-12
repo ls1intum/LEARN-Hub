@@ -11,6 +11,7 @@ import {
   FileText,
   BookOpen,
   Edit3,
+  ArrowLeft,
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
@@ -170,18 +171,29 @@ export const ActivityDetails: React.FC = () => {
     (activity.cleanupTimeMinutes || 0);
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4">
+    <div className="w-full py-6">
       <div className="mb-8">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-foreground mb-1 text-center sm:text-left">
-              Activity Details
-            </h2>
-            <p className="text-base text-muted-foreground text-center sm:text-left">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleBack}
+                aria-label={fromBrowser ? "Back to Library" : "Back to Form"}
+                className="h-9 w-9 flex-shrink-0"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                Activity Details
+              </h2>
+            </div>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1.5 ml-12">
               Detailed information about this educational activity.
             </p>
           </div>
-          <div className="flex gap-2 sm:gap-4">
+          <div className="flex flex-wrap gap-2">
             <FavouriteButton activityId={activity.id} size="default" />
             {isAdmin && (
               <Button
@@ -213,16 +225,13 @@ export const ActivityDetails: React.FC = () => {
                   : "View Artikulationsschema"}
               </Button>
             )}
-            <Button onClick={handleBack} variant="outline">
-              {fromBrowser ? "Back to Library" : "Back to Form"}
-            </Button>
           </div>
         </div>
       </div>
 
       <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
         <div className="p-2 sm:p-4">
-          <h3 className="text-3xl font-bold mb-4 text-foreground">
+          <h3 className="text-2xl font-bold mb-4 text-foreground">
             {activity.name}
           </h3>
 
@@ -354,7 +363,7 @@ export const ActivityDetails: React.FC = () => {
           {/* Topics */}
           {activity.topics && activity.topics.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-xl font-semibold mb-4 text-card-foreground">
+              <h3 className="text-lg font-semibold mb-4 text-card-foreground">
                 Topics
               </h3>
               <div className="flex flex-wrap gap-2">

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useEnvironment } from "@/hooks/useEnvironment";
-import { Menu, Server } from "lucide-react";
+import { Menu, Server, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAVIGATION_TABS, getCurrentTab } from "@/constants/navigation";
 import { NavigationMenu } from "./NavigationMenu";
@@ -16,9 +16,14 @@ import {
 
 interface MainLayoutProps {
   children: React.ReactNode;
+  /** When true, content area stretches full-width (used for markdown editor) */
+  fullWidth?: boolean;
 }
 
-export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+export const MainLayout: React.FC<MainLayoutProps> = ({
+  children,
+  fullWidth = false,
+}) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,10 +65,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left Sidebar */}
-      <div className="fixed left-0 top-0 w-72 h-screen border-r border-border/50 bg-card/80 backdrop-blur-xl hidden lg:flex shadow-xl flex-col">
+      <div className="fixed left-0 top-0 w-64 h-screen border-r border-border bg-card hidden lg:flex flex-col z-30">
         <UserHeader user={user ?? { role: "GUEST" }} onLogout={handleLogout} />
+
+        {/* Navigation */}
         <div className="flex-1 overflow-y-auto">
           <NavigationMenu
             tabs={visibleTabs}
@@ -71,14 +78,15 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             onNavigation={handleNavigation}
           />
         </div>
-        {/* Environment Version Footer - Sticks to bottom */}
-        <div className="mt-auto p-4 border-t border-border/50 bg-card/50">
+
+        {/* Environment Version Footer */}
+        <div className="p-3 border-t border-border">
           <div className="flex items-center justify-center gap-2">
-            <Server className="h-3.5 w-3.5 text-muted-foreground" />
+            <Server className="h-3 w-3 text-muted-foreground" />
             {environment && (
               <Badge
                 variant={getEnvironmentBadgeVariant(environment)}
-                className="text-xs font-medium px-2.5 py-1"
+                className="text-xs font-medium px-2 py-0.5"
               >
                 {getEnvironmentDisplayText(environment)}
               </Badge>
@@ -90,7 +98,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* Mobile Navigation Overlay */}
       {isMobileNavOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden transition-opacity"
           onClick={() => setIsMobileNavOpen(false)}
         />
       )}
@@ -98,7 +106,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* Mobile Navigation Drawer */}
       <div
         className={cn(
-          "fixed top-0 left-0 h-full w-80 bg-card/95 backdrop-blur-xl border-r border-border/50 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden flex flex-col",
+          "fixed top-0 left-0 h-full w-72 bg-card border-r border-border shadow-2xl z-50 transform transition-transform duration-300 ease-in-out lg:hidden flex flex-col",
           isMobileNavOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
@@ -117,21 +125,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </div>
 
         {/* Mobile Nav Footer */}
-        <div className="mt-auto p-6 border-t border-border/50 space-y-4 bg-card/50">
+        <div className="p-4 border-t border-border space-y-3">
           <Button
             onClick={handleLogout}
             variant="ghost"
-            className="w-full flex items-center gap-3 px-4 py-4 text-sm font-medium rounded-2xl hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+            className="w-full flex items-center justify-start gap-3 px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
+            <LogOut className="h-4 w-4" />
             <span>Logout</span>
           </Button>
-          {/* Environment Version */}
           <div className="flex items-center justify-center gap-2">
-            <Server className="h-3.5 w-3.5 text-muted-foreground" />
+            <Server className="h-3 w-3 text-muted-foreground" />
             {environment && (
               <Badge
                 variant={getEnvironmentBadgeVariant(environment)}
-                className="text-xs font-medium px-2.5 py-1"
+                className="text-xs font-medium px-2 py-0.5"
               >
                 {getEnvironmentDisplayText(environment)}
               </Badge>
@@ -141,9 +149,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:ml-72">
+      <div className="flex-1 flex flex-col lg:ml-64">
         {/* Mobile Header */}
-        <div className="lg:hidden p-6 border-b border-border/50 bg-card/80 backdrop-blur-xl shadow-lg">
+        <div className="lg:hidden sticky top-0 z-20 px-4 py-3 border-b border-border bg-card/95 backdrop-blur-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
@@ -151,17 +159,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 variant="ghost"
                 size="icon"
                 aria-label="Toggle navigation menu"
-                className="h-10 w-10 hover:bg-muted/60 transition-all duration-200"
+                className="h-9 w-9 hover:bg-muted transition-colors"
               >
                 <Menu className="h-5 w-5" />
               </Button>
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-md">
-                <span className="text-primary-foreground font-bold text-sm">
+              <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-xs">
                   {isAdmin ? "A" : isGuest ? "G" : "T"}
                 </span>
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">
+                <h1 className="text-sm font-semibold text-foreground leading-tight">
                   {isAdmin
                     ? "Admin Panel"
                     : isGuest
@@ -169,29 +177,38 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       : "Teaching Hub"}
                 </h1>
                 {user?.email && (
-                  <p className="text-xs text-muted-foreground">{user.email}</p>
+                  <p className="text-xs text-muted-foreground leading-tight">
+                    {user.email}
+                  </p>
                 )}
                 {isGuest && !user?.email && (
-                  <p className="text-xs text-muted-foreground">Guest User</p>
+                  <p className="text-xs text-muted-foreground leading-tight">
+                    Guest User
+                  </p>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={handleLogout}
-                variant="ghost"
-                size="icon"
-                aria-label="Logout"
-                className="h-10 w-10 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
-              >
-                <span>Logout</span>
-              </Button>
-            </div>
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              size="icon"
+              aria-label="Logout"
+              className="h-9 w-9 hover:bg-destructive/10 hover:text-destructive transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+            </Button>
           </div>
         </div>
 
-        <main className="flex-1 p-4 lg:p-6 overflow-x-hidden overflow-y-auto bg-gradient-to-br from-background/50 via-background/30 to-muted/10">
-          <div className="w-full px-2 sm:px-4">{children}</div>
+        <main className="flex-1 overflow-x-hidden overflow-y-auto">
+          <div
+            className={cn(
+              "p-4 sm:p-6 lg:p-8",
+              !fullWidth && "max-w-6xl mx-auto",
+            )}
+          >
+            {children}
+          </div>
         </main>
       </div>
     </div>

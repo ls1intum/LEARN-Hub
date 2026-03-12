@@ -19,16 +19,17 @@ import {
 import {
   Upload,
   FileText,
-  CheckCircle,
   AlertCircle,
   Loader2,
-  ArrowLeft,
+  ArrowRight,
   Save,
   Eye,
   Edit3,
 } from "lucide-react";
 import { apiService } from "@/services/apiService";
 import { ActivityForm } from "@/components/forms/ActivityForm";
+import { StepIndicator } from "@/components/ui/StepIndicator";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { logger } from "@/services/logger";
 import type { Activity } from "@/types/activity";
 import type { FormFieldData } from "@/types/api";
@@ -107,6 +108,37 @@ export const ActivitySetupPage: React.FC = () => {
       }
     };
   }, [previewPdfUrl]);
+
+  useEffect(() => {
+    if (!isPreviewModalOpen) return;
+
+    const html = document.documentElement;
+    const appScrollContainer = document.querySelector("main");
+    const previousHtmlOverflow = html.style.overflow;
+    const previousOverflow = document.body.style.overflow;
+    const previousBodyTouchAction = document.body.style.touchAction;
+    const previousAppOverflowY =
+      appScrollContainer instanceof HTMLElement
+        ? appScrollContainer.style.overflowY
+        : "";
+
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    if (appScrollContainer instanceof HTMLElement) {
+      appScrollContainer.style.overflowY = "hidden";
+    }
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousBodyTouchAction;
+      if (appScrollContainer instanceof HTMLElement) {
+        appScrollContainer.style.overflowY = previousAppOverflowY;
+      }
+    };
+  }, [isPreviewModalOpen]);
 
   // ─── Upload Handlers ────────────────────────────────────────────
 
@@ -290,53 +322,51 @@ export const ActivitySetupPage: React.FC = () => {
   // ─── Render ─────────────────────────────────────────────────────
 
   return (
-    <div className="w-full px-4 py-6">
-      {/* Step Indicator */}
-      <div className="mb-8">
-        <div className="flex items-center justify-center gap-2">
-          {steps.map((step, idx) => (
-            <React.Fragment key={step.key}>
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                    idx < currentStepIndex
-                      ? "bg-primary text-primary-foreground"
-                      : idx === currentStepIndex
-                        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {idx < currentStepIndex ? (
-                    <CheckCircle className="h-4 w-4" />
-                  ) : (
-                    idx + 1
-                  )}
-                </div>
-                <span
-                  className={`text-sm font-medium ${
-                    idx === currentStepIndex
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {step.label}
-                </span>
-              </div>
-              {idx < steps.length - 1 && (
-                <div
-                  className={`w-12 h-0.5 ${
-                    idx < currentStepIndex ? "bg-primary" : "bg-muted"
-                  }`}
-                />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+    <div className="w-full py-6">
+      {/* Page Header & Step Indicator */}
+      <div className="space-y-6 mb-8">
+        <PageHeader
+          title="Create Activity"
+          description="Upload a PDF, review the extracted metadata, and finalize the Artikulationsschema."
+        />
+        <StepIndicator
+          steps={steps}
+          currentStepIndex={currentStepIndex}
+          onBack={
+            currentStep === "metadata"
+              ? () => setCurrentStep("upload")
+              : currentStep === "artikulationsschema"
+                ? () => setCurrentStep("metadata")
+                : undefined
+          }
+          onForward={
+            currentStep === "metadata"
+              ? {
+                  label: "Next: Artikulationsschema",
+                  variant: "outline",
+                  size: "icon",
+                  ariaLabel: "Next step",
+                  className: "h-9 w-9",
+                  formId: "activity-setup-form",
+                }
+              : currentStep === "artikulationsschema"
+                ? {
+                    label: "Save Activity",
+                    variant: "default",
+                    onClick: handleSave,
+                    icon: <Save className="h-4 w-4" />,
+                    disabled: isSaving,
+                    loading: isSaving,
+                    loadingLabel: "Saving...",
+                  }
+                : undefined
+          }
+        />
       </div>
 
       {/* Step: Upload */}
       {currentStep === "upload" && (
-        <div className="max-w-2xl mx-auto">
+        <div>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -406,17 +436,18 @@ export const ActivitySetupPage: React.FC = () => {
               <Button
                 onClick={handleUploadAndExtract}
                 disabled={!selectedFile || isUploading}
-                className="w-full"
+                className="w-full gap-2"
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                     Uploading &amp; Extracting...
                   </>
                 ) : (
                   <>
-                    <Upload className="h-4 w-4 mr-2" />
+                    <Upload className="h-4 w-4" />
                     Upload &amp; Extract Metadata
+                    <ArrowRight className="h-4 w-4 ml-1" />
                   </>
                 )}
               </Button>
@@ -427,7 +458,7 @@ export const ActivitySetupPage: React.FC = () => {
 
       {/* Step: Metadata Review */}
       {currentStep === "metadata" && (
-        <div className="max-w-2xl mx-auto">
+        <div>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -464,8 +495,8 @@ export const ActivitySetupPage: React.FC = () => {
                 onSubmit={handleMetadataNext}
                 onCancel={() => setCurrentStep("upload")}
                 isLoading={false}
-                submitLabel="Next: Artikulationsschema"
-                cancelLabel="Back"
+                hideButtons
+                formId="activity-setup-form"
               />
             </CardContent>
           </Card>
@@ -474,31 +505,7 @@ export const ActivitySetupPage: React.FC = () => {
 
       {/* Step: Artikulationsschema */}
       {currentStep === "artikulationsschema" && (
-        <div className="space-y-4">
-          {/* Back / Save header */}
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentStep("metadata")}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Metadata
-            </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Activity
-                </>
-              )}
-            </Button>
-          </div>
-
+        <div className="space-y-4 lg:relative lg:left-1/2 lg:w-[calc(100vw-16rem-4rem)] lg:max-w-none lg:-translate-x-1/2">
           {isGeneratingSchema ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">
@@ -624,7 +631,7 @@ export const ActivitySetupPage: React.FC = () => {
                 open={isPreviewModalOpen}
                 onOpenChange={setIsPreviewModalOpen}
               >
-                <DialogContent className="max-w-[95vw] w-full h-[85vh] flex flex-col p-0">
+                <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] h-[85vh] overflow-x-hidden flex flex-col p-0">
                   <DialogHeader className="px-6 pt-6 pb-2 flex-shrink-0">
                     <DialogTitle className="flex items-center gap-2">
                       <Eye className="h-4 w-4" />
@@ -634,7 +641,7 @@ export const ActivitySetupPage: React.FC = () => {
                       )}
                     </DialogTitle>
                   </DialogHeader>
-                  <div className="flex-1 min-h-0 px-6 pb-6">
+                  <div className="flex-1 min-h-0 min-w-0 px-6 pb-6">
                     {previewPdfUrl ? (
                       <iframe
                         src={previewPdfUrl}

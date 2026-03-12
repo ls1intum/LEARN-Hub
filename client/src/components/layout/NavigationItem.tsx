@@ -25,34 +25,27 @@ export const NavigationItem: React.FC<NavigationItemProps> = ({
     <button
       onClick={() => onClick(tab.path)}
       className={cn(
-        "w-full flex items-center gap-4 px-4 py-4 text-sm font-medium rounded-2xl transition-all duration-300 group relative",
+        "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors duration-150 group relative",
         isActive
-          ? "bg-gradient-to-r from-primary to-primary/90 text-primary-foreground shadow-lg shadow-primary/25"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/60 hover:shadow-md",
+          ? "bg-primary text-primary-foreground"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted",
         className,
       )}
       aria-current={isActive ? "page" : undefined}
       role="listitem"
     >
-      <div
+      <Icon
         className={cn(
-          "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-300",
+          "h-4 w-4 flex-shrink-0",
           isActive
-            ? "bg-primary-foreground/20"
-            : "bg-muted/50 group-hover:bg-muted/80",
+            ? "text-primary-foreground"
+            : "text-muted-foreground group-hover:text-foreground",
         )}
-      >
-        <Icon
-          className={cn(
-            "h-4 w-4 transition-all duration-300",
-            isActive ? "scale-110" : "group-hover:scale-105",
-          )}
-          aria-hidden="true"
-        />
-      </div>
-      <span className="font-medium">{tab.label}</span>
+        aria-hidden="true"
+      />
+      <span>{tab.label}</span>
       {isActive && (
-        <div className="absolute right-4 w-2 h-2 bg-primary-foreground rounded-full animate-pulse" />
+        <div className="absolute right-3 w-1.5 h-1.5 bg-primary-foreground/70 rounded-full" />
       )}
     </button>
   );

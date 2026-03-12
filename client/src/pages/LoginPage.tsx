@@ -492,20 +492,20 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 flex items-center justify-center p-4">
-      <Card className="max-w-lg w-full shadow-2xl border-0 bg-card/95 backdrop-blur-xl">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="max-w-lg w-full shadow-lg">
         <CardHeader className="text-center pb-6">
           <div className="flex justify-between items-start">
             <div className="flex-1">
               <div className="flex items-center justify-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-                  <LogIn className="h-6 w-6 text-primary-foreground" />
+                <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+                  <LogIn className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <CardTitle className="text-3xl font-bold text-foreground">
+                <CardTitle className="text-2xl font-bold text-foreground">
                   Welcome Back
                 </CardTitle>
               </div>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground text-sm">
                 Choose your login method to continue
               </p>
             </div>
@@ -547,7 +547,7 @@ export const LoginPage: React.FC = () => {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="w-full h-11"
                   >
                     {isLoading ? (
                       <div className="flex items-center gap-2">
@@ -631,7 +631,7 @@ export const LoginPage: React.FC = () => {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-12 text-base font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="w-full h-11"
                   >
                     {isLoading ? (
                       <div className="flex items-center gap-2">

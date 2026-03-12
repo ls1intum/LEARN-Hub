@@ -7,10 +7,12 @@ export const FavouritesPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("activities");
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="py-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground">Favourites</h1>
-        <p className="text-muted-foreground mt-2">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+          Favourites
+        </h1>
+        <p className="text-muted-foreground mt-1.5 text-sm sm:text-base">
           Manage your favourite activities and lesson plans
         </p>
       </div>

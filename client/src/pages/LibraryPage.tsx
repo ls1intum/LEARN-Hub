@@ -22,7 +22,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Eye,
-  BookOpen,
   Brain,
   Activity as ActivityIcon,
   Users,
@@ -205,28 +204,25 @@ export const LibraryPage: React.FC = () => {
   const totalPages = Math.ceil(total / itemsPerPage);
 
   return (
-    <div className="w-full space-y-6 px-2 sm:px-4 lg:px-6">
+    <div className="w-full space-y-6 py-6">
       {/* Header */}
-      <div className="text-center space-y-4">
-        <div className="flex items-center justify-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-            <BookOpen className="h-6 w-6 text-primary-foreground" />
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              Activity Library
+            </h2>
+            <p className="text-muted-foreground mt-1.5 text-sm sm:text-base">
+              Browse, filter, and manage all available activities in your
+              teaching toolkit.
+            </p>
           </div>
-          <h2 className="text-4xl font-bold text-foreground">
-            Activity Library
-          </h2>
-        </div>
-        <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-          Browse, filter, and manage all available activities in your teaching
-          toolkit.
-        </p>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          {/* Action Buttons */}
           {isAdmin && (
-            <Button asChild size="lg" className="h-12 px-8">
+            <Button asChild className="flex-shrink-0">
               <Link to="/upload">
-                <Plus className="h-5 w-5 mr-2" />
+                <Plus className="h-4 w-4 mr-2" />
                 Add Activity
               </Link>
             </Button>
@@ -234,7 +230,7 @@ export const LibraryPage: React.FC = () => {
         </div>
       </div>
 
-      <Card className="shadow-xl border-0 bg-gradient-to-br from-card to-card/50">
+      <Card>
         <CardContent className="p-4 sm:p-6 lg:p-8">
           {/* Search and Quick Filters */}
           <div className="mb-6">
@@ -300,7 +296,7 @@ export const LibraryPage: React.FC = () => {
           {showFilters && (
             <div className="mb-8 p-6 bg-gradient-to-br from-muted/20 to-muted/10 rounded-xl border border-border/50 shadow-sm">
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-semibold text-foreground">
+                <h3 className="text-lg font-semibold text-foreground">
                   Advanced Filters
                 </h3>
               </div>
@@ -532,7 +528,7 @@ export const LibraryPage: React.FC = () => {
                 <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Filter className="h-10 w-10 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-3">
+                <h3 className="text-lg font-semibold text-foreground mb-3">
                   No activities found
                 </h3>
                 <p className="text-muted-foreground mb-8 leading-relaxed">
@@ -629,7 +625,7 @@ export const LibraryPage: React.FC = () => {
                 {/* Desktop Table View */}
                 <div className="hidden lg:block bg-card rounded-xl shadow-sm border border-border overflow-hidden">
                   <div className="px-4 py-3 border-b border-border bg-muted/20">
-                    <h3 className="text-xl font-semibold text-card-foreground">
+                    <h3 className="text-lg font-semibold text-card-foreground">
                       Activities
                     </h3>
                   </div>

@@ -16,9 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   FileText,
-  CheckCircle,
   Loader2,
-  ArrowLeft,
   Save,
   Eye,
   Edit3,
@@ -28,6 +26,8 @@ import { apiService } from "@/services/apiService";
 import { ActivityForm } from "@/components/forms/ActivityForm";
 import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
+import { StepIndicator } from "@/components/ui/StepIndicator";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { logger } from "@/services/logger";
 import type { Activity } from "@/types/activity";
 
@@ -119,6 +119,37 @@ export const ActivityEditPage: React.FC = () => {
       }
     };
   }, [previewPdfUrl]);
+
+  useEffect(() => {
+    if (!isPreviewModalOpen) return;
+
+    const html = document.documentElement;
+    const appScrollContainer = document.querySelector("main");
+    const previousHtmlOverflow = html.style.overflow;
+    const previousOverflow = document.body.style.overflow;
+    const previousBodyTouchAction = document.body.style.touchAction;
+    const previousAppOverflowY =
+      appScrollContainer instanceof HTMLElement
+        ? appScrollContainer.style.overflowY
+        : "";
+
+    html.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+
+    if (appScrollContainer instanceof HTMLElement) {
+      appScrollContainer.style.overflowY = "hidden";
+    }
+
+    return () => {
+      html.style.overflow = previousHtmlOverflow;
+      document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousBodyTouchAction;
+      if (appScrollContainer instanceof HTMLElement) {
+        appScrollContainer.style.overflowY = previousAppOverflowY;
+      }
+    };
+  }, [isPreviewModalOpen]);
 
   // ─── Metadata Step Handlers ─────────────────────────────────────
 
@@ -275,53 +306,51 @@ export const ActivityEditPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full px-4 py-6">
-      {/* Step Indicator */}
-      <div className="mb-8">
-        <div className="flex items-center justify-center gap-2">
-          {steps.map((step, idx) => (
-            <React.Fragment key={step.key}>
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                    idx < currentStepIndex
-                      ? "bg-primary text-primary-foreground"
-                      : idx === currentStepIndex
-                        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {idx < currentStepIndex ? (
-                    <CheckCircle className="h-4 w-4" />
-                  ) : (
-                    idx + 1
-                  )}
-                </div>
-                <span
-                  className={`text-sm font-medium ${
-                    idx === currentStepIndex
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {step.label}
-                </span>
-              </div>
-              {idx < steps.length - 1 && (
-                <div
-                  className={`w-12 h-0.5 ${
-                    idx < currentStepIndex ? "bg-primary" : "bg-muted"
-                  }`}
-                />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+    <div className="w-full py-6">
+      {/* Page Header & Step Indicator */}
+      <div className="space-y-6 mb-8">
+        <PageHeader
+          title="Edit Activity"
+          description={`Editing "${activity.name}"`}
+        />
+        <StepIndicator
+          steps={steps}
+          currentStepIndex={currentStepIndex}
+          onBack={
+            currentStep === "metadata"
+              ? () => navigate(`/activity-details/${id}`)
+              : currentStep === "artikulationsschema"
+                ? () => setCurrentStep("metadata")
+                : undefined
+          }
+          onForward={
+            currentStep === "metadata"
+              ? {
+                  label: "Next: Artikulationsschema",
+                  variant: "outline",
+                  size: "icon",
+                  ariaLabel: "Next step",
+                  className: "h-9 w-9",
+                  formId: "activity-edit-form",
+                }
+              : currentStep === "artikulationsschema"
+                ? {
+                    label: "Save Changes",
+                    variant: "default",
+                    onClick: handleSave,
+                    icon: <Save className="h-4 w-4" />,
+                    disabled: isSaving,
+                    loading: isSaving,
+                    loadingLabel: "Saving...",
+                  }
+                : undefined
+          }
+        />
       </div>
 
       {/* Step: Metadata */}
       {currentStep === "metadata" && (
-        <div className="max-w-2xl mx-auto">
+        <div>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -360,8 +389,8 @@ export const ActivityEditPage: React.FC = () => {
                 onSubmit={handleMetadataNext}
                 onCancel={() => navigate(`/activity-details/${id}`)}
                 isLoading={false}
-                submitLabel="Next: Artikulationsschema"
-                cancelLabel="Cancel"
+                hideButtons
+                formId="activity-edit-form"
               />
             </CardContent>
           </Card>
@@ -370,31 +399,7 @@ export const ActivityEditPage: React.FC = () => {
 
       {/* Step: Artikulationsschema */}
       {currentStep === "artikulationsschema" && (
-        <div className="space-y-4">
-          {/* Back / Save header */}
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setCurrentStep("metadata")}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Metadata
-            </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </div>
-
+        <div className="space-y-4 lg:relative lg:left-1/2 lg:w-[calc(100vw-16rem-4rem)] lg:max-w-none lg:-translate-x-1/2">
           {saveError && (
             <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
               <AlertCircle className="h-4 w-4 text-destructive" />
@@ -478,7 +483,7 @@ export const ActivityEditPage: React.FC = () => {
             open={isPreviewModalOpen}
             onOpenChange={setIsPreviewModalOpen}
           >
-            <DialogContent className="max-w-[95vw] w-full h-[85vh] flex flex-col p-0">
+            <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] h-[85vh] overflow-x-hidden flex flex-col p-0">
               <DialogHeader className="px-6 pt-6 pb-2 flex-shrink-0">
                 <DialogTitle className="flex items-center gap-2">
                   <Eye className="h-4 w-4" />
@@ -488,7 +493,7 @@ export const ActivityEditPage: React.FC = () => {
                   )}
                 </DialogTitle>
               </DialogHeader>
-              <div className="flex-1 min-h-0 px-6 pb-6">
+              <div className="flex-1 min-h-0 min-w-0 px-6 pb-6">
                 {previewPdfUrl ? (
                   <iframe
                     src={previewPdfUrl}
