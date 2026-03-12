@@ -10,6 +10,7 @@ import { useForm } from "@/hooks/useForm";
 import { apiService } from "@/services/apiService";
 import { convertSearchCriteriaToFormData } from "@/utils/searchCriteriaConverter";
 import { ArrowLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { ResultsData } from "@/types/activity";
 
 interface FormData {
@@ -184,7 +185,10 @@ export const RecommendationsPage: React.FC = () => {
               </h1>
             </div>
             <p
-              className={`text-muted-foreground mt-1.5 text-sm sm:text-base${showResults ? " ml-12" : ""}`}
+              className={cn(
+                "text-muted-foreground mt-1.5 text-sm sm:text-base",
+                showResults && "ml-12",
+              )}
             >
               Get personalized activity recommendations for your teaching needs
             </p>

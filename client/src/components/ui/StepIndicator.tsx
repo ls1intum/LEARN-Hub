@@ -112,7 +112,7 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
             className="flex-shrink-0 gap-2"
           >
             {onForward.loading
-              ? (onForward.loadingLabel || "Saving...")
+              ? (onForward.loadingLabel || "Loading...")
               : onForward.label}
             {!onForward.loading &&
               (onForward.icon || <ArrowRight className="h-4 w-4" />)}
