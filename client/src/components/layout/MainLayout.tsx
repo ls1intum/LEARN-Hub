@@ -86,7 +86,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             {environment && (
               <Badge
                 variant={getEnvironmentBadgeVariant(environment)}
-                className="text-[10px] font-medium px-2 py-0.5"
+                className="text-xs font-medium px-2 py-0.5"
               >
                 {getEnvironmentDisplayText(environment)}
               </Badge>
@@ -139,7 +139,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             {environment && (
               <Badge
                 variant={getEnvironmentBadgeVariant(environment)}
-                className="text-[10px] font-medium px-2 py-0.5"
+                className="text-xs font-medium px-2 py-0.5"
               >
                 {getEnvironmentDisplayText(environment)}
               </Badge>
@@ -177,12 +177,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                       : "Teaching Hub"}
                 </h1>
                 {user?.email && (
-                  <p className="text-[11px] text-muted-foreground leading-tight">
+                  <p className="text-xs text-muted-foreground leading-tight">
                     {user.email}
                   </p>
                 )}
                 {isGuest && !user?.email && (
-                  <p className="text-[11px] text-muted-foreground leading-tight">
+                  <p className="text-xs text-muted-foreground leading-tight">
                     Guest User
                   </p>
                 )}

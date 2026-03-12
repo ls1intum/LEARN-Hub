@@ -41,7 +41,7 @@ export const UserHeader: React.FC<UserHeaderProps> = ({
                   ? "Guest Access"
                   : "Teaching Hub"}
             </h1>
-            <p className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
+            <p className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
               {user?.email && !isGuest
                 ? user.email
                 : isGuest
