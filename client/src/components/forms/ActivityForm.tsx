@@ -35,6 +35,8 @@ interface ActivityFormProps {
   isLoading?: boolean;
   submitLabel?: string;
   cancelLabel?: string;
+  submitIcon?: React.ReactNode;
+  cancelIcon?: React.ReactNode;
 }
 
 const defaultFormData: ActivityFormData = {
@@ -63,6 +65,8 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
   isLoading = false,
   submitLabel = "Create Activity",
   cancelLabel = "Cancel",
+  submitIcon,
+  cancelIcon,
 }) => {
   const { fieldValues } = useFieldValues();
   const [formData, setFormData] = useState<ActivityFormData>({
@@ -368,12 +372,14 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
         onToggle={(value) => toggleArrayValue("topics", value)}
       />
 
-      <div className="flex gap-2 justify-end">
+      <div className="flex gap-2 justify-end pt-2">
         <Button type="button" variant="outline" onClick={onCancel}>
+          {cancelIcon}
           {cancelLabel}
         </Button>
         <Button type="submit" disabled={isLoading}>
           {isLoading ? "Creating..." : submitLabel}
+          {!isLoading && submitIcon}
         </Button>
       </div>
     </form>

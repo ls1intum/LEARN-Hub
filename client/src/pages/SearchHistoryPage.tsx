@@ -151,12 +151,12 @@ export const SearchHistoryPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="w-full">
+      <div className="w-full py-6">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
             Search History
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm sm:text-base">
             View and manage your previous activity searches
           </p>
         </div>
@@ -171,12 +171,12 @@ export const SearchHistoryPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full py-6">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
           Search History
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-sm sm:text-base">
           View and manage your previous activity searches
           {totalCount > 0 && (
             <span className="ml-2 text-sm">({totalCount} total entries)</span>

@@ -170,12 +170,12 @@ export const AccountDashboardPage: React.FC = () => {
 
   if (isGuest) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="py-6 max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
             Account Dashboard
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground text-sm sm:text-base">
             Manage your account settings and preferences
           </p>
         </div>
@@ -264,12 +264,12 @@ export const AccountDashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="py-6 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-foreground mb-2">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
           Account Dashboard
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-sm sm:text-base">
           Manage your account settings and preferences
         </p>
       </div>

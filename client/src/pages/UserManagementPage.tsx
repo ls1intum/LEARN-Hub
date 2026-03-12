@@ -263,26 +263,17 @@ export const UserManagementPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full py-6">
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-foreground mb-2">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
           User Management
         </h2>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-muted-foreground text-sm sm:text-base">
           Manage users and their roles in the system.
         </p>
       </div>
 
-      <div className="bg-card p-6 rounded-lg shadow-sm border border-border max-w-6xl">
-        <div className="text-center mb-6">
-          <h1 className="text-2xl sm:text-3xl font-semibold mb-2">
-            User Management
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Manage system users and their roles.
-          </p>
-        </div>
-
+      <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
         {/* Messages */}
         {message && (
           <Alert className="mb-4 border-green-500/50 bg-green-500/10">

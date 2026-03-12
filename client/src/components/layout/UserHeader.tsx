@@ -25,48 +25,32 @@ export const UserHeader: React.FC<UserHeaderProps> = ({
   const isGuest = user?.role === "GUEST";
 
   return (
-    <div className={`p-6 border-b border-border/50 ${className}`}>
+    <div className={`p-4 border-b border-border ${className}`}>
       <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
-              <span className="text-primary-foreground font-bold text-lg">
-                {isAdmin ? "A" : isGuest ? "G" : "T"}
-              </span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">
-                {isAdmin
-                  ? "Admin Panel"
-                  : isGuest
-                    ? "Guest Access"
-                    : "Teaching Hub"}
-              </h1>
-              <p className="text-xs text-muted-foreground font-medium">
-                {isAdmin
-                  ? "System Management"
-                  : isGuest
-                    ? "Browse Activities"
-                    : "Activity Center"}
-              </p>
-            </div>
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
+            <span className="text-primary-foreground font-bold text-sm">
+              {isAdmin ? "A" : isGuest ? "G" : "T"}
+            </span>
           </div>
-          {user?.email && !isGuest && (
-            <div className="pl-13">
-              <p className="text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 py-1.5 inline-block">
-                {user.email}
-              </p>
-            </div>
-          )}
-          {isGuest && (
-            <div className="pl-13">
-              <p className="text-sm text-muted-foreground bg-muted/30 rounded-lg px-3 py-1.5 inline-block">
-                Guest User
-              </p>
-            </div>
-          )}
+          <div className="min-w-0">
+            <h1 className="text-sm font-semibold text-foreground leading-tight">
+              {isAdmin
+                ? "Admin Panel"
+                : isGuest
+                  ? "Guest Access"
+                  : "Teaching Hub"}
+            </h1>
+            <p className="text-[11px] text-muted-foreground truncate leading-tight mt-0.5">
+              {user?.email && !isGuest
+                ? user.email
+                : isGuest
+                  ? "Guest User"
+                  : "Activity Center"}
+            </p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 flex-shrink-0">
           <ThemeToggle />
           {isMobile && onClose ? (
             <Button
@@ -74,7 +58,7 @@ export const UserHeader: React.FC<UserHeaderProps> = ({
               variant="ghost"
               size="icon"
               aria-label="Close navigation menu"
-              className="h-10 w-10 hover:bg-muted/60 transition-all duration-200"
+              className="h-8 w-8 hover:bg-muted transition-colors"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -84,7 +68,7 @@ export const UserHeader: React.FC<UserHeaderProps> = ({
               variant="ghost"
               size="icon"
               aria-label="Logout"
-              className="h-10 w-10 hover:bg-destructive/10 hover:text-destructive transition-all duration-200"
+              className="h-8 w-8 hover:bg-destructive/10 hover:text-destructive transition-colors"
             >
               <LogOut className="h-4 w-4" />
             </Button>

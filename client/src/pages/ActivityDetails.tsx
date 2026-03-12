@@ -170,18 +170,18 @@ export const ActivityDetails: React.FC = () => {
     (activity.cleanupTimeMinutes || 0);
 
   return (
-    <div className="w-full max-w-4xl mx-auto px-4">
+    <div className="w-full max-w-4xl mx-auto py-6">
       <div className="mb-8">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-foreground mb-1 text-center sm:text-left">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
               Activity Details
             </h2>
-            <p className="text-base text-muted-foreground text-center sm:text-left">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Detailed information about this educational activity.
             </p>
           </div>
-          <div className="flex gap-2 sm:gap-4">
+          <div className="flex flex-wrap gap-2">
             <FavouriteButton activityId={activity.id} size="default" />
             {isAdmin && (
               <Button

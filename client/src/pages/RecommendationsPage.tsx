@@ -161,14 +161,14 @@ export const RecommendationsPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 max-w-6xl">
+    <div className="py-6">
       <div className="space-y-8">
         <div className="flex items-start gap-4 sm:gap-6">
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
               Activity Recommendations
             </h1>
-            <p className="text-muted-foreground text-base sm:text-lg">
+            <p className="text-muted-foreground text-sm sm:text-base">
               Get personalized activity recommendations for your teaching needs
             </p>
           </div>

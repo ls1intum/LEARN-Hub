@@ -16,9 +16,9 @@ import {
 } from "@/components/ui/dialog";
 import {
   FileText,
-  CheckCircle,
   Loader2,
   ArrowLeft,
+  ArrowRight,
   Save,
   Eye,
   Edit3,
@@ -28,6 +28,8 @@ import { apiService } from "@/services/apiService";
 import { ActivityForm } from "@/components/forms/ActivityForm";
 import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
+import { StepIndicator } from "@/components/ui/StepIndicator";
+import { PageHeader } from "@/components/ui/PageHeader";
 import { logger } from "@/services/logger";
 import type { Activity } from "@/types/activity";
 
@@ -275,48 +277,17 @@ export const ActivityEditPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full px-4 py-6">
-      {/* Step Indicator */}
-      <div className="mb-8">
-        <div className="flex items-center justify-center gap-2">
-          {steps.map((step, idx) => (
-            <React.Fragment key={step.key}>
-              <div className="flex items-center gap-2">
-                <div
-                  className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
-                    idx < currentStepIndex
-                      ? "bg-primary text-primary-foreground"
-                      : idx === currentStepIndex
-                        ? "bg-primary text-primary-foreground ring-2 ring-primary/30"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {idx < currentStepIndex ? (
-                    <CheckCircle className="h-4 w-4" />
-                  ) : (
-                    idx + 1
-                  )}
-                </div>
-                <span
-                  className={`text-sm font-medium ${
-                    idx === currentStepIndex
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {step.label}
-                </span>
-              </div>
-              {idx < steps.length - 1 && (
-                <div
-                  className={`w-12 h-0.5 ${
-                    idx < currentStepIndex ? "bg-primary" : "bg-muted"
-                  }`}
-                />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
+    <div className="w-full py-6">
+      {/* Page Header & Step Indicator */}
+      <div className="space-y-6 mb-8">
+        <PageHeader
+          title="Edit Activity"
+          description={`Editing "${activity.name}"`}
+        />
+        <StepIndicator
+          steps={steps}
+          currentStepIndex={currentStepIndex}
+        />
       </div>
 
       {/* Step: Metadata */}
@@ -362,6 +333,7 @@ export const ActivityEditPage: React.FC = () => {
                 isLoading={false}
                 submitLabel="Next: Artikulationsschema"
                 cancelLabel="Cancel"
+                submitIcon={<ArrowRight className="h-4 w-4 ml-1.5" />}
               />
             </CardContent>
           </Card>
@@ -376,19 +348,20 @@ export const ActivityEditPage: React.FC = () => {
             <Button
               variant="outline"
               onClick={() => setCurrentStep("metadata")}
+              className="gap-2"
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft className="h-4 w-4" />
               Back to Metadata
             </Button>
-            <Button onClick={handleSave} disabled={isSaving}>
+            <Button onClick={handleSave} disabled={isSaving} className="gap-2">
               {isSaving ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4 mr-2" />
+                  <Save className="h-4 w-4" />
                   Save Changes
                 </>
               )}
