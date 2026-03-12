@@ -296,11 +296,16 @@ export const ActivityEditPage: React.FC = () => {
             currentStep === "metadata"
               ? {
                   label: "Next: Artikulationsschema",
+                  variant: "outline",
+                  size: "icon",
+                  ariaLabel: "Next step",
+                  className: "h-9 w-9",
                   formId: "activity-edit-form",
                 }
               : currentStep === "artikulationsschema"
                 ? {
                     label: "Save Changes",
+                    variant: "default",
                     onClick: handleSave,
                     icon: <Save className="h-4 w-4" />,
                     disabled: isSaving,
@@ -363,8 +368,7 @@ export const ActivityEditPage: React.FC = () => {
 
       {/* Step: Artikulationsschema */}
       {currentStep === "artikulationsschema" && (
-        <div className="space-y-4">
-
+        <div className="space-y-4 lg:relative lg:left-1/2 lg:w-[calc(100vw-16rem-4rem)] lg:max-w-none lg:-translate-x-1/2">
           {saveError && (
             <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
               <AlertCircle className="h-4 w-4 text-destructive" />

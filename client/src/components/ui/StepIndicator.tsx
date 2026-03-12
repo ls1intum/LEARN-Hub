@@ -2,6 +2,7 @@ import React from "react";
 import { CheckCircle, ArrowLeft, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { ButtonProps } from "@/components/ui/button";
 
 export interface StepDefinition {
   key: string;
@@ -18,6 +19,10 @@ interface StepIndicatorProps {
     label: string;
     onClick?: () => void;
     icon?: React.ReactNode;
+    variant?: ButtonProps["variant"];
+    size?: ButtonProps["size"];
+    className?: string;
+    ariaLabel?: string;
     disabled?: boolean;
     loading?: boolean;
     loadingLabel?: string;
@@ -108,12 +113,19 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
             type={onForward.formId ? "submit" : "button"}
             form={onForward.formId}
             onClick={onForward.onClick}
+            variant={onForward.variant}
+            size={onForward.size}
             disabled={onForward.disabled || onForward.loading}
-            className="flex-shrink-0 gap-2"
+            aria-label={onForward.ariaLabel}
+            className={cn("flex-shrink-0 gap-2", onForward.className)}
           >
-            {onForward.loading
-              ? (onForward.loadingLabel || "Loading...")
-              : onForward.label}
+            {!(
+              onForward.size === "icon" &&
+              !onForward.loading
+            ) &&
+              (onForward.loading
+                ? (onForward.loadingLabel || "Loading...")
+                : onForward.label)}
             {!onForward.loading &&
               (onForward.icon || <ArrowRight className="h-4 w-4" />)}
           </Button>
