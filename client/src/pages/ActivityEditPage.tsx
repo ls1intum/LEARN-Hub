@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,50 +8,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  FileText,
-  Loader2,
-  Save,
-  Eye,
-  Edit3,
-  AlertCircle,
-} from "lucide-react";
+import { Save, Edit3, AlertCircle } from "lucide-react";
 import { apiService } from "@/services/apiService";
-import { ActivityForm } from "@/components/forms/ActivityForm";
+import {
+  ActivityForm,
+  type ActivityFormData,
+} from "@/components/forms/ActivityForm";
 import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { StepIndicator } from "@/components/ui/StepIndicator";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { MarkdownEditorWithPreview } from "@/components/ui/MarkdownEditorWithPreview";
 import { logger } from "@/services/logger";
 import type { Activity } from "@/types/activity";
-
-// ─── Types ───────────────────────────────────────────────────────
-
-interface ActivityFormData {
-  name: string;
-  description: string;
-  source: string;
-  ageMin: number;
-  ageMax: number;
-  format: string;
-  bloomLevel: string;
-  durationMinMinutes: number;
-  durationMaxMinutes: number;
-  mentalLoad: string;
-  physicalEnergy: string;
-  prepTimeMinutes: number;
-  cleanupTimeMinutes: number;
-  resourcesNeeded: string[];
-  topics: string[];
-  documentId: number | string | null;
-  [key: string]: string | number | boolean | string[] | null | undefined;
-}
 
 type Step = "metadata" | "artikulationsschema";
 
@@ -78,17 +47,9 @@ export const ActivityEditPage: React.FC = () => {
   const [artikulationsschemaMarkdown, setArtikulationsschemaMarkdown] =
     useState<string>("");
 
-  // PDF preview state
-  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
-  const [isRenderingPreview, setIsRenderingPreview] = useState(false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-
   // Save state
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  // Debounce ref for preview rendering
-  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ─── Load Activity ──────────────────────────────────────────────
 
@@ -111,98 +72,19 @@ export const ActivityEditPage: React.FC = () => {
       .finally(() => setIsLoadingActivity(false));
   }, [id]);
 
-  // Cleanup blob URL on unmount or change
-  useEffect(() => {
-    return () => {
-      if (previewPdfUrl) {
-        URL.revokeObjectURL(previewPdfUrl);
-      }
-    };
-  }, [previewPdfUrl]);
-
-  useEffect(() => {
-    if (!isPreviewModalOpen) return;
-
-    const html = document.documentElement;
-    const appScrollContainer = document.querySelector("main");
-    const previousHtmlOverflow = html.style.overflow;
-    const previousOverflow = document.body.style.overflow;
-    const previousBodyTouchAction = document.body.style.touchAction;
-    const previousAppOverflowY =
-      appScrollContainer instanceof HTMLElement
-        ? appScrollContainer.style.overflowY
-        : "";
-
-    html.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
-    document.body.style.touchAction = "none";
-
-    if (appScrollContainer instanceof HTMLElement) {
-      appScrollContainer.style.overflowY = "hidden";
-    }
-
-    return () => {
-      html.style.overflow = previousHtmlOverflow;
-      document.body.style.overflow = previousOverflow;
-      document.body.style.touchAction = previousBodyTouchAction;
-      if (appScrollContainer instanceof HTMLElement) {
-        appScrollContainer.style.overflowY = previousAppOverflowY;
-      }
-    };
-  }, [isPreviewModalOpen]);
-
   // ─── Metadata Step Handlers ─────────────────────────────────────
 
   const handleMetadataNext = async (formData: ActivityFormData) => {
     setSavedMetadata(formData);
     setCurrentStep("artikulationsschema");
-
-    // Render preview if markdown already exists
-    if (artikulationsschemaMarkdown) {
-      debouncedRenderPreview(artikulationsschemaMarkdown);
-    }
   };
 
   // ─── Preview Rendering ──────────────────────────────────────────
 
-  const renderPreview = useCallback(async (markdown: string) => {
-    if (!markdown.trim()) {
-      setPreviewPdfUrl(null);
-      return;
-    }
-
-    setIsRenderingPreview(true);
-    try {
-      const blob = await apiService.previewArtikulationsschemaPdf(markdown);
-      const url = URL.createObjectURL(blob);
-      setPreviewPdfUrl((prev) => {
-        if (prev) URL.revokeObjectURL(prev);
-        return url;
-      });
-    } catch (error) {
-      logger.error("Preview render error", error, "ActivityEditPage");
-    } finally {
-      setIsRenderingPreview(false);
-    }
-  }, []);
-
-  const debouncedRenderPreview = useCallback(
-    (markdown: string) => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-      debounceTimer.current = setTimeout(() => {
-        renderPreview(markdown);
-      }, 800);
-    },
-    [renderPreview],
+  const renderPreviewFn = useCallback(
+    (markdown: string) => apiService.previewArtikulationsschemaPdf(markdown),
+    [],
   );
-
-  const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newMarkdown = e.target.value;
-    setArtikulationsschemaMarkdown(newMarkdown);
-    debouncedRenderPreview(newMarkdown);
-  };
 
   // ─── Save ───────────────────────────────────────────────────────
 
@@ -407,114 +289,11 @@ export const ActivityEditPage: React.FC = () => {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-16rem)]">
-            {/* Left: Markdown Editor */}
-            <Card className="flex flex-col min-h-0">
-              <CardHeader className="pb-2 flex-shrink-0">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Edit3 className="h-4 w-4" />
-                  Markdown Editor
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 min-h-0 pb-4">
-                <textarea
-                  value={artikulationsschemaMarkdown}
-                  onChange={handleMarkdownChange}
-                  className="w-full h-full min-h-[400px] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  placeholder="# Artikulationsschema&#10;&#10;**Thema:** ...&#10;&#10;| Zeit | Phase | Handlungsschritte | Sozialform | Kompetenzen | Medien/Material |&#10;|------|-------|-------------------|------------|-------------|-----------------|&#10;| 5 min | Einstieg | ... | Plenum | ... | ... |"
-                />
-              </CardContent>
-            </Card>
-
-            {/* Right: PDF Preview (desktop only) */}
-            <Card className="hidden lg:flex flex-col min-h-0">
-              <CardHeader className="pb-2 flex-shrink-0">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Eye className="h-4 w-4" />
-                  PDF Preview
-                  {isRenderingPreview && (
-                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                  )}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 min-h-0 pb-4">
-                {previewPdfUrl ? (
-                  <iframe
-                    src={previewPdfUrl}
-                    className="w-full h-full min-h-[400px] rounded-md border"
-                    title="Artikulationsschema Preview"
-                  />
-                ) : (
-                  <div className="w-full h-full min-h-[400px] flex items-center justify-center rounded-md border bg-muted/30">
-                    <div className="text-center text-muted-foreground">
-                      <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">
-                        {isRenderingPreview
-                          ? "Rendering preview..."
-                          : "Edit the markdown to see a PDF preview"}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Mobile: Render Preview button */}
-          <div className="lg:hidden mt-4">
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                if (!previewPdfUrl && artikulationsschemaMarkdown) {
-                  debouncedRenderPreview(artikulationsschemaMarkdown);
-                }
-                setIsPreviewModalOpen(true);
-              }}
-              disabled={!artikulationsschemaMarkdown}
-            >
-              <Eye className="h-4 w-4 mr-2" />
-              Render Preview
-            </Button>
-          </div>
-
-          {/* Mobile: PDF Preview Dialog */}
-          <Dialog
-            open={isPreviewModalOpen}
-            onOpenChange={setIsPreviewModalOpen}
-          >
-            <DialogContent className="w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] h-[85vh] overflow-x-hidden flex flex-col p-0">
-              <DialogHeader className="px-6 pt-6 pb-2 flex-shrink-0">
-                <DialogTitle className="flex items-center gap-2">
-                  <Eye className="h-4 w-4" />
-                  PDF Preview
-                  {isRenderingPreview && (
-                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                  )}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="flex-1 min-h-0 min-w-0 px-6 pb-6">
-                {previewPdfUrl ? (
-                  <iframe
-                    src={previewPdfUrl}
-                    className="w-full h-full rounded-md border"
-                    title="Artikulationsschema Preview"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center rounded-md border bg-muted/30">
-                    <div className="text-center text-muted-foreground">
-                      <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">
-                        {isRenderingPreview
-                          ? "Rendering preview..."
-                          : "Edit the markdown to see a PDF preview"}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </DialogContent>
-          </Dialog>
+          <MarkdownEditorWithPreview
+            value={artikulationsschemaMarkdown}
+            onChange={setArtikulationsschemaMarkdown}
+            renderPreviewFn={renderPreviewFn}
+          />
         </div>
       )}
     </div>
