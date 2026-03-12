@@ -176,9 +176,20 @@ public class ActivityService {
 		activity.setCleanupTimeMinutes(activityUpdate.getCleanupTimeMinutes());
 		activity.setResourcesNeeded(activityUpdate.getResourcesNeeded());
 		activity.setTopics(activityUpdate.getTopics());
+		activity.setArtikulationsschemaMarkdown(activityUpdate.getArtikulationsschemaMarkdown());
 
 		Activity saved = activityRepository.save(activity);
 		return mapToResponse(saved);
+	}
+
+	/**
+	 * Update activity from a Map payload (used by the PUT endpoint).
+	 * Re-uses createActivityFromMap to parse the request, then applies to the
+	 * existing entity.
+	 */
+	public ActivityResponse updateActivityFromMap(UUID id, Map<String, Object> request) {
+		Activity activityUpdate = createActivityFromMap(request);
+		return updateActivity(id, activityUpdate);
 	}
 
 	public void deleteActivity(UUID id) {
@@ -246,6 +257,10 @@ public class ActivityService {
 			}
 		}
 
+		if (data.get("artikulationsschema_markdown") != null) {
+			activity.setArtikulationsschemaMarkdown(data.get("artikulationsschema_markdown").toString());
+		}
+
 		return activity;
 	}
 
@@ -273,6 +288,7 @@ public class ActivityService {
 		response.setResourcesNeeded(activity.getResourcesNeeded());
 		response.setTopics(activity.getTopics());
 		response.setDocumentId(activity.getDocumentId());
+		response.setArtikulationsschemaMarkdown(activity.getArtikulationsschemaMarkdown());
 		return response;
 	}
 
@@ -323,6 +339,65 @@ public class ActivityService {
 	}
 
 	/**
+	 * Upload PDF, cache it, and extract metadata using LLM. Returns document_id
+	 * (cache key) and extracted data for the 2-step creation flow. The PDF is NOT
+	 * persisted yet – call createActivityWithValidation to finalize.
+	 */
+	public Map<String, Object> uploadPdfAndExtractMetadata(MultipartFile pdfFile) {
+		try {
+			if (pdfFile.isEmpty()) {
+				throw new IllegalArgumentException("No PDF file provided");
+			}
+
+			if (!pdfFile.getOriginalFilename().toLowerCase().endsWith(".pdf")) {
+				throw new IllegalArgumentException("File must be a PDF");
+			}
+
+			byte[] pdfContent = pdfFile.getBytes();
+			if (pdfContent.length == 0) {
+				throw new IllegalArgumentException("PDF file is empty");
+			}
+
+			UUID cacheKey = pdfService.cachePdf(pdfContent, pdfFile.getOriginalFilename());
+
+			// Extract text and metadata using LLM
+			String pdfText = pdfService.extractTextFromPdf(cacheKey);
+			Map<String, Object> extractionResult = llmService.extractActivityData(pdfText);
+
+			Object dataObj = extractionResult.get("data");
+			if (!(dataObj instanceof Map)) {
+				throw new RuntimeException("LLM extraction did not return a valid data map");
+			}
+			@SuppressWarnings("unchecked")
+			Map<String, Object> extractedData = (Map<String, Object>) dataObj;
+			Double confidence = extractionResult.get("confidence") != null
+					? (Double) extractionResult.get("confidence")
+					: 0.0;
+
+			String extractionQuality = determineExtractionQuality(confidence);
+
+			// Update cached PDF with extraction results
+			String confidenceScore = String.format("%.3f", confidence);
+			pdfService.updatePdfExtractionResults(cacheKey, extractedData, confidenceScore, extractionQuality);
+
+			// Apply defaults
+			Map<String, Object> activityData = applyActivityDefaults(extractedData);
+
+			Map<String, Object> response = new HashMap<>();
+			response.put("document_id", cacheKey.toString());
+			response.put("extracted_data", activityData);
+			response.put("extraction_confidence", confidence);
+			response.put("extraction_quality", extractionQuality);
+
+			return response;
+		} catch (IllegalArgumentException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to upload PDF and extract metadata: " + e.getMessage(), e);
+		}
+	}
+
+	/**
 	 * Upload PDF and create activity with extracted data
 	 */
 	public Map<String, Object> uploadAndCreateActivity(MultipartFile pdfFile) {
@@ -347,7 +422,12 @@ public class ActivityService {
 			String pdfText = new String(pdfContent); // Simplified - should use PDF parser
 			Map<String, Object> extractionResult = llmService.extractActivityData(pdfText);
 
-			Map<String, Object> extractedData = (Map<String, Object>) extractionResult.get("data");
+			Object dataObj = extractionResult.get("data");
+			if (!(dataObj instanceof Map)) {
+				throw new RuntimeException("LLM extraction did not return a valid data map");
+			}
+			@SuppressWarnings("unchecked")
+			Map<String, Object> extractedData = (Map<String, Object>) dataObj;
 			Double confidence = extractionResult.get("confidence") != null
 					? (Double) extractionResult.get("confidence")
 					: 0.0;

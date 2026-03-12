@@ -85,6 +85,9 @@ public class Activity {
 	@Column(name = "document_id", nullable = false)
 	private UUID documentId;
 
+	@Column(name = "artikulationsschema_markdown", columnDefinition = "TEXT")
+	private String artikulationsschemaMarkdown;
+
 	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;

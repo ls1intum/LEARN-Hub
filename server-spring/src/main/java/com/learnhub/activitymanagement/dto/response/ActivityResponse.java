@@ -53,5 +53,8 @@ public class ActivityResponse {
 	@JsonProperty("document_id")
 	private UUID documentId;
 
+	@JsonProperty("artikulationsschema_markdown")
+	private String artikulationsschemaMarkdown;
+
 	private String type = "activity";
 }

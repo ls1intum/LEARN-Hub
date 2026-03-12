@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { logger } from "@/services/logger";
 
 interface FavouriteButtonProps {
-  activityId: number;
+  activityId: string;
   variant?:
     | "default"
     | "ghost"
