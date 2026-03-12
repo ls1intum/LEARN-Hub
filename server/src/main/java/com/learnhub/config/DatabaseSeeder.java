@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -82,9 +81,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 			logger.info("Found dataset CSV and PDF directory. Loading full dataset...");
 			loadDatasetFromCSV(datasetCsv, pdfDir);
 		} else {
-			logger.warn("Dataset CSV or PDF directory not found. Creating demo data instead.");
-			// Fallback to demo data
-			createDemoActivities();
+			logger.warn("Dataset CSV or PDF directory not found. Skipping activity seeding.");
 		}
 
 		// Create admin user
@@ -184,69 +181,6 @@ public class DatabaseSeeder implements CommandLineRunner {
 		}
 		return Arrays.stream(value.split("\\|")).map(String::trim).filter(s -> !s.isEmpty())
 				.collect(Collectors.toList());
-	}
-
-	private void createDemoActivities() {
-		List<Activity> activities = Arrays.asList(
-				createActivity("Binary Cards", "Learn binary number representation using cards", 8, 12,
-						ActivityFormat.UNPLUGGED, BloomLevel.UNDERSTAND, 30, 45, EnergyLevel.MEDIUM, EnergyLevel.LOW,
-						Arrays.asList("handouts"), Arrays.asList("patterns", "abstraction")),
-
-				createActivity("Robot Commands", "Program a 'robot' classmate using simple commands", 6, 10,
-						ActivityFormat.UNPLUGGED, BloomLevel.APPLY, 20, 30, EnergyLevel.LOW, EnergyLevel.HIGH,
-						Arrays.asList("stationery"), Arrays.asList("algorithms", "decomposition")),
-
-				createActivity("Sorting Network", "Learn sorting algorithms through physical activity", 10, 14,
-						ActivityFormat.UNPLUGGED, BloomLevel.ANALYZE, 45, 60, EnergyLevel.MEDIUM, EnergyLevel.HIGH,
-						Arrays.asList("handouts"), Arrays.asList("algorithms", "patterns")),
-
-				createActivity("Scratch Animation", "Create animated stories using block-based coding", 8, 13,
-						ActivityFormat.DIGITAL, BloomLevel.CREATE, 60, 90, EnergyLevel.MEDIUM, EnergyLevel.LOW,
-						Arrays.asList("computers", "tablets"), Arrays.asList("algorithms", "decomposition")),
-
-				createActivity("Pixel Art", "Design images by coloring grid squares", 7, 11, ActivityFormat.HYBRID,
-						BloomLevel.APPLY, 30, 45, EnergyLevel.LOW, EnergyLevel.LOW,
-						Arrays.asList("handouts", "tablets"), Arrays.asList("abstraction", "patterns")));
-
-		// Save activities and link each to its own placeholder document
-		for (Activity activity : activities) {
-			PDFDocument doc = new PDFDocument();
-			doc.setFilename("demo_activities_placeholder.pdf");
-			doc.setFilePath(Paths.get(pdfStoragePath, "demo_activities_placeholder.pdf").toString());
-			doc.setFileSize(1024L);
-			doc.setExtractedFields("{}");
-			doc.setConfidenceScore("0.95");
-			doc.setExtractionQuality("high");
-			doc.setType(DocumentType.SOURCE_PDF);
-			doc.setCreatedAt(LocalDateTime.now());
-			doc = pdfDocumentRepository.save(doc);
-			activity.getDocuments().add(doc);
-		}
-		activityRepository.saveAll(activities);
-		logger.info("Created {} demo activities", activities.size());
-	}
-
-	private Activity createActivity(String name, String description, int ageMin, int ageMax, ActivityFormat format,
-			BloomLevel bloomLevel, int durationMin, int durationMax, EnergyLevel mentalLoad, EnergyLevel physicalEnergy,
-			List<String> resources, List<String> topics) {
-		Activity activity = new Activity();
-		activity.setName(name);
-		activity.setDescription(description);
-		activity.setSource("Demo Dataset");
-		activity.setAgeMin(ageMin);
-		activity.setAgeMax(ageMax);
-		activity.setFormat(format);
-		activity.setBloomLevel(bloomLevel);
-		activity.setDurationMinMinutes(durationMin);
-		activity.setDurationMaxMinutes(durationMax);
-		activity.setMentalLoad(mentalLoad);
-		activity.setPhysicalEnergy(physicalEnergy);
-		activity.setPrepTimeMinutes(5);
-		activity.setCleanupTimeMinutes(5);
-		activity.setResourcesNeeded(resources);
-		activity.setTopics(topics);
-		activity.setCreatedAt(LocalDateTime.now());
-		return activity;
 	}
 
 	private void createAdminUser() {
