@@ -292,7 +292,7 @@ export const ActivityEditPage: React.FC = () => {
 
       {/* Step: Metadata */}
       {currentStep === "metadata" && (
-        <div className="max-w-2xl mx-auto">
+        <div>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

@@ -307,7 +307,7 @@ export const ActivitySetupPage: React.FC = () => {
 
       {/* Step: Upload */}
       {currentStep === "upload" && (
-        <div className="max-w-2xl mx-auto">
+        <div>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -399,7 +399,7 @@ export const ActivitySetupPage: React.FC = () => {
 
       {/* Step: Metadata Review */}
       {currentStep === "metadata" && (
-        <div className="max-w-2xl mx-auto">
+        <div>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">

@@ -296,7 +296,7 @@ export const LibraryPage: React.FC = () => {
           {showFilters && (
             <div className="mb-8 p-6 bg-gradient-to-br from-muted/20 to-muted/10 rounded-xl border border-border/50 shadow-sm">
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-xl font-semibold text-foreground">
+                <h3 className="text-lg font-semibold text-foreground">
                   Advanced Filters
                 </h3>
               </div>
@@ -528,7 +528,7 @@ export const LibraryPage: React.FC = () => {
                 <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Filter className="h-10 w-10 text-muted-foreground" />
                 </div>
-                <h3 className="text-xl font-semibold text-foreground mb-3">
+                <h3 className="text-lg font-semibold text-foreground mb-3">
                   No activities found
                 </h3>
                 <p className="text-muted-foreground mb-8 leading-relaxed">
@@ -625,7 +625,7 @@ export const LibraryPage: React.FC = () => {
                 {/* Desktop Table View */}
                 <div className="hidden lg:block bg-card rounded-xl shadow-sm border border-border overflow-hidden">
                   <div className="px-4 py-3 border-b border-border bg-muted/20">
-                    <h3 className="text-xl font-semibold text-card-foreground">
+                    <h3 className="text-lg font-semibold text-card-foreground">
                       Activities
                     </h3>
                   </div>

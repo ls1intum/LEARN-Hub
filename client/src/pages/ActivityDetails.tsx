@@ -170,7 +170,7 @@ export const ActivityDetails: React.FC = () => {
     (activity.cleanupTimeMinutes || 0);
 
   return (
-    <div className="w-full max-w-4xl mx-auto py-6">
+    <div className="w-full py-6">
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
@@ -222,7 +222,7 @@ export const ActivityDetails: React.FC = () => {
 
       <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
         <div className="p-2 sm:p-4">
-          <h3 className="text-3xl font-bold mb-4 text-foreground">
+          <h3 className="text-2xl font-bold mb-4 text-foreground">
             {activity.name}
           </h3>
 
@@ -354,7 +354,7 @@ export const ActivityDetails: React.FC = () => {
           {/* Topics */}
           {activity.topics && activity.topics.length > 0 && (
             <div className="mb-8">
-              <h3 className="text-xl font-semibold mb-4 text-card-foreground">
+              <h3 className="text-lg font-semibold mb-4 text-card-foreground">
                 Topics
               </h3>
               <div className="flex flex-wrap gap-2">
