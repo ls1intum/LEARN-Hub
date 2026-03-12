@@ -34,16 +34,16 @@ export interface FormFieldData {
 
 // Upload PDF draft response (2-step flow)
 export interface UploadPdfDraftResponse {
-  document_id: string;
-  extracted_data: FormFieldData;
-  extraction_confidence: number;
-  extraction_quality: string;
+  documentId: string;
+  extractedData: FormFieldData;
+  extractionConfidence: number;
+  extractionQuality: string;
 }
 
 // Artikulationsschema generation response
 export interface ArtikulationsschemaResponse {
   markdown: string;
-  document_id: string;
+  documentId: string;
 }
 
 // Activity creation request
@@ -51,20 +51,20 @@ export interface CreateActivityRequest {
   name: string;
   description: string;
   source?: string;
-  age_min: number;
-  age_max: number;
+  ageMin: number;
+  ageMax: number;
   format: string;
-  resources_needed: string[];
-  bloom_level: string;
-  duration_min_minutes: number;
-  duration_max_minutes?: number;
-  prep_time_minutes?: number;
-  cleanup_time_minutes?: number;
-  mental_load?: string;
-  physical_energy?: string;
+  resourcesNeeded: string[];
+  bloomLevel: string;
+  durationMinMinutes: number;
+  durationMaxMinutes?: number;
+  prepTimeMinutes?: number;
+  cleanupTimeMinutes?: number;
+  mentalLoad?: string;
+  physicalEnergy?: string;
   topics: string[];
-  document_id?: number | string;
-  artikulationsschema_markdown?: string;
+  documentId?: number | string;
+  artikulationsschemaMarkdown?: string;
 }
 
 // Activity update request
@@ -72,26 +72,26 @@ export interface UpdateActivityRequest {
   name: string;
   description: string;
   source?: string;
-  age_min: number;
-  age_max: number;
+  ageMin: number;
+  ageMax: number;
   format: string;
-  resources_needed: string[];
-  bloom_level: string;
-  duration_min_minutes: number;
-  duration_max_minutes?: number;
-  prep_time_minutes?: number;
-  cleanup_time_minutes?: number;
-  mental_load?: string;
-  physical_energy?: string;
+  resourcesNeeded: string[];
+  bloomLevel: string;
+  durationMinMinutes: number;
+  durationMaxMinutes?: number;
+  prepTimeMinutes?: number;
+  cleanupTimeMinutes?: number;
+  mentalLoad?: string;
+  physicalEnergy?: string;
   topics: string[];
-  artikulationsschema_markdown?: string;
+  artikulationsschemaMarkdown?: string;
 }
 
 // User creation/update request
 export interface UserRequest {
   email: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   role: "TEACHER" | "ADMIN";
   password?: string;
 }
@@ -99,22 +99,22 @@ export interface UserRequest {
 // Profile update request for self-service account management
 export interface UpdateProfileRequest {
   email?: string;
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
   password?: string;
 }
 
 // Favorite activity request
 export interface FavoriteActivityRequest {
-  activity_id: string;
+  activityId: string;
   name?: string;
 }
 
 // Favorite lesson plan request
 export interface FavoriteLessonPlanRequest {
-  activity_ids: string[];
+  activityIds: string[];
   name?: string;
-  lesson_plan: import("./activity").LessonPlanData;
+  lessonPlan: import("./activity").LessonPlanData;
 }
 
 // Lesson plan generation request
@@ -124,47 +124,47 @@ export interface LessonPlanRequest {
     name: string;
     description: string;
     source?: string;
-    age_min: number;
-    age_max: number;
+    ageMin: number;
+    ageMax: number;
     format: string;
-    resources_needed: string[];
-    bloom_level: string;
-    duration_min_minutes: number;
-    duration_max_minutes?: number;
-    prep_time_minutes?: number;
-    cleanup_time_minutes?: number;
-    mental_load?: string;
-    physical_energy?: string;
+    resourcesNeeded: string[];
+    bloomLevel: string;
+    durationMinMinutes: number;
+    durationMaxMinutes?: number;
+    prepTimeMinutes?: number;
+    cleanupTimeMinutes?: number;
+    mentalLoad?: string;
+    physicalEnergy?: string;
     topics: string[];
-    document_id?: string;
-    created_at?: string;
+    documentId?: string;
+    createdAt?: string;
     type: "activity";
   }>;
-  search_criteria: FormFieldData;
+  searchCriteria: FormFieldData;
   breaks?: Array<{
     position: number;
     duration: number;
     description: string;
     reasons: string[];
   }>;
-  total_duration?: number;
+  totalDuration?: number;
 }
 
 // Search criteria for recommendations
 export interface SearchCriteria {
   name?: string;
-  age_min?: number;
-  age_max?: number;
+  ageMin?: number;
+  ageMax?: number;
   format?: string[];
-  resources_available?: string[];
-  resources_needed?: string[]; // allow client alias used in LibraryPage
-  bloom_level?: string[];
+  resourcesAvailable?: string[];
+  resourcesNeeded?: string[]; // allow client alias used in LibraryPage
+  bloomLevel?: string[];
   topics?: string[];
-  duration_min?: number;
-  duration_max?: number;
-  mental_load?: string[];
-  physical_energy?: string[];
-  priority_categories?: string[];
+  durationMin?: number;
+  durationMax?: number;
+  mentalLoad?: string[];
+  physicalEnergy?: string[];
+  priorityCategories?: string[];
   limit?: number;
   offset?: number;
 }
@@ -173,10 +173,10 @@ export interface SearchCriteria {
 export interface ActivityFavoritesResponse {
   favourites: Array<{
     id: string;
-    favourite_type: string;
-    activity_id: string;
+    favouriteType: string;
+    activityId: string;
     name: string | null;
-    created_at: string;
+    createdAt: string;
   }>;
   pagination: {
     limit: number;
@@ -189,11 +189,11 @@ export interface ActivityFavoritesResponse {
 export interface LessonPlanFavoritesResponse {
   favourites: Array<{
     id: string;
-    favourite_type: string;
+    favouriteType: string;
     name: string | null;
-    activity_ids: string[];
-    lesson_plan?: import("./activity").LessonPlanData;
-    created_at: string;
+    activityIds: string[];
+    lessonPlan?: import("./activity").LessonPlanData;
+    createdAt: string;
   }>;
   pagination: {
     limit: number;
@@ -204,7 +204,7 @@ export interface LessonPlanFavoritesResponse {
 
 // Favorite status response
 export interface FavoriteStatusResponse {
-  is_favourited: boolean;
+  isFavourited: boolean;
 }
 
 // Users response
@@ -214,8 +214,8 @@ export interface UsersResponse {
     email: string;
     name?: string;
     role: string;
-    is_verified?: boolean;
-    created_at?: string;
+    isVerified?: boolean;
+    createdAt?: string;
   }>;
 }
 

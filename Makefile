@@ -1,4 +1,4 @@
-.PHONY: help setup dev dev-server dev-client docker-up docker-down docker-build clean format lint test install
+.PHONY: help setup dev dev-server dev-client docker-up docker-build docker-prod format lint test clean db-migrate db-clean
 
 # Default target
 .DEFAULT_GOAL := help
@@ -9,7 +9,7 @@ help: ## Show this help
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Development:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(dev|install|setup)" | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(dev|setup)" | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Docker:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep "docker" | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -18,19 +18,15 @@ help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(format|lint|test|clean)" | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Database:"
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(db-setup|db-migrate|db-check|db-mock|db-dataset|db-reset|backup|restore)" | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | grep -E "(db-migrate|db-clean)" | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2}'
 	@echo ""
 	@echo "Server-specific commands: cd server && make help"
 	@echo "Client-specific commands: cd client && make help"
 
 # Setup targets
-setup: server-setup client-setup ## Install all dependencies for server and client
-
-server-setup: ## Install server dependencies
+setup: ## Install all dependencies for server and client
 	cd server && $(MAKE) setup
-
-client-setup: ## Install client dependencies  
-	cd client && $(MAKE) setup
+	cd client && npm ci
 
 # Development targets
 dev: ## Run both server and client locally for development
@@ -39,51 +35,42 @@ dev: ## Run both server and client locally for development
 	@echo "Client will be at http://localhost:3001"
 	$(MAKE) -j2 dev-server dev-client
 
-dev-server: ## Run Flask server locally
+dev-server: ## Run server locally
 	cd server && $(MAKE) dev
 
-dev-client: ## Run client server locally
-	cd client && $(MAKE) dev
+dev-client: ## Run client locally
+	cd client && npm run dev
 
 # Docker targets
-docker-up: ## Start services with Docker Compose
-	docker compose up --build -d
+docker-up: ## Start all services with Docker Compose
+	docker compose -f docker/compose.yml up --build -d
 
 docker-build: ## Build Docker images
-	docker compose build
+	docker compose -f docker/compose.yml build
 
-docker-prod: ## Start production services
-	docker compose -f compose.prod.yml up -d
+docker-prod: ## Start production services with pre-built images
+	docker compose -f docker/compose.prod.yml up -d
 
-# Code quality targets (run on both server and client)
-format: ## Format code in both server and client
+# Code quality
+format: ## Format code in server and client
 	cd server && $(MAKE) format
-	cd client && $(MAKE) format
+	cd client && npm run format || true
 
-lint: ## Lint code in both server and client
+lint: ## Lint code in server and client
 	cd server && $(MAKE) lint
-	cd client && $(MAKE) lint
+	cd client && npm run lint
 
-test: ## Run tests for server
+test: ## Run tests for server and client
 	cd server && $(MAKE) test
-	cd client && $(MAKE) test
+	cd client && npm run test:run
 
-clean: ## Clean build artifacts for both server and client
+clean: ## Clean build artifacts
 	cd server && $(MAKE) clean
-	cd client && $(MAKE) clean || true
+	cd client && rm -rf dist node_modules || true
 
 # Database targets
-db-setup: ## Apply all Alembic migrations
-	cd server && $(MAKE) db-setup
+db-migrate: ## Run Flyway database migrations
+	cd server && $(MAKE) db-migrate
 
-db-check: ## Check that migrations are up to date
-	cd server && $(MAKE) db-check
-
-db-mock: ## Populate database with mock data (requires migrations applied)
-	cd server && $(MAKE) db-mock
-
-db-dataset: ## Import real dataset (requires migrations applied)
-	cd server && $(MAKE) db-dataset
-
-db-reset: ## Reset database (delete and recreate)
-	cd server && $(MAKE) db-reset
+db-clean: ## Clean database (WARNING: deletes all data)
+	cd server && $(MAKE) db-clean

@@ -23,17 +23,17 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const navigate = useNavigate();
 
   const ageRange =
-    activity.age_min && activity.age_max
-      ? `${activity.age_min}-${activity.age_max}`
-      : activity.age_min
-        ? `${activity.age_min}+`
+    activity.ageMin && activity.ageMax
+      ? `${activity.ageMin}-${activity.ageMax}`
+      : activity.ageMin
+        ? `${activity.ageMin}+`
         : "";
 
   const durationRange =
-    activity.duration_min_minutes && activity.duration_max_minutes
-      ? `${activity.duration_min_minutes}-${activity.duration_max_minutes} min`
-      : activity.duration_min_minutes
-        ? `${activity.duration_min_minutes}+ min`
+    activity.durationMinMinutes && activity.durationMaxMinutes
+      ? `${activity.durationMinMinutes}-${activity.durationMaxMinutes} min`
+      : activity.durationMinMinutes
+        ? `${activity.durationMinMinutes}+ min`
         : "";
 
   const handleViewDetails = (e: React.MouseEvent) => {
@@ -101,34 +101,34 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               {activity.format}
             </Badge>
           )}
-          {activity.bloom_level && (
+          {activity.bloomLevel && (
             <Badge
               variant="secondary"
               className="text-xs px-2 py-0.5 bg-secondary/50 text-secondary-foreground"
             >
-              {activity.bloom_level}
+              {activity.bloomLevel}
             </Badge>
           )}
         </div>
 
         {/* Energy Levels - Minimal Design */}
-        {(activity.mental_load || activity.physical_energy) && (
+        {(activity.mentalLoad || activity.physicalEnergy) && (
           <div className="flex gap-4 text-xs">
-            {activity.mental_load && (
+            {activity.mentalLoad && (
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
                 <span className="text-muted-foreground">Mental:</span>
                 <span className="font-medium text-card-foreground capitalize">
-                  {activity.mental_load}
+                  {activity.mentalLoad}
                 </span>
               </div>
             )}
-            {activity.physical_energy && (
+            {activity.physicalEnergy && (
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-orange-500" />
                 <span className="text-muted-foreground">Physical:</span>
                 <span className="font-medium text-card-foreground capitalize">
-                  {activity.physical_energy}
+                  {activity.physicalEnergy}
                 </span>
               </div>
             )}

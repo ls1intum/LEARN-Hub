@@ -423,7 +423,7 @@ export class ApiService {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ document_id: documentId }),
+        body: JSON.stringify({ documentId: documentId }),
       },
     );
   }

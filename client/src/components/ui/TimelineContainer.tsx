@@ -37,8 +37,8 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   className = "",
 }) => {
   const getAgeRange = (activity: Activity) => {
-    if (activity.age_min && activity.age_max) {
-      return `${activity.age_min}-${activity.age_max}`;
+    if (activity.ageMin && activity.ageMax) {
+      return `${activity.ageMin}-${activity.ageMax}`;
     }
     return "All ages";
   };
@@ -80,16 +80,16 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 mr-2" />
-                {activity.duration_min_minutes}
-                {activity.duration_max_minutes &&
-                activity.duration_max_minutes !== activity.duration_min_minutes
-                  ? `-${activity.duration_max_minutes}`
+                {activity.durationMinMinutes}
+                {activity.durationMaxMinutes &&
+                activity.durationMaxMinutes !== activity.durationMinMinutes
+                  ? `-${activity.durationMaxMinutes}`
                   : ""}{" "}
                 minutes
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <BookOpen className="h-4 w-4 mr-2" />
-                {activity.bloom_level}
+                {activity.bloomLevel}
               </div>
             </div>
 
@@ -111,24 +111,22 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
             )}
 
             {/* Resources */}
-            {activity.resources_needed &&
-              activity.resources_needed.length > 0 && (
+            {activity.resourcesNeeded &&
+              activity.resourcesNeeded.length > 0 && (
                 <div className="mb-4">
                   <p className="text-sm font-medium text-foreground mb-2">
                     Resources Needed:
                   </p>
                   <div className="flex flex-wrap gap-1">
-                    {activity.resources_needed.map(
-                      (resource, resourceIndex) => (
-                        <Badge
-                          key={resourceIndex}
-                          variant="outline"
-                          className="text-xs"
-                        >
-                          {resource}
-                        </Badge>
-                      ),
-                    )}
+                    {activity.resourcesNeeded.map((resource, resourceIndex) => (
+                      <Badge
+                        key={resourceIndex}
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        {resource}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               )}

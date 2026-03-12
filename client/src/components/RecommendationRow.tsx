@@ -22,7 +22,7 @@ export const RecommendationRow: React.FC<RecommendationRowProps> = ({
   recommendation,
   onSelect,
 }) => {
-  const { activities, score, score_breakdown } = recommendation;
+  const { activities, score, scoreBreakdown } = recommendation;
 
   // Tooltip state management
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
@@ -33,8 +33,8 @@ export const RecommendationRow: React.FC<RecommendationRowProps> = ({
   // Extract activities and their embedded breaks
   const activityItems = activities;
   const breakItems = activities
-    .filter((activity) => activity.break_after)
-    .map((activity) => activity.break_after!);
+    .filter((activity) => activity.breakAfter)
+    .map((activity) => activity.breakAfter!);
 
   // Get score color based on value
   const getScoreColor = (score: number) => {
@@ -45,7 +45,7 @@ export const RecommendationRow: React.FC<RecommendationRowProps> = ({
   };
 
   // Use actual category scores from API response
-  const categoryScores = score_breakdown || {};
+  const categoryScores = scoreBreakdown || {};
 
   // Handle tooltip visibility logic
   useEffect(() => {
@@ -124,7 +124,7 @@ export const RecommendationRow: React.FC<RecommendationRowProps> = ({
                           </span>
                           <span className="font-medium">
                             {scoreData.score}%
-                            {scoreData.is_priority && (
+                            {scoreData.isPriority && (
                               <span className="ml-1 text-yellow-500">★</span>
                             )}
                           </span>
@@ -144,8 +144,8 @@ export const RecommendationRow: React.FC<RecommendationRowProps> = ({
               <Clock className="h-4 w-4" />
               <span className="font-medium">
                 {activities.reduce((total, activity) => {
-                  const activityDuration = activity.duration_min_minutes || 0;
-                  const breakDuration = activity.break_after?.duration || 0;
+                  const activityDuration = activity.durationMinMinutes || 0;
+                  const breakDuration = activity.breakAfter?.duration || 0;
                   return total + activityDuration + breakDuration;
                 }, 0)}{" "}
                 min
@@ -220,7 +220,7 @@ export const RecommendationRow: React.FC<RecommendationRowProps> = ({
                 </div>
 
                 {/* Break After Activity */}
-                {activity.break_after && (
+                {activity.breakAfter && (
                   <div className="relative flex items-start gap-3 ml-4">
                     {/* Break Timeline Dot */}
                     <div className="relative z-10 flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center border border-blue-300 dark:border-blue-700">
@@ -233,7 +233,7 @@ export const RecommendationRow: React.FC<RecommendationRowProps> = ({
                         Break after Step {activityIndex + 1}
                       </div>
                       <BreakCard
-                        breakItem={activity.break_after}
+                        breakItem={activity.breakAfter}
                         compact={true}
                         isBetweenActivities={true}
                         activityIndex={activityIndex + 1}

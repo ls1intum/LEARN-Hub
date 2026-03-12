@@ -10,16 +10,16 @@ import { RangeSlider } from "@/components/ui/RangeSlider";
 import { PriorityToggle } from "@/components/ui/PriorityToggle";
 
 interface FormData {
-  target_age: number;
+  targetAge: number;
   format: string[];
-  resources_needed: string[];
-  bloom_levels: string[];
-  target_duration: number;
+  resourcesNeeded: string[];
+  bloomLevels: string[];
+  targetDuration: number;
   topics: string[];
-  allow_lesson_plans: boolean;
-  max_activity_count: number;
-  include_breaks: boolean;
-  priority_categories: string[]; // Categories to prioritize in scoring
+  allowLessonPlans: boolean;
+  maxActivityCount: number;
+  includeBreaks: boolean;
+  priorityCategories: string[]; // Categories to prioritize in scoring
 }
 
 interface RecommendationFormProps {
@@ -44,38 +44,38 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 
   // Initialize form data with default values
   const [formData, setFormData] = useState<FormData>({
-    target_age: initialValues?.target_age ?? 10,
+    targetAge: initialValues?.targetAge ?? 10,
     format: initialValues?.format ?? [],
-    resources_needed: initialValues?.resources_needed ?? [],
-    bloom_levels: initialValues?.bloom_levels ?? [],
-    target_duration: initialValues?.target_duration ?? 60,
+    resourcesNeeded: initialValues?.resourcesNeeded ?? [],
+    bloomLevels: initialValues?.bloomLevels ?? [],
+    targetDuration: initialValues?.targetDuration ?? 60,
     topics: initialValues?.topics ?? [],
-    allow_lesson_plans: initialValues?.allow_lesson_plans ?? false,
-    max_activity_count: initialValues?.max_activity_count ?? 2,
-    include_breaks: initialValues?.include_breaks ?? false,
-    priority_categories: initialValues?.priority_categories ?? [],
+    allowLessonPlans: initialValues?.allowLessonPlans ?? false,
+    maxActivityCount: initialValues?.maxActivityCount ?? 2,
+    includeBreaks: initialValues?.includeBreaks ?? false,
+    priorityCategories: initialValues?.priorityCategories ?? [],
   });
 
-  // Track if max_activity_count has been manually touched
+  // Track if maxActivityCount has been manually touched
   const [
     isMaxActivityCountManuallyTouched,
     setIsMaxActivityCountManuallyTouched,
   ] = useState(false);
 
-  // Calculate initial max_activity_count based on duration if not provided
+  // Calculate initial maxActivityCount based on duration if not provided
   const initialMaxActivityCount =
-    initialValues?.max_activity_count ??
-    Math.max(1, Math.floor((initialValues?.target_duration ?? 60) / 30));
+    initialValues?.maxActivityCount ??
+    Math.max(1, Math.floor((initialValues?.targetDuration ?? 60) / 30));
 
   // Update formData to use calculated initial value
   useEffect(() => {
-    if (!initialValues?.max_activity_count) {
+    if (!initialValues?.maxActivityCount) {
       setFormData((prev) => ({
         ...prev,
-        max_activity_count: initialMaxActivityCount,
+        maxActivityCount: initialMaxActivityCount,
       }));
     }
-  }, [initialMaxActivityCount, initialValues?.max_activity_count]);
+  }, [initialMaxActivityCount, initialValues?.maxActivityCount]);
 
   // Initialize multi-select fields with all options when fieldValues are available
   useEffect(() => {
@@ -83,14 +83,14 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
       setFormData((prev) => ({
         ...prev,
         format: prev.format.length > 0 ? prev.format : fieldValues.format || [],
-        resources_needed:
-          prev.resources_needed.length > 0
-            ? prev.resources_needed
-            : fieldValues.resources_available || [],
-        bloom_levels:
-          prev.bloom_levels.length > 0
-            ? prev.bloom_levels
-            : fieldValues.bloom_level || [],
+        resourcesNeeded:
+          prev.resourcesNeeded.length > 0
+            ? prev.resourcesNeeded
+            : fieldValues.resourcesAvailable || [],
+        bloomLevels:
+          prev.bloomLevels.length > 0
+            ? prev.bloomLevels
+            : fieldValues.bloomLevel || [],
         topics: prev.topics.length > 0 ? prev.topics : fieldValues.topics || [],
       }));
     }
@@ -98,8 +98,8 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 
   // Get all available options to display - always show all options regardless of selection
   const actualFormat = fieldValues?.format || [];
-  const actualResources = fieldValues?.resources_available || [];
-  const actualBloomLevels = fieldValues?.bloom_level || [];
+  const actualResources = fieldValues?.resourcesAvailable || [];
+  const actualBloomLevels = fieldValues?.bloomLevel || [];
   const actualTopics = fieldValues?.topics || [];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -111,15 +111,15 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
     setFormData((prev) => {
       const newData = { ...prev, ...updates };
 
-      // If duration is being updated and max_activity_count hasn't been manually touched,
-      // automatically calculate max_activity_count using the formula: duration // 30
+      // If duration is being updated and maxActivityCount hasn't been manually touched,
+      // automatically calculate maxActivityCount using the formula: duration // 30
       if (
-        updates.target_duration !== undefined &&
+        updates.targetDuration !== undefined &&
         !isMaxActivityCountManuallyTouched
       ) {
-        newData.max_activity_count = Math.max(
+        newData.maxActivityCount = Math.max(
           1,
-          Math.floor(updates.target_duration / 30),
+          Math.floor(updates.targetDuration / 30),
         );
       }
 
@@ -133,8 +133,8 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
     // Check if this is a multi-select field that requires at least one selection
     const multiSelectFields = [
       "format",
-      "resources_needed",
-      "bloom_levels",
+      "resourcesNeeded",
+      "bloomLevels",
       "topics",
     ];
     const isMultiSelectField = multiSelectFields.includes(field);
@@ -156,19 +156,19 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 
   const handleMaxActivityCountChange = (value: number) => {
     setIsMaxActivityCountManuallyTouched(true);
-    updateFormData({ max_activity_count: value });
+    updateFormData({ maxActivityCount: value });
   };
 
   const togglePriorityCategory = (category: string) => {
-    const currentCategories = formData.priority_categories;
+    const currentCategories = formData.priorityCategories;
     const newCategories = currentCategories.includes(category)
       ? currentCategories.filter((c) => c !== category)
       : [...currentCategories, category];
-    updateFormData({ priority_categories: newCategories });
+    updateFormData({ priorityCategories: newCategories });
   };
 
   const isPriorityCategory = (category: string) => {
-    return formData.priority_categories.includes(category);
+    return formData.priorityCategories.includes(category);
   };
 
   return (
@@ -178,11 +178,11 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
         {/* Target Age */}
         <RangeSlider
           label="Age Appropriateness"
-          value={formData.target_age}
+          value={formData.targetAge}
           min={6}
           max={15}
           step={1}
-          onChange={(value) => updateFormData({ target_age: value })}
+          onChange={(value) => updateFormData({ targetAge: value })}
           unit=" years"
           priorityToggle={
             <PriorityToggle
@@ -196,11 +196,11 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
         {/* Target Duration */}
         <RangeSlider
           label="Duration Fit"
-          value={formData.target_duration}
+          value={formData.targetDuration}
           min={15}
           max={180}
           step={15}
-          onChange={(value) => updateFormData({ target_duration: value })}
+          onChange={(value) => updateFormData({ targetDuration: value })}
           unit=" minutes"
           priorityToggle={
             <PriorityToggle
@@ -223,8 +223,8 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
         <BadgeSelector
           label="Resources Available"
           options={actualResources}
-          selectedValues={formData.resources_needed}
-          onToggle={(value) => toggleArrayValue("resources_needed", value)}
+          selectedValues={formData.resourcesNeeded}
+          onToggle={(value) => toggleArrayValue("resourcesNeeded", value)}
         />
       </FormSection>
 
@@ -234,8 +234,8 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
         <BadgeSelector
           label="Bloom Level Match"
           options={actualBloomLevels}
-          selectedValues={formData.bloom_levels}
-          onToggle={(value) => toggleArrayValue("bloom_levels", value)}
+          selectedValues={formData.bloomLevels}
+          onToggle={(value) => toggleArrayValue("bloomLevels", value)}
           priorityToggle={
             <PriorityToggle
               category="bloom_level_match"
@@ -272,18 +272,18 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           </div>
           <input
             type="checkbox"
-            checked={formData.allow_lesson_plans}
+            checked={formData.allowLessonPlans}
             onChange={(e) =>
-              updateFormData({ allow_lesson_plans: e.target.checked })
+              updateFormData({ allowLessonPlans: e.target.checked })
             }
           />
         </div>
 
-        {formData.allow_lesson_plans && (
+        {formData.allowLessonPlans && (
           <>
             <RangeSlider
               label="Max Activities"
-              value={formData.max_activity_count}
+              value={formData.maxActivityCount}
               min={1}
               max={5}
               step={1}
@@ -299,9 +299,9 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
               </div>
               <input
                 type="checkbox"
-                checked={formData.include_breaks}
+                checked={formData.includeBreaks}
                 onChange={(e) =>
-                  updateFormData({ include_breaks: e.target.checked })
+                  updateFormData({ includeBreaks: e.target.checked })
                 }
               />
             </div>

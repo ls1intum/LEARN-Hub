@@ -8,7 +8,7 @@ const STORAGE_PREFIX = "learn_hub_";
 export const secureStorage = {
   getAccessToken(): string | null {
     try {
-      return sessionStorage.getItem(`${STORAGE_PREFIX}access_token`);
+      return sessionStorage.getItem(`${STORAGE_PREFIX}accessToken`);
     } catch {
       return null;
     }
@@ -16,7 +16,7 @@ export const secureStorage = {
 
   getRefreshToken(): string | null {
     try {
-      return sessionStorage.getItem(`${STORAGE_PREFIX}refresh_token`);
+      return sessionStorage.getItem(`${STORAGE_PREFIX}refreshToken`);
     } catch {
       return null;
     }
@@ -24,7 +24,7 @@ export const secureStorage = {
 
   setAccessToken(token: string): void {
     try {
-      sessionStorage.setItem(`${STORAGE_PREFIX}access_token`, token);
+      sessionStorage.setItem(`${STORAGE_PREFIX}accessToken`, token);
     } catch {
       // Ignore storage errors
     }
@@ -32,7 +32,7 @@ export const secureStorage = {
 
   setRefreshToken(token: string): void {
     try {
-      sessionStorage.setItem(`${STORAGE_PREFIX}refresh_token`, token);
+      sessionStorage.setItem(`${STORAGE_PREFIX}refreshToken`, token);
     } catch {
       // Ignore storage errors
     }
@@ -45,8 +45,8 @@ export const secureStorage = {
 
   clearTokens(): void {
     try {
-      sessionStorage.removeItem(`${STORAGE_PREFIX}access_token`);
-      sessionStorage.removeItem(`${STORAGE_PREFIX}refresh_token`);
+      sessionStorage.removeItem(`${STORAGE_PREFIX}accessToken`);
+      sessionStorage.removeItem(`${STORAGE_PREFIX}refreshToken`);
     } catch {
       // Ignore storage errors
     }

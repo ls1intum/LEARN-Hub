@@ -36,30 +36,30 @@ import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 
 interface FilterFormData {
   name: string;
-  age_min: number;
-  age_max: number;
+  ageMin: number;
+  ageMax: number;
   format: string[];
-  bloom_level: string[];
-  resources_needed: string[];
+  bloomLevel: string[];
+  resourcesNeeded: string[];
   topics: string[];
-  mental_load: string[];
-  physical_energy: string[];
-  duration_min: number;
-  duration_max: number;
+  mentalLoad: string[];
+  physicalEnergy: string[];
+  durationMin: number;
+  durationMax: number;
 }
 
 const initialFilterData: FilterFormData = {
   name: "",
-  age_min: ACTIVITY_CONSTANTS.AGE_RANGE.MIN,
-  age_max: ACTIVITY_CONSTANTS.AGE_RANGE.MAX,
+  ageMin: ACTIVITY_CONSTANTS.AGE_RANGE.MIN,
+  ageMax: ACTIVITY_CONSTANTS.AGE_RANGE.MAX,
   format: [],
-  bloom_level: [],
-  resources_needed: [],
+  bloomLevel: [],
+  resourcesNeeded: [],
   topics: [],
-  mental_load: [],
-  physical_energy: [],
-  duration_min: ACTIVITY_CONSTANTS.DURATION_RANGE.MIN,
-  duration_max: ACTIVITY_CONSTANTS.DURATION_RANGE.MAX,
+  mentalLoad: [],
+  physicalEnergy: [],
+  durationMin: ACTIVITY_CONSTANTS.DURATION_RANGE.MIN,
+  durationMax: ACTIVITY_CONSTANTS.DURATION_RANGE.MAX,
 };
 
 export const LibraryPage: React.FC = () => {
@@ -79,11 +79,11 @@ export const LibraryPage: React.FC = () => {
   const filterOptions: FilterOptions = useMemo(
     () => ({
       format: fieldValues.format,
-      resources_available: fieldValues.resources_available,
-      bloom_level: fieldValues.bloom_level,
+      resourcesAvailable: fieldValues.resourcesAvailable,
+      bloomLevel: fieldValues.bloomLevel,
       topics: fieldValues.topics,
-      mental_load: fieldValues.mental_load,
-      physical_energy: fieldValues.physical_energy,
+      mentalLoad: fieldValues.mentalLoad,
+      physicalEnergy: fieldValues.physicalEnergy,
     }),
     [fieldValues],
   );
@@ -101,36 +101,34 @@ export const LibraryPage: React.FC = () => {
     const filters = filterForm.values;
     return await apiService.getActivities({
       name: filters.name || undefined,
-      age_min:
-        filters.age_min > ACTIVITY_CONSTANTS.AGE_RANGE.MIN
-          ? filters.age_min
+      ageMin:
+        filters.ageMin > ACTIVITY_CONSTANTS.AGE_RANGE.MIN
+          ? filters.ageMin
           : undefined,
-      age_max:
-        filters.age_max < ACTIVITY_CONSTANTS.AGE_RANGE.MAX
-          ? filters.age_max
+      ageMax:
+        filters.ageMax < ACTIVITY_CONSTANTS.AGE_RANGE.MAX
+          ? filters.ageMax
           : undefined,
-      duration_min:
-        filters.duration_min > ACTIVITY_CONSTANTS.DURATION_RANGE.MIN
-          ? filters.duration_min
+      durationMin:
+        filters.durationMin > ACTIVITY_CONSTANTS.DURATION_RANGE.MIN
+          ? filters.durationMin
           : undefined,
-      duration_max:
-        filters.duration_max < ACTIVITY_CONSTANTS.DURATION_RANGE.MAX
-          ? filters.duration_max
+      durationMax:
+        filters.durationMax < ACTIVITY_CONSTANTS.DURATION_RANGE.MAX
+          ? filters.durationMax
           : undefined,
       format: filters.format.length > 0 ? filters.format : undefined,
-      bloom_level:
-        filters.bloom_level.length > 0 ? filters.bloom_level : undefined,
-      resources_needed:
-        filters.resources_needed.length > 0
-          ? filters.resources_needed
+      bloomLevel:
+        filters.bloomLevel.length > 0 ? filters.bloomLevel : undefined,
+      resourcesNeeded:
+        filters.resourcesNeeded.length > 0
+          ? filters.resourcesNeeded
           : undefined,
       topics: filters.topics.length > 0 ? filters.topics : undefined,
-      mental_load:
-        filters.mental_load.length > 0 ? filters.mental_load : undefined,
-      physical_energy:
-        filters.physical_energy.length > 0
-          ? filters.physical_energy
-          : undefined,
+      mentalLoad:
+        filters.mentalLoad.length > 0 ? filters.mentalLoad : undefined,
+      physicalEnergy:
+        filters.physicalEnergy.length > 0 ? filters.physicalEnergy : undefined,
       limit: itemsPerPage,
       offset: (currentPage - 1) * itemsPerPage,
     });
@@ -159,7 +157,7 @@ export const LibraryPage: React.FC = () => {
       try {
         const response = await apiService.getActivityFavourites();
         const favouritedIds = new Set(
-          response.favourites.map((fav) => fav.activity_id),
+          response.favourites.map((fav) => fav.activityId),
         );
         setFavouritedActivityIds(favouritedIds);
       } catch {
@@ -324,18 +322,17 @@ export const LibraryPage: React.FC = () => {
                         Select age range for learners
                       </span>
                       <span className="text-lg font-bold text-primary">
-                        {filterForm.values.age_min} -{" "}
-                        {filterForm.values.age_max}
+                        {filterForm.values.ageMin} - {filterForm.values.ageMax}
                       </span>
                     </div>
                     <Slider
                       value={[
-                        filterForm.values.age_min,
-                        filterForm.values.age_max,
+                        filterForm.values.ageMin,
+                        filterForm.values.ageMax,
                       ]}
                       onValueChange={(value) => {
-                        handleFilterChange("age_min", value[0]);
-                        handleFilterChange("age_max", value[1]);
+                        handleFilterChange("ageMin", value[0]);
+                        handleFilterChange("ageMax", value[1]);
                       }}
                       max={ACTIVITY_CONSTANTS.AGE_RANGE.MAX}
                       min={ACTIVITY_CONSTANTS.AGE_RANGE.MIN}
@@ -357,18 +354,18 @@ export const LibraryPage: React.FC = () => {
                         Select activity duration
                       </span>
                       <span className="text-lg font-bold text-primary">
-                        {filterForm.values.duration_min} -{" "}
-                        {filterForm.values.duration_max}
+                        {filterForm.values.durationMin} -{" "}
+                        {filterForm.values.durationMax}
                       </span>
                     </div>
                     <Slider
                       value={[
-                        filterForm.values.duration_min,
-                        filterForm.values.duration_max,
+                        filterForm.values.durationMin,
+                        filterForm.values.durationMax,
                       ]}
                       onValueChange={(value) => {
-                        handleFilterChange("duration_min", value[0]);
-                        handleFilterChange("duration_max", value[1]);
+                        handleFilterChange("durationMin", value[0]);
+                        handleFilterChange("durationMax", value[1]);
                       }}
                       max={ACTIVITY_CONSTANTS.DURATION_RANGE.MAX}
                       min={ACTIVITY_CONSTANTS.DURATION_RANGE.MIN}
@@ -413,13 +410,13 @@ export const LibraryPage: React.FC = () => {
                     </div>
                     <BadgeSelector
                       label=""
-                      options={filterOptions.bloom_level}
-                      selectedValues={filterForm.values.bloom_level}
+                      options={filterOptions.bloomLevel}
+                      selectedValues={filterForm.values.bloomLevel}
                       onToggle={(value) =>
                         handleMultiSelectFilter(
-                          "bloom_level",
+                          "bloomLevel",
                           value,
-                          !filterForm.values.bloom_level.includes(value),
+                          !filterForm.values.bloomLevel.includes(value),
                         )
                       }
                     />
@@ -433,13 +430,13 @@ export const LibraryPage: React.FC = () => {
                     </div>
                     <BadgeSelector
                       label=""
-                      options={filterOptions.resources_available}
-                      selectedValues={filterForm.values.resources_needed}
+                      options={filterOptions.resourcesAvailable}
+                      selectedValues={filterForm.values.resourcesNeeded}
                       onToggle={(value) =>
                         handleMultiSelectFilter(
-                          "resources_needed",
+                          "resourcesNeeded",
                           value,
-                          !filterForm.values.resources_needed.includes(value),
+                          !filterForm.values.resourcesNeeded.includes(value),
                         )
                       }
                     />
@@ -481,13 +478,13 @@ export const LibraryPage: React.FC = () => {
                     </div>
                     <BadgeSelector
                       label=""
-                      options={filterOptions.mental_load}
-                      selectedValues={filterForm.values.mental_load}
+                      options={filterOptions.mentalLoad}
+                      selectedValues={filterForm.values.mentalLoad}
                       onToggle={(value) =>
                         handleMultiSelectFilter(
-                          "mental_load",
+                          "mentalLoad",
                           value,
-                          !filterForm.values.mental_load.includes(value),
+                          !filterForm.values.mentalLoad.includes(value),
                         )
                       }
                     />
@@ -501,13 +498,13 @@ export const LibraryPage: React.FC = () => {
                     </div>
                     <BadgeSelector
                       label=""
-                      options={filterOptions.physical_energy}
-                      selectedValues={filterForm.values.physical_energy}
+                      options={filterOptions.physicalEnergy}
+                      selectedValues={filterForm.values.physicalEnergy}
                       onToggle={(value) =>
                         handleMultiSelectFilter(
-                          "physical_energy",
+                          "physicalEnergy",
                           value,
-                          !filterForm.values.physical_energy.includes(value),
+                          !filterForm.values.physicalEnergy.includes(value),
                         )
                       }
                     />
@@ -583,7 +580,7 @@ export const LibraryPage: React.FC = () => {
                             Age Range
                           </span>
                           <p className="text-sm font-medium">
-                            {activity.age_min}-{activity.age_max}
+                            {activity.ageMin}-{activity.ageMax}
                           </p>
                         </div>
                         <div>
@@ -591,8 +588,8 @@ export const LibraryPage: React.FC = () => {
                             Duration
                           </span>
                           <p className="text-sm font-medium">
-                            {activity.duration_min_minutes}-
-                            {activity.duration_max_minutes} min
+                            {activity.durationMinMinutes}-
+                            {activity.durationMaxMinutes} min
                           </p>
                         </div>
                       </div>
@@ -681,18 +678,18 @@ export const LibraryPage: React.FC = () => {
                                 <div className="flex items-center gap-1 mt-1">
                                   <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
                                     <Brain className="h-2 w-2" />
-                                    {activity.mental_load}
+                                    {activity.mentalLoad}
                                   </span>
                                   <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
                                     <ActivityIcon className="h-2 w-2" />
-                                    {activity.physical_energy}
+                                    {activity.physicalEnergy}
                                   </span>
                                 </div>
                               </div>
                             </td>
                             <td className="px-2 py-3 whitespace-nowrap">
                               <div className="text-sm font-medium text-foreground">
-                                {activity.age_min}-{activity.age_max}
+                                {activity.ageMin}-{activity.ageMax}
                               </div>
                             </td>
                             <td className="px-2 py-3 whitespace-nowrap">
@@ -702,8 +699,8 @@ export const LibraryPage: React.FC = () => {
                             </td>
                             <td className="px-2 py-3 whitespace-nowrap">
                               <div className="text-sm font-medium text-foreground">
-                                {activity.duration_min_minutes}-
-                                {activity.duration_max_minutes}m
+                                {activity.durationMinMinutes}-
+                                {activity.durationMaxMinutes}m
                               </div>
                             </td>
                             <td className="px-2 py-3">

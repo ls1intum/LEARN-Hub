@@ -28,7 +28,7 @@ services:
 
   server:
     build:
-      context: ./server
+      context: ../server
       platforms:
         - linux/amd64
         - linux/arm64
@@ -36,9 +36,9 @@ services:
     ports:
       - "${SERVER_PORT:-5001}:5001"
     env_file:
-      - .env
+      - ../.env
     environment:
-      - SQLALCHEMY_DATABASE_URI=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-learn_hub_activities}
+      - POSTGRES_DB_URI=jdbc:postgresql://postgres:5432/${POSTGRES_DB:-learn_hub_activities}
       - PDF_PATH=/app/data/pdfs
     volumes:
       - ${PDF_PATH}:/app/data/pdfs
@@ -52,7 +52,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
     deploy:
       resources:
         limits:
@@ -64,7 +64,7 @@ services:
 
   client:
     build:
-      context: ./client
+      context: ../client
       platforms:
         - linux/amd64
         - linux/arm64

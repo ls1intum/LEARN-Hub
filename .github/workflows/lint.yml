@@ -6,12 +6,14 @@ on:
     branches: [main, develop]
 
 jobs:
-  lint-server-spring:
-    name: Lint Spring Server
+  lint-server:
+    name: Lint Server
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
-        working-directory: server-spring
+        working-directory: server
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,6 +31,8 @@ jobs:
   lint-client:
     name: Lint Client
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: client

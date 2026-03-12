@@ -13,29 +13,29 @@ import { ArrowLeft } from "lucide-react";
 import type { ResultsData } from "@/types/activity";
 
 interface FormData {
-  target_age: number;
+  targetAge: number;
   format: string[];
-  resources_needed: string[];
-  bloom_levels: string[];
-  target_duration: number;
+  resourcesNeeded: string[];
+  bloomLevels: string[];
+  targetDuration: number;
   topics: string[];
-  allow_lesson_plans: boolean;
-  max_activity_count: number;
-  include_breaks: boolean;
-  priority_categories: string[];
+  allowLessonPlans: boolean;
+  maxActivityCount: number;
+  includeBreaks: boolean;
+  priorityCategories: string[];
 }
 
 const initialFormData: FormData = {
-  target_age: 6,
+  targetAge: 6,
   format: [],
-  resources_needed: [],
-  bloom_levels: [],
-  target_duration: 60,
+  resourcesNeeded: [],
+  bloomLevels: [],
+  targetDuration: 60,
   topics: [],
-  allow_lesson_plans: true,
-  max_activity_count: 2,
-  include_breaks: false,
-  priority_categories: [],
+  allowLessonPlans: true,
+  maxActivityCount: 2,
+  includeBreaks: false,
+  priorityCategories: [],
 };
 
 export const RecommendationsPage: React.FC = () => {
@@ -59,41 +59,38 @@ export const RecommendationsPage: React.FC = () => {
     onSubmit: async (formData) => {
       const params = new URLSearchParams();
 
-      params.append("target_age", String(formData.target_age ?? 6));
-      params.append("target_duration", String(formData.target_duration ?? 60));
+      params.append("targetAge", String(formData.targetAge ?? 6));
+      params.append("targetDuration", String(formData.targetDuration ?? 60));
       params.append(
-        "allow_lesson_plans",
-        String(formData.allow_lesson_plans ?? true),
+        "allowLessonPlans",
+        String(formData.allowLessonPlans ?? true),
       );
-      params.append(
-        "max_activity_count",
-        String(formData.max_activity_count ?? 2),
-      );
-      params.append("include_breaks", String(formData.include_breaks ?? false));
+      params.append("maxActivityCount", String(formData.maxActivityCount ?? 2));
+      params.append("includeBreaks", String(formData.includeBreaks ?? false));
 
       if ((formData.format?.length ?? 0) > 0) {
         (formData.format as string[]).forEach((f) =>
           params.append("format", f),
         );
       }
-      if ((formData.resources_needed?.length ?? 0) > 0) {
-        (formData.resources_needed as string[]).forEach((r) =>
-          params.append("available_resources", r),
+      if ((formData.resourcesNeeded?.length ?? 0) > 0) {
+        (formData.resourcesNeeded as string[]).forEach((r) =>
+          params.append("availableResources", r),
         );
       }
-      if ((formData.bloom_levels?.length ?? 0) > 0) {
-        (formData.bloom_levels as string[]).forEach((b) =>
-          params.append("bloom_levels", b),
+      if ((formData.bloomLevels?.length ?? 0) > 0) {
+        (formData.bloomLevels as string[]).forEach((b) =>
+          params.append("bloomLevels", b),
         );
       }
       if ((formData.topics?.length ?? 0) > 0) {
         (formData.topics as string[]).forEach((t) =>
-          params.append("preferred_topics", t),
+          params.append("preferredTopics", t),
         );
       }
 
-      (formData.priority_categories ?? []).forEach((category) =>
-        params.append("priority_categories", category),
+      (formData.priorityCategories ?? []).forEach((category) =>
+        params.append("priorityCategories", category),
       );
 
       params.set("limit", "5");
@@ -124,27 +121,27 @@ export const RecommendationsPage: React.FC = () => {
 
   const handleFormSubmit = async (formData: FormData) => {
     const params = new URLSearchParams();
-    params.append("target_age", formData.target_age.toString());
-    params.append("target_duration", formData.target_duration.toString());
-    params.append("allow_lesson_plans", formData.allow_lesson_plans.toString());
-    const effectiveMaxActivities = formData.allow_lesson_plans
-      ? formData.max_activity_count
+    params.append("targetAge", formData.targetAge.toString());
+    params.append("targetDuration", formData.targetDuration.toString());
+    params.append("allowLessonPlans", formData.allowLessonPlans.toString());
+    const effectiveMaxActivities = formData.allowLessonPlans
+      ? formData.maxActivityCount
       : 1;
-    const effectiveIncludeBreaks = formData.allow_lesson_plans
-      ? formData.include_breaks
+    const effectiveIncludeBreaks = formData.allowLessonPlans
+      ? formData.includeBreaks
       : false;
-    params.append("max_activity_count", effectiveMaxActivities.toString());
-    params.append("include_breaks", effectiveIncludeBreaks.toString());
+    params.append("maxActivityCount", effectiveMaxActivities.toString());
+    params.append("includeBreaks", effectiveIncludeBreaks.toString());
     if (formData.format.length > 0)
       params.append("format", formData.format.join(","));
-    if (formData.resources_needed.length > 0)
-      params.append("available_resources", formData.resources_needed.join(","));
-    if (formData.bloom_levels.length > 0)
-      params.append("bloom_levels", formData.bloom_levels.join(","));
+    if (formData.resourcesNeeded.length > 0)
+      params.append("availableResources", formData.resourcesNeeded.join(","));
+    if (formData.bloomLevels.length > 0)
+      params.append("bloomLevels", formData.bloomLevels.join(","));
     if (formData.topics.length > 0)
-      params.append("preferred_topics", formData.topics.join(","));
-    formData.priority_categories.forEach((category) =>
-      params.append("priority_categories", category),
+      params.append("preferredTopics", formData.topics.join(","));
+    formData.priorityCategories.forEach((category) =>
+      params.append("priorityCategories", category),
     );
     params.set("limit", "5");
     const data = await apiService.getRecommendations(params.toString());

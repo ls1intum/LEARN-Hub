@@ -43,23 +43,19 @@ The `docs/figures/` directory contains UML diagrams documenting the system archi
 
 ## Quick Start
 
-### Spring Boot (Current Implementation)
-See [`docs/dev-setup-spring.md`](docs/dev-setup-spring.md)
+See [`docs/dev-setup.md`](docs/dev-setup.md) for the full development setup guide.
 
 **Quick start**:
 ```bash
 # Start PostgreSQL
-docker compose -f compose-spring.yml up postgres -d
+docker compose -f docker/compose.yml up postgres -d
 
 # Run migrations
-cd server-spring && make db-migrate
+make db-migrate
 
-# Start server
+# Start server and client
 make dev
 ```
-
-### Flask (Legacy - Deprecated)
-See [`docs/dev-setup.md`](docs/dev-setup.md) for the legacy Flask setup.
 
 ## Services
 
@@ -67,8 +63,7 @@ Once running, access the system at:
 
 - **Client**: http://localhost:3001
 - **Server API**: http://localhost:5001
-- **API Documentation**: http://localhost:5001/api/openapi
-- **Hosted API Documentation (test deployment)**: https://learnhub-test.aet.cit.tum.de/api/openapi/swagger
+- **API Documentation**: http://localhost:5001/api/openapi/swagger
 
 ## Environment Configuration
 
@@ -81,8 +76,8 @@ cp example.env .env
 Key configuration variables:
 - `LLM_API_KEY` - API key for automated content processing
 - `JWT_SECRET_KEY` - JWT token signing
-- `SQLALCHEMY_DATABASE_URI` - PostgreSQL connection string
-- `SMTP_*` - Email service configuration for teacher verification
+- `POSTGRES_DB_URI` - PostgreSQL JDBC connection string
+- `EMAIL_*` - Email service configuration for teacher verification
 
 See `example.env` for a complete list of configurable variables.
 
@@ -119,8 +114,6 @@ See `example.env` for a complete list of configurable variables.
 - **Spring Security** with JWT authentication
 - Maven for dependency management
 
-> **Migration Note**: The server has been migrated from Flask/Python to Spring Boot/Java. The legacy Flask implementation is available in the `server/` directory. All API endpoints maintain full backward compatibility.
-
 **Client**:
 - React 19 with TypeScript for type safety
 - Vite for rapid build tooling with hot module replacement
@@ -140,28 +133,20 @@ See `example.env` for a complete list of configurable variables.
 
 ## Development Commands
 
-### Server (Spring Boot)
+### Server
 ```bash
-cd server-spring/
+cd server/
 make dev          # Start development server
 make test         # Run tests
 make build        # Build the application
 make db-migrate   # Run Flyway migrations
 ```
 
-### Legacy Server (Flask - Deprecated)
-```bash
-cd server/
-make dev          # Start development server
-make test         # Run tests with coverage
-make db-setup     # Run database migrations
-```
-
 ### Client
 ```bash
 cd client/
-make dev          # Start development server
-make test         # Run tests
-make build        # Build for production
-make lint         # Check code quality
+npm run dev       # Start development server
+npm run test:run  # Run tests
+npm run build     # Build for production
+npm run lint      # Check code quality
 ```

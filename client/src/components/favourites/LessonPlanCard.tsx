@@ -18,11 +18,11 @@ import { BreakCard } from "@/components/BreakCard";
 
 interface LessonPlanFavourite {
   id: string;
-  favourite_type: string;
+  favouriteType: string;
   name: string | null;
-  activity_ids: string[];
-  lesson_plan?: import("@/types/activity").LessonPlanData;
-  created_at: string;
+  activityIds: string[];
+  lessonPlan?: import("@/types/activity").LessonPlanData;
+  createdAt: string;
 }
 
 interface LessonPlanCardProps {
@@ -43,8 +43,8 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
 
   // Calculate lesson plan summary (including breaks)
   const totalDuration = activities.reduce((sum, activity) => {
-    const activityMinutes = activity.duration_min_minutes || 0;
-    const breakMinutes = activity.break_after?.duration || 0;
+    const activityMinutes = activity.durationMinMinutes || 0;
+    const breakMinutes = activity.breakAfter?.duration || 0;
     return sum + activityMinutes + breakMinutes;
   }, 0);
   const allTopics = [
@@ -53,8 +53,8 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
   const allFormats = [
     ...new Set(activities.map((activity) => activity.format)),
   ];
-  const minAge = Math.min(...activities.map((activity) => activity.age_min));
-  const maxAge = Math.max(...activities.map((activity) => activity.age_max));
+  const minAge = Math.min(...activities.map((activity) => activity.ageMin));
+  const maxAge = Math.max(...activities.map((activity) => activity.ageMax));
 
   const handleViewActivityDetails = (activity: Activity) => {
     if (activity.id && activity.type === "activity") {
@@ -115,7 +115,7 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
         <div className="flex items-center gap-1.5">
           <Calendar className="h-4 w-4" />
           <span>
-            Favourited {new Date(favourite.created_at).toLocaleDateString()}
+            Favourited {new Date(favourite.createdAt).toLocaleDateString()}
           </span>
         </div>
       </div>
@@ -194,7 +194,7 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
                 </div>
 
                 {/* Break After Activity */}
-                {activity.break_after && (
+                {activity.breakAfter && (
                   <div className="relative flex items-start gap-3 ml-4">
                     {/* Break Timeline Dot */}
                     <div className="relative z-10 flex-shrink-0 w-6 h-6 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center border border-blue-300 dark:border-blue-700">
@@ -207,7 +207,7 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
                         Break after Step {activityIndex + 1}
                       </div>
                       <BreakCard
-                        breakItem={activity.break_after}
+                        breakItem={activity.breakAfter}
                         compact={true}
                         isBetweenActivities={true}
                         activityIndex={activityIndex + 1}

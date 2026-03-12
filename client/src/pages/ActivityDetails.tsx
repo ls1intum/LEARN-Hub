@@ -5,7 +5,13 @@ import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { useDataFetch } from "@/hooks/useDataFetch";
 import { useApi } from "@/hooks/useApi";
-import { Brain, Activity as ActivityIcon, FileText, BookOpen, Edit3 } from "lucide-react";
+import {
+  Brain,
+  Activity as ActivityIcon,
+  FileText,
+  BookOpen,
+  Edit3,
+} from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,16 +63,16 @@ export const ActivityDetails: React.FC = () => {
 
   // Data fetching for PDF info
   const fetchPdfInfo = useCallback(async () => {
-    if (!activity?.document_id) return null;
+    if (!activity?.documentId) return null;
     try {
-      const response = await apiService.getDocumentInfo(activity.document_id);
+      const response = await apiService.getDocumentInfo(activity.documentId);
       if (response) {
         return {
           id: response.id,
           filename: response.filename,
           file_size: response.file_size,
           extracted_fields: {},
-          created_at: response.created_at,
+          createdAt: response.createdAt,
         };
       }
     } catch {
@@ -74,12 +80,12 @@ export const ActivityDetails: React.FC = () => {
       return null;
     }
     return null;
-  }, [activity?.document_id]);
+  }, [activity?.documentId]);
 
   const { data: pdfInfo } = useDataFetch({
     fetchFn: fetchPdfInfo,
-    enabled: !!activity?.document_id,
-    dependencies: [activity?.document_id],
+    enabled: !!activity?.documentId,
+    dependencies: [activity?.documentId],
   });
 
   const handleDownloadPDF = async () => {
@@ -145,23 +151,23 @@ export const ActivityDetails: React.FC = () => {
   }
 
   const ageRange =
-    activity.age_min && activity.age_max
-      ? `${activity.age_min}-${activity.age_max}`
-      : activity.age_min
-        ? `${activity.age_min}+`
+    activity.ageMin && activity.ageMax
+      ? `${activity.ageMin}-${activity.ageMax}`
+      : activity.ageMin
+        ? `${activity.ageMin}+`
         : "";
 
   const durationRange =
-    activity.duration_min_minutes && activity.duration_max_minutes
-      ? `${activity.duration_min_minutes}-${activity.duration_max_minutes} minutes`
-      : activity.duration_min_minutes
-        ? `${activity.duration_min_minutes}+ minutes`
+    activity.durationMinMinutes && activity.durationMaxMinutes
+      ? `${activity.durationMinMinutes}-${activity.durationMaxMinutes} minutes`
+      : activity.durationMinMinutes
+        ? `${activity.durationMinMinutes}+ minutes`
         : "";
 
   const totalTime =
-    (activity.duration_min_minutes || 0) +
-    (activity.prep_time_minutes || 0) +
-    (activity.cleanup_time_minutes || 0);
+    (activity.durationMinMinutes || 0) +
+    (activity.prepTimeMinutes || 0) +
+    (activity.cleanupTimeMinutes || 0);
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4">
@@ -195,7 +201,7 @@ export const ActivityDetails: React.FC = () => {
               <FileText className="h-4 w-4" />
               {downloadApi.isLoading ? "Loading..." : "View PDF"}
             </Button>
-            {activity.artikulationsschema_markdown && (
+            {activity.artikulationsschemaMarkdown && (
               <Button
                 onClick={handleViewArtikulationsschema}
                 disabled={artikulationsschemaApi.isLoading}
@@ -251,14 +257,12 @@ export const ActivityDetails: React.FC = () => {
                 </div>
               )}
 
-              {activity.bloom_level && (
+              {activity.bloomLevel && (
                 <div>
                   <h3 className="font-semibold text-card-foreground">
                     Bloom's Taxonomy Level
                   </h3>
-                  <p className="text-muted-foreground">
-                    {activity.bloom_level}
-                  </p>
+                  <p className="text-muted-foreground">{activity.bloomLevel}</p>
                 </div>
               )}
 
@@ -282,36 +286,36 @@ export const ActivityDetails: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {(activity.mental_load || activity.physical_energy) && (
+              {(activity.mentalLoad || activity.physicalEnergy) && (
                 <div>
                   <h3 className="font-semibold text-card-foreground">
                     Energy Requirements
                   </h3>
                   <div className="text-muted-foreground space-y-2">
-                    {activity.mental_load && (
+                    {activity.mentalLoad && (
                       <div className="flex items-center gap-2">
                         <Brain className="h-4 w-4 text-blue-500" />
-                        <span>Mental: {activity.mental_load}</span>
+                        <span>Mental: {activity.mentalLoad}</span>
                       </div>
                     )}
-                    {activity.physical_energy && (
+                    {activity.physicalEnergy && (
                       <div className="flex items-center gap-2">
                         <ActivityIcon className="h-4 w-4 text-orange-500" />
-                        <span>Physical: {activity.physical_energy}</span>
+                        <span>Physical: {activity.physicalEnergy}</span>
                       </div>
                     )}
                   </div>
                 </div>
               )}
 
-              {activity.resources_needed &&
-                activity.resources_needed.length > 0 && (
+              {activity.resourcesNeeded &&
+                activity.resourcesNeeded.length > 0 && (
                   <div>
                     <h3 className="font-semibold text-card-foreground">
                       Resources Needed
                     </h3>
                     <ul className="text-muted-foreground list-disc list-inside">
-                      {activity.resources_needed.map((resource, index) => (
+                      {activity.resourcesNeeded.map((resource, index) => (
                         <li key={index}>{resource}</li>
                       ))}
                     </ul>
@@ -383,7 +387,7 @@ export const ActivityDetails: React.FC = () => {
                 </p>
                 <p>
                   <span className="font-medium">Uploaded:</span>{" "}
-                  {new Date(pdfInfo.created_at).toLocaleDateString()}
+                  {new Date(pdfInfo.createdAt).toLocaleDateString()}
                 </p>
               </div>
             ) : (

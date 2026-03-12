@@ -12,10 +12,10 @@ import type { Activity } from "@/types/activity";
 
 interface ActivityFavourite {
   id: string;
-  favourite_type: string;
-  activity_id: string;
+  favouriteType: string;
+  activityId: string;
   name: string | null;
-  created_at: string;
+  createdAt: string;
 }
 
 export const ActivityFavouritesTab: React.FC = () => {
@@ -38,7 +38,7 @@ export const ActivityFavouritesTab: React.FC = () => {
       setFavourites(response.favourites);
 
       // Load activity details for each favourite
-      const activityIds = response.favourites.map((fav) => fav.activity_id);
+      const activityIds = response.favourites.map((fav) => fav.activityId);
       if (activityIds.length > 0) {
         const activityDetails =
           await apiService.getActivitiesByIds(activityIds);
@@ -62,7 +62,7 @@ export const ActivityFavouritesTab: React.FC = () => {
 
       // Remove from local state
       setFavourites((prev) =>
-        prev.filter((fav) => fav.activity_id !== activityId),
+        prev.filter((fav) => fav.activityId !== activityId),
       );
       setActivities((prev) =>
         prev.filter((activity) => activity.id !== activityId),
@@ -139,7 +139,7 @@ export const ActivityFavouritesTab: React.FC = () => {
   return (
     <div className="space-y-4">
       {favourites.map((favourite) => {
-        const activity = activities.find((a) => a.id === favourite.activity_id);
+        const activity = activities.find((a) => a.id === favourite.activityId);
         if (!activity) return null;
 
         const isRemoving = removingIds.has(activity.id);
@@ -183,17 +183,17 @@ export const ActivityFavouritesTab: React.FC = () => {
               <div className="flex flex-wrap gap-2 mb-4">
                 <Badge variant="secondary">
                   <Users className="h-3 w-3 mr-1" />
-                  Ages {activity.age_min}-{activity.age_max}
+                  Ages {activity.ageMin}-{activity.ageMax}
                 </Badge>
                 <Badge variant="secondary">
                   <Clock className="h-3 w-3 mr-1" />
-                  {activity.duration_min_minutes}
-                  {activity.duration_max_minutes &&
-                    `-${activity.duration_max_minutes}`}{" "}
+                  {activity.durationMinMinutes}
+                  {activity.durationMaxMinutes &&
+                    `-${activity.durationMaxMinutes}`}{" "}
                   min
                 </Badge>
                 <Badge variant="secondary">{activity.format}</Badge>
-                <Badge variant="outline">{activity.bloom_level}</Badge>
+                <Badge variant="outline">{activity.bloomLevel}</Badge>
               </div>
 
               <div className="flex flex-wrap gap-1 mb-4">
@@ -208,7 +208,7 @@ export const ActivityFavouritesTab: React.FC = () => {
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
                   Favourited{" "}
-                  {new Date(favourite.created_at).toLocaleDateString()}
+                  {new Date(favourite.createdAt).toLocaleDateString()}
                 </div>
                 {favourite.name && (
                   <div className="text-right">

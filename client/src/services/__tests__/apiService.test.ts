@@ -207,7 +207,9 @@ describe("ApiService", () => {
         new Error("Network error"),
       );
 
-      await expect(ApiService.getActivity("1")).rejects.toThrow("Network error");
+      await expect(ApiService.getActivity("1")).rejects.toThrow(
+        "Network error",
+      );
     });
 
     it("should handle malformed JSON response", async () => {
@@ -232,11 +234,11 @@ describe("ApiService", () => {
         name: "Test Activity",
         description: "Test",
         format: "unplugged",
-        age_min: 8,
-        age_max: 12,
-        resources_needed: ["handouts"],
-        bloom_level: "apply",
-        duration_min_minutes: 30,
+        ageMin: 8,
+        ageMax: 12,
+        resourcesNeeded: ["handouts"],
+        bloomLevel: "apply",
+        durationMinMinutes: 30,
         topics: ["decomposition"],
       };
 
@@ -257,7 +259,7 @@ describe("ApiService", () => {
 
       const userData = {
         email: "test@example.com",
-        first_name: "John",
+        firstName: "John",
       };
 
       await ApiService.updateProfile(userData);

@@ -9,7 +9,7 @@
 
 const FIELD_VALUES = {
   format: ["unplugged", "digital", "hybrid"],
-  resources_available: [
+  resourcesAvailable: [
     "computers",
     "tablets",
     "handouts",
@@ -17,7 +17,7 @@ const FIELD_VALUES = {
     "electronics",
     "stationery",
   ],
-  bloom_level: [
+  bloomLevel: [
     "remember",
     "understand",
     "apply",
@@ -26,9 +26,9 @@ const FIELD_VALUES = {
     "create",
   ],
   topics: ["decomposition", "patterns", "abstraction", "algorithms"],
-  mental_load: ["low", "medium", "high"],
-  physical_energy: ["low", "medium", "high"],
-  priority_categories: [
+  mentalLoad: ["low", "medium", "high"],
+  physicalEnergy: ["low", "medium", "high"],
+  priorityCategories: [
     "age_appropriateness",
     "bloom_level_match",
     "topic_relevance",
@@ -55,17 +55,17 @@ const FIELD_VALUES = {
 // Legacy compatibility - these match the old field values structure
 export const fieldValues = {
   format: FIELD_VALUES.format,
-  resources_available: FIELD_VALUES.resources_available,
-  bloom_level: FIELD_VALUES.bloom_level,
+  resourcesAvailable: FIELD_VALUES.resourcesAvailable,
+  bloomLevel: FIELD_VALUES.bloomLevel,
   topics: FIELD_VALUES.topics,
-  mental_load: FIELD_VALUES.mental_load,
-  physical_energy: FIELD_VALUES.physical_energy,
-  priority_categories: FIELD_VALUES.priority_categories,
+  mentalLoad: FIELD_VALUES.mentalLoad,
+  physicalEnergy: FIELD_VALUES.physicalEnergy,
+  priorityCategories: FIELD_VALUES.priorityCategories,
   age_range: FIELD_VALUES.age_range,
   bloom_order: FIELD_VALUES.bloom_order,
   age_filter_tolerance: FIELD_VALUES.age_filter_tolerance,
   default_max_activity_count: FIELD_VALUES.default_max_activity_count,
   default_recommendation_limit: FIELD_VALUES.default_recommendation_limit,
   // Add bloom_levels for backward compatibility
-  bloom_levels: FIELD_VALUES.bloom_level,
+  bloom_levels: FIELD_VALUES.bloomLevel,
 };

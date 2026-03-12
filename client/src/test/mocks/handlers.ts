@@ -12,8 +12,8 @@ export const handlers = [
 
     if (body.email === "test@example.com" && body.password === "password123") {
       return HttpResponse.json({
-        access_token: "mock-access-token",
-        refresh_token: "mock-refresh-token",
+        accessToken: "mock-access-token",
+        refreshToken: "mock-refresh-token",
         user: {
           id: 1,
           email: "test@example.com",
@@ -33,8 +33,8 @@ export const handlers = [
       body.password === "teacher123"
     ) {
       return HttpResponse.json({
-        access_token: "mock-teacher-token",
-        refresh_token: "mock-refresh-token",
+        accessToken: "mock-teacher-token",
+        refreshToken: "mock-refresh-token",
         user: {
           id: 2,
           email: "teacher@example.com",
@@ -48,8 +48,8 @@ export const handlers = [
 
   http.post("/api/auth/guest/login", () => {
     return HttpResponse.json({
-      access_token: "mock-guest-token",
-      refresh_token: "mock-guest-refresh-token",
+      accessToken: "mock-guest-token",
+      refreshToken: "mock-guest-refresh-token",
       user: {
         id: 999,
         email: "guest@temporary.com",
@@ -59,12 +59,12 @@ export const handlers = [
   }),
 
   http.post("/api/auth/refresh", async ({ request }) => {
-    const body = (await request.json()) as { refresh_token: string };
+    const body = (await request.json()) as { refreshToken: string };
 
-    if (body.refresh_token) {
+    if (body.refreshToken) {
       return HttpResponse.json({
-        access_token: "new-mock-access-token",
-        refresh_token: body.refresh_token,
+        accessToken: "new-mock-access-token",
+        refreshToken: body.refreshToken,
       });
     }
 
@@ -101,7 +101,7 @@ export const handlers = [
           title: "Test Activity 1",
           description: "Test description",
           format: "unplugged",
-          bloom_level: "apply",
+          bloomLevel: "apply",
         },
       ],
       total: 1,
@@ -115,7 +115,7 @@ export const handlers = [
       title: `Test Activity ${id}`,
       description: "Test description",
       format: "unplugged",
-      bloom_level: "apply",
+      bloomLevel: "apply",
     });
   }),
 

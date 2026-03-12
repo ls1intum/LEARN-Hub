@@ -39,8 +39,8 @@ export const AccountDashboardPage: React.FC = () => {
   // Form state for ADMIN/TEACHER users
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     email: user?.email || "",
-    first_name: user?.first_name || "",
-    last_name: user?.last_name || "",
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
     password: "",
   });
 
@@ -63,8 +63,8 @@ export const AccountDashboardPage: React.FC = () => {
       // Only include password if it's provided
       const updateData: UpdateProfileRequest = {
         email: formData.email,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
       };
 
       if (formData.password && formData.password.trim()) {
@@ -325,23 +325,23 @@ export const AccountDashboardPage: React.FC = () => {
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="first_name">First Name</Label>
+                  <Label htmlFor="firstName">First Name</Label>
                   <Input
-                    id="first_name"
-                    value={formData.first_name}
+                    id="firstName"
+                    value={formData.firstName}
                     onChange={(e) =>
-                      handleInputChange("first_name", e.target.value)
+                      handleInputChange("firstName", e.target.value)
                     }
                     placeholder="Enter your first name"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="last_name">Last Name</Label>
+                  <Label htmlFor="lastName">Last Name</Label>
                   <Input
-                    id="last_name"
-                    value={formData.last_name}
+                    id="lastName"
+                    value={formData.lastName}
                     onChange={(e) =>
-                      handleInputChange("last_name", e.target.value)
+                      handleInputChange("lastName", e.target.value)
                     }
                     placeholder="Enter your last name"
                   />

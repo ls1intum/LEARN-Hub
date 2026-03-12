@@ -26,7 +26,7 @@ describe("secureStorage", () => {
       secureStorage.setAccessToken(token);
 
       expect(sessionStorageMock.setItem).toHaveBeenCalledWith(
-        "learn_hub_access_token",
+        "learn_hub_accessToken",
         token,
       );
 
@@ -39,7 +39,7 @@ describe("secureStorage", () => {
       secureStorage.setRefreshToken(token);
 
       expect(sessionStorageMock.setItem).toHaveBeenCalledWith(
-        "learn_hub_refresh_token",
+        "learn_hub_refreshToken",
         token,
       );
 
@@ -54,11 +54,11 @@ describe("secureStorage", () => {
       secureStorage.setTokens(accessToken, refreshToken);
 
       expect(sessionStorageMock.setItem).toHaveBeenCalledWith(
-        "learn_hub_access_token",
+        "learn_hub_accessToken",
         accessToken,
       );
       expect(sessionStorageMock.setItem).toHaveBeenCalledWith(
-        "learn_hub_refresh_token",
+        "learn_hub_refreshToken",
         refreshToken,
       );
     });
@@ -67,10 +67,10 @@ describe("secureStorage", () => {
       secureStorage.clearTokens();
 
       expect(sessionStorageMock.removeItem).toHaveBeenCalledWith(
-        "learn_hub_access_token",
+        "learn_hub_accessToken",
       );
       expect(sessionStorageMock.removeItem).toHaveBeenCalledWith(
-        "learn_hub_refresh_token",
+        "learn_hub_refreshToken",
       );
     });
   });

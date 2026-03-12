@@ -37,9 +37,9 @@ export const SearchHistoryPage: React.FC = () => {
           offset,
         );
         if (response) {
-          setSearchHistory(response.search_history);
+          setSearchHistory(response.searchHistory);
           setTotalCount(response.pagination.count);
-          setHasMore(response.search_history.length === ITEMS_PER_PAGE);
+          setHasMore(response.searchHistory.length === ITEMS_PER_PAGE);
         }
       } catch (err) {
         logger.error("Error fetching search history", err, "SearchHistoryPage");
@@ -73,7 +73,7 @@ export const SearchHistoryPage: React.FC = () => {
       // Navigate to recommendations page with pre-filled search criteria
       navigate("/recommendations", {
         state: {
-          searchCriteria: entry.search_criteria,
+          searchCriteria: entry.searchCriteria,
         },
       });
     } catch (err) {
@@ -101,8 +101,8 @@ export const SearchHistoryPage: React.FC = () => {
     if (criteria.target_duration) {
       formatted.push(`Duration: ${criteria.target_duration}min`);
     }
-    if (criteria.bloom_level && criteria.bloom_level !== "any") {
-      formatted.push(`Bloom Level: ${criteria.bloom_level}`);
+    if (criteria.bloomLevel && criteria.bloomLevel !== "any") {
+      formatted.push(`Bloom Level: ${criteria.bloomLevel}`);
     }
     if (
       criteria.bloom_levels &&
@@ -126,11 +126,11 @@ export const SearchHistoryPage: React.FC = () => {
       formatted.push(`Topics: ${criteria.topics.join(", ")}`);
     }
     if (
-      criteria.resources_needed &&
-      Array.isArray(criteria.resources_needed) &&
-      criteria.resources_needed.length > 0
+      criteria.resourcesNeeded &&
+      Array.isArray(criteria.resourcesNeeded) &&
+      criteria.resourcesNeeded.length > 0
     ) {
-      formatted.push(`Resources: ${criteria.resources_needed.join(", ")}`);
+      formatted.push(`Resources: ${criteria.resourcesNeeded.join(", ")}`);
     }
 
     return formatted.length > 0 ? formatted : ["No specific criteria"];
@@ -214,11 +214,11 @@ export const SearchHistoryPage: React.FC = () => {
                       </h3>
                       <div className="flex items-center text-xs text-muted-foreground">
                         <Clock className="h-3 w-3 mr-1" />
-                        {formatDate(entry.created_at)}
+                        {formatDate(entry.createdAt)}
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {formatSearchCriteria(entry.search_criteria)
+                      {formatSearchCriteria(entry.searchCriteria)
                         .slice(0, 4)
                         .map((criterion, index) => (
                           <Badge
@@ -229,14 +229,14 @@ export const SearchHistoryPage: React.FC = () => {
                             {criterion}
                           </Badge>
                         ))}
-                      {formatSearchCriteria(entry.search_criteria).length >
+                      {formatSearchCriteria(entry.searchCriteria).length >
                         4 && (
                         <Badge
                           variant="outline"
                           className="text-xs px-2 py-0.5"
                         >
                           +
-                          {formatSearchCriteria(entry.search_criteria).length -
+                          {formatSearchCriteria(entry.searchCriteria).length -
                             4}{" "}
                           more
                         </Badge>

@@ -25,9 +25,9 @@ export const LessonPlanRow: React.FC<LessonPlanRowProps> = ({
 }) => {
   const getActivityDuration = (activity: Activity, isLast: boolean) => {
     // Include the break duration only if the activity is not the last one
-    let duration = activity.duration_min_minutes || 0;
-    if (!isLast && activity.break_after) {
-      duration += activity.break_after.duration;
+    let duration = activity.durationMinMinutes || 0;
+    if (!isLast && activity.breakAfter) {
+      duration += activity.breakAfter.duration;
     }
     return duration;
   };
@@ -41,7 +41,7 @@ export const LessonPlanRow: React.FC<LessonPlanRowProps> = ({
 
   const activityCount = activities.length;
   const breakCount = activities.filter(
-    (a, index) => index < activities.length - 1 && a.break_after,
+    (a, index) => index < activities.length - 1 && a.breakAfter,
   ).length;
 
   // Calculate card widths based on content and available space
@@ -49,7 +49,7 @@ export const LessonPlanRow: React.FC<LessonPlanRowProps> = ({
     const baseWidth = 280; // Base width for activity cards
     const breakWidth = 200; // Smaller width for break cards
 
-    if (activity.break_after) {
+    if (activity.breakAfter) {
       return breakWidth;
     }
 
@@ -133,7 +133,7 @@ export const LessonPlanRow: React.FC<LessonPlanRowProps> = ({
                 compact={true}
               />
             </div>
-            {activity.break_after && index < activities.length - 1 && (
+            {activity.breakAfter && index < activities.length - 1 && (
               <>
                 {/* Visual connector line */}
                 <div className="flex-shrink-0 flex items-center justify-center px-2">
@@ -147,7 +147,7 @@ export const LessonPlanRow: React.FC<LessonPlanRowProps> = ({
                   style={{ width: `${getCardWidth(activity)}px` }}
                 >
                   <BreakCard
-                    breakItem={activity.break_after}
+                    breakItem={activity.breakAfter}
                     isBetweenActivities={true}
                     activityIndex={index + 1}
                   />

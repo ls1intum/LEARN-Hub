@@ -5,14 +5,14 @@ import { logger } from "@/services/logger";
 export interface User {
   id: number;
   email: string;
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
   role: "ADMIN" | "TEACHER" | "GUEST";
 }
 
 export interface AuthTokens {
-  access_token: string;
-  refresh_token: string;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface AuthResponse {
@@ -139,14 +139,14 @@ export class AuthService {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          refresh_token: this.refreshToken,
+          refreshToken: this.refreshToken,
         }),
       });
 
       if (response.ok) {
         const responseData = await response.json();
         // Server returns data directly without wrapper
-        this.setTokens(responseData.access_token, responseData.refresh_token);
+        this.setTokens(responseData.accessToken, responseData.refreshToken);
         return true;
       } else {
         this.clearTokens();
@@ -177,7 +177,7 @@ export class AuthService {
       if (response.ok) {
         const responseData = await response.json();
         // Server returns data directly without wrapper
-        this.setTokens(responseData.access_token, responseData.refresh_token);
+        this.setTokens(responseData.accessToken, responseData.refreshToken);
         return { success: true, user: responseData.user };
       } else {
         const errorData = await response.json();
@@ -255,8 +255,8 @@ export class AuthService {
           },
           body: JSON.stringify({
             email: email,
-            first_name: firstName,
-            last_name: lastName,
+            firstName: firstName,
+            lastName: lastName,
           }),
         },
       );
