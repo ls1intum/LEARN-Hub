@@ -207,7 +207,9 @@ describe("ApiService", () => {
         new Error("Network error"),
       );
 
-      await expect(ApiService.getActivity("1")).rejects.toThrow("Network error");
+      await expect(ApiService.getActivity("1")).rejects.toThrow(
+        "Network error",
+      );
     });
 
     it("should handle malformed JSON response", async () => {

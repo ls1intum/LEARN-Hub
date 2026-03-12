@@ -685,8 +685,8 @@ public class PDFService {
 				pdfContent = getPdfContent(documentIdOrCacheKey);
 			}
 			try (PDDocument document = Loader.loadPDF(pdfContent)) {
-			org.apache.pdfbox.text.PDFTextStripper stripper = new org.apache.pdfbox.text.PDFTextStripper();
-			return stripper.getText(document);
+				org.apache.pdfbox.text.PDFTextStripper stripper = new org.apache.pdfbox.text.PDFTextStripper();
+				return stripper.getText(document);
 			}
 		} catch (Exception e) {
 			logger.error("Failed to extract text from PDF {}: {}", documentIdOrCacheKey, e.getMessage());

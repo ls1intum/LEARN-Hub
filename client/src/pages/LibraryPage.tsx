@@ -128,9 +128,7 @@ export const LibraryPage: React.FC = () => {
       mentalLoad:
         filters.mentalLoad.length > 0 ? filters.mentalLoad : undefined,
       physicalEnergy:
-        filters.physicalEnergy.length > 0
-          ? filters.physicalEnergy
-          : undefined,
+        filters.physicalEnergy.length > 0 ? filters.physicalEnergy : undefined,
       limit: itemsPerPage,
       offset: (currentPage - 1) * itemsPerPage,
     });
@@ -324,8 +322,7 @@ export const LibraryPage: React.FC = () => {
                         Select age range for learners
                       </span>
                       <span className="text-lg font-bold text-primary">
-                        {filterForm.values.ageMin} -{" "}
-                        {filterForm.values.ageMax}
+                        {filterForm.values.ageMin} - {filterForm.values.ageMax}
                       </span>
                     </div>
                     <Slider

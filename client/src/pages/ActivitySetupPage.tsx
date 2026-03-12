@@ -189,17 +189,12 @@ export const ActivitySetupPage: React.FC = () => {
       setIsGeneratingSchema(true);
       setSchemaError(null);
       try {
-        const result =
-          await apiService.generateArtikulationsschema(documentId);
+        const result = await apiService.generateArtikulationsschema(documentId);
         setArtikulationsschemaMarkdown(result.markdown);
         // Trigger initial preview
         debouncedRenderPreview(result.markdown);
       } catch (error) {
-        logger.error(
-          "Schema generation error",
-          error,
-          "ActivitySetupPage",
-        );
+        logger.error("Schema generation error", error, "ActivitySetupPage");
         setSchemaError(
           error instanceof Error
             ? error.message
@@ -248,9 +243,7 @@ export const ActivitySetupPage: React.FC = () => {
     [renderPreview],
   );
 
-  const handleMarkdownChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {
+  const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newMarkdown = e.target.value;
     setArtikulationsschemaMarkdown(newMarkdown);
     debouncedRenderPreview(newMarkdown);
@@ -266,17 +259,14 @@ export const ActivitySetupPage: React.FC = () => {
       const response = (await apiService.createActivity({
         ...savedMetadata,
         documentId: documentId,
-        artikulationsschemaMarkdown:
-          artikulationsschemaMarkdown || undefined,
+        artikulationsschemaMarkdown: artikulationsschemaMarkdown || undefined,
       })) as { activity: Activity };
 
       navigate(`/activity-details/${response.activity.id}`);
     } catch (error) {
       logger.error("Save error", error, "ActivitySetupPage");
       setSchemaError(
-        error instanceof Error
-          ? error.message
-          : "Failed to save activity",
+        error instanceof Error ? error.message : "Failed to save activity",
       );
     } finally {
       setIsSaving(false);
@@ -354,8 +344,8 @@ export const ActivitySetupPage: React.FC = () => {
                 Upload Activity PDF
               </CardTitle>
               <CardDescription>
-                Upload a PDF file containing learning activity information.
-                The system will extract metadata and generate an
+                Upload a PDF file containing learning activity information. The
+                system will extract metadata and generate an
                 Artikulationsschema.
               </CardDescription>
             </CardHeader>
@@ -517,8 +507,8 @@ export const ActivitySetupPage: React.FC = () => {
                   Generating Artikulationsschema...
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  The AI is analyzing the PDF and creating a lesson
-                  articulation schema.
+                  The AI is analyzing the PDF and creating a lesson articulation
+                  schema.
                 </p>
               </CardContent>
             </Card>
@@ -527,9 +517,7 @@ export const ActivitySetupPage: React.FC = () => {
               <CardContent className="py-8">
                 <div className="flex flex-col items-center gap-4">
                   <AlertCircle className="h-8 w-8 text-destructive" />
-                  <p className="text-destructive font-medium">
-                    {schemaError}
-                  </p>
+                  <p className="text-destructive font-medium">{schemaError}</p>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -539,9 +527,7 @@ export const ActivitySetupPage: React.FC = () => {
                         apiService
                           .generateArtikulationsschema(documentId)
                           .then((result) => {
-                            setArtikulationsschemaMarkdown(
-                              result.markdown,
-                            );
+                            setArtikulationsschemaMarkdown(result.markdown);
                             debouncedRenderPreview(result.markdown);
                           })
                           .catch((err) =>
@@ -551,9 +537,7 @@ export const ActivitySetupPage: React.FC = () => {
                                 : "Retry failed",
                             ),
                           )
-                          .finally(() =>
-                            setIsGeneratingSchema(false),
-                          );
+                          .finally(() => setIsGeneratingSchema(false));
                       }
                     }}
                   >

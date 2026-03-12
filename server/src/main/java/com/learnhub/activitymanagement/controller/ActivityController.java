@@ -202,7 +202,8 @@ public class ActivityController {
 			ActivityResponse activity = activityService.getActivityById(activityId);
 			String markdown = activity.getArtikulationsschemaMarkdown();
 			if (markdown == null || markdown.trim().isEmpty()) {
-				logger.error("GET /api/activities/{}/artikulationsschema-pdf - No Artikulationsschema for this activity",
+				logger.error(
+						"GET /api/activities/{}/artikulationsschema-pdf - No Artikulationsschema for this activity",
 						activityId);
 				return ResponseEntity.status(404)
 						.body(ErrorResponse.of("No Artikulationsschema found for this activity"));

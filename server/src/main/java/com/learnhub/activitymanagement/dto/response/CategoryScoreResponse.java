@@ -1,6 +1,5 @@
 package com.learnhub.activitymanagement.dto.response;
 
-
 public class CategoryScoreResponse {
 
 	private String category;

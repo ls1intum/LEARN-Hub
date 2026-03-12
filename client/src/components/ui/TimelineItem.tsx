@@ -60,9 +60,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
               {/* Age Range */}
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Users className="h-4 w-4" />
-                <span>
-                  {formatAgeRange(activity.ageMin, activity.ageMax)}
-                </span>
+                <span>{formatAgeRange(activity.ageMin, activity.ageMax)}</span>
               </div>
 
               {/* Format */}

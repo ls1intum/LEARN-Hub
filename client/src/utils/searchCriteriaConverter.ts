@@ -71,8 +71,7 @@ export function convertSearchCriteriaToFormData(
   // Handle both client and server parameter names
   if (searchCriteria.availableResources) {
     if (Array.isArray(searchCriteria.availableResources)) {
-      formData.resourcesNeeded =
-        searchCriteria.availableResources.map(String);
+      formData.resourcesNeeded = searchCriteria.availableResources.map(String);
     } else if (typeof searchCriteria.availableResources === "string") {
       // Handle comma-separated values from URL parameters
       formData.resourcesNeeded = searchCriteria.availableResources

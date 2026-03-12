@@ -100,9 +100,7 @@ export const ActivityEditPage: React.FC = () => {
       .getActivity(id)
       .then((data) => {
         setActivity(data);
-        setArtikulationsschemaMarkdown(
-          data.artikulationsschemaMarkdown || "",
-        );
+        setArtikulationsschemaMarkdown(data.artikulationsschemaMarkdown || "");
       })
       .catch((err) => {
         logger.error("Failed to load activity", err, "ActivityEditPage");
@@ -169,9 +167,7 @@ export const ActivityEditPage: React.FC = () => {
     [renderPreview],
   );
 
-  const handleMarkdownChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {
+  const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newMarkdown = e.target.value;
     setArtikulationsschemaMarkdown(newMarkdown);
     debouncedRenderPreview(newMarkdown);
@@ -201,8 +197,7 @@ export const ActivityEditPage: React.FC = () => {
         mentalLoad: savedMetadata.mentalLoad || undefined,
         physicalEnergy: savedMetadata.physicalEnergy || undefined,
         topics: savedMetadata.topics,
-        artikulationsschemaMarkdown:
-          artikulationsschemaMarkdown || undefined,
+        artikulationsschemaMarkdown: artikulationsschemaMarkdown || undefined,
       });
 
       navigate(`/activity-details/${id}`);

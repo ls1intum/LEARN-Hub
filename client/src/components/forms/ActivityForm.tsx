@@ -124,10 +124,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
     if (!formData.format) return "Format is required";
     if (!formData.bloomLevel) return "Bloom's taxonomy level is required";
     if (!formData.documentId) return "PDF document is required";
-    if (
-      formData.durationMinMinutes < 1 ||
-      formData.durationMinMinutes > 300
-    ) {
+    if (formData.durationMinMinutes < 1 || formData.durationMinMinutes > 300) {
       return "Duration must be between 1 and 300 minutes";
     }
     if (

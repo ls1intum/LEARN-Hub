@@ -183,9 +183,9 @@ public class ActivityService {
 	}
 
 	/**
-	 * Update activity from a Map payload (used by the PUT endpoint).
-	 * Re-uses createActivityFromMap to parse the request, then applies to the
-	 * existing entity.
+	 * Update activity from a Map payload (used by the PUT endpoint). Re-uses
+	 * createActivityFromMap to parse the request, then applies to the existing
+	 * entity.
 	 */
 	public ActivityResponse updateActivityFromMap(UUID id, Map<String, Object> request) {
 		Activity activityUpdate = createActivityFromMap(request);

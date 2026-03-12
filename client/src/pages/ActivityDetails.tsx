@@ -5,7 +5,13 @@ import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { useDataFetch } from "@/hooks/useDataFetch";
 import { useApi } from "@/hooks/useApi";
-import { Brain, Activity as ActivityIcon, FileText, BookOpen, Edit3 } from "lucide-react";
+import {
+  Brain,
+  Activity as ActivityIcon,
+  FileText,
+  BookOpen,
+  Edit3,
+} from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
@@ -256,9 +262,7 @@ export const ActivityDetails: React.FC = () => {
                   <h3 className="font-semibold text-card-foreground">
                     Bloom's Taxonomy Level
                   </h3>
-                  <p className="text-muted-foreground">
-                    {activity.bloomLevel}
-                  </p>
+                  <p className="text-muted-foreground">{activity.bloomLevel}</p>
                 </div>
               )}
 

@@ -65,10 +65,7 @@ export const RecommendationsPage: React.FC = () => {
         "allowLessonPlans",
         String(formData.allowLessonPlans ?? true),
       );
-      params.append(
-        "maxActivityCount",
-        String(formData.maxActivityCount ?? 2),
-      );
+      params.append("maxActivityCount", String(formData.maxActivityCount ?? 2));
       params.append("includeBreaks", String(formData.includeBreaks ?? false));
 
       if ((formData.format?.length ?? 0) > 0) {

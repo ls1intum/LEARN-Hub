@@ -118,17 +118,15 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                     Resources Needed:
                   </p>
                   <div className="flex flex-wrap gap-1">
-                    {activity.resourcesNeeded.map(
-                      (resource, resourceIndex) => (
-                        <Badge
-                          key={resourceIndex}
-                          variant="outline"
-                          className="text-xs"
-                        >
-                          {resource}
-                        </Badge>
-                      ),
-                    )}
+                    {activity.resourcesNeeded.map((resource, resourceIndex) => (
+                      <Badge
+                        key={resourceIndex}
+                        variant="outline"
+                        className="text-xs"
+                      >
+                        {resource}
+                      </Badge>
+                    ))}
                   </div>
                 </div>
               )}
