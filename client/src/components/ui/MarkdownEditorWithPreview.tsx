@@ -130,9 +130,7 @@ export const MarkdownEditorWithPreview: React.FC<
         clearTimeout(debounceTimer.current);
       }
     };
-    // Only re-run when value changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value]);
+  }, [value, debouncedRenderPreview]);
 
   const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     onChange(e.target.value);
