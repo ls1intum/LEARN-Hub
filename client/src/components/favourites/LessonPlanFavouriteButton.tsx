@@ -53,15 +53,15 @@ export const LessonPlanFavouriteButton: React.FC<
       // Include a minimal snapshot so favourites can render breaks and metadata consistently
       const totalDuration = activities.reduce(
         (sum, a) =>
-          sum + (a.duration_min_minutes || 0) + (a.break_after?.duration || 0),
+          sum + (a.durationMinMinutes || 0) + (a.breakAfter?.duration || 0),
         0,
       );
       await apiService.saveLessonPlanFavourite({
-        activity_ids: activityIds,
+        activityIds: activityIds,
         name: name.trim() || undefined,
-        lesson_plan: {
+        lessonPlan: {
           activities,
-          total_duration_minutes: totalDuration,
+          totalDurationMinutes: totalDuration,
           ordering_strategy: "balanced",
           title: name.trim() || "My Lesson Plan",
         },

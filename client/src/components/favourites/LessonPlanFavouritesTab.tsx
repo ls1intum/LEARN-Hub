@@ -9,11 +9,11 @@ import type { Activity } from "@/types/activity";
 
 interface LessonPlanFavourite {
   id: string;
-  favourite_type: string;
+  favouriteType: string;
   name: string | null;
-  activity_ids: string[];
-  lesson_plan?: import("@/types/activity").LessonPlanData;
-  created_at: string;
+  activityIds: string[];
+  lessonPlan?: import("@/types/activity").LessonPlanData;
+  createdAt: string;
 }
 
 export const LessonPlanFavouritesTab: React.FC = () => {
@@ -38,8 +38,8 @@ export const LessonPlanFavouritesTab: React.FC = () => {
 
       // With enforced snapshots, activity fetching becomes a no-op, but keep fallback for safety
       const idsNeedingFetch = response.favourites
-        .filter((fav) => !fav.lesson_plan)
-        .flatMap((fav) => fav.activity_ids);
+        .filter((fav) => !fav.lessonPlan)
+        .flatMap((fav) => fav.activityIds);
       const uniqueIds = [...new Set(idsNeedingFetch)];
       if (uniqueIds.length > 0) {
         const activityDetails = await apiService.getActivitiesByIds(uniqueIds);
@@ -139,9 +139,9 @@ export const LessonPlanFavouritesTab: React.FC = () => {
   return (
     <div className="space-y-6">
       {favourites.map((favourite) => {
-        const activities: Activity[] = favourite.lesson_plan
-          ? favourite.lesson_plan.activities
-          : ((favourite.activity_ids || [])
+        const activities: Activity[] = favourite.lessonPlan
+          ? favourite.lessonPlan.activities
+          : ((favourite.activityIds || [])
               .map((id) => activitiesMap.get(id))
               .filter(Boolean) as Activity[]);
 

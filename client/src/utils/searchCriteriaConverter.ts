@@ -1,14 +1,14 @@
 export interface FormData {
-  target_age: number;
+  targetAge: number;
   format: string[];
-  resources_needed: string[];
-  bloom_levels: string[];
-  target_duration: number;
+  resourcesNeeded: string[];
+  bloomLevels: string[];
+  targetDuration: number;
   topics: string[];
-  allow_lesson_plans: boolean;
-  max_activity_count: number;
-  include_breaks: boolean;
-  priority_categories: string[]; // Categories to prioritize in scoring
+  allowLessonPlans: boolean;
+  maxActivityCount: number;
+  includeBreaks: boolean;
+  priorityCategories: string[]; // Categories to prioritize in scoring
 }
 
 /**
@@ -20,39 +20,39 @@ export function convertSearchCriteriaToFormData(
   const formData: Partial<FormData> = {};
 
   // Convert basic fields
-  if (searchCriteria.target_age !== undefined) {
-    formData.target_age =
-      typeof searchCriteria.target_age === "number"
-        ? searchCriteria.target_age
-        : parseInt(String(searchCriteria.target_age), 10);
+  if (searchCriteria.targetAge !== undefined) {
+    formData.targetAge =
+      typeof searchCriteria.targetAge === "number"
+        ? searchCriteria.targetAge
+        : parseInt(String(searchCriteria.targetAge), 10);
   }
 
-  if (searchCriteria.target_duration !== undefined) {
-    formData.target_duration =
-      typeof searchCriteria.target_duration === "number"
-        ? searchCriteria.target_duration
-        : parseInt(String(searchCriteria.target_duration), 10);
+  if (searchCriteria.targetDuration !== undefined) {
+    formData.targetDuration =
+      typeof searchCriteria.targetDuration === "number"
+        ? searchCriteria.targetDuration
+        : parseInt(String(searchCriteria.targetDuration), 10);
   }
 
-  if (searchCriteria.allow_lesson_plans !== undefined) {
-    formData.allow_lesson_plans =
-      typeof searchCriteria.allow_lesson_plans === "boolean"
-        ? searchCriteria.allow_lesson_plans
-        : String(searchCriteria.allow_lesson_plans).toLowerCase() === "true";
+  if (searchCriteria.allowLessonPlans !== undefined) {
+    formData.allowLessonPlans =
+      typeof searchCriteria.allowLessonPlans === "boolean"
+        ? searchCriteria.allowLessonPlans
+        : String(searchCriteria.allowLessonPlans).toLowerCase() === "true";
   }
 
-  if (searchCriteria.max_activity_count !== undefined) {
-    formData.max_activity_count =
-      typeof searchCriteria.max_activity_count === "number"
-        ? searchCriteria.max_activity_count
-        : parseInt(String(searchCriteria.max_activity_count), 10);
+  if (searchCriteria.maxActivityCount !== undefined) {
+    formData.maxActivityCount =
+      typeof searchCriteria.maxActivityCount === "number"
+        ? searchCriteria.maxActivityCount
+        : parseInt(String(searchCriteria.maxActivityCount), 10);
   }
 
-  if (searchCriteria.include_breaks !== undefined) {
-    formData.include_breaks =
-      typeof searchCriteria.include_breaks === "boolean"
-        ? searchCriteria.include_breaks
-        : String(searchCriteria.include_breaks).toLowerCase() === "true";
+  if (searchCriteria.includeBreaks !== undefined) {
+    formData.includeBreaks =
+      typeof searchCriteria.includeBreaks === "boolean"
+        ? searchCriteria.includeBreaks
+        : String(searchCriteria.includeBreaks).toLowerCase() === "true";
   }
 
   // Convert array fields (handle both arrays and single strings)
@@ -69,43 +69,43 @@ export function convertSearchCriteriaToFormData(
   }
 
   // Handle both client and server parameter names
-  if (searchCriteria.available_resources) {
-    if (Array.isArray(searchCriteria.available_resources)) {
-      formData.resources_needed =
-        searchCriteria.available_resources.map(String);
-    } else if (typeof searchCriteria.available_resources === "string") {
+  if (searchCriteria.availableResources) {
+    if (Array.isArray(searchCriteria.availableResources)) {
+      formData.resourcesNeeded =
+        searchCriteria.availableResources.map(String);
+    } else if (typeof searchCriteria.availableResources === "string") {
       // Handle comma-separated values from URL parameters
-      formData.resources_needed = searchCriteria.available_resources
+      formData.resourcesNeeded = searchCriteria.availableResources
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
     }
-  } else if (searchCriteria.resources_needed) {
-    if (Array.isArray(searchCriteria.resources_needed)) {
-      formData.resources_needed = searchCriteria.resources_needed.map(String);
-    } else if (typeof searchCriteria.resources_needed === "string") {
-      formData.resources_needed = [searchCriteria.resources_needed];
+  } else if (searchCriteria.resourcesNeeded) {
+    if (Array.isArray(searchCriteria.resourcesNeeded)) {
+      formData.resourcesNeeded = searchCriteria.resourcesNeeded.map(String);
+    } else if (typeof searchCriteria.resourcesNeeded === "string") {
+      formData.resourcesNeeded = [searchCriteria.resourcesNeeded];
     }
   }
 
-  if (searchCriteria.bloom_levels) {
-    if (Array.isArray(searchCriteria.bloom_levels)) {
-      formData.bloom_levels = searchCriteria.bloom_levels.map(String);
-    } else if (typeof searchCriteria.bloom_levels === "string") {
+  if (searchCriteria.bloomLevels) {
+    if (Array.isArray(searchCriteria.bloomLevels)) {
+      formData.bloomLevels = searchCriteria.bloomLevels.map(String);
+    } else if (typeof searchCriteria.bloomLevels === "string") {
       // Handle comma-separated values from URL parameters
-      formData.bloom_levels = searchCriteria.bloom_levels
+      formData.bloomLevels = searchCriteria.bloomLevels
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
     }
   }
 
-  if (searchCriteria.preferred_topics) {
-    if (Array.isArray(searchCriteria.preferred_topics)) {
-      formData.topics = searchCriteria.preferred_topics.map(String);
-    } else if (typeof searchCriteria.preferred_topics === "string") {
+  if (searchCriteria.preferredTopics) {
+    if (Array.isArray(searchCriteria.preferredTopics)) {
+      formData.topics = searchCriteria.preferredTopics.map(String);
+    } else if (typeof searchCriteria.preferredTopics === "string") {
       // Handle comma-separated values from URL parameters
-      formData.topics = searchCriteria.preferred_topics
+      formData.topics = searchCriteria.preferredTopics
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
@@ -119,13 +119,13 @@ export function convertSearchCriteriaToFormData(
   }
 
   // Convert priority categories
-  if (searchCriteria.priority_categories) {
-    if (Array.isArray(searchCriteria.priority_categories)) {
-      formData.priority_categories =
-        searchCriteria.priority_categories.map(String);
-    } else if (typeof searchCriteria.priority_categories === "string") {
+  if (searchCriteria.priorityCategories) {
+    if (Array.isArray(searchCriteria.priorityCategories)) {
+      formData.priorityCategories =
+        searchCriteria.priorityCategories.map(String);
+    } else if (typeof searchCriteria.priorityCategories === "string") {
       // Handle comma-separated values from URL parameters
-      formData.priority_categories = searchCriteria.priority_categories
+      formData.priorityCategories = searchCriteria.priorityCategories
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
@@ -133,13 +133,13 @@ export function convertSearchCriteriaToFormData(
   } else if (searchCriteria.priority_fields) {
     // Handle legacy priority_fields for backward compatibility
     if (Array.isArray(searchCriteria.priority_fields)) {
-      formData.priority_categories = searchCriteria.priority_fields.map(String);
+      formData.priorityCategories = searchCriteria.priority_fields.map(String);
     } else if (typeof searchCriteria.priority_fields === "string") {
-      formData.priority_categories = [searchCriteria.priority_fields];
+      formData.priorityCategories = [searchCriteria.priority_fields];
     }
   } else {
     // Default to empty array if no priority categories
-    formData.priority_categories = [];
+    formData.priorityCategories = [];
   }
 
   return formData;

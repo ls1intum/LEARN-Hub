@@ -329,7 +329,7 @@ describe("AuthContext", () => {
         id: 1,
         email: "test@example.com",
         role: "TEACHER" as const,
-        first_name: "John",
+        firstName: "John",
       };
 
       vi.mocked(authService.isAuthenticated)

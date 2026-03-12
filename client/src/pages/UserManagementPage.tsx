@@ -27,16 +27,16 @@ import { logger } from "@/services/logger";
 
 interface CreateUserData {
   email: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   role: string;
   password: string;
 }
 
 interface EditUserData {
   email: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   role: string;
   password: string;
 }
@@ -55,8 +55,8 @@ export const UserManagementPage: React.FC = () => {
   // Create user form state
   const [createForm, setCreateForm] = useState<CreateUserData>({
     email: "",
-    first_name: "",
-    last_name: "",
+    firstName: "",
+    lastName: "",
     role: "TEACHER",
     password: "",
   });
@@ -64,8 +64,8 @@ export const UserManagementPage: React.FC = () => {
   // Edit user form state
   const [editForm, setEditForm] = useState<EditUserData>({
     email: "",
-    first_name: "",
-    last_name: "",
+    firstName: "",
+    lastName: "",
     role: "TEACHER",
     password: "",
   });
@@ -100,8 +100,8 @@ export const UserManagementPage: React.FC = () => {
       // Include all required fields for user creation
       const submitData = {
         email: createForm.email,
-        first_name: createForm.first_name,
-        last_name: createForm.last_name,
+        firstName: createForm.firstName,
+        lastName: createForm.lastName,
         role: createForm.role as "ADMIN" | "TEACHER",
         password: createForm.password,
       };
@@ -110,8 +110,8 @@ export const UserManagementPage: React.FC = () => {
       setMessage("User created successfully");
       setCreateForm({
         email: "",
-        first_name: "",
-        last_name: "",
+        firstName: "",
+        lastName: "",
         role: "TEACHER",
         password: "",
       });
@@ -132,8 +132,8 @@ export const UserManagementPage: React.FC = () => {
     try {
       const updateData: Partial<typeof editForm> = {
         email: editForm.email,
-        first_name: editForm.first_name,
-        last_name: editForm.last_name,
+        firstName: editForm.firstName,
+        lastName: editForm.lastName,
         role: editForm.role as "ADMIN" | "TEACHER",
       };
 
@@ -150,8 +150,8 @@ export const UserManagementPage: React.FC = () => {
       setIsEditing(null);
       setEditForm({
         email: "",
-        first_name: "",
-        last_name: "",
+        firstName: "",
+        lastName: "",
         role: "TEACHER",
         password: "",
       });
@@ -232,8 +232,8 @@ export const UserManagementPage: React.FC = () => {
   const startEdit = (user: UserType) => {
     setEditForm({
       email: user.email,
-      first_name: user.first_name || "",
-      last_name: user.last_name || "",
+      firstName: user.firstName || "",
+      lastName: user.lastName || "",
       role: user.role,
       password: "",
     });
@@ -244,8 +244,8 @@ export const UserManagementPage: React.FC = () => {
     setIsEditing(null);
     setEditForm({
       email: "",
-      first_name: "",
-      last_name: "",
+      firstName: "",
+      lastName: "",
       role: "TEACHER",
       password: "",
     });
@@ -326,11 +326,11 @@ export const UserManagementPage: React.FC = () => {
                 <Input
                   id="create-first-name"
                   type="text"
-                  value={createForm.first_name}
+                  value={createForm.firstName}
                   onChange={(e) =>
                     setCreateForm((prev) => ({
                       ...prev,
-                      first_name: e.target.value,
+                      firstName: e.target.value,
                     }))
                   }
                   placeholder="John"
@@ -343,11 +343,11 @@ export const UserManagementPage: React.FC = () => {
                 <Input
                   id="create-last-name"
                   type="text"
-                  value={createForm.last_name}
+                  value={createForm.lastName}
                   onChange={(e) =>
                     setCreateForm((prev) => ({
                       ...prev,
-                      last_name: e.target.value,
+                      lastName: e.target.value,
                     }))
                   }
                   placeholder="Doe"
@@ -464,33 +464,33 @@ export const UserManagementPage: React.FC = () => {
                       <td className="border border-border px-4 py-2">
                         {isEditing === user.id ? (
                           <Input
-                            value={editForm.first_name}
+                            value={editForm.firstName}
                             onChange={(e) =>
                               setEditForm((prev) => ({
                                 ...prev,
-                                first_name: e.target.value,
+                                firstName: e.target.value,
                               }))
                             }
                             className="w-full"
                           />
                         ) : (
-                          user.first_name || "-"
+                          user.firstName || "-"
                         )}
                       </td>
                       <td className="border border-border px-4 py-2">
                         {isEditing === user.id ? (
                           <Input
-                            value={editForm.last_name}
+                            value={editForm.lastName}
                             onChange={(e) =>
                               setEditForm((prev) => ({
                                 ...prev,
-                                last_name: e.target.value,
+                                lastName: e.target.value,
                               }))
                             }
                             className="w-full"
                           />
                         ) : (
-                          user.last_name || "-"
+                          user.lastName || "-"
                         )}
                       </td>
                       <td className="border border-border px-4 py-2">
@@ -640,7 +640,7 @@ export const UserManagementPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Name:</span>
                   <span className="text-sm">
-                    {userToDelete.first_name} {userToDelete.last_name}
+                    {userToDelete.firstName} {userToDelete.lastName}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">

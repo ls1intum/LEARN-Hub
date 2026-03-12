@@ -10,16 +10,16 @@ import { TimelineContainer } from "@/components/ui/TimelineContainer";
 
 interface LessonPlanData {
   activities: Activity[];
-  total_duration_minutes: number;
+  totalDurationMinutes: number;
   breaks?: Array<{
     description: string;
     duration: number;
     reasons: string[];
   }>;
   ordering_strategy?: string;
-  created_at?: string;
+  createdAt?: string;
   title?: string;
-  search_criteria?: Record<string, unknown>;
+  searchCriteria?: Record<string, unknown>;
 }
 
 interface LessonPlanModalProps {
@@ -41,14 +41,14 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      // Extract breaks from activities' break_after field for PDF generation
+      // Extract breaks from activities' breakAfter field for PDF generation
       const inlineBreaks = lessonPlanData.activities
-        .filter((activity) => activity.break_after)
+        .filter((activity) => activity.breakAfter)
         .map((activity, index) => ({
           position: (index + 1) / lessonPlanData.activities.length, // Normalize position
-          duration: activity.break_after?.duration || 0,
-          description: activity.break_after?.description || "Take a break",
-          reasons: activity.break_after?.reasons || [],
+          duration: activity.breakAfter?.duration || 0,
+          description: activity.breakAfter?.description || "Take a break",
+          reasons: activity.breakAfter?.reasons || [],
         }));
 
       // Use inline breaks if available, otherwise fall back to lessonPlanData.breaks
@@ -63,11 +63,11 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
       // Generate lesson plan PDF
       const blob = await apiService.generateLessonPlan({
         activities: lessonPlanData.activities,
-        search_criteria: (lessonPlanData.search_criteria || {}) as Record<
+        searchCriteria: (lessonPlanData.searchCriteria || {}) as Record<
           string,
           string | number | boolean | string[]
         >,
-        total_duration: lessonPlanData.total_duration_minutes,
+        totalDuration: lessonPlanData.totalDurationMinutes,
         breaks: breaksForPdf,
       });
 
@@ -75,7 +75,7 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${lessonPlanData.title || "lesson_plan"}.pdf`;
+      a.download = `${lessonPlanData.title || "lessonPlan"}.pdf`;
 
       try {
         document.body.appendChild(a);
@@ -127,7 +127,7 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
             </h2>
             <p className="text-muted-foreground">
               {lessonPlanData.activities.length} activities •{" "}
-              {formatDuration(lessonPlanData.total_duration_minutes)} total
+              {formatDuration(lessonPlanData.totalDurationMinutes)} total
               duration
             </p>
           </div>
@@ -164,8 +164,8 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
               <TimelineItem activity={activity} stepNumber={index + 1} />
 
               {/* Break After Activity */}
-              {activity.break_after && (
-                <BreakCard breakData={activity.break_after} />
+              {activity.breakAfter && (
+                <BreakCard breakData={activity.breakAfter} />
               )}
             </React.Fragment>
           ))}

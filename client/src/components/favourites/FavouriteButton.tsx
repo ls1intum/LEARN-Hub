@@ -46,7 +46,7 @@ export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
     try {
       const response =
         await apiService.checkActivityFavouriteStatus(activityId);
-      setIsFavourited(response.is_favourited);
+      setIsFavourited(response.isFavourited);
     } catch (err) {
       logger.error("Failed to check favourite status", err, "FavouriteButton");
     } finally {
@@ -65,7 +65,7 @@ export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
         setIsFavourited(false);
         onToggle?.(false);
       } else {
-        await apiService.saveActivityFavourite({ activity_id: activityId });
+        await apiService.saveActivityFavourite({ activityId: activityId });
         setIsFavourited(true);
         onToggle?.(true);
       }

@@ -13,19 +13,19 @@ interface ActivityFormData extends FormFieldData {
   name: string;
   description: string;
   source: string;
-  age_min: number;
-  age_max: number;
+  ageMin: number;
+  ageMax: number;
   format: string;
-  bloom_level: string;
-  duration_min_minutes: number;
-  duration_max_minutes: number;
-  mental_load: string;
-  physical_energy: string;
-  prep_time_minutes: number;
-  cleanup_time_minutes: number;
-  resources_needed: string[];
+  bloomLevel: string;
+  durationMinMinutes: number;
+  durationMaxMinutes: number;
+  mentalLoad: string;
+  physicalEnergy: string;
+  prepTimeMinutes: number;
+  cleanupTimeMinutes: number;
+  resourcesNeeded: string[];
   topics: string[];
-  document_id: number | string | null;
+  documentId: number | string | null;
 }
 
 interface ActivityFormProps {
@@ -41,19 +41,19 @@ const defaultFormData: ActivityFormData = {
   name: "",
   description: "",
   source: "",
-  age_min: 6,
-  age_max: 12,
+  ageMin: 6,
+  ageMax: 12,
   format: "",
-  bloom_level: "",
-  duration_min_minutes: 15,
-  duration_max_minutes: 30,
-  mental_load: "medium",
-  physical_energy: "medium",
-  prep_time_minutes: 5,
-  cleanup_time_minutes: 5,
-  resources_needed: [],
+  bloomLevel: "",
+  durationMinMinutes: 15,
+  durationMaxMinutes: 30,
+  mentalLoad: "medium",
+  physicalEnergy: "medium",
+  prepTimeMinutes: 5,
+  cleanupTimeMinutes: 5,
+  resourcesNeeded: [],
   topics: [],
-  document_id: null,
+  documentId: null,
 };
 
 export const ActivityForm: React.FC<ActivityFormProps> = ({
@@ -115,33 +115,33 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
       return "Description must be at least 25 characters long";
     if (formData.description.trim().length > 1000)
       return "Description must be 1000 characters or less";
-    if (formData.age_min < 6 || formData.age_min > 15)
+    if (formData.ageMin < 6 || formData.ageMin > 15)
       return "Minimum age must be between 6 and 15";
-    if (formData.age_max < 6 || formData.age_max > 15)
+    if (formData.ageMax < 6 || formData.ageMax > 15)
       return "Maximum age must be between 6 and 15";
-    if (formData.age_max < formData.age_min)
+    if (formData.ageMax < formData.ageMin)
       return "Maximum age must be greater than or equal to minimum age";
     if (!formData.format) return "Format is required";
-    if (!formData.bloom_level) return "Bloom's taxonomy level is required";
-    if (!formData.document_id) return "PDF document is required";
+    if (!formData.bloomLevel) return "Bloom's taxonomy level is required";
+    if (!formData.documentId) return "PDF document is required";
     if (
-      formData.duration_min_minutes < 1 ||
-      formData.duration_min_minutes > 300
+      formData.durationMinMinutes < 1 ||
+      formData.durationMinMinutes > 300
     ) {
       return "Duration must be between 1 and 300 minutes";
     }
     if (
-      formData.duration_max_minutes &&
-      formData.duration_max_minutes < formData.duration_min_minutes
+      formData.durationMaxMinutes &&
+      formData.durationMaxMinutes < formData.durationMinMinutes
     ) {
       return "Maximum duration must be greater than or equal to minimum duration";
     }
     // Validate prep time is in 5-minute increments
-    if (formData.prep_time_minutes % 5 !== 0) {
+    if (formData.prepTimeMinutes % 5 !== 0) {
       return "Preparation time must be in 5-minute increments (0, 5, 10, 15, etc.)";
     }
     // Validate cleanup time is in 5-minute increments
-    if (formData.cleanup_time_minutes % 5 !== 0) {
+    if (formData.cleanupTimeMinutes % 5 !== 0) {
       return "Cleanup time must be in 5-minute increments (0, 5, 10, 15, etc.)";
     }
     return null;
@@ -217,8 +217,8 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
         <FormField label="Minimum Age" required htmlFor="minimum-age">
           <NumberField
             id="minimum-age"
-            value={formData.age_min}
-            onChange={(value) => updateField("age_min", value)}
+            value={formData.ageMin}
+            onChange={(value) => updateField("ageMin", value)}
             min={6}
             max={15}
           />
@@ -226,8 +226,8 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
         <FormField label="Maximum Age" required htmlFor="maximum-age">
           <NumberField
             id="maximum-age"
-            value={formData.age_max}
-            onChange={(value) => updateField("age_max", value)}
+            value={formData.ageMax}
+            onChange={(value) => updateField("ageMax", value)}
             min={6}
             max={15}
           />
@@ -246,8 +246,8 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
         </FormField>
         <FormField label="Bloom's Taxonomy Level" required>
           <SelectField
-            value={formData.bloom_level}
-            onValueChange={(value) => updateField("bloom_level", value)}
+            value={formData.bloomLevel}
+            onValueChange={(value) => updateField("bloomLevel", value)}
             options={BLOOM_LEVEL_OPTIONS}
             placeholder="Select Bloom level"
           />
@@ -263,8 +263,8 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
         >
           <NumberField
             id="minimum-duration"
-            value={formData.duration_min_minutes}
-            onChange={(value) => updateField("duration_min_minutes", value)}
+            value={formData.durationMinMinutes}
+            onChange={(value) => updateField("durationMinMinutes", value)}
             min={1}
             max={300}
           />
@@ -275,8 +275,8 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
         >
           <NumberField
             id="maximum-duration"
-            value={formData.duration_max_minutes}
-            onChange={(value) => updateField("duration_max_minutes", value)}
+            value={formData.durationMaxMinutes}
+            onChange={(value) => updateField("durationMaxMinutes", value)}
             min={1}
             max={300}
           />
@@ -287,15 +287,15 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField label="Mental Load">
           <SelectField
-            value={formData.mental_load}
-            onValueChange={(value) => updateField("mental_load", value)}
+            value={formData.mentalLoad}
+            onValueChange={(value) => updateField("mentalLoad", value)}
             options={ENERGY_OPTIONS}
           />
         </FormField>
         <FormField label="Physical Energy">
           <SelectField
-            value={formData.physical_energy}
-            onValueChange={(value) => updateField("physical_energy", value)}
+            value={formData.physicalEnergy}
+            onValueChange={(value) => updateField("physicalEnergy", value)}
             options={ENERGY_OPTIONS}
           />
         </FormField>
@@ -309,8 +309,8 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
         >
           <NumberField
             id="preparation-time"
-            value={formData.prep_time_minutes}
-            onChange={(value) => updateField("prep_time_minutes", value)}
+            value={formData.prepTimeMinutes}
+            onChange={(value) => updateField("prepTimeMinutes", value)}
             min={0}
             max={60}
             step={5}
@@ -319,8 +319,8 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
         <FormField label="Cleanup Time (minutes)" htmlFor="cleanup-time">
           <NumberField
             id="cleanup-time"
-            value={formData.cleanup_time_minutes}
-            onChange={(value) => updateField("cleanup_time_minutes", value)}
+            value={formData.cleanupTimeMinutes}
+            onChange={(value) => updateField("cleanupTimeMinutes", value)}
             min={0}
             max={60}
             step={5}
@@ -330,7 +330,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* PDF Document Status */}
       <FormField label="PDF Document">
-        {formData.document_id ? (
+        {formData.documentId ? (
           <div className="mt-2 p-3 bg-success/10 border border-success/20 rounded-lg">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-success" />
@@ -339,7 +339,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
                   PDF Document Ready
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Document ID: {formData.document_id}
+                  Document ID: {formData.documentId}
                 </p>
               </div>
             </div>
@@ -359,9 +359,9 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
       {/* Resources and Topics */}
       <BadgeSelector
         label="Resources Needed"
-        options={fieldValues?.resources_available || []}
-        selectedValues={formData.resources_needed}
-        onToggle={(value) => toggleArrayValue("resources_needed", value)}
+        options={fieldValues?.resourcesAvailable || []}
+        selectedValues={formData.resourcesNeeded}
+        onToggle={(value) => toggleArrayValue("resourcesNeeded", value)}
       />
 
       <BadgeSelector

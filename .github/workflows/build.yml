@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - "client/**"
-      - "server-spring/**"
+      - "server/**"
       - ".github/workflows/build.yml"
   workflow_dispatch:
 
@@ -38,7 +38,7 @@ jobs:
               - "client/**"
               - ".github/workflows/build.yml"
             server:
-              - "server-spring/**"
+              - "server/**"
               - ".github/workflows/build.yml"
 
   build-client:
@@ -65,9 +65,9 @@ jobs:
       packages: write
     uses: ls1intum/.github/.github/workflows/build-and-push-docker-image.yml@main
     with:
-      image-name: ls1intum/learn-hub/spring-server
-      docker-file: server-spring/Dockerfile
-      docker-context: ./server-spring
+      image-name: ls1intum/learn-hub/server
+      docker-file: server/Dockerfile
+      docker-context: ./server
       tags: |
         type=sha,format=short,prefix=main-
         latest

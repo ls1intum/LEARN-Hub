@@ -31,7 +31,7 @@ services:
           memory: 256M
 
   server:
-    image: ghcr.io/${GITHUB_REPOSITORY:-ls1intum/learn-hub}/spring-server:${IMAGE_TAG:-latest}
+    image: ghcr.io/${GITHUB_REPOSITORY:-ls1intum/learn-hub}/server:${IMAGE_TAG:-latest}
     container_name: lhub-server
     restart: unless-stopped
     ports:

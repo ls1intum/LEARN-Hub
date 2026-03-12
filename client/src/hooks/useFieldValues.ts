@@ -5,12 +5,12 @@ import { logger } from "@/services/logger";
 
 interface FieldValues {
   format: string[];
-  resources_available: string[];
-  bloom_level: string[];
+  resourcesAvailable: string[];
+  bloomLevel: string[];
   topics: string[];
-  mental_load: string[];
-  physical_energy: string[];
-  priority_categories: string[];
+  mentalLoad: string[];
+  physicalEnergy: string[];
+  priorityCategories: string[];
   age_range: { min: number; max: number };
 }
 

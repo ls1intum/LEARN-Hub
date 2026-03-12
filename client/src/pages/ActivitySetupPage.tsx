@@ -39,19 +39,19 @@ interface ActivityFormData {
   name: string;
   description: string;
   source: string;
-  age_min: number;
-  age_max: number;
+  ageMin: number;
+  ageMax: number;
   format: string;
-  bloom_level: string;
-  duration_min_minutes: number;
-  duration_max_minutes: number;
-  mental_load: string;
-  physical_energy: string;
-  prep_time_minutes: number;
-  cleanup_time_minutes: number;
-  resources_needed: string[];
+  bloomLevel: string;
+  durationMinMinutes: number;
+  durationMaxMinutes: number;
+  mentalLoad: string;
+  physicalEnergy: string;
+  prepTimeMinutes: number;
+  cleanupTimeMinutes: number;
+  resourcesNeeded: string[];
   topics: string[];
-  document_id: number | string | null;
+  documentId: number | string | null;
   [key: string]: string | number | boolean | string[] | null | undefined;
 }
 
@@ -161,10 +161,10 @@ export const ActivitySetupPage: React.FC = () => {
 
     try {
       const result = await apiService.uploadPdfDraft(selectedFile);
-      setDocumentId(result.document_id);
-      setExtractedData(result.extracted_data);
-      setExtractionConfidence(result.extraction_confidence);
-      setExtractionQuality(result.extraction_quality);
+      setDocumentId(result.documentId);
+      setExtractedData(result.extractedData);
+      setExtractionConfidence(result.extractionConfidence);
+      setExtractionQuality(result.extractionQuality);
       setCurrentStep("metadata");
     } catch (error) {
       logger.error("Upload error", error, "ActivitySetupPage");
@@ -265,8 +265,8 @@ export const ActivitySetupPage: React.FC = () => {
     try {
       const response = (await apiService.createActivity({
         ...savedMetadata,
-        document_id: documentId,
-        artikulationsschema_markdown:
+        documentId: documentId,
+        artikulationsschemaMarkdown:
           artikulationsschemaMarkdown || undefined,
       })) as { activity: Activity };
 
@@ -468,7 +468,7 @@ export const ActivitySetupPage: React.FC = () => {
                   savedMetadata ||
                   ({
                     ...extractedData,
-                    document_id: documentId || null,
+                    documentId: documentId || null,
                   } as Partial<ActivityFormData>)
                 }
                 onSubmit={handleMetadataNext}

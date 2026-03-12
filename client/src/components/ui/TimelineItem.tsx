@@ -54,14 +54,14 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
               {/* Duration */}
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Clock className="h-4 w-4" />
-                <span>{formatDuration(activity.duration_min_minutes)}</span>
+                <span>{formatDuration(activity.durationMinMinutes)}</span>
               </div>
 
               {/* Age Range */}
               <div className="flex items-center gap-1 text-muted-foreground">
                 <Users className="h-4 w-4" />
                 <span>
-                  {formatAgeRange(activity.age_min, activity.age_max)}
+                  {formatAgeRange(activity.ageMin, activity.ageMax)}
                 </span>
               </div>
 
@@ -72,7 +72,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
 
               {/* Bloom Level */}
               <Badge variant="outline" className="text-xs">
-                {activity.bloom_level}
+                {activity.bloomLevel}
               </Badge>
             </div>
 
@@ -91,12 +91,12 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
             )}
 
             {/* Resources */}
-            {activity.resources_needed &&
-              activity.resources_needed.length > 0 && (
+            {activity.resourcesNeeded &&
+              activity.resourcesNeeded.length > 0 && (
                 <div className="text-sm">
                   <span className="text-muted-foreground">Resources: </span>
                   <span className="text-foreground">
-                    {activity.resources_needed.join(", ")}
+                    {activity.resourcesNeeded.join(", ")}
                   </span>
                 </div>
               )}

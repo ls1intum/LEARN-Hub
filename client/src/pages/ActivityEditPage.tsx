@@ -37,19 +37,19 @@ interface ActivityFormData {
   name: string;
   description: string;
   source: string;
-  age_min: number;
-  age_max: number;
+  ageMin: number;
+  ageMax: number;
   format: string;
-  bloom_level: string;
-  duration_min_minutes: number;
-  duration_max_minutes: number;
-  mental_load: string;
-  physical_energy: string;
-  prep_time_minutes: number;
-  cleanup_time_minutes: number;
-  resources_needed: string[];
+  bloomLevel: string;
+  durationMinMinutes: number;
+  durationMaxMinutes: number;
+  mentalLoad: string;
+  physicalEnergy: string;
+  prepTimeMinutes: number;
+  cleanupTimeMinutes: number;
+  resourcesNeeded: string[];
   topics: string[];
-  document_id: number | string | null;
+  documentId: number | string | null;
   [key: string]: string | number | boolean | string[] | null | undefined;
 }
 
@@ -101,7 +101,7 @@ export const ActivityEditPage: React.FC = () => {
       .then((data) => {
         setActivity(data);
         setArtikulationsschemaMarkdown(
-          data.artikulationsschema_markdown || "",
+          data.artikulationsschemaMarkdown || "",
         );
       })
       .catch((err) => {
@@ -189,19 +189,19 @@ export const ActivityEditPage: React.FC = () => {
         name: savedMetadata.name,
         description: savedMetadata.description,
         source: savedMetadata.source || undefined,
-        age_min: savedMetadata.age_min,
-        age_max: savedMetadata.age_max,
+        ageMin: savedMetadata.ageMin,
+        ageMax: savedMetadata.ageMax,
         format: savedMetadata.format,
-        resources_needed: savedMetadata.resources_needed,
-        bloom_level: savedMetadata.bloom_level,
-        duration_min_minutes: savedMetadata.duration_min_minutes,
-        duration_max_minutes: savedMetadata.duration_max_minutes || undefined,
-        prep_time_minutes: savedMetadata.prep_time_minutes,
-        cleanup_time_minutes: savedMetadata.cleanup_time_minutes,
-        mental_load: savedMetadata.mental_load || undefined,
-        physical_energy: savedMetadata.physical_energy || undefined,
+        resourcesNeeded: savedMetadata.resourcesNeeded,
+        bloomLevel: savedMetadata.bloomLevel,
+        durationMinMinutes: savedMetadata.durationMinMinutes,
+        durationMaxMinutes: savedMetadata.durationMaxMinutes || undefined,
+        prepTimeMinutes: savedMetadata.prepTimeMinutes,
+        cleanupTimeMinutes: savedMetadata.cleanupTimeMinutes,
+        mentalLoad: savedMetadata.mentalLoad || undefined,
+        physicalEnergy: savedMetadata.physicalEnergy || undefined,
         topics: savedMetadata.topics,
-        artikulationsschema_markdown:
+        artikulationsschemaMarkdown:
           artikulationsschemaMarkdown || undefined,
       });
 
@@ -257,7 +257,7 @@ export const ActivityEditPage: React.FC = () => {
                   .then((data) => {
                     setActivity(data);
                     setArtikulationsschemaMarkdown(
-                      data.artikulationsschema_markdown || "",
+                      data.artikulationsschemaMarkdown || "",
                     );
                   })
                   .catch((err) =>
@@ -345,21 +345,21 @@ export const ActivityEditPage: React.FC = () => {
                     name: activity.name,
                     description: activity.description,
                     source: activity.source || "",
-                    age_min: activity.age_min,
-                    age_max: activity.age_max,
+                    ageMin: activity.ageMin,
+                    ageMax: activity.ageMax,
                     format: activity.format,
-                    bloom_level: activity.bloom_level,
-                    duration_min_minutes: activity.duration_min_minutes,
-                    duration_max_minutes:
-                      activity.duration_max_minutes ||
-                      activity.duration_min_minutes,
-                    mental_load: activity.mental_load || "medium",
-                    physical_energy: activity.physical_energy || "medium",
-                    prep_time_minutes: activity.prep_time_minutes || 5,
-                    cleanup_time_minutes: activity.cleanup_time_minutes || 5,
-                    resources_needed: activity.resources_needed || [],
+                    bloomLevel: activity.bloomLevel,
+                    durationMinMinutes: activity.durationMinMinutes,
+                    durationMaxMinutes:
+                      activity.durationMaxMinutes ||
+                      activity.durationMinMinutes,
+                    mentalLoad: activity.mentalLoad || "medium",
+                    physicalEnergy: activity.physicalEnergy || "medium",
+                    prepTimeMinutes: activity.prepTimeMinutes || 5,
+                    cleanupTimeMinutes: activity.cleanupTimeMinutes || 5,
+                    resourcesNeeded: activity.resourcesNeeded || [],
                     topics: activity.topics || [],
-                    document_id: activity.document_id || null,
+                    documentId: activity.documentId || null,
                   } as Partial<ActivityFormData>)
                 }
                 onSubmit={handleMetadataNext}

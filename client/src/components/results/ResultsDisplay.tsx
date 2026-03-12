@@ -31,14 +31,14 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     // Calculate total duration from activities
     const totalDuration = recommendation.activities.reduce(
       (total, activity) => {
-        return total + (activity.duration_min_minutes || 0);
+        return total + (activity.durationMinMinutes || 0);
       },
       0,
     );
 
     const data: LessonPlanData = {
       activities: recommendation.activities,
-      total_duration_minutes: totalDuration,
+      totalDurationMinutes: totalDuration,
       breaks: [], // Breaks are now included inline with activities
       ordering_strategy: "balanced",
       title: "My Lesson Plan",

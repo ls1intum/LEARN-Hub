@@ -104,11 +104,11 @@ vi.mock("@/hooks/useFieldValues", () => ({
   useFieldValues: () => ({
     fieldValues: {
       format: ["unplugged", "digital", "hybrid"],
-      resources_available: ["computers", "tablets", "handouts"],
-      bloom_level: ["remember", "understand", "apply"],
+      resourcesAvailable: ["computers", "tablets", "handouts"],
+      bloomLevel: ["remember", "understand", "apply"],
       topics: ["decomposition", "patterns", "abstraction"],
-      mental_load: ["low", "medium", "high"],
-      physical_energy: ["low", "medium", "high"],
+      mentalLoad: ["low", "medium", "high"],
+      physicalEnergy: ["low", "medium", "high"],
     },
   }),
 }));

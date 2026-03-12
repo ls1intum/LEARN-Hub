@@ -13,31 +13,31 @@ export interface Activity {
   name: string;
   description: string;
   source?: string;
-  age_min: number;
-  age_max: number;
+  ageMin: number;
+  ageMax: number;
   format: string;
-  resources_needed: string[];
-  bloom_level: string;
-  duration_min_minutes: number;
-  duration_max_minutes?: number;
-  prep_time_minutes?: number;
-  cleanup_time_minutes?: number;
-  mental_load?: string;
-  physical_energy?: string;
+  resourcesNeeded: string[];
+  bloomLevel: string;
+  durationMinMinutes: number;
+  durationMaxMinutes?: number;
+  prepTimeMinutes?: number;
+  cleanupTimeMinutes?: number;
+  mentalLoad?: string;
+  physicalEnergy?: string;
   topics: string[];
-  document_id?: string;
-  created_at?: string;
-  artikulationsschema_markdown?: string;
+  documentId?: string;
+  createdAt?: string;
+  artikulationsschemaMarkdown?: string;
   type: "activity";
   // Break that should happen after this activity
-  break_after?: BreakAfter;
+  breakAfter?: BreakAfter;
 }
 
 // Individual recommendation containing activities and scoring breakdown
 export interface Recommendation {
   activities: Activity[]; // Activities in this recommendation
   score: number; // Relevance score for this recommendation (0-100)
-  score_breakdown: Record<string, CategoryScore>; // Detailed scoring breakdown by category
+  scoreBreakdown: Record<string, CategoryScore>; // Detailed scoring breakdown by category
 }
 
 // Category score details for recommendation scoring
@@ -45,27 +45,27 @@ export interface CategoryScore {
   category: string;
   score: number;
   impact: number;
-  priority_multiplier: number;
-  is_priority: boolean;
+  priorityMultiplier: number;
+  isPriority: boolean;
 }
 
 // Updated to match server API - now returns individual recommendations
 export interface ResultsData {
   activities: Recommendation[]; // List of individual recommendations (matches server field name)
   total: number; // Total number of recommendations
-  search_criteria: Record<string, string>; // Search criteria used for the request
-  generated_at: string; // ISO timestamp when recommendations were generated
+  searchCriteria: Record<string, string>; // Search criteria used for the request
+  generatedAt: string; // ISO timestamp when recommendations were generated
 }
 
-// Legacy Break interface removed - breaks are now embedded in activities via break_after field
+// Legacy Break interface removed - breaks are now embedded in activities via breakAfter field
 
 export interface FilterOptions {
   format: string[];
-  resources_available: string[];
-  bloom_level: string[];
+  resourcesAvailable: string[];
+  bloomLevel: string[];
   topics: string[];
-  mental_load: string[];
-  physical_energy: string[];
+  mentalLoad: string[];
+  physicalEnergy: string[];
 }
 
 export interface ActivitiesResponse {
@@ -79,13 +79,13 @@ export interface FavoriteActivity {
   id: string;
   name: string;
   source: string;
-  age_min: number;
-  age_max: number;
+  ageMin: number;
+  ageMax: number;
   format: string;
-  duration_min_minutes: number;
-  duration_max_minutes?: number;
+  durationMinMinutes: number;
+  durationMaxMinutes?: number;
   topics: string[];
-  favorited_at: string;
+  favoritedAt: string;
   serverData?: Record<string, string | number | boolean | string[]>;
 }
 
@@ -93,30 +93,30 @@ export interface FavoriteActivity {
 export interface User {
   id: number;
   email: string;
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
   name?: string;
   role: string;
-  is_verified?: boolean;
-  created_at?: string;
+  isVerified?: boolean;
+  createdAt?: string;
 }
 
 export interface UserLoginData {
   user: User;
-  access_token: string;
-  refresh_token: string;
+  accessToken: string;
+  refreshToken: string;
   expires_in?: number;
 }
 
 // Search history types
 export interface SearchHistoryEntry {
   id: number;
-  search_criteria: Record<string, string | number | boolean | string[]>;
-  created_at: string;
+  searchCriteria: Record<string, string | number | boolean | string[]>;
+  createdAt: string;
 }
 
 export interface SearchHistoryResponse {
-  search_history: SearchHistoryEntry[];
+  searchHistory: SearchHistoryEntry[];
   pagination: {
     limit: number;
     offset: number;
@@ -129,9 +129,9 @@ export interface Favorite {
   id: number;
   name: string;
   activities: Activity[];
-  search_criteria: Record<string, string | number | boolean | string[]>;
-  total_duration: number;
-  created_at: string;
+  searchCriteria: Record<string, string | number | boolean | string[]>;
+  totalDuration: number;
+  createdAt: string;
 }
 
 export interface FavoritesResponse {
@@ -146,11 +146,11 @@ export interface FavoritesResponse {
 // Lesson plan types
 export interface LessonPlanInfo {
   title: string;
-  total_duration: number;
-  activity_count: number;
-  topics_covered: string[];
-  bloom_levels: string[];
-  age_range: string;
+  totalDuration: number;
+  activityCount: number;
+  topicsCovered: string[];
+  bloomLevels: string[];
+  ageRange: string;
   formats: string[];
 }
 
@@ -160,31 +160,31 @@ export interface Document {
   filename: string;
   file_size: number;
   mime_type?: string;
-  created_at: string;
+  createdAt: string;
 }
 
 // Field values types - matches server FieldValuesResponse
 export interface FieldValues {
   format: string[];
-  resources_available: string[];
-  bloom_level: string[];
+  resourcesAvailable: string[];
+  bloomLevel: string[];
   topics: string[];
-  priority_categories: string[];
-  mental_load: string[];
-  physical_energy: string[];
+  priorityCategories: string[];
+  mentalLoad: string[];
+  physicalEnergy: string[];
 }
 
 // Lesson plan data type
 export interface LessonPlanData {
   activities: Activity[];
-  total_duration_minutes: number;
+  totalDurationMinutes: number;
   breaks?: Array<{
     description: string;
     duration: number;
     reasons: string[];
   }>;
   ordering_strategy?: string;
-  created_at?: string;
+  createdAt?: string;
   title?: string;
-  search_criteria?: Record<string, string | number | boolean | string[]>;
+  searchCriteria?: Record<string, string | number | boolean | string[]>;
 }

@@ -4,101 +4,64 @@
 
 ```bash
 cd server/
-make setup      # Install dependencies via uv sync
-make db-setup   # Run database migrations
-make db-mock    # Populate with mock data (or use: make db-dataset)
-make dev        # Start development server (port 5001)
-```
-
-## Critical Requirement: Use `uv`
-
-All Python operations must use `uv` as the package and task manager. Direct use of `pip` or `python` is prohibited.
-
-```bash
-uv run python <script>
-uv run pytest
-uv run alembic <command>
+make db-migrate  # Run Flyway database migrations
+make dev         # Start development server (port 5001)
 ```
 
 ## Development Commands
 
 ### Application
-- `make dev` - Development server with hot reload
-- `make run` - Production-like server via Gunicorn
+- `make dev` - Start development server with Spring Boot DevTools
+- `make build` - Build the application JAR
 
 ### Code Quality
-- `make format` - Format with Black (120 character lines)
-- `make lint-fix` - Check and auto-fix linting issues with Ruff
+- `make format` - Format code with Spotless (Google Java Style)
+- `make lint` - Check code style with Spotless
 
 ### Testing
-- `make test` - All tests with coverage
-- `make test-unit` - Unit tests only
-- `make test-integration` - Integration tests
-
-**Testing Targets**: < 4 seconds execution, < 100 tests, > 50% coverage on critical business logic.
+- `make test` - Run all tests with JUnit
 
 ### Database
-- `make db-setup` - Apply Alembic migrations
-- `make db-check` - Verify migrations are up to date
-- `make db-mock` - Seed mock data (requires migrations)
-- `make db-dataset` - Import real dataset (requires migrations)
-- `make db-reset` - Reset (development only)
+- `make db-migrate` - Apply Flyway migrations
+- `make db-clean` - Clean database (WARNING: deletes all data)
 
 ## Testing Strategy
 
-The test suite prioritises high-value regression protection:
-
-**Tested**: User-facing features, error paths, business logic  
-**Not Tested**: Third-party libraries, UI rendering, implementation details  
-**Tools**: pytest, SQLAlchemy (in-memory SQLite for integration tests)
+The test suite uses JUnit 5 and Mockito.
 
 **Running Tests**:
 ```bash
-make test                    # All tests with coverage
-make test-unit               # Fast unit tests only
-uv run pytest tests/unit/    # Specific directory
+make test
 ```
 
 ## Code Quality
 
-- **Black**: 120-character line formatting
-- **Ruff**: Fast Python linter combining multiple tools
-- **Type Hints**: Required for all functions using modern syntax (`list[str]`)
+- **Spotless**: Java code formatter using Google Java Style
+- **Constructor injection**: All Spring beans use constructor injection (no `@Autowired` field injection)
 
 **Pre-commit Workflow**:
 ```bash
-make format && make lint-fix && make test
+make format && make lint && make test
 ```
 
 ## Database Management
 
-Alembic manages version-controlled schema migrations:
+Flyway manages version-controlled schema migrations located in `src/main/resources/db/migration/`:
 
 ```bash
-uv run alembic revision --autogenerate -m "Description"  # Create migration
-uv run alembic upgrade head                               # Apply migrations
-uv run alembic downgrade -1                               # Revert last
-uv run alembic current                                    # Check status
+make db-migrate   # Apply all pending migrations
+make db-clean     # Revert all migrations (development only)
 ```
 
-**Workflow**:
-```bash
-# Development
-make db-setup     # Apply migrations
-make db-mock      # Seed with mock data (optional)
-
-# Production
-make db-setup     # Apply migrations
-make db-dataset   # Import real dataset
-```
+**Migration naming**: `V{version}__{description}.sql` (e.g., `V1__Initial_schema.sql`)
 
 ## Production Deployment
 
 ### Containerisation
 
 Multi-stage Docker build:
-- **Build Stage**: Uses `uv` to install dependencies from `pyproject.toml`
-- **Production Stage**: Minimal Python slim image with Gunicorn as WSGI server
+- **Build Stage**: Maven builds a fat JAR (`./mvnw clean package -DskipTests`)
+- **Production Stage**: Eclipse Temurin JRE 21 slim image
 - **Non-root User**: Application runs as non-root for security
 
 Health check endpoint: `/api/hello` (used by Docker health checks)
@@ -109,27 +72,27 @@ Docker Compose manages the application:
 
 ```bash
 # Development
-docker compose up --build -d
+docker compose -f docker/compose.yml up --build -d
 
 # Production (pre-built images from GitHub Container Registry)
-docker compose -f compose.prod.yml up -d
+docker compose -f docker/compose.prod.yml up -d
 
 # View logs
-docker compose logs -f server
+docker compose -f docker/compose.yml logs -f server
 ```
 
 ### Configuration
 
-Pydantic Settings maps environment variables to strongly-typed configuration:
+Spring Boot maps environment variables to configuration properties:
 
 **Required Variables**:
 - `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL_NAME` - Ollama LLM service
-- `FLASK_SECRET_KEY`, `JWT_SECRET_KEY` - Security keys
-- `SQLALCHEMY_DATABASE_URI` - PostgreSQL connection
-- `SMTP_*` - Email service configuration
-- `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` - Bootstrap admin
+- `JWT_SECRET_KEY` - Security key for JWT token signing
+- `POSTGRES_DB_URI` - PostgreSQL JDBC connection string
+- `EMAIL_*` - Email service configuration
+- `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` - Bootstrap admin (optional)
 
-The `ENVIRONMENT` variable enables runtime behavior adaptation without code changes.
+The `DB_SEED_ENABLED` variable controls automatic database seeding on startup.
 
 ## Related Documentation
 
