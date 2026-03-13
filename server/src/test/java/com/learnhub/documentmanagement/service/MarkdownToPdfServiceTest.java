@@ -41,15 +41,15 @@ class MarkdownToPdfServiceTest {
 	@Test
 	void renderMarkdownToPdfWithTable() {
 		String markdown = """
-				# Artikulationsschema
+				# Lesson Plan
 
-				**Fach:** Mathematik
-				**Klasse:** 5
+				**Subject:** Mathematics
+				**Grade:** 5
 
-				| Zeit | Phase | Handlungsschritte | Sozialform | Kompetenzen | Medien/Material |
-				|------|-------|-------------------|------------|-------------|-----------------|
-				| 5 min | Einstieg | Begrüßung | Plenum | Kommunikation | - |
-				| 20 min | Erarbeitung | Aufgaben lösen | Einzelarbeit | Rechnen | Arbeitsblatt |
+				| Time | Phase | Steps | Format | Skills | Materials |
+				|------|-------|-------|--------|--------|-----------|
+				| 5 min | Intro | Greeting | Plenary | Communication | - |
+				| 20 min | Work | Solve tasks | Individual | Calculation | Worksheet |
 				""";
 		byte[] result = service.renderMarkdownToPdf(markdown);
 		assertThat(result).isNotNull();

@@ -390,8 +390,7 @@ public class MarkdownToPdfService {
 
 	private float[] getColumnWidths(int numCols) {
 		if (numCols == 6) {
-			// Standard schema: Zeit, Phase, Handlungsschritte, Sozialform, Kompetenzen,
-			// Medien/Material
+			// Optimized widths for 6-column tables: narrow first column, wide middle column
 			return new float[]{8f, 12f, 30f, 12f, 20f, 18f};
 		}
 		float[] widths = new float[numCols];
