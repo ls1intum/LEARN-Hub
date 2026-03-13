@@ -46,10 +46,6 @@ public class ScoringEngineService {
 		this.priorityCategories = priorityCategories != null ? priorityCategories : new ArrayList<>();
 	}
 
-	public static Map<String, ScoringCategory> getScoringCategories() {
-		return new HashMap<>(SCORING_CATEGORIES);
-	}
-
 	public ScoreResponse scoreActivity(Activity activity, SearchCriteria criteria) {
 		Map<String, CategoryScoreResponse> categoryScores = new HashMap<>();
 

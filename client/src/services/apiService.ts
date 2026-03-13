@@ -23,7 +23,6 @@ import type {
   LessonPlanFavoritesResponse,
   FavoriteStatusResponse,
   UsersResponse,
-  ScoringInsightsResponse,
 } from "@/types/api";
 
 // Legacy interfaces removed - now using types from activity.ts
@@ -386,15 +385,6 @@ export class ApiService {
    */
   static async getEnvironment() {
     return this.request<{ environment: string }>("/api/meta/environment");
-  }
-
-  /**
-   * Get scoring insights
-   */
-  static async getScoringInsights() {
-    return this.request<ScoringInsightsResponse>(
-      "/api/activities/scoring-insights",
-    );
   }
 
   /**

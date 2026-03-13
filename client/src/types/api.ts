@@ -218,12 +218,3 @@ export interface UsersResponse {
     createdAt?: string;
   }>;
 }
-
-// Scoring insights response
-export interface ScoringInsightsResponse {
-  insights: Array<{
-    category: string;
-    description: string;
-    impact: number;
-  }>;
-}

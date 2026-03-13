@@ -33,14 +33,6 @@ public class ActivityService {
 	@Autowired
 	private LLMService llmService;
 
-	public List<ActivityResponse> getAllActivities() {
-		return activityRepository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
-	}
-
-	public long countAllActivities() {
-		return activityRepository.count();
-	}
-
 	public long countActivitiesWithFilters(String name, Integer ageMin, Integer ageMax, Integer durationMin,
 			Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics) {
@@ -394,69 +386,6 @@ public class ActivityService {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to upload PDF and extract metadata: " + e.getMessage(), e);
-		}
-	}
-
-	/**
-	 * Upload PDF and create activity with extracted data
-	 */
-	public Map<String, Object> uploadAndCreateActivity(MultipartFile pdfFile) {
-		try {
-			if (pdfFile.isEmpty()) {
-				throw new IllegalArgumentException("No PDF file provided");
-			}
-
-			if (!pdfFile.getOriginalFilename().toLowerCase().endsWith(".pdf")) {
-				throw new IllegalArgumentException("File must be a PDF");
-			}
-
-			// Cache PDF in memory first
-			byte[] pdfContent = pdfFile.getBytes();
-			if (pdfContent.length == 0) {
-				throw new IllegalArgumentException("PDF file is empty");
-			}
-
-			UUID cacheKey = pdfService.cachePdf(pdfContent, pdfFile.getOriginalFilename());
-
-			// Extract activity data using LLM
-			String pdfText = new String(pdfContent); // Simplified - should use PDF parser
-			Map<String, Object> extractionResult = llmService.extractActivityData(pdfText);
-
-			Object dataObj = extractionResult.get("data");
-			if (!(dataObj instanceof Map)) {
-				throw new RuntimeException("LLM extraction did not return a valid data map");
-			}
-			@SuppressWarnings("unchecked")
-			Map<String, Object> extractedData = (Map<String, Object>) dataObj;
-			Double confidence = extractionResult.get("confidence") != null
-					? (Double) extractionResult.get("confidence")
-					: 0.0;
-
-			String extractionQuality = determineExtractionQuality(confidence);
-
-			// Update cached PDF with extraction results
-			String confidenceScore = String.format("%.3f", confidence);
-			pdfService.updatePdfExtractionResults(cacheKey, extractedData, confidenceScore, extractionQuality);
-
-			// Finalize: persist PDF to filesystem + DB, get the auto-generated document ID
-			UUID documentId = pdfService.finalizePdf(cacheKey);
-
-			// Create activity with extracted data and defaults
-			Map<String, Object> activityData = applyActivityDefaults(extractedData);
-			activityData.put("documentId", documentId);
-
-			Activity activity = createActivityFromMap(activityData);
-			ActivityResponse saved = createActivity(activity);
-
-			Map<String, Object> response = new HashMap<>();
-			response.put("activity", saved);
-			response.put("documentId", documentId);
-			response.put("extractionConfidence", confidence);
-			response.put("extractionQuality", extractionQuality);
-
-			return response;
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to upload and create activity: " + e.getMessage(), e);
 		}
 	}
 

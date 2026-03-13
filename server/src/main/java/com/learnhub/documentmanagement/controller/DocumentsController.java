@@ -11,8 +11,6 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -26,27 +24,6 @@ public class DocumentsController {
 
 	@Autowired
 	private PDFService pdfService;
-
-	@GetMapping("/{documentId}")
-	@PreAuthorize("permitAll()")
-	@Operation(summary = "Get document", description = "Retrieve PDF file content by document ID")
-	public ResponseEntity<?> getDocument(@PathVariable UUID documentId) {
-		logger.info("GET /api/documents/{} - Get document called", documentId);
-		try {
-			PDFDocument document = pdfService.getPdfDocument(documentId);
-			byte[] pdfContent = pdfService.getPdfContent(documentId);
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_PDF);
-			headers.setContentDispositionFormData("inline", document.getFilename());
-			headers.setContentLength(pdfContent.length);
-
-			return ResponseEntity.ok().headers(headers).body(pdfContent);
-		} catch (Exception e) {
-			logger.error("GET /api/documents/{} - Document not found: {}", documentId, e.getMessage());
-			return ResponseEntity.status(404).body(ErrorResponse.of("Document not found: " + e.getMessage()));
-		}
-	}
 
 	@GetMapping("/{documentId}/info")
 	@PreAuthorize("permitAll()")

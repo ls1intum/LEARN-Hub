@@ -8,7 +8,6 @@ import com.learnhub.activitymanagement.dto.response.ActivityResponse;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
 import com.learnhub.activitymanagement.service.ActivityService;
 import com.learnhub.activitymanagement.service.RecommendationService;
-import com.learnhub.activitymanagement.service.ScoringEngineService;
 import com.learnhub.documentmanagement.service.ArtikulationsschemaService;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
@@ -256,36 +255,6 @@ public class ActivityController {
 			logger.error("GET /api/activities/recommendations - Failed to get recommendations: {}", e.getMessage());
 			return ResponseEntity.status(500)
 					.body(ErrorResponse.of("Failed to get recommendations: " + e.getMessage()));
-		}
-	}
-
-	@GetMapping("/scoring-insights")
-	@PreAuthorize("permitAll()")
-	@Operation(summary = "Get scoring insights", description = "Get information about scoring categories and their weights")
-	public ResponseEntity<?> getScoringInsights() {
-		logger.info("GET /api/activities/scoring-insights - Get scoring insights called");
-		try {
-			Map<String, ScoringEngineService.ScoringCategory> categories = ScoringEngineService.getScoringCategories();
-
-			Map<String, Object> response = new HashMap<>();
-			Map<String, Map<String, Object>> categoriesMap = new HashMap<>();
-
-			for (Map.Entry<String, ScoringEngineService.ScoringCategory> entry : categories.entrySet()) {
-				Map<String, Object> categoryInfo = new HashMap<>();
-				categoryInfo.put("name", entry.getValue().getName());
-				categoryInfo.put("impact", entry.getValue().getImpact());
-				categoryInfo.put("description", entry.getValue().getDescription());
-				categoriesMap.put(entry.getKey(), categoryInfo);
-			}
-
-			response.put("categories", categoriesMap);
-			response.put("description", "Scoring categories used to evaluate activity recommendations");
-
-			return ResponseEntity.ok(response);
-		} catch (Exception e) {
-			logger.error("GET /api/activities/scoring-insights - Failed to get scoring insights: {}", e.getMessage());
-			return ResponseEntity.status(500)
-					.body(ErrorResponse.of("Failed to get scoring insights: " + e.getMessage()));
 		}
 	}
 

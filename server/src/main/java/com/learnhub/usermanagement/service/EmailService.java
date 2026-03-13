@@ -37,21 +37,6 @@ public class EmailService {
 		mailSender.send(message);
 	}
 
-	public void sendPasswordResetCode(String to, String code, String firstName) {
-		logger.debug("Sending password reset code to email={}", to);
-		SimpleMailMessage message = new SimpleMailMessage();
-		message.setFrom(fromName + " <" + fromAddress + ">");
-		message.setTo(to);
-		message.setSubject("Password Reset Code for LEARN-Hub");
-		message.setText(String.format(
-				"Hello %s,\n\n" + "Your password reset code is: %s\n\n" + "This code will expire in 10 minutes.\n\n"
-						+ "If you didn't request this code, please ignore this email.\n\n" + "Best regards,\n"
-						+ "The LEARN-Hub Team",
-				firstName, code));
-
-		mailSender.send(message);
-	}
-
 	public void sendTeacherCredentials(String to, String firstName, String password) {
 		logger.debug("Sending teacher credentials to email={}", to);
 		SimpleMailMessage message = new SimpleMailMessage();
