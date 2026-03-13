@@ -433,9 +433,7 @@ export const ActivityDetails: React.FC = () => {
                       variant="outline"
                       size="sm"
                       disabled={documentApi.isLoading}
-                      onClick={() =>
-                        handleDownloadMarkdownDocx(md.id, md.type)
-                      }
+                      onClick={() => handleDownloadMarkdownDocx(md.id, md.type)}
                       title="Download as Word document"
                       className="flex items-center gap-1.5"
                     >

@@ -31,8 +31,7 @@ public class MarkdownToDocxService {
 	 * Render markdown content to DOCX bytes.
 	 */
 	public byte[] renderMarkdownToDocx(String markdown) {
-		try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				XWPFDocument document = new XWPFDocument()) {
+		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); XWPFDocument document = new XWPFDocument()) {
 
 			// Set default page to landscape
 			CTSectPr sectPr = document.getDocument().getBody().addNewSectPr();

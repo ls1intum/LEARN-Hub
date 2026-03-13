@@ -31,10 +31,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * Service for rendering markdown content into a styled PDF using
- * iText7 and commonmark for generic markdown parsing. Supports headings,
- * paragraphs, bold/italic text, lists, tables, code blocks, block quotes, and
- * more.
+ * Service for rendering markdown content into a styled PDF using iText7 and
+ * commonmark for generic markdown parsing. Supports headings, paragraphs,
+ * bold/italic text, lists, tables, code blocks, block quotes, and more.
  */
 @Service
 public class MarkdownToPdfService {
@@ -353,8 +352,7 @@ public class MarkdownToPdfService {
 			}
 		} else if (node instanceof Code code) {
 			Text t = new Text(code.getLiteral());
-			t.setFont(fonts.mono()).setFontSize(FONT_SIZE_CODE)
-					.setBackgroundColor(new DeviceRgb(240, 240, 240));
+			t.setFont(fonts.mono()).setFontSize(FONT_SIZE_CODE).setBackgroundColor(new DeviceRgb(240, 240, 240));
 			p.add(t);
 		} else if (node instanceof SoftLineBreak) {
 			p.add(new Text(" "));
