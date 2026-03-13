@@ -326,19 +326,13 @@ public class ActivityService {
 		response.setTopics(activity.getTopics());
 
 		// Extract documentId from the first SOURCE_PDF document
-		UUID documentId = activity.getDocuments().stream()
-				.filter(d -> d.getType() == DocumentType.SOURCE_PDF)
-				.findFirst()
-				.map(PDFDocument::getId)
-				.orElse(null);
+		UUID documentId = activity.getDocuments().stream().filter(d -> d.getType() == DocumentType.SOURCE_PDF)
+				.findFirst().map(PDFDocument::getId).orElse(null);
 		response.setDocumentId(documentId);
 
 		// Extract artikulationsschema markdown from the first ARTIKULATIONSSCHEMA entry
-		String markdown = activity.getMarkdowns().stream()
-				.filter(m -> m.getType() == MarkdownType.ARTIKULATIONSSCHEMA)
-				.findFirst()
-				.map(ActivityMarkdown::getContent)
-				.orElse(null);
+		String markdown = activity.getMarkdowns().stream().filter(m -> m.getType() == MarkdownType.ARTIKULATIONSSCHEMA)
+				.findFirst().map(ActivityMarkdown::getContent).orElse(null);
 		response.setArtikulationsschemaMarkdown(markdown);
 
 		return response;

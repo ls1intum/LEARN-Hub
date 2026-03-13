@@ -89,7 +89,8 @@ public class Activity {
 	private List<String> topics;
 
 	// Documents relationship: FK and ON DELETE CASCADE managed at DB level.
-	// PDFDocument lifecycle is independent (created by PDFService before Activity exists).
+	// PDFDocument lifecycle is independent (created by PDFService before Activity
+	// exists).
 	@OneToMany(fetch = FetchType.EAGER)
 	@JoinColumn(name = "activity_id")
 	@Fetch(FetchMode.SUBSELECT)

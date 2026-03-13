@@ -119,12 +119,9 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({
             aria-label={onForward.ariaLabel}
             className={cn("flex-shrink-0 gap-2", onForward.className)}
           >
-            {!(
-              onForward.size === "icon" &&
-              !onForward.loading
-            ) &&
+            {!(onForward.size === "icon" && !onForward.loading) &&
               (onForward.loading
-                ? (onForward.loadingLabel || "Loading...")
+                ? onForward.loadingLabel || "Loading..."
                 : onForward.label)}
             {!onForward.loading &&
               (onForward.icon || <ArrowRight className="h-4 w-4" />)}

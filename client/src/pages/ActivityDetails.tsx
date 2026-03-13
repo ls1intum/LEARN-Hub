@@ -367,7 +367,9 @@ export const ActivityDetails: React.FC = () => {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-card-foreground">
                       <FileText className="h-4 w-4 text-green-600" />
-                      <p className="font-medium break-all">{pdfInfo.filename}</p>
+                      <p className="font-medium break-all">
+                        {pdfInfo.filename}
+                      </p>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Source PDF

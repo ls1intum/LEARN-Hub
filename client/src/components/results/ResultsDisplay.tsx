@@ -39,9 +39,9 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [scoreThreshold, setScoreThreshold] = useState(0);
   const [durationRange, setDurationRange] = useState<[number, number]>([0, 0]);
-  const [activityCountRange, setActivityCountRange] = useState<[number, number]>(
-    [1, 1],
-  );
+  const [activityCountRange, setActivityCountRange] = useState<
+    [number, number]
+  >([1, 1]);
   const [showFilters, setShowFilters] = useState(false);
 
   const handleCreateLessonPlanFromRecommendation = (
@@ -87,11 +87,14 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   }
 
   const recommendationSummaries = results.activities.map((recommendation) => {
-    const totalDuration = recommendation.activities.reduce((total, activity) => {
-      const activityDuration = activity.durationMinMinutes || 0;
-      const breakDuration = activity.breakAfter?.duration || 0;
-      return total + activityDuration + breakDuration;
-    }, 0);
+    const totalDuration = recommendation.activities.reduce(
+      (total, activity) => {
+        const activityDuration = activity.durationMinMinutes || 0;
+        const breakDuration = activity.breakAfter?.duration || 0;
+        return total + activityDuration + breakDuration;
+      },
+      0,
+    );
 
     const activityCount = recommendation.activities.length;
     const searchText = recommendation.activities
@@ -240,7 +243,10 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                     <div className="rounded-lg border border-border/50 bg-card/50 p-5 shadow-xs">
                       <div className="mb-1 flex items-center gap-2">
                         <Target className="h-4 w-4 text-primary" />
-                        <Label htmlFor="score-threshold" className="font-semibold">
+                        <Label
+                          htmlFor="score-threshold"
+                          className="font-semibold"
+                        >
                           Match Percentage
                         </Label>
                       </div>
@@ -258,7 +264,9 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                         max={100}
                         step={1}
                         value={[scoreThreshold]}
-                        onValueChange={([value]) => setScoreThreshold(value ?? 0)}
+                        onValueChange={([value]) =>
+                          setScoreThreshold(value ?? 0)
+                        }
                         className="w-full"
                       />
                     </div>
@@ -266,7 +274,9 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                     <div className="rounded-lg border border-border/50 bg-card/50 p-5 shadow-xs">
                       <div className="mb-1 flex items-center gap-2">
                         <Clock className="h-4 w-4 text-primary" />
-                        <Label className="font-semibold">Length (minutes)</Label>
+                        <Label className="font-semibold">
+                          Length (minutes)
+                        </Label>
                       </div>
                       <div className="mb-4 flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">

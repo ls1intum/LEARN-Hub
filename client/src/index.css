@@ -76,8 +76,16 @@
   /* Soft background gradient for standalone pages */
   .app-gradient {
     background:
-      radial-gradient(1200px 600px at 10% -10%, hsl(var(--primary) / 0.06) 0%, transparent 40%),
-      radial-gradient(1000px 500px at 110% 10%, hsl(var(--primary) / 0.04) 0%, transparent 35%),
+      radial-gradient(
+        1200px 600px at 10% -10%,
+        hsl(var(--primary) / 0.06) 0%,
+        transparent 40%
+      ),
+      radial-gradient(
+        1000px 500px at 110% 10%,
+        hsl(var(--primary) / 0.04) 0%,
+        transparent 35%
+      ),
       hsl(var(--background));
   }
 
@@ -85,7 +93,9 @@
   .panel {
     background-color: hsl(var(--card));
     border: 1px solid hsl(var(--border));
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    box-shadow:
+      0 1px 3px 0 rgb(0 0 0 / 0.1),
+      0 1px 2px -1px rgb(0 0 0 / 0.1);
     border-radius: var(--radius);
   }
 
@@ -117,7 +127,9 @@
   /* Consistent button focus ring */
   button:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring));
+    box-shadow:
+      0 0 0 2px hsl(var(--background)),
+      0 0 0 4px hsl(var(--ring));
   }
 
   /* Line clamp utilities */
