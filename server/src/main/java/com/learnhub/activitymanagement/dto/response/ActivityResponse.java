@@ -1,5 +1,6 @@
 package com.learnhub.activitymanagement.dto.response;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
@@ -39,9 +40,9 @@ public class ActivityResponse {
 
 	private List<String> topics;
 
-	private UUID documentId;
+	private List<DocumentResponse> documents = new ArrayList<>();
 
-	private String artikulationsschemaMarkdown;
+	private List<MarkdownResponse> markdowns = new ArrayList<>();
 
 	private String type = "activity";
 }

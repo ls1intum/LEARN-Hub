@@ -1,6 +1,8 @@
 package com.learnhub.activitymanagement.service;
 
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
+import com.learnhub.activitymanagement.dto.response.DocumentResponse;
+import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.*;
@@ -325,15 +327,19 @@ public class ActivityService {
 		response.setResourcesNeeded(activity.getResourcesNeeded());
 		response.setTopics(activity.getTopics());
 
-		// Extract documentId from the first SOURCE_PDF document
-		UUID documentId = activity.getDocuments().stream().filter(d -> d.getType() == DocumentType.SOURCE_PDF)
-				.findFirst().map(PDFDocument::getId).orElse(null);
-		response.setDocumentId(documentId);
+		// Map all documents to response list
+		List<DocumentResponse> docResponses = activity.getDocuments().stream()
+				.map(d -> new DocumentResponse(d.getId(), d.getFilename(), d.getFileSize(),
+						d.getType() != null ? d.getType().getValue() : null))
+				.collect(Collectors.toList());
+		response.setDocuments(docResponses);
 
-		// Extract artikulationsschema markdown from the first ARTIKULATIONSSCHEMA entry
-		String markdown = activity.getMarkdowns().stream().filter(m -> m.getType() == MarkdownType.ARTIKULATIONSSCHEMA)
-				.findFirst().map(ActivityMarkdown::getContent).orElse(null);
-		response.setArtikulationsschemaMarkdown(markdown);
+		// Map all markdowns to response list
+		List<MarkdownResponse> mdResponses = activity.getMarkdowns().stream()
+				.map(m -> new MarkdownResponse(m.getId(), m.getType() != null ? m.getType().getValue() : null,
+						m.getContent()))
+				.collect(Collectors.toList());
+		response.setMarkdowns(mdResponses);
 
 		return response;
 	}

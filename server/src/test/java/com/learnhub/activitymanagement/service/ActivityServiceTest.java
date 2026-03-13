@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
+import com.learnhub.activitymanagement.dto.response.DocumentResponse;
+import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
@@ -131,7 +133,7 @@ class ActivityServiceTest {
 	}
 
 	@Test
-	void mapToResponseExtractsDocumentIdFromDocuments() {
+	void mapToResponseReturnsDocumentsList() {
 		Activity activity = createTestActivity();
 		UUID docId = UUID.randomUUID();
 
@@ -140,14 +142,20 @@ class ActivityServiceTest {
 
 		ActivityResponse response = activityService.convertToResponse(activity);
 
-		assertThat(response.getDocumentId()).isEqualTo(docId);
+		assertThat(response.getDocuments()).hasSize(1);
+		DocumentResponse docResp = response.getDocuments().get(0);
+		assertThat(docResp.getId()).isEqualTo(docId);
+		assertThat(docResp.getType()).isEqualTo("source_pdf");
+		assertThat(docResp.getFilename()).isEqualTo("test.pdf");
+		assertThat(docResp.getFileSize()).isEqualTo(1024L);
 	}
 
 	@Test
-	void mapToResponseExtractsMarkdownFromMarkdowns() {
+	void mapToResponseReturnsMarkdownsList() {
 		Activity activity = createTestActivity();
 
 		ActivityMarkdown actMd = new ActivityMarkdown();
+		actMd.setId(UUID.randomUUID());
 		actMd.setActivity(activity);
 		actMd.setType(MarkdownType.ARTIKULATIONSSCHEMA);
 		actMd.setContent("# Test Schema");
@@ -156,17 +164,21 @@ class ActivityServiceTest {
 
 		ActivityResponse response = activityService.convertToResponse(activity);
 
-		assertThat(response.getArtikulationsschemaMarkdown()).isEqualTo("# Test Schema");
+		assertThat(response.getMarkdowns()).hasSize(1);
+		MarkdownResponse mdResp = response.getMarkdowns().get(0);
+		assertThat(mdResp.getId()).isEqualTo(actMd.getId());
+		assertThat(mdResp.getType()).isEqualTo("artikulationsschema");
+		assertThat(mdResp.getContent()).isEqualTo("# Test Schema");
 	}
 
 	@Test
-	void mapToResponseReturnsNullsWhenNoDocumentsOrMarkdowns() {
+	void mapToResponseReturnsEmptyListsWhenNoDocumentsOrMarkdowns() {
 		Activity activity = createTestActivity();
 
 		ActivityResponse response = activityService.convertToResponse(activity);
 
-		assertThat(response.getDocumentId()).isNull();
-		assertThat(response.getArtikulationsschemaMarkdown()).isNull();
+		assertThat(response.getDocuments()).isEmpty();
+		assertThat(response.getMarkdowns()).isEmpty();
 	}
 
 	@Test
@@ -200,7 +212,8 @@ class ActivityServiceTest {
 		// Existing markdown should be updated, not a new one created
 		assertThat(existingActivity.getMarkdowns()).hasSize(1);
 		assertThat(existingActivity.getMarkdowns().get(0).getContent()).isEqualTo("New content");
-		assertThat(response.getArtikulationsschemaMarkdown()).isEqualTo("New content");
+		assertThat(response.getMarkdowns()).hasSize(1);
+		assertThat(response.getMarkdowns().get(0).getContent()).isEqualTo("New content");
 	}
 
 	@Test
@@ -227,7 +240,8 @@ class ActivityServiceTest {
 		assertThat(existingActivity.getMarkdowns()).hasSize(1);
 		assertThat(existingActivity.getMarkdowns().get(0).getContent()).isEqualTo("New schema");
 		assertThat(existingActivity.getMarkdowns().get(0).getType()).isEqualTo(MarkdownType.ARTIKULATIONSSCHEMA);
-		assertThat(response.getArtikulationsschemaMarkdown()).isEqualTo("New schema");
+		assertThat(response.getMarkdowns()).hasSize(1);
+		assertThat(response.getMarkdowns().get(0).getContent()).isEqualTo("New schema");
 	}
 
 	@Test
@@ -258,7 +272,9 @@ class ActivityServiceTest {
 		ActivityResponse response = activityService.createActivityWithValidation(request);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getDocumentId()).isEqualTo(finalizedDocId);
+		assertThat(response.getDocuments()).hasSize(1);
+		assertThat(response.getDocuments().get(0).getId()).isEqualTo(finalizedDocId);
+		assertThat(response.getDocuments().get(0).getType()).isEqualTo("source_pdf");
 
 		// Verify the saved activity has the document relationship
 		ArgumentCaptor<Activity> captor = ArgumentCaptor.forClass(Activity.class);
