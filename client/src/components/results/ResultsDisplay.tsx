@@ -32,6 +32,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   results,
   className = "",
 }) => {
+  const hasRecommendations = Boolean(results?.activities?.length);
   const [isLessonPlanOpen, setIsLessonPlanOpen] = useState(false);
   const [lessonPlanData, setLessonPlanData] = useState<LessonPlanData | null>(
     null,
@@ -72,20 +73,18 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     setLessonPlanData(null);
   };
 
-  if (!results || !results.activities || results.activities.length === 0) {
-    return (
-      <div className="text-center py-12">
-        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">
-          No recommendations found
-        </h3>
-        <p className="text-muted-foreground">
-          Try adjusting your search criteria to find more activities.
-        </p>
-      </div>
-    );
-  }
+  const recommendationSummaries = (results?.activities ?? []).map(
+    (recommendation) => {
+      const totalDuration = recommendation.activities.reduce(
+        (total, activity) => {
+          const activityDuration = activity.durationMinMinutes || 0;
+          const breakDuration = activity.breakAfter?.duration || 0;
+          return total + activityDuration + breakDuration;
+        },
+        0,
+      );
 
+<<<<<<< copilot/refactor-activity-document-structure
   const recommendationSummaries = results.activities.map((recommendation) => {
     const totalDuration = recommendation.activities.reduce(
       (total, activity) => {
@@ -95,20 +94,22 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
       },
       0,
     );
+=======
+      const activityCount = recommendation.activities.length;
+      const searchText = recommendation.activities
+        .flatMap((activity) => [activity.name, activity.description])
+        .join(" ")
+        .toLowerCase();
+>>>>>>> main
 
-    const activityCount = recommendation.activities.length;
-    const searchText = recommendation.activities
-      .flatMap((activity) => [activity.name, activity.description])
-      .join(" ")
-      .toLowerCase();
-
-    return {
-      recommendation,
-      totalDuration,
-      activityCount,
-      searchText,
-    };
-  });
+      return {
+        recommendation,
+        totalDuration,
+        activityCount,
+        searchText,
+      };
+    },
+  );
 
   const durationBounds = recommendationSummaries.reduce(
     (bounds, item) => ({
@@ -133,14 +134,16 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     Number.isFinite(activityCountBounds.min) ? activityCountBounds.min : 1,
     activityCountBounds.max || 1,
   ];
+  const [minDuration, maxDuration] = normalizedDurationBounds;
+  const [minActivityCount, maxActivityCount] = normalizedActivityCountBounds;
 
   useEffect(() => {
     setSearchQuery("");
     setScoreThreshold(0);
-    setDurationRange(normalizedDurationBounds);
-    setActivityCountRange(normalizedActivityCountBounds);
+    setDurationRange([minDuration, maxDuration]);
+    setActivityCountRange([minActivityCount, maxActivityCount]);
     setShowFilters(false);
-  }, [results]);
+  }, [results, minDuration, maxDuration, minActivityCount, maxActivityCount]);
 
   const filteredRecommendations = recommendationSummaries.filter((item) => {
     const matchesQuery =
@@ -163,6 +166,20 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     setDurationRange(normalizedDurationBounds);
     setActivityCountRange(normalizedActivityCountBounds);
   };
+
+  if (!hasRecommendations) {
+    return (
+      <div className="text-center py-12">
+        <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-semibold text-foreground mb-2">
+          No recommendations found
+        </h3>
+        <p className="text-muted-foreground">
+          Try adjusting your search criteria to find more activities.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>

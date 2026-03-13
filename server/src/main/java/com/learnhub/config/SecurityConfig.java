@@ -31,6 +31,7 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 		http.csrf(AbstractHttpConfigurer::disable).cors(cors -> cors.configurationSource(corsConfigurationSource))
+				.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()))
 				.authorizeHttpRequests(auth -> auth
 						// OpenAPI/Swagger documentation - permit all
 						.requestMatchers("/api/openapi/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
