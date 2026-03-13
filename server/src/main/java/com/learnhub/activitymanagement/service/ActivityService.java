@@ -328,16 +328,15 @@ public class ActivityService {
 		response.setTopics(activity.getTopics());
 
 		// Map all documents to response list
-		List<DocumentResponse> docResponses = activity.getDocuments().stream()
-				.map(d -> new DocumentResponse(d.getId(), d.getFilename(), d.getFileSize(),
-						d.getType() != null ? d.getType().getValue() : null))
+		List<DocumentResponse> docResponses = activity.getDocuments().stream().map(d -> new DocumentResponse(d.getId(),
+				d.getFilename(), d.getFileSize(), d.getType() != null ? d.getType().getValue() : null))
 				.collect(Collectors.toList());
 		response.setDocuments(docResponses);
 
 		// Map all markdowns to response list
-		List<MarkdownResponse> mdResponses = activity.getMarkdowns().stream()
-				.map(m -> new MarkdownResponse(m.getId(), m.getType() != null ? m.getType().getValue() : null,
-						m.getContent()))
+		List<MarkdownResponse> mdResponses = activity
+				.getMarkdowns().stream().map(m -> new MarkdownResponse(m.getId(),
+						m.getType() != null ? m.getType().getValue() : null, m.getContent()))
 				.collect(Collectors.toList());
 		response.setMarkdowns(mdResponses);
 

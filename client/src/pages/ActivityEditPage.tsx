@@ -62,9 +62,8 @@ export const ActivityEditPage: React.FC = () => {
       .then((data) => {
         setActivity(data);
         const artikulationsMd =
-          data.markdowns?.find(
-            (m) => m.type === "artikulationsschema",
-          )?.content || "";
+          data.markdowns?.find((m) => m.type === "artikulationsschema")
+            ?.content || "";
         setArtikulationsschemaMarkdown(artikulationsMd);
       })
       .catch((err) => {
@@ -272,9 +271,8 @@ export const ActivityEditPage: React.FC = () => {
                     resourcesNeeded: activity.resourcesNeeded || [],
                     topics: activity.topics || [],
                     documentId:
-                      activity.documents?.find(
-                        (d) => d.type === "source_pdf",
-                      )?.id || null,
+                      activity.documents?.find((d) => d.type === "source_pdf")
+                        ?.id || null,
                   } as Partial<ActivityFormData>)
                 }
                 onSubmit={handleMetadataNext}

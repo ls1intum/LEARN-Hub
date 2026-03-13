@@ -172,8 +172,8 @@ public class ActivityController {
 		logger.info("GET /api/activities/{}/pdf - Get activity PDF called", activityId);
 		try {
 			ActivityResponse activity = activityService.getActivityById(activityId);
-			DocumentResponse sourcePdf = activity.getDocuments().stream()
-					.filter(d -> "source_pdf".equals(d.getType())).findFirst().orElse(null);
+			DocumentResponse sourcePdf = activity.getDocuments().stream().filter(d -> "source_pdf".equals(d.getType()))
+					.findFirst().orElse(null);
 			if (sourcePdf == null) {
 				logger.error("GET /api/activities/{}/pdf - No PDF associated with this activity", activityId);
 				return ResponseEntity.status(404).body(ErrorResponse.of("PDF not found for this activity"));
