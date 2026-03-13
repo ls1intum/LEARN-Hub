@@ -90,23 +90,22 @@ export const ActivityDetails: React.FC = () => {
     });
   };
 
-  const handleOpenArtikulationsschemaPdf = async () => {
-    if (!activity?.id) return;
-
+  const handleDownloadMarkdownPdf = async (markdownId: string) => {
     await documentApi.call(async () => {
-      await openBlobInNewTab(() =>
-        apiService.getArtikulationsschemaPdf(activity.id),
-      );
+      await openBlobInNewTab(() => apiService.getMarkdownPdf(markdownId));
     });
   };
 
-  const handleDownloadArtikulationsschemaDocx = async () => {
-    if (!activity?.id) return;
+  const handleDownloadMarkdownDocx = async (
+    markdownId: string,
+    markdownType: string,
+  ) => {
+    if (!activity?.name) return;
 
     await documentApi.call(async () => {
-      const filename = `${activity.name || "activity"}_artikulationsschema.docx`;
+      const filename = `${activity.name || "activity"}_${markdownType}.docx`;
       await downloadBlob(
-        () => apiService.getArtikulationsschemaDocx(activity.id),
+        () => apiService.getMarkdownDocx(markdownId),
         filename,
       );
     });
@@ -416,34 +415,34 @@ export const ActivityDetails: React.FC = () => {
                     </div>
                     <p className="text-sm text-muted-foreground">{md.type}</p>
                   </div>
-                  {md.type === "artikulationsschema" && (
-                    <div className="flex items-center gap-2 sm:shrink-0">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={documentApi.isLoading}
-                        onClick={handleOpenArtikulationsschemaPdf}
-                        title="Download as PDF"
-                        className="flex items-center gap-1.5"
-                      >
-                        <Download className="h-4 w-4 text-red-600" />
-                        <span>PDF</span>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={documentApi.isLoading}
-                        onClick={handleDownloadArtikulationsschemaDocx}
-                        title="Download as Word document"
-                        className="flex items-center gap-1.5"
-                      >
-                        <Download className="h-4 w-4 text-blue-600" />
-                        <span>DOCX</span>
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 sm:shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={documentApi.isLoading}
+                      onClick={() => handleDownloadMarkdownPdf(md.id)}
+                      title="Download as PDF"
+                      className="flex items-center gap-1.5"
+                    >
+                      <Download className="h-4 w-4 text-red-600" />
+                      <span>PDF</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={documentApi.isLoading}
+                      onClick={() =>
+                        handleDownloadMarkdownDocx(md.id, md.type)
+                      }
+                      title="Download as Word document"
+                      className="flex items-center gap-1.5"
+                    >
+                      <Download className="h-4 w-4 text-blue-600" />
+                      <span>DOCX</span>
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

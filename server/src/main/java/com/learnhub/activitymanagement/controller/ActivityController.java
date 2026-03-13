@@ -7,12 +7,9 @@ import com.learnhub.activitymanagement.dto.request.RecommendationRequest;
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
 import com.learnhub.activitymanagement.dto.response.DocumentResponse;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
-import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.service.ActivityService;
 import com.learnhub.activitymanagement.service.RecommendationService;
-import com.learnhub.documentmanagement.service.ArtikulationsschemaService;
 import com.learnhub.documentmanagement.service.LLMService;
-import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.usermanagement.service.UserSearchHistoryService;
@@ -55,12 +52,6 @@ public class ActivityController {
 
 	@Autowired
 	private LLMService llmService;
-
-	@Autowired
-	private ArtikulationsschemaService artikulationsschemaService;
-
-	@Autowired
-	private MarkdownToDocxService markdownToDocxService;
 
 	@GetMapping("/")
 	@PreAuthorize("permitAll()")
@@ -200,80 +191,6 @@ public class ActivityController {
 		}
 	}
 
-	@GetMapping("/{activityId}/artikulationsschema-pdf")
-	@PreAuthorize("permitAll()")
-	@Operation(summary = "Get Artikulationsschema PDF", description = "Get the Artikulationsschema PDF for a specific activity, rendered from saved markdown")
-	public ResponseEntity<?> getArtikulationsschemaPdf(@PathVariable UUID activityId) {
-		logger.info("GET /api/activities/{}/artikulationsschema-pdf - Get Artikulationsschema PDF called", activityId);
-		try {
-			ActivityResponse activity = activityService.getActivityById(activityId);
-			MarkdownResponse artikulationsschema = activity.getMarkdowns().stream()
-					.filter(m -> "artikulationsschema".equals(m.getType())).findFirst().orElse(null);
-			String markdown = artikulationsschema != null ? artikulationsschema.getContent() : null;
-			if (markdown == null || markdown.trim().isEmpty()) {
-				logger.error(
-						"GET /api/activities/{}/artikulationsschema-pdf - No Artikulationsschema for this activity",
-						activityId);
-				return ResponseEntity.status(404)
-						.body(ErrorResponse.of("No Artikulationsschema found for this activity"));
-			}
-
-			byte[] pdfBytes = artikulationsschemaService.renderMarkdownToPdf(markdown);
-
-			String activityName = activity.getName() != null ? activity.getName() : "activity";
-			String downloadName = sanitizeDownloadFilename(activityName) + "_artikulationsschema.pdf";
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_PDF);
-			headers.setContentDispositionFormData("inline", downloadName);
-			headers.setContentLength(pdfBytes.length);
-
-			return ResponseEntity.ok().headers(headers).body(pdfBytes);
-		} catch (Exception e) {
-			logger.error("GET /api/activities/{}/artikulationsschema-pdf - Failed: {}", activityId, e.getMessage());
-			return ResponseEntity.status(404)
-					.body(ErrorResponse.of("Artikulationsschema PDF not found: " + e.getMessage()));
-		}
-	}
-
-	@GetMapping("/{activityId}/artikulationsschema-docx")
-	@PreAuthorize("permitAll()")
-	@Operation(summary = "Get Artikulationsschema DOCX", description = "Get the Artikulationsschema as a Word document for a specific activity, rendered from saved markdown")
-	public ResponseEntity<?> getArtikulationsschemaDocx(@PathVariable UUID activityId) {
-		logger.info("GET /api/activities/{}/artikulationsschema-docx - Get Artikulationsschema DOCX called",
-				activityId);
-		try {
-			ActivityResponse activity = activityService.getActivityById(activityId);
-			MarkdownResponse artikulationsschema = activity.getMarkdowns().stream()
-					.filter(m -> "artikulationsschema".equals(m.getType())).findFirst().orElse(null);
-			String markdown = artikulationsschema != null ? artikulationsschema.getContent() : null;
-			if (markdown == null || markdown.trim().isEmpty()) {
-				logger.error(
-						"GET /api/activities/{}/artikulationsschema-docx - No Artikulationsschema for this activity",
-						activityId);
-				return ResponseEntity.status(404)
-						.body(ErrorResponse.of("No Artikulationsschema found for this activity"));
-			}
-
-			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(markdown);
-
-			String activityName = activity.getName() != null ? activity.getName() : "activity";
-			String downloadName = sanitizeDownloadFilename(activityName) + "_artikulationsschema.docx";
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType
-					.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
-			headers.setContentDispositionFormData("attachment", downloadName);
-			headers.setContentLength(docxBytes.length);
-
-			return ResponseEntity.ok().headers(headers).body(docxBytes);
-		} catch (Exception e) {
-			logger.error("GET /api/activities/{}/artikulationsschema-docx - Failed: {}", activityId, e.getMessage());
-			return ResponseEntity.status(404)
-					.body(ErrorResponse.of("Artikulationsschema DOCX not found: " + e.getMessage()));
-		}
-	}
-
 	@GetMapping("/recommendations")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get activity recommendations", description = "Get personalized activity recommendations with scoring")
@@ -399,32 +316,6 @@ public class ActivityController {
 			logger.error("POST /api/activities/generate-artikulationsschema - Failed: {}", e.getMessage());
 			return ResponseEntity.status(500)
 					.body(ErrorResponse.of("Failed to generate Artikulationsschema: " + e.getMessage()));
-		}
-	}
-
-	@PostMapping("/preview-artikulationsschema-pdf")
-	@PreAuthorize("hasRole('ADMIN')")
-	@SecurityRequirement(name = "BearerAuth")
-	@Operation(summary = "Preview Artikulationsschema PDF", description = "Render Artikulationsschema markdown to a preview PDF (admin only)")
-	public ResponseEntity<?> previewArtikulationsschemaPdf(@RequestBody Map<String, String> request) {
-		logger.info("POST /api/activities/preview-artikulationsschema-pdf called");
-		try {
-			String markdown = request.get("markdown");
-			if (markdown == null || markdown.trim().isEmpty()) {
-				return ResponseEntity.badRequest().body(ErrorResponse.of("markdown is required"));
-			}
-
-			byte[] pdfBytes = artikulationsschemaService.renderMarkdownToPdf(markdown);
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_PDF);
-			headers.setContentDispositionFormData("inline", "artikulationsschema_preview.pdf");
-			headers.setContentLength(pdfBytes.length);
-
-			return ResponseEntity.ok().headers(headers).body(pdfBytes);
-		} catch (Exception e) {
-			logger.error("POST /api/activities/preview-artikulationsschema-pdf - Failed: {}", e.getMessage());
-			return ResponseEntity.status(500).body(ErrorResponse.of("Failed to render preview PDF: " + e.getMessage()));
 		}
 	}
 

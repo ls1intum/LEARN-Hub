@@ -5,13 +5,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ArtikulationsschemaServiceTest {
+class MarkdownToPdfServiceTest {
 
-	private ArtikulationsschemaService service;
+	private MarkdownToPdfService service;
 
 	@BeforeEach
 	void setUp() {
-		service = new ArtikulationsschemaService();
+		service = new MarkdownToPdfService();
 	}
 
 	@Test

@@ -31,15 +31,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * Service for rendering Artikulationsschema markdown into a styled PDF using
+ * Service for rendering markdown content into a styled PDF using
  * iText7 and commonmark for generic markdown parsing. Supports headings,
  * paragraphs, bold/italic text, lists, tables, code blocks, block quotes, and
  * more.
  */
 @Service
-public class ArtikulationsschemaService {
+public class MarkdownToPdfService {
 
-	private static final Logger logger = LoggerFactory.getLogger(ArtikulationsschemaService.class);
+	private static final Logger logger = LoggerFactory.getLogger(MarkdownToPdfService.class);
 
 	private static final DeviceRgb HEADER_BG_COLOR = new DeviceRgb(41, 65, 122);
 	private static final DeviceRgb ALT_ROW_COLOR = new DeviceRgb(240, 244, 250);
@@ -54,12 +54,12 @@ public class ArtikulationsschemaService {
 
 	private final Parser parser;
 
-	public ArtikulationsschemaService() {
+	public MarkdownToPdfService() {
 		this.parser = Parser.builder().extensions(java.util.List.of(TablesExtension.create())).build();
 	}
 
 	/**
-	 * Render Artikulationsschema markdown to PDF bytes.
+	 * Render markdown content to PDF bytes.
 	 */
 	public byte[] renderMarkdownToPdf(String markdown) {
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
@@ -83,8 +83,8 @@ public class ArtikulationsschemaService {
 			document.close();
 			return baos.toByteArray();
 		} catch (Exception e) {
-			logger.error("Failed to render Artikulationsschema PDF: {}", e.getMessage(), e);
-			throw new RuntimeException("Failed to render Artikulationsschema PDF: " + e.getMessage(), e);
+			logger.error("Failed to render markdown PDF: {}", e.getMessage(), e);
+			throw new RuntimeException("Failed to render markdown PDF: " + e.getMessage(), e);
 		}
 	}
 
