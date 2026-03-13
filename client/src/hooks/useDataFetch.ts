@@ -31,7 +31,6 @@ export function useDataFetch<T>({
         onError?.(err instanceof Error ? err : new Error(String(err)));
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, refetch, onError, ...dependencies]);
 
   return {

@@ -32,15 +32,12 @@ export const ActivityDetails: React.FC = () => {
   const stateActivity = location.state?.activity as Activity | undefined;
   const fromBrowser = location.state?.fromBrowser as boolean | undefined;
 
-  // API hooks for data fetching
-  const downloadApi = useApi();
-  const artikulationsschemaApi = useApi();
-
-  // Data fetching for activity details
+  const documentApi = useApi();
   const fetchActivity = useCallback(async () => {
     if (stateActivity) {
       return stateActivity;
     }
+
     if (id) {
       const fetchedActivity = await apiService.getActivity(id);
       if (!fetchedActivity) {
@@ -48,6 +45,7 @@ export const ActivityDetails: React.FC = () => {
       }
       return fetchedActivity;
     }
+
     throw new Error("No activity ID provided");
   }, [stateActivity, id]);
 
@@ -59,59 +57,30 @@ export const ActivityDetails: React.FC = () => {
   } = useDataFetch({
     fetchFn: fetchActivity,
     enabled: !!(stateActivity || id),
-    dependencies: [stateActivity, id],
+    dependencies: [fetchActivity],
   });
 
-  // Data fetching for PDF info
-  const fetchPdfInfo = useCallback(async () => {
-    if (!activity?.documentId) return null;
-    try {
-      const response = await apiService.getDocumentInfo(activity.documentId);
-      if (response) {
-        return {
-          id: response.id,
-          filename: response.filename,
-          file_size: response.file_size,
-          extracted_fields: {},
-          createdAt: response.createdAt,
-        };
-      }
-    } catch {
-      // Gracefully handle missing/404 document by treating as no PDF
-      return null;
-    }
-    return null;
-  }, [activity?.documentId]);
+  const openBlobInNewTab = async (getBlob: () => Promise<Blob>) => {
+    const blob = await getBlob();
+    const url = window.URL.createObjectURL(blob);
+    window.open(url, "_blank");
+  };
 
-  const { data: pdfInfo } = useDataFetch({
-    fetchFn: fetchPdfInfo,
-    enabled: !!activity?.documentId,
-    dependencies: [activity?.documentId],
-  });
-
-  const handleDownloadPDF = async () => {
+  const handleOpenSourcePdf = async () => {
     if (!activity?.id) return;
 
-    await downloadApi.call(async () => {
-      const blob = await apiService.getActivityPdf(activity.id);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = pdfInfo?.filename || `activity_${id}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+    await documentApi.call(async () => {
+      await openBlobInNewTab(() => apiService.getActivityPdf(activity.id));
     });
   };
 
-  const handleViewArtikulationsschema = async () => {
+  const handleOpenArtikulationsschemaPdf = async () => {
     if (!activity?.id) return;
 
-    await artikulationsschemaApi.call(async () => {
-      const blob = await apiService.getArtikulationsschemaPdf(activity.id);
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, "_blank");
+    await documentApi.call(async () => {
+      await openBlobInNewTab(() =>
+        apiService.getArtikulationsschemaPdf(activity.id),
+      );
     });
   };
 
@@ -203,26 +172,6 @@ export const ActivityDetails: React.FC = () => {
               >
                 <Edit3 className="h-4 w-4" />
                 Edit
-              </Button>
-            )}
-            <Button
-              onClick={handleDownloadPDF}
-              disabled={downloadApi.isLoading}
-              className="bg-green-500 hover:bg-green-700 flex items-center gap-2"
-            >
-              <FileText className="h-4 w-4" />
-              {downloadApi.isLoading ? "Loading..." : "View PDF"}
-            </Button>
-            {activity.artikulationsschemaMarkdown && (
-              <Button
-                onClick={handleViewArtikulationsschema}
-                disabled={artikulationsschemaApi.isLoading}
-                className="bg-blue-500 hover:bg-blue-700 flex items-center gap-2"
-              >
-                <BookOpen className="h-4 w-4" />
-                {artikulationsschemaApi.isLoading
-                  ? "Loading..."
-                  : "View Artikulationsschema"}
               </Button>
             )}
           </div>
@@ -379,33 +328,76 @@ export const ActivityDetails: React.FC = () => {
             </div>
           )}
 
-          {/* PDF Information */}
-          <div className="mb-8 p-4 rounded-lg border border-success/20 bg-success/5">
-            <h3 className="text-lg font-semibold mb-2 text-success">
-              PDF Available
-            </h3>
-            {pdfInfo ? (
-              <div className="text-foreground text-sm sm:text-base">
-                <p>
-                  <span className="font-medium">Filename:</span>{" "}
-                  {pdfInfo.filename}
-                </p>
-                <p>
-                  <span className="font-medium">Size:</span>{" "}
-                  {(pdfInfo.file_size / 1024).toFixed(1)} KB
-                </p>
-                <p>
-                  <span className="font-medium">Uploaded:</span>{" "}
-                  {new Date(pdfInfo.createdAt).toLocaleDateString()}
-                </p>
+          {/* Documents & Markdowns */}
+          {((activity.documents && activity.documents.length > 0) ||
+            (activity.markdowns && activity.markdowns.length > 0)) && (
+            <div className="rounded-lg border border-border bg-muted/20">
+              <div className="border-b border-border px-4 py-3">
+                <h3 className="text-lg font-semibold text-card-foreground">
+                  Documents & Markdowns
+                </h3>
               </div>
-            ) : (
-              <p className="text-muted-foreground text-sm sm:text-base">
-                A PDF is available for this activity. Details are currently
-                unavailable, but you can preview or download it above.
-              </p>
-            )}
-          </div>
+
+              {activity.documents?.map((doc, index) => (
+                <div
+                  key={doc.id}
+                  className={`flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between${index > 0 ? " border-t border-border" : ""}`}
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 text-card-foreground">
+                      <FileText className="h-4 w-4 text-green-600" />
+                      <p className="font-medium break-all">{doc.filename}</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {doc.type}
+                      {Number.isFinite(doc.fileSize)
+                        ? ` • ${(doc.fileSize / 1024).toFixed(1)} KB`
+                        : ""}
+                    </p>
+                  </div>
+                  {doc.type === "source_pdf" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="sm:shrink-0"
+                      disabled={documentApi.isLoading}
+                      onClick={handleOpenSourcePdf}
+                    >
+                      {documentApi.isLoading ? "Opening..." : "Open PDF"}
+                    </Button>
+                  )}
+                </div>
+              ))}
+
+              {activity.markdowns?.map((md) => (
+                <div
+                  key={md.id}
+                  className="flex flex-col gap-4 border-t border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 text-card-foreground">
+                      <BookOpen className="h-4 w-4 text-blue-600" />
+                      <p className="font-medium break-all">
+                        {activity.name} {md.type}.pdf
+                      </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{md.type}</p>
+                  </div>
+                  {md.type === "artikulationsschema" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="sm:shrink-0"
+                      disabled={documentApi.isLoading}
+                      onClick={handleOpenArtikulationsschemaPdf}
+                    >
+                      {documentApi.isLoading ? "Opening..." : "Open PDF"}
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,14 +1,21 @@
 package com.learnhub.activitymanagement.service;
 
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
+import com.learnhub.activitymanagement.dto.response.DocumentResponse;
+import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.entity.Activity;
+import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.*;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
+import com.learnhub.documentmanagement.entity.PDFDocument;
+import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -26,6 +33,9 @@ public class ActivityService {
 
 	@Autowired
 	private ActivityRepository activityRepository;
+
+	@Autowired
+	private PDFDocumentRepository pdfDocumentRepository;
 
 	@Autowired
 	private PDFService pdfService;
@@ -168,7 +178,25 @@ public class ActivityService {
 		activity.setCleanupTimeMinutes(activityUpdate.getCleanupTimeMinutes());
 		activity.setResourcesNeeded(activityUpdate.getResourcesNeeded());
 		activity.setTopics(activityUpdate.getTopics());
-		activity.setArtikulationsschemaMarkdown(activityUpdate.getArtikulationsschemaMarkdown());
+
+		// Update artikulationsschema markdown if provided
+		Optional<ActivityMarkdown> newMarkdown = activityUpdate.getMarkdowns().stream()
+				.filter(m -> m.getType() == MarkdownType.ARTIKULATIONSSCHEMA).findFirst();
+		if (newMarkdown.isPresent()) {
+			String newContent = newMarkdown.get().getContent();
+			Optional<ActivityMarkdown> existing = activity.getMarkdowns().stream()
+					.filter(m -> m.getType() == MarkdownType.ARTIKULATIONSSCHEMA).findFirst();
+			if (existing.isPresent()) {
+				existing.get().setContent(newContent);
+			} else {
+				ActivityMarkdown md = new ActivityMarkdown();
+				md.setActivity(activity);
+				md.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+				md.setContent(newContent);
+				md.setCreatedAt(LocalDateTime.now());
+				activity.getMarkdowns().add(md);
+			}
+		}
 
 		Activity saved = activityRepository.save(activity);
 		return mapToResponse(saved);
@@ -243,14 +271,25 @@ public class ActivityService {
 
 		if (data.get("documentId") != null) {
 			try {
-				activity.setDocumentId(UUID.fromString(data.get("documentId").toString()));
+				UUID docId = UUID.fromString(data.get("documentId").toString());
+				PDFDocument doc = pdfDocumentRepository.findById(docId).orElse(null);
+				if (doc != null) {
+					doc.setType(DocumentType.SOURCE_PDF);
+					pdfDocumentRepository.save(doc);
+					activity.getDocuments().add(doc);
+				}
 			} catch (IllegalArgumentException e) {
 				throw new IllegalArgumentException("Invalid documentId format: must be a valid UUID");
 			}
 		}
 
 		if (data.get("artikulationsschemaMarkdown") != null) {
-			activity.setArtikulationsschemaMarkdown(data.get("artikulationsschemaMarkdown").toString());
+			ActivityMarkdown actMd = new ActivityMarkdown();
+			actMd.setActivity(activity);
+			actMd.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+			actMd.setContent(data.get("artikulationsschemaMarkdown").toString());
+			actMd.setCreatedAt(LocalDateTime.now());
+			activity.getMarkdowns().add(actMd);
 		}
 
 		return activity;
@@ -279,8 +318,20 @@ public class ActivityService {
 		response.setCleanupTimeMinutes(activity.getCleanupTimeMinutes());
 		response.setResourcesNeeded(activity.getResourcesNeeded());
 		response.setTopics(activity.getTopics());
-		response.setDocumentId(activity.getDocumentId());
-		response.setArtikulationsschemaMarkdown(activity.getArtikulationsschemaMarkdown());
+
+		// Map all documents to response list
+		List<DocumentResponse> docResponses = activity.getDocuments().stream().map(d -> new DocumentResponse(d.getId(),
+				d.getFilename(), d.getFileSize(), d.getType() != null ? d.getType().getValue() : null))
+				.collect(Collectors.toList());
+		response.setDocuments(docResponses);
+
+		// Map all markdowns to response list
+		List<MarkdownResponse> mdResponses = activity
+				.getMarkdowns().stream().map(m -> new MarkdownResponse(m.getId(),
+						m.getType() != null ? m.getType().getValue() : null, m.getContent()))
+				.collect(Collectors.toList());
+		response.setMarkdowns(mdResponses);
+
 		return response;
 	}
 
