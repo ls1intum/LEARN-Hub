@@ -158,7 +158,7 @@ export interface LessonPlanInfo {
 export interface Document {
   id: string;
   filename: string;
-  file_size: number;
+  fileSize: number;
   mime_type?: string;
   createdAt: string;
 }
