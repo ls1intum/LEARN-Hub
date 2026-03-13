@@ -339,14 +339,22 @@ public class ActivityController {
 				return ResponseEntity.badRequest().body(ErrorResponse.of("Invalid documentId format"));
 			}
 
-			// Get PDF text from cached or persisted PDF
+			// Get PDF text and content from cached or persisted PDF
 			String pdfText = pdfService.extractTextFromPdf(documentId);
 			if (pdfText == null || pdfText.trim().length() < 10) {
 				return ResponseEntity.badRequest()
 						.body(ErrorResponse.of("PDF does not contain sufficient text for schema generation"));
 			}
 
-			String markdown = llmService.generateArtikulationsschema(pdfText);
+			byte[] pdfContent = pdfService.getPdfContent(documentId);
+
+			// Extract user-adjusted metadata if provided
+			@SuppressWarnings("unchecked")
+			Map<String, Object> metadata = request.get("metadata") instanceof Map
+					? (Map<String, Object>) request.get("metadata")
+					: null;
+
+			String markdown = llmService.generateArtikulationsschema(pdfText, pdfContent, metadata);
 
 			Map<String, Object> response = new HashMap<>();
 			response.put("markdown", markdown);

@@ -148,7 +148,10 @@ export const ActivitySetupPage: React.FC = () => {
       setIsGeneratingSchema(true);
       setSchemaError(null);
       try {
-        const result = await apiService.generateArtikulationsschema(documentId);
+        const result = await apiService.generateArtikulationsschema(
+          documentId,
+          formData as unknown as Record<string, unknown>,
+        );
         setArtikulationsschemaMarkdown(result.markdown);
       } catch (error) {
         logger.error("Schema generation error", error, "ActivitySetupPage");
