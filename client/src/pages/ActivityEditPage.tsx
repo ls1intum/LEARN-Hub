@@ -61,7 +61,11 @@ export const ActivityEditPage: React.FC = () => {
       .getActivity(id)
       .then((data) => {
         setActivity(data);
-        setArtikulationsschemaMarkdown(data.artikulationsschemaMarkdown || "");
+        const artikulationsMd =
+          data.markdowns?.find(
+            (m) => m.type === "artikulationsschema",
+          )?.content || "";
+        setArtikulationsschemaMarkdown(artikulationsMd);
       })
       .catch((err) => {
         logger.error("Failed to load activity", err, "ActivityEditPage");
@@ -165,7 +169,9 @@ export const ActivityEditPage: React.FC = () => {
                   .then((data) => {
                     setActivity(data);
                     setArtikulationsschemaMarkdown(
-                      data.artikulationsschemaMarkdown || "",
+                      data.markdowns?.find(
+                        (m) => m.type === "artikulationsschema",
+                      )?.content || "",
                     );
                   })
                   .catch((err) =>
@@ -265,7 +271,10 @@ export const ActivityEditPage: React.FC = () => {
                     cleanupTimeMinutes: activity.cleanupTimeMinutes || 5,
                     resourcesNeeded: activity.resourcesNeeded || [],
                     topics: activity.topics || [],
-                    documentId: activity.documentId || null,
+                    documentId:
+                      activity.documents?.find(
+                        (d) => d.type === "source_pdf",
+                      )?.id || null,
                   } as Partial<ActivityFormData>)
                 }
                 onSubmit={handleMetadataNext}

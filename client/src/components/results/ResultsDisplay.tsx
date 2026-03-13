@@ -84,23 +84,11 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
         0,
       );
 
-<<<<<<< copilot/refactor-activity-document-structure
-  const recommendationSummaries = results.activities.map((recommendation) => {
-    const totalDuration = recommendation.activities.reduce(
-      (total, activity) => {
-        const activityDuration = activity.durationMinMinutes || 0;
-        const breakDuration = activity.breakAfter?.duration || 0;
-        return total + activityDuration + breakDuration;
-      },
-      0,
-    );
-=======
       const activityCount = recommendation.activities.length;
       const searchText = recommendation.activities
         .flatMap((activity) => [activity.name, activity.description])
         .join(" ")
         .toLowerCase();
->>>>>>> main
 
       return {
         recommendation,

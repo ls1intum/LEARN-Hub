@@ -1,5 +1,18 @@
 // Removed ApiResponse wrapper - server now returns data directly
 
+export interface ActivityDocument {
+  id: string;
+  filename: string;
+  fileSize: number;
+  type: string;
+}
+
+export interface ActivityMarkdown {
+  id: string;
+  type: string;
+  content: string;
+}
+
 export interface BreakAfter {
   type: "break";
   id: string;
@@ -25,9 +38,9 @@ export interface Activity {
   mentalLoad?: string;
   physicalEnergy?: string;
   topics: string[];
-  documentId?: string;
+  documents: ActivityDocument[];
+  markdowns: ActivityMarkdown[];
   createdAt?: string;
-  artikulationsschemaMarkdown?: string;
   type: "activity";
   // Break that should happen after this activity
   breakAfter?: BreakAfter;

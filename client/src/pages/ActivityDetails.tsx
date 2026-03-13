@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
@@ -34,56 +34,27 @@ export const ActivityDetails: React.FC = () => {
 
   const documentApi = useApi();
 
-  const fetchActivity = useCallback(async () => {
-    if (stateActivity) {
-      return stateActivity;
-    }
-    if (id) {
-      const fetchedActivity = await apiService.getActivity(id);
-      if (!fetchedActivity) {
-        throw new Error("Activity not found");
-      }
-      return fetchedActivity;
-    }
-    throw new Error("No activity ID provided");
-  }, [stateActivity, id]);
-
   const {
     data: activity,
     isLoading,
     error,
     refetch,
   } = useDataFetch({
-    fetchFn: fetchActivity,
+    fetchFn: async () => {
+      if (stateActivity) {
+        return stateActivity;
+      }
+      if (id) {
+        const fetchedActivity = await apiService.getActivity(id);
+        if (!fetchedActivity) {
+          throw new Error("Activity not found");
+        }
+        return fetchedActivity;
+      }
+      throw new Error("No activity ID provided");
+    },
     enabled: !!(stateActivity || id),
     dependencies: [stateActivity, id],
-  });
-
-  // Data fetching for PDF info
-  const fetchPdfInfo = useCallback(async () => {
-    if (!activity?.documentId) return null;
-    try {
-      const response = await apiService.getDocumentInfo(activity.documentId);
-      if (response) {
-        return {
-          id: response.id,
-          filename: response.filename,
-          fileSize: response.fileSize,
-          extracted_fields: {},
-          createdAt: response.createdAt,
-        };
-      }
-    } catch {
-      // Gracefully handle missing/404 document by treating as no PDF
-      return null;
-    }
-    return null;
-  }, [activity?.documentId]);
-
-  const { data: pdfInfo } = useDataFetch({
-    fetchFn: fetchPdfInfo,
-    enabled: !!activity?.documentId,
-    dependencies: [activity?.documentId],
   });
 
   const openBlobInNewTab = async (getBlob: () => Promise<Blob>) => {
@@ -354,66 +325,74 @@ export const ActivityDetails: React.FC = () => {
             </div>
           )}
 
-          {(pdfInfo || activity.artikulationsschemaMarkdown) && (
+          {/* Documents & Markdowns */}
+          {((activity.documents && activity.documents.length > 0) ||
+            (activity.markdowns && activity.markdowns.length > 0)) && (
             <div className="rounded-lg border border-border bg-muted/20">
               <div className="border-b border-border px-4 py-3">
                 <h3 className="text-lg font-semibold text-card-foreground">
-                  Downloads
+                  Documents & Markdowns
                 </h3>
               </div>
 
-              {pdfInfo && activity.documentId && (
-                <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              {activity.documents?.map((doc, index) => (
+                <div
+                  key={doc.id}
+                  className={`flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between${index > 0 || activity.markdowns?.length ? " border-t border-border" : ""}`}
+                >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-card-foreground">
                       <FileText className="h-4 w-4 text-green-600" />
-                      <p className="font-medium break-all">
-                        {pdfInfo.filename}
-                      </p>
+                      <p className="font-medium break-all">{doc.filename}</p>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Source PDF
-                      {Number.isFinite(pdfInfo.fileSize)
-                        ? ` • ${(pdfInfo.fileSize / 1024).toFixed(1)} KB`
+                      {doc.type}
+                      {Number.isFinite(doc.fileSize)
+                        ? ` • ${(doc.fileSize / 1024).toFixed(1)} KB`
                         : ""}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="sm:shrink-0"
-                    disabled={documentApi.isLoading}
-                    onClick={handleOpenSourcePdf}
-                  >
-                    {documentApi.isLoading ? "Opening..." : "Open PDF"}
-                  </Button>
+                  {doc.type === "source_pdf" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="sm:shrink-0"
+                      disabled={documentApi.isLoading}
+                      onClick={handleOpenSourcePdf}
+                    >
+                      {documentApi.isLoading ? "Opening..." : "Open PDF"}
+                    </Button>
+                  )}
                 </div>
-              )}
+              ))}
 
-              {activity.artikulationsschemaMarkdown && (
-                <div className="flex flex-col gap-4 border-t border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+              {activity.markdowns?.map((md) => (
+                <div
+                  key={md.id}
+                  className="flex flex-col gap-4 border-t border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+                >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-card-foreground">
                       <BookOpen className="h-4 w-4 text-blue-600" />
                       <p className="font-medium break-all">
-                        {activity.name} Artikulationsschema.pdf
+                        {activity.name} {md.type}.pdf
                       </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Artikulationsschema PDF
-                    </p>
+                    <p className="text-sm text-muted-foreground">{md.type}</p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="sm:shrink-0"
-                    disabled={documentApi.isLoading}
-                    onClick={handleOpenArtikulationsschemaPdf}
-                  >
-                    {documentApi.isLoading ? "Opening..." : "Open PDF"}
-                  </Button>
+                  {md.type === "artikulationsschema" && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="sm:shrink-0"
+                      disabled={documentApi.isLoading}
+                      onClick={handleOpenArtikulationsschemaPdf}
+                    >
+                      {documentApi.isLoading ? "Opening..." : "Open PDF"}
+                    </Button>
+                  )}
                 </div>
-              )}
+              ))}
             </div>
           )}
         </div>
