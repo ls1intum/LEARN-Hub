@@ -136,7 +136,13 @@ export interface LessonPlanRequest {
     mentalLoad?: string;
     physicalEnergy?: string;
     topics: string[];
-    documentId?: string;
+    documents?: Array<{
+      id: string;
+      filename: string;
+      fileSize: number;
+      type: string;
+    }>;
+    markdowns?: Array<{ id: string; type: string; content: string }>;
     createdAt?: string;
     type: "activity";
   }>;

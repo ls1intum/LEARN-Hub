@@ -3,13 +3,19 @@ package com.learnhub.activitymanagement.entity;
 import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.entity.enums.EnergyLevel;
+import com.learnhub.documentmanagement.entity.PDFDocument;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
@@ -82,11 +88,21 @@ public class Activity {
 	@Column(columnDefinition = "jsonb")
 	private List<String> topics;
 
-	@Column(name = "document_id", nullable = false)
-	private UUID documentId;
+	// Documents relationship: FK and ON DELETE CASCADE managed at DB level.
+	// PDFDocument lifecycle is independent (created by PDFService before Activity
+	// exists).
+	@OneToMany(fetch = FetchType.EAGER)
+	@JoinColumn(name = "activity_id")
+	@Fetch(FetchMode.SUBSELECT)
+	@ToString.Exclude
+	@EqualsAndHashCode.Exclude
+	private List<PDFDocument> documents = new ArrayList<>();
 
-	@Column(name = "artikulationsschema_markdown", columnDefinition = "TEXT")
-	private String artikulationsschemaMarkdown;
+	@OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+	@Fetch(FetchMode.SUBSELECT)
+	@ToString.Exclude
+	@EqualsAndHashCode.Exclude
+	private List<ActivityMarkdown> markdowns = new ArrayList<>();
 
 	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)

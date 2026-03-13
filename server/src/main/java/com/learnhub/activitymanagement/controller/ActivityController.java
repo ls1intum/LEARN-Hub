@@ -5,7 +5,9 @@ import com.learnhub.activitymanagement.dto.request.LessonPlanInfoRequest;
 import com.learnhub.activitymanagement.dto.request.LessonPlanRequest;
 import com.learnhub.activitymanagement.dto.request.RecommendationRequest;
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
+import com.learnhub.activitymanagement.dto.response.DocumentResponse;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
+import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.service.ActivityService;
 import com.learnhub.activitymanagement.service.RecommendationService;
 import com.learnhub.activitymanagement.service.ScoringEngineService;
@@ -170,12 +172,14 @@ public class ActivityController {
 		logger.info("GET /api/activities/{}/pdf - Get activity PDF called", activityId);
 		try {
 			ActivityResponse activity = activityService.getActivityById(activityId);
-			if (activity.getDocumentId() == null) {
+			DocumentResponse sourcePdf = activity.getDocuments().stream().filter(d -> "source_pdf".equals(d.getType()))
+					.findFirst().orElse(null);
+			if (sourcePdf == null) {
 				logger.error("GET /api/activities/{}/pdf - No PDF associated with this activity", activityId);
 				return ResponseEntity.status(404).body(ErrorResponse.of("PDF not found for this activity"));
 			}
 
-			byte[] pdfContent = pdfService.getPdfContent(activity.getDocumentId());
+			byte[] pdfContent = pdfService.getPdfContent(sourcePdf.getId());
 
 			// Use activity name as download filename, sanitized for safety
 			String activityName = activity.getName() != null ? activity.getName() : "activity";
@@ -200,7 +204,9 @@ public class ActivityController {
 		logger.info("GET /api/activities/{}/artikulationsschema-pdf - Get Artikulationsschema PDF called", activityId);
 		try {
 			ActivityResponse activity = activityService.getActivityById(activityId);
-			String markdown = activity.getArtikulationsschemaMarkdown();
+			MarkdownResponse artikulationsschema = activity.getMarkdowns().stream()
+					.filter(m -> "artikulationsschema".equals(m.getType())).findFirst().orElse(null);
+			String markdown = artikulationsschema != null ? artikulationsschema.getContent() : null;
 			if (markdown == null || markdown.trim().isEmpty()) {
 				logger.error(
 						"GET /api/activities/{}/artikulationsschema-pdf - No Artikulationsschema for this activity",

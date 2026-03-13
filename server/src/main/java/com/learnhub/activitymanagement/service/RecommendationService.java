@@ -410,7 +410,8 @@ public class RecommendationService {
 		map.put("cleanupTimeMinutes", response.getCleanupTimeMinutes());
 		map.put("resourcesNeeded", response.getResourcesNeeded());
 		map.put("topics", response.getTopics());
-		map.put("documentId", response.getDocumentId());
+		map.put("documents", response.getDocuments());
+		map.put("markdowns", response.getMarkdowns());
 		map.put("type", "activity");
 
 		if (activity.getBreakAfter() != null) {
