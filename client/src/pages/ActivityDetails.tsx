@@ -12,6 +12,7 @@ import {
   BookOpen,
   Edit3,
   ArrowLeft,
+  Download,
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
@@ -66,6 +67,21 @@ export const ActivityDetails: React.FC = () => {
     window.open(url, "_blank");
   };
 
+  const downloadBlob = async (
+    getBlob: () => Promise<Blob>,
+    filename: string,
+  ) => {
+    const blob = await getBlob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  };
+
   const handleOpenSourcePdf = async () => {
     if (!activity?.id) return;
 
@@ -80,6 +96,18 @@ export const ActivityDetails: React.FC = () => {
     await documentApi.call(async () => {
       await openBlobInNewTab(() =>
         apiService.getArtikulationsschemaPdf(activity.id),
+      );
+    });
+  };
+
+  const handleDownloadArtikulationsschemaDocx = async () => {
+    if (!activity?.id) return;
+
+    await documentApi.call(async () => {
+      const filename = `${activity.name || "activity"}_artikulationsschema.docx`;
+      await downloadBlob(
+        () => apiService.getArtikulationsschemaDocx(activity.id),
+        filename,
       );
     });
   };
@@ -356,15 +384,20 @@ export const ActivityDetails: React.FC = () => {
                     </p>
                   </div>
                   {doc.type === "source_pdf" && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="sm:shrink-0"
-                      disabled={documentApi.isLoading}
-                      onClick={handleOpenSourcePdf}
-                    >
-                      {documentApi.isLoading ? "Opening..." : "Open PDF"}
-                    </Button>
+                    <div className="flex items-center gap-2 sm:shrink-0">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={documentApi.isLoading}
+                        onClick={handleOpenSourcePdf}
+                        title="Download as PDF"
+                        className="flex items-center gap-1.5"
+                      >
+                        <Download className="h-4 w-4 text-red-600" />
+                        <span>PDF</span>
+                      </Button>
+                    </div>
                   )}
                 </div>
               ))}
@@ -378,21 +411,38 @@ export const ActivityDetails: React.FC = () => {
                     <div className="flex items-center gap-2 text-card-foreground">
                       <BookOpen className="h-4 w-4 text-blue-600" />
                       <p className="font-medium break-all">
-                        {activity.name} {md.type}.pdf
+                        {activity.name} {md.type}
                       </p>
                     </div>
                     <p className="text-sm text-muted-foreground">{md.type}</p>
                   </div>
                   {md.type === "artikulationsschema" && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="sm:shrink-0"
-                      disabled={documentApi.isLoading}
-                      onClick={handleOpenArtikulationsschemaPdf}
-                    >
-                      {documentApi.isLoading ? "Opening..." : "Open PDF"}
-                    </Button>
+                    <div className="flex items-center gap-2 sm:shrink-0">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={documentApi.isLoading}
+                        onClick={handleOpenArtikulationsschemaPdf}
+                        title="Download as PDF"
+                        className="flex items-center gap-1.5"
+                      >
+                        <Download className="h-4 w-4 text-red-600" />
+                        <span>PDF</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={documentApi.isLoading}
+                        onClick={handleDownloadArtikulationsschemaDocx}
+                        title="Download as Word document"
+                        className="flex items-center gap-1.5"
+                      >
+                        <Download className="h-4 w-4 text-blue-600" />
+                        <span>DOCX</span>
+                      </Button>
+                    </div>
                   )}
                 </div>
               ))}

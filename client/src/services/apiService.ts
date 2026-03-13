@@ -354,6 +354,21 @@ export class ApiService {
   }
 
   /**
+   * Get Artikulationsschema as DOCX (Word) by activity ID
+   */
+  static async getArtikulationsschemaDocx(activityId: string) {
+    const response = await authService.makeAuthenticatedRequest(
+      `/api/activities/${activityId}/artikulationsschema-docx`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.blob();
+  }
+
+  /**
    * Get field values from server
    */
   static async getFieldValues() {
