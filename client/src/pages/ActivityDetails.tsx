@@ -338,7 +338,7 @@ export const ActivityDetails: React.FC = () => {
               {activity.documents?.map((doc, index) => (
                 <div
                   key={doc.id}
-                  className={`flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between${index > 0 || activity.markdowns?.length ? " border-t border-border" : ""}`}
+                  className={`flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between${index > 0 ? " border-t border-border" : ""}`}
                 >
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-card-foreground">
