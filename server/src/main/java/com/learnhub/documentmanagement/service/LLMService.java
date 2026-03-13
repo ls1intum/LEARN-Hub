@@ -146,85 +146,95 @@ public class LLMService {
 	private String buildArtikulationsschemaPrompt(String pdfText, Map<String, Object> metadata) {
 		StringBuilder metadataSection = new StringBuilder();
 		if (metadata != null && !metadata.isEmpty()) {
-			metadataSection.append("\n\nACTIVITY METADATA (confirmed by the teacher):\n");
+			metadataSection.append("\n\nMETADATEN DER AKTIVITÄT (von der Lehrkraft bestätigt):\n");
 			if (metadata.containsKey("name")) {
 				metadataSection.append("- Name: ").append(metadata.get("name")).append("\n");
 			}
 			if (metadata.containsKey("description")) {
-				metadataSection.append("- Description: ").append(metadata.get("description")).append("\n");
+				metadataSection.append("- Beschreibung: ").append(metadata.get("description")).append("\n");
 			}
 			if (metadata.containsKey("ageMin") || metadata.containsKey("ageMax")) {
-				metadataSection.append("- Age range: ").append(metadata.getOrDefault("ageMin", "?")).append("-")
+				metadataSection.append("- Altersbereich: ").append(metadata.getOrDefault("ageMin", "?")).append("-")
 						.append(metadata.getOrDefault("ageMax", "?")).append("\n");
 			}
 			if (metadata.containsKey("format")) {
 				metadataSection.append("- Format: ").append(metadata.get("format")).append("\n");
 			}
 			if (metadata.containsKey("bloomLevel")) {
-				metadataSection.append("- Bloom level: ").append(metadata.get("bloomLevel")).append("\n");
+				metadataSection.append("- Bloom-Stufe: ").append(metadata.get("bloomLevel")).append("\n");
 			}
 			if (metadata.containsKey("durationMinMinutes")) {
-				metadataSection.append("- Duration (min): ").append(metadata.get("durationMinMinutes"));
+				metadataSection.append("- Dauer (min): ").append(metadata.get("durationMinMinutes"));
 				if (metadata.containsKey("durationMaxMinutes")) {
 					metadataSection.append("-").append(metadata.get("durationMaxMinutes"));
 				}
-				metadataSection.append(" minutes\n");
+				metadataSection.append(" Minuten\n");
 			}
 			if (metadata.containsKey("resourcesNeeded")) {
-				metadataSection.append("- Resources needed: ").append(metadata.get("resourcesNeeded")).append("\n");
+				metadataSection.append("- Benötigte Materialien: ").append(metadata.get("resourcesNeeded"))
+						.append("\n");
 			}
 			if (metadata.containsKey("topics")) {
-				metadataSection.append("- Topics: ").append(metadata.get("topics")).append("\n");
+				metadataSection.append("- Themen: ").append(metadata.get("topics")).append("\n");
 			}
 			if (metadata.containsKey("mentalLoad")) {
-				metadataSection.append("- Mental load: ").append(metadata.get("mentalLoad")).append("\n");
+				metadataSection.append("- Kognitive Belastung: ").append(metadata.get("mentalLoad")).append("\n");
 			}
 			if (metadata.containsKey("physicalEnergy")) {
-				metadataSection.append("- Physical energy: ").append(metadata.get("physicalEnergy")).append("\n");
+				metadataSection.append("- Körperliche Aktivität: ").append(metadata.get("physicalEnergy")).append("\n");
 			}
 			if (metadata.containsKey("source")) {
-				metadataSection.append("- Source: ").append(metadata.get("source")).append("\n");
+				metadataSection.append("- Quelle: ").append(metadata.get("source")).append("\n");
 			}
 			metadataSection.append(
-					"\nUse this metadata to inform the Klassenstufe, Dauer, Thema, and material/media columns.\n");
+					"\nVerwende diese Metadaten für Klassenstufe, Dauer, Thema und die Spalte Medien/Material.\n");
 		}
 
 		return String.format(
 				"""
-						You are a pedagogical expert. Analyze the following teaching material and produce an Artikulationsschema (lesson articulation schema).
+						Du bist ein Experte für Pädagogik und Unterrichtsplanung. Analysiere das folgende Unterrichtsmaterial und erstelle ein Artikulationsschema nach dem AVIVA+-Modell.
 						%s
-						IMPORTANT RULES:
-						1. If the text already contains an Artikulationsschema or lesson phase structure, extract and normalize it faithfully.
-						2. If no schema exists, generate a conservative, clearly structured one grounded in the material.
-						3. Do NOT invent content that is not supported by the source material.
-						4. Use the standard instructional phase flow: Einstieg, Erarbeitung, Ergebnissicherung. Add Reflexion/Transfer only if supported by the material.
+						WICHTIGE REGELN:
+						1. Falls der Text bereits ein Artikulationsschema oder eine Phasenstruktur enthält, extrahiere und normalisiere diese originalgetreu in das AVIVA+-Schema.
+						2. Falls kein Schema vorhanden ist, erstelle ein konservatives, klar strukturiertes Schema auf Grundlage des Materials.
+						3. Erfinde KEINE Inhalte, die nicht durch das Quellmaterial gestützt werden.
+						4. Verwende das AVIVA+-Phasenmodell mit den folgenden Phasen:
+						   (+) Lernatmosphäre schaffen – Vertrauensvolle Umgebung und positive Grundstimmung herstellen.
+						   (A) Ankommen und Ausrichten – Relevanz motivieren, Lernziele und Ablauf bekanntgeben.
+						   (V) Vorwissen aktivieren – Vorwissen identifizieren und reaktivieren, damit sich Neues mit Bekanntem verbinden kann.
+						   (I) Informieren – Neue Inhalte vorstellen, die als Grundlage für den Kompetenzaufbau dienen.
+						   (V) Verarbeiten – Gelerntes anwenden, vertiefen und üben, um es zu verfestigen.
+						   (A) Auswerten – Lernerfolg überprüfen und den Lehr-Lernprozess reflektieren.
 
-						OUTPUT FORMAT:
-						Return ONLY a markdown document with this exact structure:
+						AUSGABEFORMAT:
+						Gib NUR ein Markdown-Dokument mit exakt folgender Struktur zurück:
 
 						# Artikulationsschema
 
-						**Thema:** [Topic derived from the material]
-						**Klassenstufe:** [Grade/level if mentioned, otherwise "k.A."]
-						**Dauer:** [Total duration in minutes if mentioned, otherwise estimate]
+						**Thema:** [Aus dem Material abgeleitetes Thema]
+						**Klassenstufe:** [Klassenstufe/Alter falls erwähnt, sonst "k.A."]
+						**Dauer:** [Gesamtdauer in Minuten falls erwähnt, sonst schätzen]
 
 						| Zeit | Phase | Handlungsschritte | Sozialform | Kompetenzen | Medien/Material |
 						|------|-------|-------------------|------------|-------------|-----------------|
-						| ... | Einstieg | ... | ... | ... | ... |
-						| ... | Erarbeitung | ... | ... | ... | ... |
-						| ... | Ergebnissicherung | ... | ... | ... | ... |
+						| ... | (+) Lernatmosphäre schaffen | ... | ... | ... | ... |
+						| ... | (A) Ankommen / Ausrichten | ... | ... | ... | ... |
+						| ... | (V) Vorwissen aktivieren | ... | ... | ... | ... |
+						| ... | (I) Informieren | ... | ... | ... | ... |
+						| ... | (V) Verarbeiten | ... | ... | ... | ... |
+						| ... | (A) Auswerten | ... | ... | ... | ... |
 
-						COLUMN GUIDELINES:
-						- Zeit: Duration for each phase (e.g. "5 min", "15 min")
-						- Phase: One of Einstieg, Erarbeitung, Ergebnissicherung, Reflexion, Transfer
-						- Handlungsschritte: Concrete teacher and student actions
-						- Sozialform: e.g. Plenum, Einzelarbeit, Partnerarbeit, Gruppenarbeit
-						- Kompetenzen: Learning objectives or competencies addressed
-						- Medien/Material: Required materials and media
+						SPALTEN-RICHTLINIEN:
+						- Zeit: Dauer jeder Phase (z.B. "5 min", "15 min")
+						- Phase: Eine der AVIVA+-Phasen (siehe oben)
+						- Handlungsschritte: Konkrete Lehrer- und Schüleraktivitäten
+						- Sozialform: z.B. Plenum, Einzelarbeit, Partnerarbeit, Gruppenarbeit
+						- Kompetenzen: Angestrebte Lernziele bzw. Kompetenzen
+						- Medien/Material: Beschreibe die benötigten Materialien konkret (z.B. "Arbeitsblatt zu Algorithmen", "Stifte und Papier", "Laptop mit Internetzugang"). Verweise NICHT auf Seitenzahlen oder Dokumentabschnitte, sondern beschreibe das Material so, dass es eigenständig verständlich ist.
 
-						Return ONLY the markdown. No explanations, no code blocks wrapping the markdown.
+						Gib NUR das Markdown zurück. Keine Erklärungen, keine Code-Block-Umschließungen.
 
-						Teaching material:
+						Unterrichtsmaterial:
 						%s
 						""",
 				metadataSection.toString(), pdfText);
