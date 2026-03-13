@@ -14,6 +14,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
@@ -88,13 +90,15 @@ public class Activity {
 
 	// Documents relationship: FK and ON DELETE CASCADE managed at DB level.
 	// PDFDocument lifecycle is independent (created by PDFService before Activity exists).
-	@OneToMany
+	@OneToMany(fetch = FetchType.EAGER)
 	@JoinColumn(name = "activity_id")
+	@Fetch(FetchMode.SUBSELECT)
 	@ToString.Exclude
 	@EqualsAndHashCode.Exclude
 	private List<PDFDocument> documents = new ArrayList<>();
 
-	@OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+	@Fetch(FetchMode.SUBSELECT)
 	@ToString.Exclude
 	@EqualsAndHashCode.Exclude
 	private List<ActivityMarkdown> markdowns = new ArrayList<>();
