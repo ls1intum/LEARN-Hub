@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
@@ -33,6 +33,21 @@ export const ActivityDetails: React.FC = () => {
   const fromBrowser = location.state?.fromBrowser as boolean | undefined;
 
   const documentApi = useApi();
+  const fetchActivity = useCallback(async () => {
+    if (stateActivity) {
+      return stateActivity;
+    }
+
+    if (id) {
+      const fetchedActivity = await apiService.getActivity(id);
+      if (!fetchedActivity) {
+        throw new Error("Activity not found");
+      }
+      return fetchedActivity;
+    }
+
+    throw new Error("No activity ID provided");
+  }, [stateActivity, id]);
 
   const {
     data: activity,
@@ -40,21 +55,9 @@ export const ActivityDetails: React.FC = () => {
     error,
     refetch,
   } = useDataFetch({
-    fetchFn: async () => {
-      if (stateActivity) {
-        return stateActivity;
-      }
-      if (id) {
-        const fetchedActivity = await apiService.getActivity(id);
-        if (!fetchedActivity) {
-          throw new Error("Activity not found");
-        }
-        return fetchedActivity;
-      }
-      throw new Error("No activity ID provided");
-    },
+    fetchFn: fetchActivity,
     enabled: !!(stateActivity || id),
-    dependencies: [stateActivity, id],
+    dependencies: [fetchActivity],
   });
 
   const openBlobInNewTab = async (getBlob: () => Promise<Blob>) => {

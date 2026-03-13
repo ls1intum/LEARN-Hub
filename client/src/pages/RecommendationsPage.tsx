@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { RecommendationForm } from "@/components/forms/RecommendationForm";
@@ -44,6 +44,7 @@ export const RecommendationsPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [, setActiveTab] = useState<"form" | "results">("form");
   const [results, setResults] = useState<ResultsData | null>(null);
+  const searchParamsString = searchParams.toString();
 
   const getInitialFormData = () => {
     const state = location.state as {
@@ -102,22 +103,27 @@ export const RecommendationsPage: React.FC = () => {
     },
   });
 
+  const fetchRecommendations = useCallback(async () => {
+    if (!searchParamsString) return null;
+
+    const params = new URLSearchParams(searchParamsString);
+    params.set("limit", "5");
+
+    return await apiService.getRecommendations(params.toString());
+  }, [searchParamsString]);
+
+  const handleFetchSuccess = useCallback((data: ResultsData | null) => {
+    if (data) {
+      setResults(data);
+      setActiveTab("results");
+    }
+  }, []);
+
   const { isLoading, error, refetch } = useDataFetch({
-    fetchFn: async () => {
-      if (!searchParams.toString()) return null;
-
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("limit", "5");
-
-      return await apiService.getRecommendations(params.toString());
-    },
-    enabled: !!searchParams.toString(),
-    onSuccess: (data) => {
-      if (data) {
-        setResults(data);
-        setActiveTab("results");
-      }
-    },
+    fetchFn: fetchRecommendations,
+    enabled: !!searchParamsString,
+    dependencies: [fetchRecommendations],
+    onSuccess: handleFetchSuccess,
   });
 
   const handleFormSubmit = async (formData: FormData) => {
@@ -151,17 +157,17 @@ export const RecommendationsPage: React.FC = () => {
   };
 
   useEffect(() => {
-    const hasResults = searchParams.toString() || results;
+    const hasResults = searchParamsString || results;
     if (hasResults) setActiveTab("results");
-  }, [searchParams, results]);
+  }, [searchParamsString, results]);
 
   const handleBackToForm = () => {
     setResults(null);
     setActiveTab("form");
-    if (searchParams.toString()) setSearchParams({});
+    if (searchParamsString) setSearchParams({});
   };
 
-  const showResults = !!(results || (isLoading && !!searchParams.toString()));
+  const showResults = !!(results || (isLoading && !!searchParamsString));
 
   return (
     <div className="py-6">
