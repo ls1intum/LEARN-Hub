@@ -1,32 +1,5 @@
 // API-specific type definitions to replace any/unknown types
 
-// Generic API response wrapper (when server returns wrapped responses)
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  message?: string;
-  error?: string;
-}
-
-// Error response structure
-export interface ApiError {
-  error: string;
-  message?: string;
-  details?: Record<string, string>;
-}
-
-// Generic request body for API calls
-export interface ApiRequestBody {
-  [key: string]:
-    | string
-    | number
-    | boolean
-    | string[]
-    | number[]
-    | null
-    | undefined;
-}
-
 // Form data for dynamic forms
 export interface FormFieldData {
   [key: string]: string | number | boolean | string[] | null | undefined;

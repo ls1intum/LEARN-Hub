@@ -5,8 +5,6 @@ import type {
   ResultsData,
   SearchHistoryResponse,
   User,
-  LessonPlanInfo,
-  Document,
   FieldValues,
 } from "@/types/activity";
 import type {
@@ -326,17 +324,6 @@ export class ApiService {
   }
 
   /**
-   * Get lesson plan info
-   */
-  static async getLessonPlanInfo(activities: Activity[]) {
-    return this.request<LessonPlanInfo>("/api/activities/lesson-plan/info", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ activities }),
-    });
-  }
-
-  /**
    * Get PDF by activity ID
    */
   static async getActivityPdf(activityId: string) {
@@ -364,13 +351,6 @@ export class ApiService {
     }
 
     return response.blob();
-  }
-
-  /**
-   * Get PDF document info by document ID
-   */
-  static async getDocumentInfo(documentId: string) {
-    return this.request<Document>(`/api/documents/${documentId}/info`);
   }
 
   /**

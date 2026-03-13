@@ -22,10 +22,6 @@ public class UserFavouritesService {
 
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
-	public List<UserFavourites> getUserFavourites(UUID userId) {
-		return userFavouritesRepository.findByUserIdOrderByCreatedAtDesc(userId);
-	}
-
 	public List<UserFavourites> getUserFavourites(UUID userId, String type) {
 		return userFavouritesRepository.findByUserIdAndFavouriteType(userId, type);
 	}

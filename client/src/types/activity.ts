@@ -88,20 +88,6 @@ export interface ActivitiesResponse {
   offset: number;
 }
 
-export interface FavoriteActivity {
-  id: string;
-  name: string;
-  source: string;
-  ageMin: number;
-  ageMax: number;
-  format: string;
-  durationMinMinutes: number;
-  durationMaxMinutes?: number;
-  topics: string[];
-  favoritedAt: string;
-  serverData?: Record<string, string | number | boolean | string[]>;
-}
-
 // User response types
 export interface User {
   id: number;
@@ -112,13 +98,6 @@ export interface User {
   role: string;
   isVerified?: boolean;
   createdAt?: string;
-}
-
-export interface UserLoginData {
-  user: User;
-  accessToken: string;
-  refreshToken: string;
-  expires_in?: number;
 }
 
 // Search history types
@@ -135,45 +114,6 @@ export interface SearchHistoryResponse {
     offset: number;
     count: number;
   };
-}
-
-// Favorites types
-export interface Favorite {
-  id: number;
-  name: string;
-  activities: Activity[];
-  searchCriteria: Record<string, string | number | boolean | string[]>;
-  totalDuration: number;
-  createdAt: string;
-}
-
-export interface FavoritesResponse {
-  favorites: Favorite[];
-  pagination: {
-    limit: number;
-    offset: number;
-    count: number;
-  };
-}
-
-// Lesson plan types
-export interface LessonPlanInfo {
-  title: string;
-  totalDuration: number;
-  activityCount: number;
-  topicsCovered: string[];
-  bloomLevels: string[];
-  ageRange: string;
-  formats: string[];
-}
-
-// Document types
-export interface Document {
-  id: string;
-  filename: string;
-  fileSize: number;
-  mime_type?: string;
-  createdAt: string;
 }
 
 // Field values types - matches server FieldValuesResponse
