@@ -339,11 +339,26 @@ export class ApiService {
   }
 
   /**
-   * Get Artikulationsschema PDF by activity ID
+   * Get a stored markdown rendered as PDF by markdown ID
    */
-  static async getArtikulationsschemaPdf(activityId: string) {
+  static async getMarkdownPdf(markdownId: string) {
     const response = await authService.makeAuthenticatedRequest(
-      `/api/activities/${activityId}/artikulationsschema-pdf`,
+      `/api/markdowns/${markdownId}/pdf`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.blob();
+  }
+
+  /**
+   * Get a stored markdown rendered as DOCX (Word) by markdown ID
+   */
+  static async getMarkdownDocx(markdownId: string) {
+    const response = await authService.makeAuthenticatedRequest(
+      `/api/markdowns/${markdownId}/docx`,
     );
 
     if (!response.ok) {
@@ -403,12 +418,12 @@ export class ApiService {
   }
 
   /**
-   * Render Artikulationsschema markdown to a preview PDF.
+   * Render markdown text to a preview PDF.
    * Returns a Blob containing the PDF bytes.
    */
-  static async previewArtikulationsschemaPdf(markdown: string) {
+  static async previewMarkdownPdf(markdown: string) {
     const response = await authService.makeAuthenticatedRequest(
-      "/api/activities/preview-artikulationsschema-pdf",
+      "/api/markdowns/preview-pdf",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

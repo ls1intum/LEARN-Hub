@@ -169,7 +169,7 @@ export const ActivitySetupPage: React.FC = () => {
   // ─── Preview Rendering ──────────────────────────────────────────
 
   const renderPreviewFn = useCallback(
-    (markdown: string) => apiService.previewArtikulationsschemaPdf(markdown),
+    (markdown: string) => apiService.previewMarkdownPdf(markdown),
     [],
   );
 
