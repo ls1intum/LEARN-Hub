@@ -10,9 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MimeType;
 
 @Service
 public class LLMService {
@@ -20,7 +18,6 @@ public class LLMService {
 	private static final Logger logger = LoggerFactory.getLogger(LLMService.class);
 	private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*?})\\s*```",
 			Pattern.DOTALL);
-	private static final MimeType APPLICATION_PDF = MimeType.valueOf("application/pdf");
 
 	private final ChatClient chatClient;
 	private final ObjectMapper objectMapper = new ObjectMapper();
@@ -30,7 +27,7 @@ public class LLMService {
 		this.chatClient = builder != null ? builder.build() : null;
 	}
 
-	public Map<String, Object> extractActivityData(String pdfText, byte[] pdfContent) {
+	public Map<String, Object> extractActivityData(String pdfText) {
 		if (chatClient == null) {
 			throw new IllegalStateException("ChatClient is not available. Please configure a ChatModel.");
 		}
@@ -38,8 +35,7 @@ public class LLMService {
 		String promptText = buildExtractionPrompt(pdfText);
 
 		try {
-			String responseText = chatClient.prompt().user(u -> u.text(promptText)
-					.media(APPLICATION_PDF, new ByteArrayResource(pdfContent))).call().content();
+			String responseText = chatClient.prompt().user(promptText).call().content();
 
 			logger.debug("LLM Response: {}", responseText);
 
@@ -60,11 +56,10 @@ public class LLMService {
 	 * contains a schema, extract and normalize it. Otherwise, infer a fitting
 	 * schema from the teaching material. Returns markdown text.
 	 *
-	 * @param pdfText    extracted text from the PDF
-	 * @param pdfContent raw PDF bytes attached as media
-	 * @param metadata   user-adjusted activity metadata to inform the schema
+	 * @param pdfText  extracted text from the PDF
+	 * @param metadata user-adjusted activity metadata to inform the schema
 	 */
-	public String generateArtikulationsschema(String pdfText, byte[] pdfContent, Map<String, Object> metadata) {
+	public String generateArtikulationsschema(String pdfText, Map<String, Object> metadata) {
 		if (chatClient == null) {
 			throw new IllegalStateException("ChatClient is not available. Please configure a ChatModel.");
 		}
@@ -72,8 +67,7 @@ public class LLMService {
 		String promptText = buildArtikulationsschemaPrompt(pdfText, metadata);
 
 		try {
-			String responseText = chatClient.prompt().user(u -> u.text(promptText)
-					.media(APPLICATION_PDF, new ByteArrayResource(pdfContent))).call().content();
+			String responseText = chatClient.prompt().user(promptText).call().content();
 
 			logger.debug("LLM Artikulationsschema Response: {}", responseText);
 

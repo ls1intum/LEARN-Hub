@@ -405,7 +405,7 @@ public class ActivityService {
 
 			// Extract text and metadata using LLM
 			String pdfText = pdfService.extractTextFromPdf(cacheKey);
-			Map<String, Object> extractionResult = llmService.extractActivityData(pdfText, pdfContent);
+			Map<String, Object> extractionResult = llmService.extractActivityData(pdfText);
 
 			Object dataObj = extractionResult.get("data");
 			if (!(dataObj instanceof Map)) {
