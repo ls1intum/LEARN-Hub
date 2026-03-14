@@ -401,14 +401,18 @@ export class ApiService {
 
   /**
    * Generate Artikulationsschema markdown from an uploaded PDF.
+   * Sends user-adjusted metadata to inform the schema generation.
    */
-  static async generateArtikulationsschema(documentId: string) {
+  static async generateArtikulationsschema(
+    documentId: string,
+    metadata?: Record<string, unknown>,
+  ) {
     return this.request<ArtikulationsschemaResponse>(
       "/api/activities/generate-artikulationsschema",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: documentId }),
+        body: JSON.stringify({ documentId: documentId, metadata: metadata }),
       },
     );
   }

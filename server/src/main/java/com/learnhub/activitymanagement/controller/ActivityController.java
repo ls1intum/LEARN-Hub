@@ -305,7 +305,13 @@ public class ActivityController {
 						.body(ErrorResponse.of("PDF does not contain sufficient text for schema generation"));
 			}
 
-			String markdown = llmService.generateArtikulationsschema(pdfText);
+			// Extract user-adjusted metadata if provided
+			@SuppressWarnings("unchecked")
+			Map<String, Object> metadata = request.get("metadata") instanceof Map
+					? (Map<String, Object>) request.get("metadata")
+					: null;
+
+			String markdown = llmService.generateArtikulationsschema(pdfText, metadata);
 
 			Map<String, Object> response = new HashMap<>();
 			response.put("markdown", markdown);
