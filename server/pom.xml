@@ -86,13 +86,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- PDF Processing -->
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-            <version>3.0.3</version>
-        </dependency>
-
         <!-- iText for PDF rendering -->
         <dependency>
             <groupId>com.itextpdf</groupId>
