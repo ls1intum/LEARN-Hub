@@ -288,8 +288,9 @@ class PDFServiceTest {
 		document.setFilePath(filePath.toString());
 		when(pdfDocumentRepository.findById(documentId)).thenReturn(Optional.of(document));
 
-		LessonPlanInfoResponse response = pdfService.getLessonPlanInfo(List.of(Map.of("id", UUID.randomUUID().toString(),
-				"documents", List.of(Map.of("id", documentId.toString(), "type", DocumentType.SOURCE_PDF.getValue())))));
+		LessonPlanInfoResponse response = pdfService
+				.getLessonPlanInfo(List.of(Map.of("id", UUID.randomUUID().toString(), "documents",
+						List.of(Map.of("id", documentId.toString(), "type", DocumentType.SOURCE_PDF.getValue())))));
 
 		assertThat(response.isCanGenerateLessonPlan()).isTrue();
 		assertThat(response.getAvailablePdfs()).isEqualTo(1);
