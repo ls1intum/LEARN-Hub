@@ -46,8 +46,8 @@ public class MarkdownToHtmlService {
 	}
 
 	/**
-	 * Parse Markdown into a CommonMark AST node. Used by services that need the
-	 * AST for further processing (e.g. DOCX generation via Apache POI).
+	 * Parse Markdown into a CommonMark AST node. Used by services that need the AST
+	 * for further processing (e.g. DOCX generation via Apache POI).
 	 */
 	public Node parseToNode(String markdown) {
 		return parser.parse(markdown);

@@ -16,8 +16,8 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 /**
- * Service for rendering Markdown content to DOCX (Word) format using Apache POI.
- * Uses {@link MarkdownToHtmlService} for shared Markdown parsing via its
+ * Service for rendering Markdown content to DOCX (Word) format using Apache
+ * POI. Uses {@link MarkdownToHtmlService} for shared Markdown parsing via its
  * {@link MarkdownToHtmlService#parseToNode(String)} method.
  */
 @Service
@@ -417,9 +417,10 @@ public class MarkdownToDocxService {
 			String heading1Style, int heading1FontSize, String heading2Style, int heading2FontSize,
 			String heading3Style, int heading3FontSize, String defaultHeadingStyle, int defaultHeadingFontSize,
 			int listIndentLeft, int codeBlockIndentLeft, String codeFontFamily, int codeFontSize,
-			int blockQuoteIndentLeft, Borders blockQuoteBorderLeft, Borders thematicBreakBorderBottom, int tableWidthPct,
-			String tableHeaderBackground, String tableHeaderFontColor, int tableHeaderFontSize, int tableBodyFontSize,
-			String tableBodyAlternateBackground, String linkColor, UnderlinePatterns linkUnderline) {
+			int blockQuoteIndentLeft, Borders blockQuoteBorderLeft, Borders thematicBreakBorderBottom,
+			int tableWidthPct, String tableHeaderBackground, String tableHeaderFontColor, int tableHeaderFontSize,
+			int tableBodyFontSize, String tableBodyAlternateBackground, String linkColor,
+			UnderlinePatterns linkUnderline) {
 
 		static DocxTemplateSettings load(String path) {
 			Properties properties = new Properties();
@@ -430,7 +431,8 @@ public class MarkdownToDocxService {
 				throw new IllegalStateException("Failed to load DOCX template settings: " + path, e);
 			}
 
-			return new DocxTemplateSettings(getInt(properties, "page.width.twips"), getInt(properties, "page.height.twips"),
+			return new DocxTemplateSettings(getInt(properties, "page.width.twips"),
+					getInt(properties, "page.height.twips"),
 					STPageOrientation.Enum.forString(getString(properties, "page.orientation")),
 					getString(properties, "heading.1.style"), getInt(properties, "heading.1.fontSize"),
 					getString(properties, "heading.2.style"), getInt(properties, "heading.2.fontSize"),

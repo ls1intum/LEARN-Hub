@@ -437,8 +437,8 @@ public class PDFService {
 				document.add(buildTable(new float[]{100f, 400f}, breakRows, true));
 			}
 
-			document.add(buildSectionHeader(
-					"Total Duration: " + (totalDuration != null ? totalDuration : 0) + " minutes"));
+			document.add(
+					buildSectionHeader("Total Duration: " + (totalDuration != null ? totalDuration : 0) + " minutes"));
 			String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
 			document.add(new Paragraph("Generated: " + timestamp).setFontSize(10).setMarginTop(12));
 
