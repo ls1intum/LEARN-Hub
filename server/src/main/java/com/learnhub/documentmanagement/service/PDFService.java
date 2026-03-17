@@ -15,6 +15,7 @@ import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
 import com.learnhub.activitymanagement.entity.Activity;
+import com.learnhub.activitymanagement.entity.enums.DocumentType;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
@@ -257,30 +258,92 @@ public class PDFService {
 
 		for (int i = 0; i < activities.size(); i++) {
 			Map<String, Object> activity = activities.get(i);
-			Object docIdObj = activity.get("documentId");
+			UUID documentId = resolveLessonPlanDocumentId(activity);
+			if (documentId == null) {
+				missingPdfs.add(i);
+				continue;
+			}
 
-			if (docIdObj != null) {
-				try {
-					UUID documentId = UUID.fromString(docIdObj.toString());
-					byte[] content = getPdfContent(documentId);
-					if (content != null && content.length > 0) {
-						availablePdfs++;
-					} else {
-						missingPdfs.add(i);
-					}
-				} catch (IllegalArgumentException e) {
-					// Invalid UUID format
-					missingPdfs.add(i);
-				} catch (Exception e) {
+			try {
+				byte[] content = getPdfContent(documentId);
+				if (content != null && content.length > 0) {
+					availablePdfs++;
+				} else {
 					missingPdfs.add(i);
 				}
-			} else {
+			} catch (Exception e) {
 				missingPdfs.add(i);
 			}
 		}
 
 		boolean canGenerate = missingPdfs.isEmpty();
 		return new LessonPlanInfoResponse(canGenerate, availablePdfs, missingPdfs);
+	}
+
+	private UUID resolveLessonPlanDocumentId(Map<String, Object> activity) {
+		UUID directDocumentId = parseUuid(activity.get("documentId"));
+		if (directDocumentId != null) {
+			return directDocumentId;
+		}
+
+		UUID embeddedDocumentId = extractSourcePdfId(activity.get("documents"));
+		if (embeddedDocumentId != null) {
+			return embeddedDocumentId;
+		}
+
+		UUID activityId = parseUuid(activity.get("id"));
+		if (activityId == null) {
+			return null;
+		}
+
+		return activityRepository.findById(activityId)
+				.flatMap(savedActivity -> savedActivity.getDocuments().stream()
+						.filter(document -> document.getType() == DocumentType.SOURCE_PDF).findFirst()
+						.map(PDFDocument::getId))
+				.orElse(null);
+	}
+
+	private UUID extractSourcePdfId(Object documentsObj) {
+		if (!(documentsObj instanceof List<?> documents)) {
+			return null;
+		}
+
+		for (Object documentObj : documents) {
+			if (!(documentObj instanceof Map<?, ?> document)) {
+				continue;
+			}
+
+			Object typeObj = document.get("type");
+			if (typeObj == null) {
+				continue;
+			}
+
+			try {
+				DocumentType documentType = DocumentType.fromValue(typeObj.toString());
+				if (documentType == DocumentType.SOURCE_PDF) {
+					UUID documentId = parseUuid(document.get("id"));
+					if (documentId != null) {
+						return documentId;
+					}
+				}
+			} catch (IllegalArgumentException e) {
+				// Ignore unknown document types from the client payload.
+			}
+		}
+
+		return null;
+	}
+
+	private UUID parseUuid(Object value) {
+		if (value == null) {
+			return null;
+		}
+
+		try {
+			return UUID.fromString(value.toString());
+		} catch (IllegalArgumentException e) {
+			return null;
+		}
 	}
 
 	public byte[] generateLessonPlan(List<Map<String, Object>> activities, Map<String, Object> searchCriteria,
