@@ -156,7 +156,8 @@ public class LLMService {
 		if (metadata.containsKey("source")) {
 			metadataSection.append("- Quelle: ").append(metadata.get("source")).append("\n");
 		}
-		metadataSection.append("\nVerwende diese Metadaten für Klassenstufe, Dauer, Thema und die Spalte Medien/Material.\n");
+		metadataSection
+				.append("\nVerwende diese Metadaten für Klassenstufe, Dauer, Thema und die Spalte Medien/Material.\n");
 		return metadataSection.toString();
 	}
 
