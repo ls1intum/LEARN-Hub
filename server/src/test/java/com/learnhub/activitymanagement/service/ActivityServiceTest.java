@@ -22,8 +22,8 @@ import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
-import java.time.LocalDateTime;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -293,8 +293,7 @@ class ActivityServiceTest {
 		UUID documentId = UUID.randomUUID();
 		Map<String, Object> llmResponse = new HashMap<>();
 		llmResponse.put("name", "Roboterspiel: Algorithmus im Labyrinth");
-		llmResponse.put("description",
-				"Schüler übernehmen in Gruppen die Rollen Programmierer, Computer und Roboter.");
+		llmResponse.put("description", "Schüler übernehmen in Gruppen die Rollen Programmierer, Computer und Roboter.");
 		llmResponse.put("duration", "60 Minuten");
 		llmResponse.put("materials", List.of("Kreppband", "Stifte", "Bauklötze"));
 		llmResponse.put("bloom_taxonomy_level", "Analyze");
@@ -319,7 +318,8 @@ class ActivityServiceTest {
 		assertThat(extractedData.get("resourcesNeeded")).isEqualTo(List.of("Kreppband", "Stifte", "Bauklötze"));
 
 		ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
-		verify(pdfService).updatePdfExtractionResults(any(UUID.class), captor.capture(), any(String.class), any(String.class));
+		verify(pdfService).updatePdfExtractionResults(any(UUID.class), captor.capture(), any(String.class),
+				any(String.class));
 		assertThat(captor.getValue().get("durationMinMinutes")).isEqualTo(60);
 		assertThat(captor.getValue().get("bloomLevel")).isEqualTo("analyze");
 	}

@@ -56,8 +56,10 @@ public class LLMService {
 	 * contains a schema, extract and normalize it. Otherwise, infer a fitting
 	 * schema from the teaching material. Returns markdown text.
 	 *
-	 * @param pdfText  extracted text from the PDF
-	 * @param metadata user-adjusted activity metadata to inform the schema
+	 * @param pdfText
+	 *            extracted text from the PDF
+	 * @param metadata
+	 *            user-adjusted activity metadata to inform the schema
 	 */
 	public String generateArtikulationsschema(String pdfText, Map<String, Object> metadata) {
 		if (chatClient == null) {

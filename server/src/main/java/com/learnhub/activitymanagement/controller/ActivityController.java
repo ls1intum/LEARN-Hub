@@ -368,7 +368,8 @@ public class ActivityController {
 			return ResponseEntity.ok(result);
 		} catch (Exception e) {
 			logger.error("POST /api/activities/regenerate-metadata - Failed: {}", e.getMessage());
-			return ResponseEntity.status(500).body(ErrorResponse.of("Failed to regenerate metadata: " + e.getMessage()));
+			return ResponseEntity.status(500)
+					.body(ErrorResponse.of("Failed to regenerate metadata: " + e.getMessage()));
 		}
 	}
 

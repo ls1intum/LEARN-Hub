@@ -431,7 +431,8 @@ public class ActivityService {
 
 			String extractionQuality = determineExtractionQuality(confidence);
 			String confidenceScore = String.format("%.3f", confidence);
-			pdfService.updatePdfExtractionResults(documentIdOrCacheKey, extractedData, confidenceScore, extractionQuality);
+			pdfService.updatePdfExtractionResults(documentIdOrCacheKey, extractedData, confidenceScore,
+					extractionQuality);
 
 			return buildExtractionResponse(documentIdOrCacheKey, extractedData, confidence, extractionQuality);
 		} catch (Exception e) {
@@ -459,8 +460,9 @@ public class ActivityService {
 	}
 
 	private boolean looksLikeActivityData(Map<String, Object> candidate) {
-		return candidate.containsKey("name") || candidate.containsKey("description") || candidate.containsKey("duration")
-				|| candidate.containsKey("materials") || candidate.containsKey("bloom_taxonomy_level");
+		return candidate.containsKey("name") || candidate.containsKey("description")
+				|| candidate.containsKey("duration") || candidate.containsKey("materials")
+				|| candidate.containsKey("bloom_taxonomy_level");
 	}
 
 	private Map<String, Object> normalizeExtractedData(Map<String, Object> data) {
