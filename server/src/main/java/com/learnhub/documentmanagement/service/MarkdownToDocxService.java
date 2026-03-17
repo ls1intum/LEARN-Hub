@@ -2,29 +2,28 @@ package com.learnhub.documentmanagement.service;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
-import java.util.List;
 import org.apache.poi.xwpf.usermodel.*;
 import org.commonmark.ext.gfm.tables.*;
 import org.commonmark.node.*;
-import org.commonmark.parser.Parser;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
- * Service for rendering Markdown content to DOCX (Word) format using Apache POI
- * and commonmark for markdown parsing.
+ * Service for rendering Markdown content to DOCX (Word) format using Apache POI.
+ * Uses {@link MarkdownToHtmlService} for shared Markdown parsing via its
+ * {@link MarkdownToHtmlService#parseToNode(String)} method.
  */
 @Service
 public class MarkdownToDocxService {
 
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToDocxService.class);
 
-	private final Parser parser;
+	private final MarkdownToHtmlService markdownToHtmlService;
 
-	public MarkdownToDocxService() {
-		this.parser = Parser.builder().extensions(List.of(TablesExtension.create())).build();
+	public MarkdownToDocxService(MarkdownToHtmlService markdownToHtmlService) {
+		this.markdownToHtmlService = markdownToHtmlService;
 	}
 
 	/**
@@ -41,7 +40,7 @@ public class MarkdownToDocxService {
 			pageSize.setH(BigInteger.valueOf(11906));
 			pageSize.setOrient(STPageOrientation.LANDSCAPE);
 
-			Node docNode = parser.parse(markdown);
+			Node docNode = markdownToHtmlService.parseToNode(markdown);
 			renderNode(document, docNode);
 
 			document.write(baos);
