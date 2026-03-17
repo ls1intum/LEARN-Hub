@@ -20,7 +20,9 @@ describe("ImpressumPage", () => {
     expect(
       screen.getByText("TUM School of Computation, Information and Technology"),
     ).toBeInTheDocument();
-    expect(screen.getByText("Department of Computer Science")).toBeInTheDocument();
+    expect(
+      screen.getByText("Department of Computer Science"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Prof. Dr. Stephan Krusche")).toBeInTheDocument();
   });
 

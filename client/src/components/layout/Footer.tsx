@@ -19,8 +19,8 @@ const EXTERNAL_LINKS = [
 
 export const Footer: React.FC = () => {
   return (
-    <footer className="mt-auto border-t border-border bg-card/50 px-4 py-6 text-xs text-muted-foreground">
-      <div className="max-w-6xl mx-auto flex flex-wrap items-center gap-4">
+    <footer className="mt-auto border-t border-border bg-card/50 px-4 py-3 text-xs text-muted-foreground">
+      <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-4">
         {/* Impressum internal link */}
         <Link
           to="/impressum"
