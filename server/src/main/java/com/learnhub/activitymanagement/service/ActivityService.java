@@ -12,12 +12,15 @@ import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ActivityService {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivityService.class);
+	private static final Pattern FIRST_INTEGER_PATTERN = Pattern.compile("(\\d+)");
 
 	@Autowired
 	private ActivityRepository activityRepository;
@@ -386,7 +390,7 @@ public class ActivityService {
 	 * (cache key) and extracted data for the 2-step creation flow. The PDF is NOT
 	 * persisted yet – call createActivityWithValidation to finalize.
 	 */
-	public Map<String, Object> uploadPdfAndExtractMetadata(MultipartFile pdfFile) {
+	public Map<String, Object> uploadPdfAndExtractMetadata(MultipartFile pdfFile, boolean extractMetadata) {
 		try {
 			if (pdfFile.isEmpty()) {
 				throw new IllegalArgumentException("No PDF file provided");
@@ -403,41 +407,127 @@ public class ActivityService {
 
 			UUID cacheKey = pdfService.cachePdf(pdfContent, pdfFile.getOriginalFilename());
 
-			// Extract text and metadata using LLM
-			String pdfText = pdfService.extractTextFromPdf(cacheKey);
-			Map<String, Object> extractionResult = llmService.extractActivityData(pdfText);
-
-			Object dataObj = extractionResult.get("data");
-			if (!(dataObj instanceof Map)) {
-				throw new RuntimeException("LLM extraction did not return a valid data map");
+			if (!extractMetadata) {
+				pdfService.updatePdfExtractionResults(cacheKey, Map.of(), null, "not_run");
+				return buildExtractionResponse(cacheKey, Map.of(), 0.0, "not_run");
 			}
-			@SuppressWarnings("unchecked")
-			Map<String, Object> extractedData = (Map<String, Object>) dataObj;
-			Double confidence = extractionResult.get("confidence") != null
-					? (Double) extractionResult.get("confidence")
-					: 0.0;
 
-			String extractionQuality = determineExtractionQuality(confidence);
-
-			// Update cached PDF with extraction results
-			String confidenceScore = String.format("%.3f", confidence);
-			pdfService.updatePdfExtractionResults(cacheKey, extractedData, confidenceScore, extractionQuality);
-
-			// Apply defaults
-			Map<String, Object> activityData = applyActivityDefaults(extractedData);
-
-			Map<String, Object> response = new HashMap<>();
-			response.put("documentId", cacheKey.toString());
-			response.put("extractedData", activityData);
-			response.put("extractionConfidence", confidence);
-			response.put("extractionQuality", extractionQuality);
-
-			return response;
+			return extractMetadataFromDocument(cacheKey);
 		} catch (IllegalArgumentException e) {
 			throw e;
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to upload PDF and extract metadata: " + e.getMessage(), e);
 		}
+	}
+
+	public Map<String, Object> extractMetadataFromDocument(UUID documentIdOrCacheKey) {
+		try {
+			String pdfText = pdfService.extractTextFromPdf(documentIdOrCacheKey);
+			Map<String, Object> extractionResult = llmService.extractActivityData(pdfText);
+			Map<String, Object> extractedData = extractActivityDataMap(extractionResult);
+			Double confidence = extractionResult.get("confidence") instanceof Number
+					? ((Number) extractionResult.get("confidence")).doubleValue()
+					: 0.0;
+
+			String extractionQuality = determineExtractionQuality(confidence);
+			String confidenceScore = String.format("%.3f", confidence);
+			pdfService.updatePdfExtractionResults(documentIdOrCacheKey, extractedData, confidenceScore,
+					extractionQuality);
+
+			return buildExtractionResponse(documentIdOrCacheKey, extractedData, confidence, extractionQuality);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to extract metadata: " + e.getMessage(), e);
+		}
+	}
+
+	private Map<String, Object> extractActivityDataMap(Map<String, Object> extractionResult) {
+		if (extractionResult == null || extractionResult.isEmpty()) {
+			throw new RuntimeException("LLM extraction did not return a valid data map");
+		}
+
+		Object dataObj = extractionResult.get("data");
+		if (dataObj instanceof Map<?, ?> rawMap) {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> extractedData = new HashMap<>((Map<String, Object>) rawMap);
+			return normalizeExtractedData(extractedData);
+		}
+
+		if (looksLikeActivityData(extractionResult)) {
+			return normalizeExtractedData(new HashMap<>(extractionResult));
+		}
+
+		throw new RuntimeException("LLM extraction did not return a valid data map");
+	}
+
+	private boolean looksLikeActivityData(Map<String, Object> candidate) {
+		return candidate.containsKey("name") || candidate.containsKey("description")
+				|| candidate.containsKey("duration") || candidate.containsKey("materials")
+				|| candidate.containsKey("bloom_taxonomy_level");
+	}
+
+	private Map<String, Object> normalizeExtractedData(Map<String, Object> data) {
+		copyAlias(data, "title", "name");
+		copyAlias(data, "summary", "description");
+		copyAlias(data, "materials", "resourcesNeeded");
+		copyAlias(data, "bloom_taxonomy_level", "bloomLevel");
+		copyAlias(data, "bloomTaxonomyLevel", "bloomLevel");
+
+		Object duration = data.get("duration");
+		if (duration != null) {
+			Integer parsedDuration = extractFirstInteger(duration);
+			if (parsedDuration != null) {
+				data.putIfAbsent("durationMinMinutes", parsedDuration);
+				data.putIfAbsent("durationMaxMinutes", parsedDuration);
+			}
+		}
+
+		Object bloomLevel = data.get("bloomLevel");
+		if (bloomLevel != null) {
+			data.put("bloomLevel", bloomLevel.toString().trim().toLowerCase());
+		}
+
+		Object resourcesNeeded = data.get("resourcesNeeded");
+		if (resourcesNeeded instanceof List<?> rawList) {
+			List<String> normalized = new ArrayList<>();
+			for (Object item : rawList) {
+				if (item != null) {
+					normalized.add(item.toString());
+				}
+			}
+			data.put("resourcesNeeded", normalized);
+		}
+
+		Object topics = data.get("topics");
+		if (topics instanceof List<?> rawTopics) {
+			List<String> normalizedTopics = new ArrayList<>();
+			for (Object item : rawTopics) {
+				if (item != null) {
+					normalizedTopics.add(item.toString());
+				}
+			}
+			data.put("topics", normalizedTopics);
+		}
+
+		return data;
+	}
+
+	private void copyAlias(Map<String, Object> data, String sourceKey, String targetKey) {
+		if (!data.containsKey(targetKey) && data.get(sourceKey) != null) {
+			data.put(targetKey, data.get(sourceKey));
+		}
+	}
+
+	private Integer extractFirstInteger(Object value) {
+		if (value instanceof Number number) {
+			return number.intValue();
+		}
+
+		Matcher matcher = FIRST_INTEGER_PATTERN.matcher(value.toString());
+		if (matcher.find()) {
+			return Integer.parseInt(matcher.group(1));
+		}
+
+		return null;
 	}
 
 	/**
@@ -478,6 +568,16 @@ public class ActivityService {
 			activityData.put("cleanupTimeMinutes", 5);
 
 		return activityData;
+	}
+
+	private Map<String, Object> buildExtractionResponse(UUID documentId, Map<String, Object> extractedData,
+			Double confidence, String extractionQuality) {
+		Map<String, Object> response = new HashMap<>();
+		response.put("documentId", documentId.toString());
+		response.put("extractedData", applyActivityDefaults(extractedData));
+		response.put("extractionConfidence", confidence);
+		response.put("extractionQuality", extractionQuality);
+		return response;
 	}
 
 	/**
