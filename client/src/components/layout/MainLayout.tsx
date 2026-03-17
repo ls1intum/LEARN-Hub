@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { NAVIGATION_TABS, getCurrentTab } from "@/constants/navigation";
 import { NavigationMenu } from "./NavigationMenu";
 import { UserHeader } from "./UserHeader";
+import { Footer } from "./Footer";
 import {
   getEnvironmentDisplayText,
   getEnvironmentBadgeVariant,
@@ -209,6 +210,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           >
             {children}
           </div>
+          <Footer />
         </main>
       </div>
     </div>
