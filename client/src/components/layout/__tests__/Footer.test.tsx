@@ -1,41 +1,27 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { Footer } from "../Footer";
 
 afterEach(cleanup);
 
 describe("Footer", () => {
-  it("renders the Impressum heading", () => {
-    render(<Footer />);
-    expect(screen.getByText("Impressum")).toBeInTheDocument();
-  });
+  const renderFooter = () =>
+    render(
+      <MemoryRouter>
+        <Footer />
+      </MemoryRouter>,
+    );
 
-  it("renders TUM institution details", () => {
-    render(<Footer />);
-    expect(screen.getByText("Technische Universität München")).toBeInTheDocument();
-    expect(
-      screen.getByText("TUM School of Computation, Information and Technology"),
-    ).toBeInTheDocument();
-    expect(screen.getByText("Department of Computer Science")).toBeInTheDocument();
-    expect(screen.getByText("Prof. Dr. Stephan Krusche")).toBeInTheDocument();
-  });
-
-  it("renders address information", () => {
-    render(<Footer />);
-    expect(screen.getByText("Boltzmannstrasse 3")).toBeInTheDocument();
-    expect(screen.getByText("D-85748 Garching b. München")).toBeInTheDocument();
-  });
-
-  it("renders regulating authority and VAT number", () => {
-    render(<Footer />);
-    expect(
-      screen.getByText(/Bayerisches Staatsministerium für Wissenschaft, Forschung und Kunst/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/DE 811193231/)).toBeInTheDocument();
+  it("renders the Impressum link pointing to /impressum", () => {
+    renderFooter();
+    const link = screen.getByRole("link", { name: "Impressum" });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute("href", "/impressum");
   });
 
   it("renders external links with correct hrefs", () => {
-    render(<Footer />);
+    renderFooter();
 
     const codeOfConductLink = screen.getByRole("link", {
       name: /Code of Conduct/i,
