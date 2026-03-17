@@ -189,16 +189,16 @@ public class LLMService {
 						Du bist ein Experte für Pädagogik und Unterrichtsplanung. Analysiere das folgende Unterrichtsmaterial und erstelle ein Artikulationsschema nach dem AVIVA+-Modell.
 						%s
 						WICHTIGE REGELN:
-						1. Falls der Text bereits ein Artikulationsschema oder eine Phasenstruktur enthält, extrahiere und normalisiere diese originalgetreu in das AVIVA+-Schema.
+						1. Falls der Text bereits ein Artikulationsschema oder eine Phasenstruktur enthält, nutze all diese Daten in deinem AVIVA+-Schema und erkläre alle vorhandenen Schritte in den Handlungsanweisungen.
 						2. Falls kein Schema vorhanden ist, erstelle ein konservatives, klar strukturiertes Schema auf Grundlage des Materials.
-						3. Erfinde KEINE Inhalte, die nicht durch das Quellmaterial gestützt werden.
-						4. Verwende das AVIVA+-Phasenmodell mit den folgenden Phasen:
-						   (+) Lernatmosphäre schaffen – Vertrauensvolle Umgebung und positive Grundstimmung herstellen.
-						   (A) Ankommen und Ausrichten – Relevanz motivieren, Lernziele und Ablauf bekanntgeben.
-						   (V) Vorwissen aktivieren – Vorwissen identifizieren und reaktivieren, damit sich Neues mit Bekanntem verbinden kann.
-						   (I) Informieren – Neue Inhalte vorstellen, die als Grundlage für den Kompetenzaufbau dienen.
-						   (V) Verarbeiten – Gelerntes anwenden, vertiefen und üben, um es zu verfestigen.
-						   (A) Auswerten – Lernerfolg überprüfen und den Lehr-Lernprozess reflektieren.
+						3. Verwende das AVIVA+-Phasenmodell mit den folgenden Phasen (ALLE 6 PHASEN MÜSSEN ALS MIN. EINE SPALTE VORHANDEN SEIN, AUCH WENN SIE NUR KURZ ANGEDEUTET WERDEN):
+						   (+) Lernatmosphäre schaffen - Vertrauensvolle Umgebung und positive Grundstimmung herstellen.
+						   (A) Ankommen und Ausrichten - Relevanz motivieren, Lernziele und Ablauf bekanntgeben.
+						   (V) Vorwissen aktivieren - Vorwissen identifizieren und reaktivieren, damit sich Neues mit Bekanntem verbinden kann.
+						   (I) Informieren - Neue Inhalte vorstellen, die als Grundlage für den Kompetenzaufbau dienen.
+						   (V) Verarbeiten - Gelerntes anwenden, vertiefen und üben, um es zu verfestigen.
+						   (A) Auswerten - Lernerfolg überprüfen und den Lehr-Lernprozess reflektieren.
+						4. Sei detailiert und konkret in der Beschreibung der Handlungsschritte!
 
 						AUSGABEFORMAT:
 						Gib NUR ein Markdown-Dokument mit exakt folgender Struktur zurück:

@@ -9,6 +9,7 @@ import type {
 } from "@/types/activity";
 import type {
   UploadPdfDraftResponse,
+  UploadPdfDraftOptions,
   ArtikulationsschemaResponse,
   CreateActivityRequest,
   UpdateActivityRequest,
@@ -386,15 +387,27 @@ export class ApiService {
    * Upload PDF for the 2-step activity creation flow.
    * Caches the PDF and extracts metadata without creating an activity.
    */
-  static async uploadPdfDraft(file: File) {
+  static async uploadPdfDraft(file: File, options: UploadPdfDraftOptions = {}) {
     const formData = new FormData();
     formData.append("pdf_file", file);
+    formData.append("extractMetadata", String(options.extractMetadata ?? true));
 
     return this.request<UploadPdfDraftResponse>(
       "/api/activities/upload-pdf-draft",
       {
         method: "POST",
         body: formData,
+      },
+    );
+  }
+
+  static async regenerateMetadata(documentId: string) {
+    return this.request<UploadPdfDraftResponse>(
+      "/api/activities/regenerate-metadata",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId }),
       },
     );
   }

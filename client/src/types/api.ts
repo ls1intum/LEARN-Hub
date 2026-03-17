@@ -13,6 +13,10 @@ export interface UploadPdfDraftResponse {
   extractionQuality: string;
 }
 
+export interface UploadPdfDraftOptions {
+  extractMetadata?: boolean;
+}
+
 // Artikulationsschema generation response
 export interface ArtikulationsschemaResponse {
   markdown: string;

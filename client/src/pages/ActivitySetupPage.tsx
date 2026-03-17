@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,8 @@ import {
   ArrowRight,
   Save,
   Edit3,
+  RefreshCw,
+  Sparkles,
 } from "lucide-react";
 import { apiService } from "@/services/apiService";
 import {
@@ -30,6 +32,7 @@ import { MarkdownEditorWithPreview } from "@/components/ui/MarkdownEditorWithPre
 import { logger } from "@/services/logger";
 import type { Activity } from "@/types/activity";
 import type { FormFieldData } from "@/types/api";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Step = "upload" | "metadata" | "artikulationsschema";
 
@@ -46,6 +49,8 @@ export const ActivitySetupPage: React.FC = () => {
   );
   const [extractionQuality, setExtractionQuality] = useState<string>("");
   const [extractionConfidence, setExtractionConfidence] = useState<number>(0);
+  const [shouldExtractMetadata, setShouldExtractMetadata] = useState(true);
+  const [shouldGenerateSchema, setShouldGenerateSchema] = useState(true);
 
   // Metadata form state (saved when moving to step 2)
   const [savedMetadata, setSavedMetadata] = useState<ActivityFormData | null>(
@@ -56,7 +61,9 @@ export const ActivitySetupPage: React.FC = () => {
   const [artikulationsschemaMarkdown, setArtikulationsschemaMarkdown] =
     useState<string>("");
   const [isGeneratingSchema, setIsGeneratingSchema] = useState(false);
+  const [isRegeneratingMetadata, setIsRegeneratingMetadata] = useState(false);
   const [schemaError, setSchemaError] = useState<string | null>(null);
+  const [hasVisitedSchemaStep, setHasVisitedSchemaStep] = useState(false);
 
   // Upload state
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -119,11 +126,17 @@ export const ActivitySetupPage: React.FC = () => {
     setUploadError(null);
 
     try {
-      const result = await apiService.uploadPdfDraft(selectedFile);
+      const result = await apiService.uploadPdfDraft(selectedFile, {
+        extractMetadata: shouldExtractMetadata,
+      });
       setDocumentId(result.documentId);
       setExtractedData(result.extractedData);
       setExtractionConfidence(result.extractionConfidence);
       setExtractionQuality(result.extractionQuality);
+      setSavedMetadata(null);
+      setArtikulationsschemaMarkdown("");
+      setSchemaError(null);
+      setHasVisitedSchemaStep(false);
       setCurrentStep("metadata");
     } catch (error) {
       logger.error("Upload error", error, "ActivitySetupPage");
@@ -139,30 +152,67 @@ export const ActivitySetupPage: React.FC = () => {
 
   // ─── Metadata Step Handlers ─────────────────────────────────────
 
+  const generateSchema = async (metadata?: ActivityFormData) => {
+    if (!documentId) return;
+
+    setIsGeneratingSchema(true);
+    setSchemaError(null);
+    try {
+      const result = await apiService.generateArtikulationsschema(
+        documentId,
+        metadata as unknown as Record<string, unknown> | undefined,
+      );
+      setArtikulationsschemaMarkdown(result.markdown);
+    } catch (error) {
+      logger.error("Schema generation error", error, "ActivitySetupPage");
+      setSchemaError(
+        error instanceof Error
+          ? error.message
+          : "Failed to generate Artikulationsschema",
+      );
+    } finally {
+      setIsGeneratingSchema(false);
+    }
+  };
+
+  const handleRegenerateMetadata = async () => {
+    if (!documentId) return;
+
+    setIsRegeneratingMetadata(true);
+    setUploadError(null);
+    try {
+      const result = await apiService.regenerateMetadata(documentId);
+      setExtractedData(result.extractedData);
+      setExtractionConfidence(result.extractionConfidence);
+      setExtractionQuality(result.extractionQuality);
+      setSavedMetadata(null);
+      setArtikulationsschemaMarkdown("");
+      setSchemaError(null);
+    } catch (error) {
+      logger.error("Metadata regeneration error", error, "ActivitySetupPage");
+      setUploadError(
+        error instanceof Error
+          ? error.message
+          : "Failed to regenerate metadata",
+      );
+    } finally {
+      setIsRegeneratingMetadata(false);
+    }
+  };
+
   const handleMetadataNext = async (formData: ActivityFormData) => {
+    const shouldAutoGenerateOnThisVisit = !hasVisitedSchemaStep;
+
     setSavedMetadata(formData);
+    setHasVisitedSchemaStep(true);
     setCurrentStep("artikulationsschema");
 
-    // Generate Artikulationsschema if not already generated
-    if (!artikulationsschemaMarkdown && documentId) {
-      setIsGeneratingSchema(true);
-      setSchemaError(null);
-      try {
-        const result = await apiService.generateArtikulationsschema(
-          documentId,
-          formData as unknown as Record<string, unknown>,
-        );
-        setArtikulationsschemaMarkdown(result.markdown);
-      } catch (error) {
-        logger.error("Schema generation error", error, "ActivitySetupPage");
-        setSchemaError(
-          error instanceof Error
-            ? error.message
-            : "Failed to generate Artikulationsschema",
-        );
-      } finally {
-        setIsGeneratingSchema(false);
-      }
+    if (
+      shouldAutoGenerateOnThisVisit &&
+      shouldGenerateSchema &&
+      !artikulationsschemaMarkdown
+    ) {
+      await generateSchema(formData);
     }
   };
 
@@ -210,6 +260,15 @@ export const ActivitySetupPage: React.FC = () => {
   ];
 
   const currentStepIndex = steps.findIndex((s) => s.key === currentStep);
+  const metadataInitialData = useMemo(
+    () =>
+      savedMetadata ||
+      ({
+        ...(extractedData ?? {}),
+        documentId: documentId || null,
+      } as Partial<ActivityFormData>),
+    [documentId, extractedData, savedMetadata],
+  );
 
   // ─── Render ─────────────────────────────────────────────────────
 
@@ -247,9 +306,9 @@ export const ActivitySetupPage: React.FC = () => {
                     variant: "default",
                     onClick: handleSave,
                     icon: <Save className="h-4 w-4" />,
-                    disabled: isSaving,
                     loading: isSaving,
                     loadingLabel: "Saving...",
+                    disabled: isSaving || isGeneratingSchema,
                   }
                 : undefined
           }
@@ -267,8 +326,8 @@ export const ActivitySetupPage: React.FC = () => {
               </CardTitle>
               <CardDescription>
                 Upload a PDF file containing learning activity information. The
-                system will extract metadata and generate an
-                Artikulationsschema.
+                system can extract metadata and generate an Artikulationsschema
+                for you.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -318,6 +377,48 @@ export const ActivitySetupPage: React.FC = () => {
                 </div>
               )}
 
+              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-medium">AI options</p>
+                  <p className="text-xs text-muted-foreground">
+                    Choose which AI-assisted steps should run automatically.
+                  </p>
+                </div>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={shouldExtractMetadata}
+                    onCheckedChange={(checked) =>
+                      setShouldExtractMetadata(checked === true)
+                    }
+                  />
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium">
+                      Extract metadata from PDF
+                    </span>
+                    <p className="text-xs text-muted-foreground">
+                      Prefill the activity form with AI-extracted fields.
+                    </p>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <Checkbox
+                    checked={shouldGenerateSchema}
+                    onCheckedChange={(checked) =>
+                      setShouldGenerateSchema(checked === true)
+                    }
+                  />
+                  <div className="space-y-1">
+                    <span className="text-sm font-medium">
+                      Generate Artikulationsschema after review
+                    </span>
+                    <p className="text-xs text-muted-foreground">
+                      Run schema generation automatically when you finish the
+                      metadata step.
+                    </p>
+                  </div>
+                </label>
+              </div>
+
               {uploadError && (
                 <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
                   <AlertCircle className="h-4 w-4 text-destructive" />
@@ -333,12 +434,16 @@ export const ActivitySetupPage: React.FC = () => {
                 {isUploading ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Uploading &amp; Extracting...
+                    {shouldExtractMetadata
+                      ? "Uploading & Extracting..."
+                      : "Uploading..."}
                   </>
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
-                    Upload &amp; Extract Metadata
+                    {shouldExtractMetadata
+                      ? "Upload & Extract Metadata"
+                      : "Upload PDF"}
                     <ArrowRight className="h-4 w-4 ml-1" />
                   </>
                 )}
@@ -353,37 +458,65 @@ export const ActivitySetupPage: React.FC = () => {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Edit3 className="h-5 w-5" />
-                Review Extracted Metadata
-              </CardTitle>
-              <CardDescription>
-                Review and edit the metadata extracted from your PDF.
-                {extractionQuality && (
-                  <span
-                    className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                      extractionQuality === "high"
-                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                        : extractionQuality === "medium"
-                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                    }`}
-                  >
-                    {extractionQuality} quality (
-                    {(extractionConfidence * 100).toFixed(0)}%)
-                  </span>
-                )}
-              </CardDescription>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Edit3 className="h-5 w-5" />
+                    Review Extracted Metadata
+                  </CardTitle>
+                  <CardDescription>
+                    Review and edit the metadata extracted from your PDF.
+                    {extractionQuality && (
+                      <span
+                        className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                          extractionQuality === "high"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : extractionQuality === "medium"
+                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                              : extractionQuality === "not_run"
+                                ? "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300"
+                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        }`}
+                      >
+                        {extractionQuality === "not_run"
+                          ? "AI skipped"
+                          : `${extractionQuality} quality (${(
+                              extractionConfidence * 100
+                            ).toFixed(0)}%)`}
+                      </span>
+                    )}
+                  </CardDescription>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={handleRegenerateMetadata}
+                  disabled={!documentId || isRegeneratingMetadata}
+                >
+                  {isRegeneratingMetadata ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Regenerating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4" />
+                      Re-run AI metadata
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {uploadError && (
+                <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                  <p className="text-sm text-destructive">{uploadError}</p>
+                </div>
+              )}
               <ActivityForm
-                initialData={
-                  savedMetadata ||
-                  ({
-                    ...extractedData,
-                    documentId: documentId || null,
-                  } as Partial<ActivityFormData>)
-                }
+                initialData={metadataInitialData}
                 onSubmit={handleMetadataNext}
                 onCancel={() => setCurrentStep("upload")}
                 isLoading={false}
@@ -398,6 +531,42 @@ export const ActivitySetupPage: React.FC = () => {
       {/* Step: Artikulationsschema */}
       {currentStep === "artikulationsschema" && (
         <div className="space-y-4 lg:relative lg:left-1/2 lg:w-[calc(100vw-16rem-4rem)] lg:max-w-none lg:-translate-x-1/2">
+          <Card>
+            <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium">Artikulationsschema</p>
+                <p className="text-sm text-muted-foreground">
+                  Edit the AI draft or generate a fresh version from the saved
+                  metadata.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-2"
+                onClick={() => void generateSchema(savedMetadata || undefined)}
+                disabled={!documentId || !savedMetadata || isGeneratingSchema}
+              >
+                {isGeneratingSchema ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Regenerating...
+                  </>
+                ) : (
+                  <>
+                    {artikulationsschemaMarkdown ? (
+                      <RefreshCw className="h-4 w-4" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    {artikulationsschemaMarkdown
+                      ? "Re-generate AI schema"
+                      : "Generate AI schema"}
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
           {isGeneratingSchema ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">
@@ -420,23 +589,7 @@ export const ActivitySetupPage: React.FC = () => {
                   <Button
                     variant="outline"
                     onClick={() => {
-                      if (documentId) {
-                        setIsGeneratingSchema(true);
-                        setSchemaError(null);
-                        apiService
-                          .generateArtikulationsschema(documentId)
-                          .then((result) => {
-                            setArtikulationsschemaMarkdown(result.markdown);
-                          })
-                          .catch((err) =>
-                            setSchemaError(
-                              err instanceof Error
-                                ? err.message
-                                : "Retry failed",
-                            ),
-                          )
-                          .finally(() => setIsGeneratingSchema(false));
-                      }
+                      void generateSchema(savedMetadata || undefined);
                     }}
                   >
                     Retry Generation

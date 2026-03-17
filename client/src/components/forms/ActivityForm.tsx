@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle, AlertCircle } from "lucide-react";
@@ -80,6 +80,16 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
     ...initialData,
   });
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!initialData) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      ...defaultFormData,
+      ...initialData,
+    }));
+  }, [initialData]);
 
   // Form field options
   const FORMAT_OPTIONS = [
