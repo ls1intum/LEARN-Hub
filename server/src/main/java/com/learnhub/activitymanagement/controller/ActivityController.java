@@ -305,7 +305,13 @@ public class ActivityController {
 						.body(ErrorResponse.of("PDF does not contain sufficient text for schema generation"));
 			}
 
-			String markdown = llmService.generateArtikulationsschema(pdfText);
+			// Extract user-adjusted metadata if provided
+			@SuppressWarnings("unchecked")
+			Map<String, Object> metadata = request.get("metadata") instanceof Map
+					? (Map<String, Object>) request.get("metadata")
+					: null;
+
+			String markdown = llmService.generateArtikulationsschema(pdfText, metadata);
 
 			Map<String, Object> response = new HashMap<>();
 			response.put("markdown", markdown);
@@ -323,11 +329,12 @@ public class ActivityController {
 	@PreAuthorize("hasRole('ADMIN')")
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Upload PDF for draft activity", description = "Upload a PDF and cache it, returning a document_id and extracted metadata for the 2-step creation flow (admin only)")
-	public ResponseEntity<?> uploadPdfDraft(@RequestParam("pdf_file") MultipartFile pdfFile) {
+	public ResponseEntity<?> uploadPdfDraft(@RequestParam("pdf_file") MultipartFile pdfFile,
+			@RequestParam(value = "extractMetadata", defaultValue = "true") boolean extractMetadata) {
 		logger.info("POST /api/activities/upload-pdf-draft - Upload PDF draft called with file={}",
 				pdfFile.getOriginalFilename());
 		try {
-			Map<String, Object> result = activityService.uploadPdfAndExtractMetadata(pdfFile);
+			Map<String, Object> result = activityService.uploadPdfAndExtractMetadata(pdfFile, extractMetadata);
 			return ResponseEntity.status(201).body(result);
 		} catch (IllegalArgumentException e) {
 			logger.error("POST /api/activities/upload-pdf-draft - Invalid input: {}", e.getMessage());
@@ -335,6 +342,34 @@ public class ActivityController {
 		} catch (Exception e) {
 			logger.error("POST /api/activities/upload-pdf-draft - Failed: {}", e.getMessage());
 			return ResponseEntity.status(500).body(ErrorResponse.of("Failed to upload PDF draft: " + e.getMessage()));
+		}
+	}
+
+	@PostMapping("/regenerate-metadata")
+	@PreAuthorize("hasRole('ADMIN')")
+	@SecurityRequirement(name = "BearerAuth")
+	@Operation(summary = "Regenerate metadata", description = "Re-run metadata extraction for a cached or persisted PDF (admin only)")
+	public ResponseEntity<?> regenerateMetadata(@RequestBody Map<String, Object> request) {
+		logger.info("POST /api/activities/regenerate-metadata called");
+		try {
+			Object documentIdObj = request.get("documentId");
+			if (documentIdObj == null) {
+				return ResponseEntity.badRequest().body(ErrorResponse.of("documentId is required"));
+			}
+
+			UUID documentId;
+			try {
+				documentId = UUID.fromString(documentIdObj.toString());
+			} catch (IllegalArgumentException e) {
+				return ResponseEntity.badRequest().body(ErrorResponse.of("Invalid documentId format"));
+			}
+
+			Map<String, Object> result = activityService.extractMetadataFromDocument(documentId);
+			return ResponseEntity.ok(result);
+		} catch (Exception e) {
+			logger.error("POST /api/activities/regenerate-metadata - Failed: {}", e.getMessage());
+			return ResponseEntity.status(500)
+					.body(ErrorResponse.of("Failed to regenerate metadata: " + e.getMessage()));
 		}
 	}
 

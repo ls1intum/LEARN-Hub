@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -21,14 +22,17 @@ import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class ActivityServiceTest {
@@ -242,6 +246,82 @@ class ActivityServiceTest {
 		assertThat(existingActivity.getMarkdowns().get(0).getType()).isEqualTo(MarkdownType.ARTIKULATIONSSCHEMA);
 		assertThat(response.getMarkdowns()).hasSize(1);
 		assertThat(response.getMarkdowns().get(0).getContent()).isEqualTo("New schema");
+	}
+
+	@Test
+	void uploadPdfAndExtractMetadataSkipsLlmWhenDisabled() throws Exception {
+		MockMultipartFile pdfFile = new MockMultipartFile("pdf_file", "activity.pdf", "application/pdf",
+				"fake-pdf".getBytes(StandardCharsets.UTF_8));
+		UUID cacheKey = UUID.randomUUID();
+
+		when(pdfService.cachePdf(any(byte[].class), any(String.class))).thenReturn(cacheKey);
+
+		Map<String, Object> result = activityService.uploadPdfAndExtractMetadata(pdfFile, false);
+
+		assertThat(result.get("documentId")).isEqualTo(cacheKey.toString());
+		assertThat(result.get("extractionConfidence")).isEqualTo(0.0);
+		assertThat(result.get("extractionQuality")).isEqualTo("not_run");
+		assertThat(result.get("extractedData")).isInstanceOf(Map.class);
+		verify(llmService, never()).extractActivityData(any(String.class));
+		verify(pdfService).updatePdfExtractionResults(cacheKey, Map.of(), null, "not_run");
+	}
+
+	@Test
+	void extractMetadataFromDocumentUpdatesStoredResults() {
+		UUID documentId = UUID.randomUUID();
+		Map<String, Object> extractedData = new HashMap<>();
+		extractedData.put("name", "Binary Bracelets");
+		extractedData.put("description", "A complete activity description for students.");
+
+		Map<String, Object> llmResponse = new HashMap<>();
+		llmResponse.put("data", extractedData);
+		llmResponse.put("confidence", 0.82d);
+
+		when(pdfService.extractTextFromPdf(documentId)).thenReturn("PDF text");
+		when(llmService.extractActivityData("PDF text")).thenReturn(llmResponse);
+
+		Map<String, Object> result = activityService.extractMetadataFromDocument(documentId);
+
+		assertThat(result.get("documentId")).isEqualTo(documentId.toString());
+		assertThat(result.get("extractionQuality")).isEqualTo("high");
+		assertThat(result.get("extractionConfidence")).isEqualTo(0.82d);
+		verify(pdfService).updatePdfExtractionResults(documentId, extractedData, "0.820", "high");
+	}
+
+	@Test
+	void extractMetadataFromDocumentNormalizesFlatLlmResponse() {
+		UUID documentId = UUID.randomUUID();
+		Map<String, Object> llmResponse = new HashMap<>();
+		llmResponse.put("name", "Roboterspiel: Algorithmus im Labyrinth");
+		llmResponse.put("description", "Schüler übernehmen in Gruppen die Rollen Programmierer, Computer und Roboter.");
+		llmResponse.put("duration", "60 Minuten");
+		llmResponse.put("materials", List.of("Kreppband", "Stifte", "Bauklötze"));
+		llmResponse.put("bloom_taxonomy_level", "Analyze");
+		llmResponse.put("topics", List.of("Algorithmen", "Roboter", "Fehlerkorrektur"));
+		llmResponse.put("confidence", 0.91d);
+
+		when(pdfService.extractTextFromPdf(documentId)).thenReturn("PDF text");
+		when(llmService.extractActivityData("PDF text")).thenReturn(llmResponse);
+
+		Map<String, Object> result = activityService.extractMetadataFromDocument(documentId);
+
+		assertThat(result.get("extractionConfidence")).isEqualTo(0.91d);
+		assertThat(result.get("extractionQuality")).isEqualTo("high");
+		assertThat(result.get("extractedData")).isInstanceOf(Map.class);
+
+		@SuppressWarnings("unchecked")
+		Map<String, Object> extractedData = (Map<String, Object>) result.get("extractedData");
+		assertThat(extractedData.get("name")).isEqualTo("Roboterspiel: Algorithmus im Labyrinth");
+		assertThat(extractedData.get("durationMinMinutes")).isEqualTo(60);
+		assertThat(extractedData.get("durationMaxMinutes")).isEqualTo(60);
+		assertThat(extractedData.get("bloomLevel")).isEqualTo("analyze");
+		assertThat(extractedData.get("resourcesNeeded")).isEqualTo(List.of("Kreppband", "Stifte", "Bauklötze"));
+
+		ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
+		verify(pdfService).updatePdfExtractionResults(any(UUID.class), captor.capture(), any(String.class),
+				any(String.class));
+		assertThat(captor.getValue().get("durationMinMinutes")).isEqualTo(60);
+		assertThat(captor.getValue().get("bloomLevel")).isEqualTo("analyze");
 	}
 
 	@Test

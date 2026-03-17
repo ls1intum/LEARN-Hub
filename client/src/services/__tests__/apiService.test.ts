@@ -326,4 +326,54 @@ describe("ApiService", () => {
       expect(authService.makeAuthenticatedRequest).toHaveBeenCalledTimes(3);
     });
   });
+
+  describe("Upload draft helpers", () => {
+    it("should include AI extraction flag when uploading a draft PDF", async () => {
+      vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            documentId: "doc-1",
+            extractedData: {},
+            extractionConfidence: 0,
+            extractionQuality: "not_run",
+          }),
+          { status: 201 },
+        ),
+      );
+
+      const file = new File(["pdf"], "draft.pdf", { type: "application/pdf" });
+      await ApiService.uploadPdfDraft(file, { extractMetadata: false });
+
+      const [, options] = vi.mocked(authService.makeAuthenticatedRequest).mock
+        .calls[0];
+      expect(options?.method).toBe("POST");
+      expect(options?.body).toBeInstanceOf(FormData);
+      expect((options?.body as FormData).get("extractMetadata")).toBe("false");
+    });
+
+    it("should post document id when regenerating metadata", async () => {
+      vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            documentId: "doc-1",
+            extractedData: {},
+            extractionConfidence: 0.9,
+            extractionQuality: "high",
+          }),
+          { status: 200 },
+        ),
+      );
+
+      await ApiService.regenerateMetadata("doc-1");
+
+      expect(authService.makeAuthenticatedRequest).toHaveBeenCalledWith(
+        "/api/activities/regenerate-metadata",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ documentId: "doc-1" }),
+        },
+      );
+    });
+  });
 });
