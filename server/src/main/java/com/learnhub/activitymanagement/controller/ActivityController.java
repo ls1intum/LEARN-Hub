@@ -7,9 +7,12 @@ import com.learnhub.activitymanagement.dto.request.RecommendationRequest;
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
 import com.learnhub.activitymanagement.dto.response.DocumentResponse;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
+import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.service.ActivityService;
 import com.learnhub.activitymanagement.service.RecommendationService;
 import com.learnhub.documentmanagement.service.LLMService;
+import com.learnhub.documentmanagement.service.MarkdownToPdfService;
+import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.usermanagement.service.UserSearchHistoryService;
@@ -17,6 +20,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +56,12 @@ public class ActivityController {
 
 	@Autowired
 	private LLMService llmService;
+
+	@Autowired
+	private MarkdownToPdfService markdownToPdfService;
+
+	@Autowired
+	private MarkdownToDocxService markdownToDocxService;
 
 	@GetMapping("/")
 	@PreAuthorize("permitAll()")
@@ -371,6 +381,155 @@ public class ActivityController {
 			return ResponseEntity.status(500)
 					.body(ErrorResponse.of("Failed to regenerate metadata: " + e.getMessage()));
 		}
+	}
+
+	@PostMapping("/generate-activity-markdowns")
+	@PreAuthorize("hasRole('ADMIN')")
+	@SecurityRequirement(name = "BearerAuth")
+	@Operation(summary = "Generate all activity markdowns", description = "Generate Deckblatt, Artikulationsschema, and Hintergrundwissen markdowns from an uploaded PDF (admin only)")
+	public ResponseEntity<?> generateActivityMarkdowns(@RequestBody Map<String, Object> request) {
+		logger.info("POST /api/activities/generate-activity-markdowns called");
+		try {
+			Object documentIdObj = request.get("documentId");
+			if (documentIdObj == null) {
+				return ResponseEntity.badRequest().body(ErrorResponse.of("documentId is required"));
+			}
+
+			UUID documentId;
+			try {
+				documentId = UUID.fromString(documentIdObj.toString());
+			} catch (IllegalArgumentException e) {
+				return ResponseEntity.badRequest().body(ErrorResponse.of("Invalid documentId format"));
+			}
+
+			String pdfText = pdfService.extractTextFromPdf(documentId);
+			if (pdfText == null || pdfText.trim().length() < 10) {
+				return ResponseEntity.badRequest()
+						.body(ErrorResponse.of("PDF does not contain sufficient text for generation"));
+			}
+
+			@SuppressWarnings("unchecked")
+			Map<String, Object> metadata = request.get("metadata") instanceof Map
+					? (Map<String, Object>) request.get("metadata")
+					: null;
+
+			// Determine which types to generate
+			@SuppressWarnings("unchecked")
+			List<String> types = request.get("types") instanceof List ? (List<String>) request.get("types") : null;
+
+			Map<String, Object> response = new HashMap<>();
+			response.put("documentId", documentId.toString());
+
+			boolean generateAll = types == null || types.isEmpty();
+
+			if (generateAll || types.contains("deckblatt")) {
+				String deckblatt = llmService.generateDeckblatt(pdfText, metadata);
+				response.put("deckblattMarkdown", deckblatt);
+			}
+
+			if (generateAll || types.contains("artikulationsschema")) {
+				String artikulationsschema = llmService.generateArtikulationsschema(pdfText, metadata);
+				response.put("artikulationsschemaMarkdown", artikulationsschema);
+			}
+
+			if (generateAll || types.contains("hintergrundwissen")) {
+				String hintergrundwissen = llmService.generateHintergrundwissen(pdfText, metadata);
+				response.put("hintergrundwissenMarkdown", hintergrundwissen);
+			}
+
+			return ResponseEntity.ok(response);
+		} catch (Exception e) {
+			logger.error("POST /api/activities/generate-activity-markdowns - Failed: {}", e.getMessage());
+			return ResponseEntity.status(500)
+					.body(ErrorResponse.of("Failed to generate activity markdowns: " + e.getMessage()));
+		}
+	}
+
+	@GetMapping("/{activityId}/download-pdf")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Download activity as combined PDF", description = "Download all markdown files (Deckblatt, Artikulationsschema, Hintergrundwissen) as a single PDF")
+	public ResponseEntity<?> downloadActivityPdf(@PathVariable UUID activityId) {
+		logger.info("GET /api/activities/{}/download-pdf - Download combined activity PDF", activityId);
+		try {
+			ActivityResponse activity = activityService.getActivityById(activityId);
+			String combinedMarkdown = buildCombinedMarkdown(activity);
+
+			if (combinedMarkdown.isEmpty()) {
+				return ResponseEntity.status(404).body(ErrorResponse.of("No markdown content available for this activity"));
+			}
+
+			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(combinedMarkdown);
+
+			String activityName = activity.getName() != null ? activity.getName() : "activity";
+			String downloadName = sanitizeDownloadFilename(activityName) + ".pdf";
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_PDF);
+			headers.setContentDispositionFormData("attachment", downloadName);
+			headers.setContentLength(pdfBytes.length);
+
+			return ResponseEntity.ok().headers(headers).body(pdfBytes);
+		} catch (Exception e) {
+			logger.error("GET /api/activities/{}/download-pdf - Failed: {}", activityId, e.getMessage());
+			return ResponseEntity.status(500)
+					.body(ErrorResponse.of("Failed to generate combined PDF: " + e.getMessage()));
+		}
+	}
+
+	@GetMapping("/{activityId}/download-docx")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Download activity as combined DOCX", description = "Download all markdown files (Deckblatt, Artikulationsschema, Hintergrundwissen) as a single DOCX")
+	public ResponseEntity<?> downloadActivityDocx(@PathVariable UUID activityId) {
+		logger.info("GET /api/activities/{}/download-docx - Download combined activity DOCX", activityId);
+		try {
+			ActivityResponse activity = activityService.getActivityById(activityId);
+			String combinedMarkdown = buildCombinedMarkdown(activity);
+
+			if (combinedMarkdown.isEmpty()) {
+				return ResponseEntity.status(404).body(ErrorResponse.of("No markdown content available for this activity"));
+			}
+
+			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(combinedMarkdown);
+
+			String activityName = activity.getName() != null ? activity.getName() : "activity";
+			String downloadName = sanitizeDownloadFilename(activityName) + ".docx";
+
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType
+					.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+			headers.setContentDispositionFormData("attachment", downloadName);
+			headers.setContentLength(docxBytes.length);
+
+			return ResponseEntity.ok().headers(headers).body(docxBytes);
+		} catch (Exception e) {
+			logger.error("GET /api/activities/{}/download-docx - Failed: {}", activityId, e.getMessage());
+			return ResponseEntity.status(500)
+					.body(ErrorResponse.of("Failed to generate combined DOCX: " + e.getMessage()));
+		}
+	}
+
+	/**
+	 * Build combined markdown from all activity markdowns in order:
+	 * Deckblatt, Artikulationsschema, Hintergrundwissen.
+	 */
+	private String buildCombinedMarkdown(ActivityResponse activity) {
+		StringBuilder combined = new StringBuilder();
+		String[] typeOrder = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
+
+		for (String type : typeOrder) {
+			if (activity.getMarkdowns() != null) {
+				for (MarkdownResponse md : activity.getMarkdowns()) {
+					if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
+						if (combined.length() > 0) {
+							combined.append("\n\n---\n\n");
+						}
+						combined.append(md.getContent());
+					}
+				}
+			}
+		}
+
+		return combined.toString();
 	}
 
 	private String sanitizeDownloadFilename(String name) {

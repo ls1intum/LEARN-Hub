@@ -11,6 +11,7 @@ import type {
   UploadPdfDraftResponse,
   UploadPdfDraftOptions,
   ArtikulationsschemaResponse,
+  ActivityMarkdownsResponse,
   CreateActivityRequest,
   UpdateActivityRequest,
   UserRequest,
@@ -428,6 +429,59 @@ export class ApiService {
         body: JSON.stringify({ documentId: documentId, metadata: metadata }),
       },
     );
+  }
+
+  /**
+   * Generate all activity markdowns (Deckblatt, Artikulationsschema, Hintergrundwissen)
+   * from an uploaded PDF. Sends user-adjusted metadata to inform the generation.
+   */
+  static async generateActivityMarkdowns(
+    documentId: string,
+    metadata?: Record<string, unknown>,
+    types?: string[],
+  ) {
+    return this.request<ActivityMarkdownsResponse>(
+      "/api/activities/generate-activity-markdowns",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId: documentId,
+          metadata: metadata,
+          types: types,
+        }),
+      },
+    );
+  }
+
+  /**
+   * Download combined activity PDF (Deckblatt + Artikulationsschema + Hintergrundwissen)
+   */
+  static async downloadActivityPdf(activityId: string) {
+    const response = await authService.makeAuthenticatedRequest(
+      `/api/activities/${activityId}/download-pdf`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.blob();
+  }
+
+  /**
+   * Download combined activity DOCX (Deckblatt + Artikulationsschema + Hintergrundwissen)
+   */
+  static async downloadActivityDocx(activityId: string) {
+    const response = await authService.makeAuthenticatedRequest(
+      `/api/activities/${activityId}/download-docx`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.blob();
   }
 
   /**

@@ -33,8 +33,22 @@ import { logger } from "@/services/logger";
 import type { Activity } from "@/types/activity";
 import type { FormFieldData } from "@/types/api";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-type Step = "upload" | "metadata" | "artikulationsschema";
+type Step = "upload" | "metadata" | "documents";
+type MarkdownTab = "deckblatt" | "artikulationsschema" | "hintergrundwissen";
+
+const MARKDOWN_TAB_LABELS: Record<MarkdownTab, string> = {
+  deckblatt: "Deckblatt",
+  artikulationsschema: "Artikulationsschema",
+  hintergrundwissen: "Hintergrundwissen",
+};
 
 // ─── Component ───────────────────────────────────────────────────
 
@@ -60,6 +74,11 @@ export const ActivitySetupPage: React.FC = () => {
   // Artikulationsschema state
   const [artikulationsschemaMarkdown, setArtikulationsschemaMarkdown] =
     useState<string>("");
+  const [deckblattMarkdown, setDeckblattMarkdown] = useState<string>("");
+  const [hintergrundwissenMarkdown, setHintergrundwissenMarkdown] =
+    useState<string>("");
+  const [activeMarkdownTab, setActiveMarkdownTab] =
+    useState<MarkdownTab>("deckblatt");
   const [isGeneratingSchema, setIsGeneratingSchema] = useState(false);
   const [isRegeneratingMetadata, setIsRegeneratingMetadata] = useState(false);
   const [schemaError, setSchemaError] = useState<string | null>(null);
@@ -135,6 +154,8 @@ export const ActivitySetupPage: React.FC = () => {
       setExtractionQuality(result.extractionQuality);
       setSavedMetadata(null);
       setArtikulationsschemaMarkdown("");
+      setDeckblattMarkdown("");
+      setHintergrundwissenMarkdown("");
       setSchemaError(null);
       setHasVisitedSchemaStep(false);
       setCurrentStep("metadata");
@@ -158,17 +179,25 @@ export const ActivitySetupPage: React.FC = () => {
     setIsGeneratingSchema(true);
     setSchemaError(null);
     try {
-      const result = await apiService.generateArtikulationsschema(
+      const result = await apiService.generateActivityMarkdowns(
         documentId,
         metadata as unknown as Record<string, unknown> | undefined,
       );
-      setArtikulationsschemaMarkdown(result.markdown);
+      if (result.deckblattMarkdown) {
+        setDeckblattMarkdown(result.deckblattMarkdown);
+      }
+      if (result.artikulationsschemaMarkdown) {
+        setArtikulationsschemaMarkdown(result.artikulationsschemaMarkdown);
+      }
+      if (result.hintergrundwissenMarkdown) {
+        setHintergrundwissenMarkdown(result.hintergrundwissenMarkdown);
+      }
     } catch (error) {
       logger.error("Schema generation error", error, "ActivitySetupPage");
       setSchemaError(
         error instanceof Error
           ? error.message
-          : "Failed to generate Artikulationsschema",
+          : "Failed to generate documents",
       );
     } finally {
       setIsGeneratingSchema(false);
@@ -187,6 +216,8 @@ export const ActivitySetupPage: React.FC = () => {
       setExtractionQuality(result.extractionQuality);
       setSavedMetadata(null);
       setArtikulationsschemaMarkdown("");
+      setDeckblattMarkdown("");
+      setHintergrundwissenMarkdown("");
       setSchemaError(null);
     } catch (error) {
       logger.error("Metadata regeneration error", error, "ActivitySetupPage");
@@ -205,12 +236,17 @@ export const ActivitySetupPage: React.FC = () => {
 
     setSavedMetadata(formData);
     setHasVisitedSchemaStep(true);
-    setCurrentStep("artikulationsschema");
+    setCurrentStep("documents");
+
+    const hasAnyMarkdown =
+      artikulationsschemaMarkdown ||
+      deckblattMarkdown ||
+      hintergrundwissenMarkdown;
 
     if (
       shouldAutoGenerateOnThisVisit &&
       shouldGenerateSchema &&
-      !artikulationsschemaMarkdown
+      !hasAnyMarkdown
     ) {
       await generateSchema(formData);
     }
@@ -234,6 +270,8 @@ export const ActivitySetupPage: React.FC = () => {
         ...savedMetadata,
         documentId: documentId,
         artikulationsschemaMarkdown: artikulationsschemaMarkdown || undefined,
+        deckblattMarkdown: deckblattMarkdown || undefined,
+        hintergrundwissenMarkdown: hintergrundwissenMarkdown || undefined,
       })) as { activity: Activity };
 
       navigate(`/activity-details/${response.activity.id}`);
@@ -253,8 +291,8 @@ export const ActivitySetupPage: React.FC = () => {
     { key: "upload" as Step, label: "Upload PDF", number: 0 },
     { key: "metadata" as Step, label: "Review Metadata", number: 1 },
     {
-      key: "artikulationsschema" as Step,
-      label: "Artikulationsschema",
+      key: "documents" as Step,
+      label: "Documents",
       number: 2,
     },
   ];
@@ -286,21 +324,21 @@ export const ActivitySetupPage: React.FC = () => {
           onBack={
             currentStep === "metadata"
               ? () => setCurrentStep("upload")
-              : currentStep === "artikulationsschema"
+              : currentStep === "documents"
                 ? () => setCurrentStep("metadata")
                 : undefined
           }
           onForward={
             currentStep === "metadata"
               ? {
-                  label: "Next: Artikulationsschema",
+                  label: "Next: Documents",
                   variant: "outline",
                   size: "icon",
                   ariaLabel: "Next step",
                   className: "h-9 w-9",
                   formId: "activity-setup-form",
                 }
-              : currentStep === "artikulationsschema"
+              : currentStep === "documents"
                 ? {
                     label: "Save Activity",
                     variant: "default",
@@ -409,10 +447,11 @@ export const ActivitySetupPage: React.FC = () => {
                   />
                   <div className="space-y-1">
                     <span className="text-sm font-medium">
-                      Generate Artikulationsschema after review
+                      Generate documents after review
                     </span>
                     <p className="text-xs text-muted-foreground">
-                      Run schema generation automatically when you finish the
+                      Run AI generation of Deckblatt, Artikulationsschema, and
+                      Hintergrundwissen automatically when you finish the
                       metadata step.
                     </p>
                   </div>
@@ -528,16 +567,36 @@ export const ActivitySetupPage: React.FC = () => {
         </div>
       )}
 
-      {/* Step: Artikulationsschema */}
-      {currentStep === "artikulationsschema" && (
+      {/* Step: Documents (Deckblatt, Artikulationsschema, Hintergrundwissen) */}
+      {currentStep === "documents" && (
         <div className="space-y-4 lg:relative lg:left-1/2 lg:w-[calc(100vw-16rem-4rem)] lg:max-w-none lg:-translate-x-1/2">
           <Card>
             <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm font-medium">Artikulationsschema</p>
-                <p className="text-sm text-muted-foreground">
-                  Edit the AI draft or generate a fresh version from the saved
-                  metadata.
+              <div className="flex items-center gap-3">
+                <Select
+                  value={activeMarkdownTab}
+                  onValueChange={(value) =>
+                    setActiveMarkdownTab(value as MarkdownTab)
+                  }
+                >
+                  <SelectTrigger className="w-[220px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(
+                      Object.entries(MARKDOWN_TAB_LABELS) as [
+                        MarkdownTab,
+                        string,
+                      ][]
+                    ).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground hidden sm:block">
+                  Edit the AI draft or generate a fresh version.
                 </p>
               </div>
               <Button
@@ -550,18 +609,22 @@ export const ActivitySetupPage: React.FC = () => {
                 {isGeneratingSchema ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Regenerating...
+                    Generating...
                   </>
                 ) : (
                   <>
-                    {artikulationsschemaMarkdown ? (
+                    {artikulationsschemaMarkdown ||
+                    deckblattMarkdown ||
+                    hintergrundwissenMarkdown ? (
                       <RefreshCw className="h-4 w-4" />
                     ) : (
                       <Sparkles className="h-4 w-4" />
                     )}
-                    {artikulationsschemaMarkdown
-                      ? "Re-generate AI schema"
-                      : "Generate AI schema"}
+                    {artikulationsschemaMarkdown ||
+                    deckblattMarkdown ||
+                    hintergrundwissenMarkdown
+                      ? "Re-generate all"
+                      : "Generate all"}
                   </>
                 )}
               </Button>
@@ -572,11 +635,11 @@ export const ActivitySetupPage: React.FC = () => {
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
                 <p className="text-lg font-medium">
-                  Generating Artikulationsschema...
+                  Generating documents...
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  The AI is analyzing the PDF and creating a lesson articulation
-                  schema.
+                  The AI is analyzing the PDF and creating Deckblatt,
+                  Artikulationsschema, and Hintergrundwissen.
                 </p>
               </CardContent>
             </Card>
@@ -598,11 +661,29 @@ export const ActivitySetupPage: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            <MarkdownEditorWithPreview
-              value={artikulationsschemaMarkdown}
-              onChange={setArtikulationsschemaMarkdown}
-              renderPreviewFn={renderPreviewFn}
-            />
+            <>
+              {activeMarkdownTab === "deckblatt" && (
+                <MarkdownEditorWithPreview
+                  value={deckblattMarkdown}
+                  onChange={setDeckblattMarkdown}
+                  renderPreviewFn={renderPreviewFn}
+                />
+              )}
+              {activeMarkdownTab === "artikulationsschema" && (
+                <MarkdownEditorWithPreview
+                  value={artikulationsschemaMarkdown}
+                  onChange={setArtikulationsschemaMarkdown}
+                  renderPreviewFn={renderPreviewFn}
+                />
+              )}
+              {activeMarkdownTab === "hintergrundwissen" && (
+                <MarkdownEditorWithPreview
+                  value={hintergrundwissenMarkdown}
+                  onChange={setHintergrundwissenMarkdown}
+                  renderPreviewFn={renderPreviewFn}
+                />
+              )}
+            </>
           )}
         </div>
       )}

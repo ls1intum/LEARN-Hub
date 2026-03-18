@@ -21,8 +21,22 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { MarkdownEditorWithPreview } from "@/components/ui/MarkdownEditorWithPreview";
 import { logger } from "@/services/logger";
 import type { Activity } from "@/types/activity";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-type Step = "metadata" | "artikulationsschema";
+type Step = "metadata" | "documents";
+type MarkdownTab = "deckblatt" | "artikulationsschema" | "hintergrundwissen";
+
+const MARKDOWN_TAB_LABELS: Record<MarkdownTab, string> = {
+  deckblatt: "Deckblatt",
+  artikulationsschema: "Artikulationsschema",
+  hintergrundwissen: "Hintergrundwissen",
+};
 
 // ─── Component ───────────────────────────────────────────────────
 
@@ -46,6 +60,11 @@ export const ActivityEditPage: React.FC = () => {
   // Artikulationsschema state
   const [artikulationsschemaMarkdown, setArtikulationsschemaMarkdown] =
     useState<string>("");
+  const [deckblattMarkdown, setDeckblattMarkdown] = useState<string>("");
+  const [hintergrundwissenMarkdown, setHintergrundwissenMarkdown] =
+    useState<string>("");
+  const [activeMarkdownTab, setActiveMarkdownTab] =
+    useState<MarkdownTab>("deckblatt");
 
   // Save state
   const [isSaving, setIsSaving] = useState(false);
@@ -65,6 +84,13 @@ export const ActivityEditPage: React.FC = () => {
           data.markdowns?.find((m) => m.type === "artikulationsschema")
             ?.content || "";
         setArtikulationsschemaMarkdown(artikulationsMd);
+        const deckblattMd =
+          data.markdowns?.find((m) => m.type === "deckblatt")?.content || "";
+        setDeckblattMarkdown(deckblattMd);
+        const hintergrundwissenMd =
+          data.markdowns?.find((m) => m.type === "hintergrundwissen")
+            ?.content || "";
+        setHintergrundwissenMarkdown(hintergrundwissenMd);
       })
       .catch((err) => {
         logger.error("Failed to load activity", err, "ActivityEditPage");
@@ -79,7 +105,7 @@ export const ActivityEditPage: React.FC = () => {
 
   const handleMetadataNext = async (formData: ActivityFormData) => {
     setSavedMetadata(formData);
-    setCurrentStep("artikulationsschema");
+    setCurrentStep("documents");
   };
 
   // ─── Preview Rendering ──────────────────────────────────────────
@@ -114,6 +140,8 @@ export const ActivityEditPage: React.FC = () => {
         physicalEnergy: savedMetadata.physicalEnergy || undefined,
         topics: savedMetadata.topics,
         artikulationsschemaMarkdown: artikulationsschemaMarkdown || undefined,
+        deckblattMarkdown: deckblattMarkdown || undefined,
+        hintergrundwissenMarkdown: hintergrundwissenMarkdown || undefined,
       });
 
       navigate(`/activity-details/${id}`);
@@ -132,8 +160,8 @@ export const ActivityEditPage: React.FC = () => {
   const steps = [
     { key: "metadata" as Step, label: "Edit Metadata" },
     {
-      key: "artikulationsschema" as Step,
-      label: "Artikulationsschema",
+      key: "documents" as Step,
+      label: "Documents",
     },
   ];
 
@@ -172,6 +200,15 @@ export const ActivityEditPage: React.FC = () => {
                         (m) => m.type === "artikulationsschema",
                       )?.content || "",
                     );
+                    setDeckblattMarkdown(
+                      data.markdowns?.find((m) => m.type === "deckblatt")
+                        ?.content || "",
+                    );
+                    setHintergrundwissenMarkdown(
+                      data.markdowns?.find(
+                        (m) => m.type === "hintergrundwissen",
+                      )?.content || "",
+                    );
                   })
                   .catch((err) =>
                     setLoadError(
@@ -206,21 +243,21 @@ export const ActivityEditPage: React.FC = () => {
           onBack={
             currentStep === "metadata"
               ? () => navigate(`/activity-details/${id}`)
-              : currentStep === "artikulationsschema"
+              : currentStep === "documents"
                 ? () => setCurrentStep("metadata")
                 : undefined
           }
           onForward={
             currentStep === "metadata"
               ? {
-                  label: "Next: Artikulationsschema",
+                  label: "Next: Documents",
                   variant: "outline",
                   size: "icon",
                   ariaLabel: "Next step",
                   className: "h-9 w-9",
                   formId: "activity-edit-form",
                 }
-              : currentStep === "artikulationsschema"
+              : currentStep === "documents"
                 ? {
                     label: "Save Changes",
                     variant: "default",
@@ -286,8 +323,8 @@ export const ActivityEditPage: React.FC = () => {
         </div>
       )}
 
-      {/* Step: Artikulationsschema */}
-      {currentStep === "artikulationsschema" && (
+      {/* Step: Documents (Deckblatt, Artikulationsschema, Hintergrundwissen) */}
+      {currentStep === "documents" && (
         <div className="space-y-4 lg:relative lg:left-1/2 lg:w-[calc(100vw-16rem-4rem)] lg:max-w-none lg:-translate-x-1/2">
           {saveError && (
             <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
@@ -296,11 +333,54 @@ export const ActivityEditPage: React.FC = () => {
             </div>
           )}
 
-          <MarkdownEditorWithPreview
-            value={artikulationsschemaMarkdown}
-            onChange={setArtikulationsschemaMarkdown}
-            renderPreviewFn={renderPreviewFn}
-          />
+          <Card>
+            <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <Select
+                value={activeMarkdownTab}
+                onValueChange={(value) =>
+                  setActiveMarkdownTab(value as MarkdownTab)
+                }
+              >
+                <SelectTrigger className="w-[220px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(
+                    Object.entries(MARKDOWN_TAB_LABELS) as [
+                      MarkdownTab,
+                      string,
+                    ][]
+                  ).map(([key, label]) => (
+                    <SelectItem key={key} value={key}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
+
+          {activeMarkdownTab === "deckblatt" && (
+            <MarkdownEditorWithPreview
+              value={deckblattMarkdown}
+              onChange={setDeckblattMarkdown}
+              renderPreviewFn={renderPreviewFn}
+            />
+          )}
+          {activeMarkdownTab === "artikulationsschema" && (
+            <MarkdownEditorWithPreview
+              value={artikulationsschemaMarkdown}
+              onChange={setArtikulationsschemaMarkdown}
+              renderPreviewFn={renderPreviewFn}
+            />
+          )}
+          {activeMarkdownTab === "hintergrundwissen" && (
+            <MarkdownEditorWithPreview
+              value={hintergrundwissenMarkdown}
+              onChange={setHintergrundwissenMarkdown}
+              renderPreviewFn={renderPreviewFn}
+            />
+          )}
         </div>
       )}
     </div>
