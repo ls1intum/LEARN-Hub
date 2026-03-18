@@ -8,6 +8,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
+import com.learnhub.activitymanagement.entity.enums.DocumentType;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
@@ -17,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -272,5 +275,25 @@ class PDFServiceTest {
 		assertThat(saved.getConfidenceScore()).isEqualTo("0.900");
 		assertThat(saved.getExtractionQuality()).isEqualTo("high");
 		assertThat(saved.getExtractedFields()).contains("My Activity");
+	}
+
+	@Test
+	void getLessonPlanInfoAcceptsDocumentIdsFromDocumentsArray() throws IOException {
+		UUID documentId = UUID.randomUUID();
+		Path filePath = tempDir.resolve("lesson-plan.pdf");
+		Files.write(filePath, "pdf".getBytes(StandardCharsets.UTF_8));
+
+		PDFDocument document = new PDFDocument();
+		document.setId(documentId);
+		document.setFilePath(filePath.toString());
+		when(pdfDocumentRepository.findById(documentId)).thenReturn(Optional.of(document));
+
+		LessonPlanInfoResponse response = pdfService
+				.getLessonPlanInfo(List.of(Map.of("id", UUID.randomUUID().toString(), "documents",
+						List.of(Map.of("id", documentId.toString(), "type", DocumentType.SOURCE_PDF.getValue())))));
+
+		assertThat(response.isCanGenerateLessonPlan()).isTrue();
+		assertThat(response.getAvailablePdfs()).isEqualTo(1);
+		assertThat(response.getMissingPdfs()).isEmpty();
 	}
 }

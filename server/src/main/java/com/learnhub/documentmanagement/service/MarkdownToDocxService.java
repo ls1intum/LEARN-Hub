@@ -1,30 +1,37 @@
 package com.learnhub.documentmanagement.service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 import org.apache.poi.xwpf.usermodel.*;
 import org.commonmark.ext.gfm.tables.*;
 import org.commonmark.node.*;
-import org.commonmark.parser.Parser;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 /**
- * Service for rendering Markdown content to DOCX (Word) format using Apache POI
- * and commonmark for markdown parsing.
+ * Service for rendering Markdown content to DOCX (Word) format using Apache
+ * POI. Uses {@link MarkdownToHtmlService} for shared Markdown parsing via its
+ * {@link MarkdownToHtmlService#parseToNode(String)} method.
  */
 @Service
 public class MarkdownToDocxService {
 
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToDocxService.class);
+	private static final String DOCX_TEMPLATE_PATH = "templates/markdown/docx-template.properties";
 
-	private final Parser parser;
+	private final MarkdownToHtmlService markdownToHtmlService;
+	private final DocxTemplateSettings templateSettings;
 
-	public MarkdownToDocxService() {
-		this.parser = Parser.builder().extensions(List.of(TablesExtension.create())).build();
+	public MarkdownToDocxService(MarkdownToHtmlService markdownToHtmlService) {
+		this.markdownToHtmlService = markdownToHtmlService;
+		this.templateSettings = DocxTemplateSettings.load(DOCX_TEMPLATE_PATH);
 	}
 
 	/**
@@ -36,12 +43,11 @@ public class MarkdownToDocxService {
 			// Set default page to landscape
 			CTSectPr sectPr = document.getDocument().getBody().addNewSectPr();
 			CTPageSz pageSize = sectPr.addNewPgSz();
-			// A4 landscape: width=16838 (297mm), height=11906 (210mm) in twips
-			pageSize.setW(BigInteger.valueOf(16838));
-			pageSize.setH(BigInteger.valueOf(11906));
-			pageSize.setOrient(STPageOrientation.LANDSCAPE);
+			pageSize.setW(BigInteger.valueOf(templateSettings.pageWidthTwips()));
+			pageSize.setH(BigInteger.valueOf(templateSettings.pageHeightTwips()));
+			pageSize.setOrient(templateSettings.pageOrientation());
 
-			Node docNode = parser.parse(markdown);
+			Node docNode = markdownToHtmlService.parseToNode(markdown);
 			renderNode(document, docNode);
 
 			document.write(baos);
@@ -83,16 +89,16 @@ public class MarkdownToDocxService {
 		int level = heading.getLevel();
 		switch (level) {
 			case 1 :
-				para.setStyle("Heading1");
+				para.setStyle(templateSettings.heading1Style());
 				break;
 			case 2 :
-				para.setStyle("Heading2");
+				para.setStyle(templateSettings.heading2Style());
 				break;
 			case 3 :
-				para.setStyle("Heading3");
+				para.setStyle(templateSettings.heading3Style());
 				break;
 			default :
-				para.setStyle("Heading4");
+				para.setStyle(templateSettings.defaultHeadingStyle());
 				break;
 		}
 		renderInlineContent(para, heading);
@@ -101,16 +107,16 @@ public class MarkdownToDocxService {
 			run.setBold(true);
 			switch (level) {
 				case 1 :
-					run.setFontSize(24);
+					run.setFontSize(templateSettings.heading1FontSize());
 					break;
 				case 2 :
-					run.setFontSize(18);
+					run.setFontSize(templateSettings.heading2FontSize());
 					break;
 				case 3 :
-					run.setFontSize(14);
+					run.setFontSize(templateSettings.heading3FontSize());
 					break;
 				default :
-					run.setFontSize(12);
+					run.setFontSize(templateSettings.defaultHeadingFontSize());
 					break;
 			}
 		}
@@ -149,7 +155,7 @@ public class MarkdownToDocxService {
 		while (child != null) {
 			if (child instanceof org.commonmark.node.Paragraph para) {
 				XWPFParagraph xwpfPara = document.createParagraph();
-				xwpfPara.setIndentationLeft(720); // 0.5 inch indent
+				xwpfPara.setIndentationLeft(templateSettings.listIndentLeft());
 				if (first) {
 					XWPFRun markerRun = xwpfPara.createRun();
 					markerRun.setText(marker);
@@ -167,10 +173,10 @@ public class MarkdownToDocxService {
 
 	private void renderCodeBlock(XWPFDocument document, String code) {
 		XWPFParagraph para = document.createParagraph();
-		para.setIndentationLeft(360);
+		para.setIndentationLeft(templateSettings.codeBlockIndentLeft());
 		XWPFRun run = para.createRun();
-		run.setFontFamily("Courier New");
-		run.setFontSize(9);
+		run.setFontFamily(templateSettings.codeFontFamily());
+		run.setFontSize(templateSettings.codeFontSize());
 		// Handle multi-line code blocks
 		String[] lines = code.split("\\n");
 		for (int i = 0; i < lines.length; i++) {
@@ -186,8 +192,8 @@ public class MarkdownToDocxService {
 		while (child != null) {
 			if (child instanceof org.commonmark.node.Paragraph para) {
 				XWPFParagraph xwpfPara = document.createParagraph();
-				xwpfPara.setIndentationLeft(720);
-				xwpfPara.setBorderLeft(Borders.SINGLE);
+				xwpfPara.setIndentationLeft(templateSettings.blockQuoteIndentLeft());
+				xwpfPara.setBorderLeft(templateSettings.blockQuoteBorderLeft());
 				renderInlineContent(xwpfPara, para);
 				// Italicize block quote text
 				for (XWPFRun run : xwpfPara.getRuns()) {
@@ -200,7 +206,7 @@ public class MarkdownToDocxService {
 
 	private void renderThematicBreak(XWPFDocument document) {
 		XWPFParagraph para = document.createParagraph();
-		para.setBorderBottom(Borders.SINGLE);
+		para.setBorderBottom(templateSettings.thematicBreakBorderBottom());
 	}
 
 	private void renderTable(XWPFDocument document, TableBlock tableBlock) {
@@ -249,7 +255,7 @@ public class MarkdownToDocxService {
 			tblPr = table.getCTTbl().addNewTblPr();
 		}
 		CTTblWidth tblWidth = tblPr.addNewTblW();
-		tblWidth.setW(BigInteger.valueOf(5000));
+		tblWidth.setW(BigInteger.valueOf(templateSettings.tableWidthPct()));
 		tblWidth.setType(STTblWidth.PCT);
 
 		// Render header row
@@ -266,7 +272,7 @@ public class MarkdownToDocxService {
 					// Dark blue background for header
 					CTTcPr tcPr = xwpfCell.getCTTc().addNewTcPr();
 					CTShd shd = tcPr.addNewShd();
-					shd.setFill("29417A");
+					shd.setFill(templateSettings.tableHeaderBackground());
 					shd.setVal(STShd.CLEAR);
 					colIdx++;
 				}
@@ -293,7 +299,7 @@ public class MarkdownToDocxService {
 							if (rowIdx % 2 == 1) {
 								CTTcPr tcPr = xwpfCell.getCTTc().addNewTcPr();
 								CTShd shd = tcPr.addNewShd();
-								shd.setFill("F0F4FA");
+								shd.setFill(templateSettings.tableBodyAlternateBackground());
 								shd.setVal(STShd.CLEAR);
 							}
 							colIdx++;
@@ -329,11 +335,11 @@ public class MarkdownToDocxService {
 		}
 		// Style the runs
 		for (XWPFRun run : para.getRuns()) {
-			run.setFontSize(9);
+			run.setFontSize(templateSettings.tableBodyFontSize());
 			if (isHeader) {
 				run.setBold(true);
-				run.setColor("FFFFFF");
-				run.setFontSize(10);
+				run.setColor(templateSettings.tableHeaderFontColor());
+				run.setFontSize(templateSettings.tableHeaderFontSize());
 			}
 		}
 	}
@@ -371,7 +377,7 @@ public class MarkdownToDocxService {
 		} else if (node instanceof Code code) {
 			XWPFRun run = para.createRun();
 			run.setText(code.getLiteral());
-			run.setFontFamily("Courier New");
+			run.setFontFamily(templateSettings.codeFontFamily());
 		} else if (node instanceof SoftLineBreak) {
 			XWPFRun run = para.createRun();
 			run.setText(" ");
@@ -381,8 +387,8 @@ public class MarkdownToDocxService {
 		} else if (node instanceof Link link) {
 			XWPFRun run = para.createRun();
 			run.setText(extractText(link));
-			run.setUnderline(UnderlinePatterns.SINGLE);
-			run.setColor("0563C1");
+			run.setUnderline(templateSettings.linkUnderline());
+			run.setColor(templateSettings.linkColor());
 		} else {
 			// For any other inline node, try to render its children
 			Node child = node.getFirstChild();
@@ -405,5 +411,55 @@ public class MarkdownToDocxService {
 			child = child.getNext();
 		}
 		return sb.toString();
+	}
+
+	record DocxTemplateSettings(int pageWidthTwips, int pageHeightTwips, STPageOrientation.Enum pageOrientation,
+			String heading1Style, int heading1FontSize, String heading2Style, int heading2FontSize,
+			String heading3Style, int heading3FontSize, String defaultHeadingStyle, int defaultHeadingFontSize,
+			int listIndentLeft, int codeBlockIndentLeft, String codeFontFamily, int codeFontSize,
+			int blockQuoteIndentLeft, Borders blockQuoteBorderLeft, Borders thematicBreakBorderBottom,
+			int tableWidthPct, String tableHeaderBackground, String tableHeaderFontColor, int tableHeaderFontSize,
+			int tableBodyFontSize, String tableBodyAlternateBackground, String linkColor,
+			UnderlinePatterns linkUnderline) {
+
+		static DocxTemplateSettings load(String path) {
+			Properties properties = new Properties();
+			ClassPathResource resource = new ClassPathResource(path);
+			try (InputStream inputStream = resource.getInputStream()) {
+				properties.load(new java.io.InputStreamReader(inputStream, StandardCharsets.UTF_8));
+			} catch (IOException e) {
+				throw new IllegalStateException("Failed to load DOCX template settings: " + path, e);
+			}
+
+			return new DocxTemplateSettings(getInt(properties, "page.width.twips"),
+					getInt(properties, "page.height.twips"),
+					STPageOrientation.Enum.forString(getString(properties, "page.orientation")),
+					getString(properties, "heading.1.style"), getInt(properties, "heading.1.fontSize"),
+					getString(properties, "heading.2.style"), getInt(properties, "heading.2.fontSize"),
+					getString(properties, "heading.3.style"), getInt(properties, "heading.3.fontSize"),
+					getString(properties, "heading.default.style"), getInt(properties, "heading.default.fontSize"),
+					getInt(properties, "list.indent.left"), getInt(properties, "code.block.indent.left"),
+					getString(properties, "code.font.family"), getInt(properties, "code.font.size"),
+					getInt(properties, "blockquote.indent.left"),
+					Borders.valueOf(getString(properties, "blockquote.border.left")),
+					Borders.valueOf(getString(properties, "thematic.break.border.bottom")),
+					getInt(properties, "table.width.pct"), getString(properties, "table.header.background"),
+					getString(properties, "table.header.font.color"), getInt(properties, "table.header.font.size"),
+					getInt(properties, "table.body.font.size"),
+					getString(properties, "table.body.alternate.background"), getString(properties, "link.color"),
+					UnderlinePatterns.valueOf(getString(properties, "link.underline")));
+		}
+
+		private static int getInt(Properties properties, String key) {
+			return Integer.parseInt(getString(properties, key));
+		}
+
+		private static String getString(Properties properties, String key) {
+			String value = properties.getProperty(key);
+			if (value == null || value.isBlank()) {
+				throw new IllegalStateException("Missing DOCX template setting: " + key);
+			}
+			return value.trim();
+		}
 	}
 }

@@ -11,7 +11,7 @@ class MarkdownToPdfServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		service = new MarkdownToPdfService();
+		service = new MarkdownToPdfService(new MarkdownToHtmlService());
 	}
 
 	@Test
