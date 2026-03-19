@@ -121,10 +121,12 @@
         </dependency>
 
         <!-- DOCX generation (docx4j with HTML import) -->
+        <!-- Both docx4j artifacts MUST use the same version to avoid fontbox conflicts.
+             docx4j-ImportXHTML latest is 11.4.8, so docx4j-JAXB-ReferenceImpl must match. -->
         <dependency>
             <groupId>org.docx4j</groupId>
             <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
-            <version>11.4.11</version>
+            <version>11.4.8</version>
         </dependency>
         <dependency>
             <groupId>org.docx4j</groupId>
