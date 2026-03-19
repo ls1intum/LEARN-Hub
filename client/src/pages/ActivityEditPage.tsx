@@ -141,11 +141,14 @@ export const ActivityEditPage: React.FC = () => {
     try {
       const result = await apiService.regenerateMetadata(documentId);
       if (result.extractedData) {
-        setSavedMetadata((prev) => ({
-          ...prev,
-          ...(result.extractedData as Partial<ActivityFormData>),
-          documentId: documentId,
-        }) as ActivityFormData);
+        setSavedMetadata(
+          (prev) =>
+            ({
+              ...prev,
+              ...(result.extractedData as Partial<ActivityFormData>),
+              documentId: documentId,
+            }) as ActivityFormData,
+        );
       }
     } catch (error) {
       logger.error("Metadata regeneration error", error, "ActivityEditPage");
@@ -182,9 +185,7 @@ export const ActivityEditPage: React.FC = () => {
     } catch (error) {
       logger.error("Markdown generation error", error, "ActivityEditPage");
       setGenerateError(
-        error instanceof Error
-          ? error.message
-          : "Failed to generate document",
+        error instanceof Error ? error.message : "Failed to generate document",
       );
     } finally {
       setIsGenerating(false);
@@ -454,7 +455,7 @@ export const ActivityEditPage: React.FC = () => {
 
           <Card>
             <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex grow items-center gap-3">
                 <Select
                   value={activeMarkdownTab}
                   onValueChange={(value) =>
