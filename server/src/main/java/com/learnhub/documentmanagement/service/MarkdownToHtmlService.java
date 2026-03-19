@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Base64;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
@@ -29,6 +30,14 @@ public class MarkdownToHtmlService {
 	private static final String DOCX_CSS_TEMPLATE_PATH = "templates/markdown/docx-styles.css";
 	private static final String LOGO_PATH = "templates/markdown/header-logo.png";
 	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
+	/**
+	 * Patterns to convert HTML5 void elements to XHTML self-closing form. Matches
+	 * {@code <br>}, {@code <hr>}, and {@code <img ...>} (with optional attributes)
+	 * that are NOT already self-closed.
+	 */
+	private static final Pattern VOID_ELEMENT_PATTERN = Pattern
+			.compile("<(br|hr|img|input|col|source|track|wbr)(\\s[^>]*?)?>", Pattern.CASE_INSENSITIVE);
 
 	private final Parser parser;
 	private final HtmlRenderer renderer;
@@ -98,13 +107,20 @@ public class MarkdownToHtmlService {
 	 * docx4j XHTMLImporter. Uses a DOCX-specific template without @page rules or
 	 * running header/footer elements (those are added via the DOCX API).
 	 *
+	 * <p>
+	 * The output is sanitized to XHTML: void elements like {@code <br>},
+	 * {@code <hr>}, and {@code <img>} are converted to self-closing form so that
+	 * docx4j's XML parser can process them.
+	 * </p>
+	 *
 	 * @param markdown
 	 *            the markdown content
 	 */
 	public String renderMarkdownToDocxHtml(String markdown) {
 		Node document = parser.parse(markdown);
 		String body = renderer.render(document);
-		return docxHtmlTemplate.replace("{{styles}}", docxCssTemplate).replace("{{body}}", body);
+		String html = docxHtmlTemplate.replace("{{styles}}", docxCssTemplate).replace("{{body}}", body);
+		return sanitizeToXhtml(html);
 	}
 
 	/**
@@ -112,6 +128,25 @@ public class MarkdownToHtmlService {
 	 */
 	public Node parseToNode(String markdown) {
 		return parser.parse(markdown);
+	}
+
+	/**
+	 * Sanitize HTML to XHTML by converting HTML5 void elements (e.g. {@code <br>},
+	 * {@code <hr>}, {@code <img ...>}) to self-closing XHTML form ({@code <br />},
+	 * {@code <hr />}, {@code <img ... />}). This is required because docx4j's
+	 * {@link org.docx4j.convert.in.xhtml.XHTMLImporterImpl} parses HTML as strict
+	 * XML, which rejects unclosed void elements.
+	 */
+	private String sanitizeToXhtml(String html) {
+		return VOID_ELEMENT_PATTERN.matcher(html).replaceAll(match -> {
+			String tag = match.group(1);
+			String attrs = match.group(2);
+			if (attrs != null && attrs.endsWith("/")) {
+				// Already self-closed
+				return match.group();
+			}
+			return "<" + tag + (attrs != null ? attrs : "") + " />";
+		});
 	}
 
 	private String loadTemplate(String path) {

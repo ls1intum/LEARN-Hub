@@ -49,4 +49,21 @@ class MarkdownToHtmlServiceTest {
 		assertThat(node).isNotNull();
 		assertThat(node.getFirstChild()).isNotNull();
 	}
+
+	@Test
+	void renderMarkdownToDocxHtmlSanitizesVoidElements() {
+		String markdown = "Line one<br>Line two<br>Line three\n\n<hr>\n\nDone.";
+		String html = service.renderMarkdownToDocxHtml(markdown);
+		assertThat(html).doesNotContain("<br>").doesNotContain("<hr>");
+		assertThat(html).contains("<br />");
+		assertThat(html).contains("<hr />");
+	}
+
+	@Test
+	void renderMarkdownToDocxHtmlPreservesAlreadySelfClosedElements() {
+		String markdown = "Line one  \nLine two";
+		String html = service.renderMarkdownToDocxHtml(markdown);
+		assertThat(html).contains("<br />");
+		assertThat(html).doesNotContain("<br>");
+	}
 }

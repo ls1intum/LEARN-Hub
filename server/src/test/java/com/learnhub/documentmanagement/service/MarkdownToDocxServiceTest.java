@@ -161,4 +161,32 @@ class MarkdownToDocxServiceTest {
 			assertThat(footerText).contains("Page");
 		}
 	}
+
+	@Test
+	void renderMarkdownToDocxWithRawHtmlBreaksAndHorizontalRules() {
+		String markdown = """
+				# Title
+
+				First line<br>Second line<br>Third line
+
+				<hr>
+
+				Paragraph after rule.
+				""";
+		byte[] result = service.renderMarkdownToDocx(markdown);
+		assertThat(result).isNotNull();
+		assertThat(result.length).isGreaterThan(0);
+		assertThat(result[0]).isEqualTo((byte) 'P');
+		assertThat(result[1]).isEqualTo((byte) 'K');
+	}
+
+	@Test
+	void renderMarkdownToDocxHeaderIncludesLogo() throws Exception {
+		byte[] result = service.renderMarkdownToDocx("# Test", true, "My Activity");
+
+		try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(result))) {
+			assertThat(document.getHeaderList()).hasSize(1);
+			assertThat(document.getHeaderList().get(0).getAllPictures()).isNotEmpty();
+		}
+	}
 }
