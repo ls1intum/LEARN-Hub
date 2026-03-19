@@ -110,8 +110,13 @@ export const ActivityEditPage: React.FC = () => {
 
   // ─── Preview Rendering ──────────────────────────────────────────
 
-  const renderPreviewFn = useCallback(
-    (markdown: string) => apiService.previewMarkdownPdf(markdown),
+  const renderPreviewLandscape = useCallback(
+    (markdown: string) => apiService.previewMarkdownPdf(markdown, "landscape"),
+    [],
+  );
+
+  const renderPreviewPortrait = useCallback(
+    (markdown: string) => apiService.previewMarkdownPdf(markdown, "portrait"),
     [],
   );
 
@@ -364,21 +369,21 @@ export const ActivityEditPage: React.FC = () => {
             <MarkdownEditorWithPreview
               value={deckblattMarkdown}
               onChange={setDeckblattMarkdown}
-              renderPreviewFn={renderPreviewFn}
+              renderPreviewFn={renderPreviewPortrait}
             />
           )}
           {activeMarkdownTab === "artikulationsschema" && (
             <MarkdownEditorWithPreview
               value={artikulationsschemaMarkdown}
               onChange={setArtikulationsschemaMarkdown}
-              renderPreviewFn={renderPreviewFn}
+              renderPreviewFn={renderPreviewLandscape}
             />
           )}
           {activeMarkdownTab === "hintergrundwissen" && (
             <MarkdownEditorWithPreview
               value={hintergrundwissenMarkdown}
               onChange={setHintergrundwissenMarkdown}
-              renderPreviewFn={renderPreviewFn}
+              renderPreviewFn={renderPreviewPortrait}
             />
           )}
         </div>

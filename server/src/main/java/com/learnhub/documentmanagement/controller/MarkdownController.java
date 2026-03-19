@@ -1,6 +1,7 @@
 package com.learnhub.documentmanagement.controller;
 
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
+import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
@@ -50,7 +51,8 @@ public class MarkdownController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown content is empty"));
 			}
 
-			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content);
+			boolean landscape = isLandscapeType(markdown.getType());
+			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, landscape);
 
 			String downloadName = sanitizeFilename(markdown.getType().getValue()) + ".pdf";
 
@@ -81,7 +83,8 @@ public class MarkdownController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown content is empty"));
 			}
 
-			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(content);
+			boolean landscape = isLandscapeType(markdown.getType());
+			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(content, landscape);
 
 			String downloadName = sanitizeFilename(markdown.getType().getValue()) + ".docx";
 
@@ -110,7 +113,10 @@ public class MarkdownController {
 				return ResponseEntity.badRequest().body(ErrorResponse.of("markdown is required"));
 			}
 
-			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown);
+			// Preview uses landscape by default; orientation param is optional
+			String orientation = request.get("orientation");
+			boolean landscape = orientation == null || !"portrait".equalsIgnoreCase(orientation);
+			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown, landscape);
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_PDF);
@@ -122,6 +128,14 @@ public class MarkdownController {
 			logger.error("POST /api/markdowns/preview-pdf - Failed: {}", e.getMessage());
 			return ResponseEntity.status(500).body(ErrorResponse.of("Failed to render preview PDF: " + e.getMessage()));
 		}
+	}
+
+	/**
+	 * Determine if a markdown type should be rendered in landscape orientation.
+	 * Only Artikulationsschema uses landscape; Deckblatt and Hintergrundwissen use portrait.
+	 */
+	private boolean isLandscapeType(MarkdownType type) {
+		return type == MarkdownType.ARTIKULATIONSSCHEMA;
 	}
 
 	private String sanitizeFilename(String name) {

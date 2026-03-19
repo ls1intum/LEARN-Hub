@@ -111,19 +111,15 @@ export const ActivityDetails: React.FC = () => {
     });
   };
 
-  const handleDownloadActivityPdf = async () => {
+  const handleOpenActivityPdf = async () => {
     if (!activity?.id) return;
 
     await documentApi.call(async () => {
-      const filename = `${activity.name || "activity"}.pdf`;
-      await downloadBlob(
-        () => apiService.downloadActivityPdf(activity.id),
-        filename,
-      );
+      await openBlobInNewTab(() => apiService.downloadActivityPdf(activity.id));
     });
   };
 
-  const handleDownloadActivityDocx = async () => {
+  const handleOpenActivityDocx = async () => {
     if (!activity?.id) return;
 
     await documentApi.call(async () => {
@@ -379,13 +375,13 @@ export const ActivityDetails: React.FC = () => {
             </div>
           )}
 
-          {/* Documents & Markdowns */}
+          {/* Downloads */}
           {((activity.documents && activity.documents.length > 0) ||
             (activity.markdowns && activity.markdowns.length > 0)) && (
             <div className="rounded-lg border border-border bg-muted/20">
               <div className="border-b border-border px-4 py-3">
                 <h3 className="text-lg font-semibold text-card-foreground">
-                  Documents & Markdowns
+                  Downloads
                 </h3>
               </div>
 
@@ -487,8 +483,8 @@ export const ActivityDetails: React.FC = () => {
                       variant="outline"
                       size="sm"
                       disabled={documentApi.isLoading}
-                      onClick={handleDownloadActivityPdf}
-                      title="Download combined activity as PDF"
+                      onClick={handleOpenActivityPdf}
+                      title="Open combined activity as PDF"
                       className="flex items-center gap-1.5"
                     >
                       <Download className="h-4 w-4 text-red-600" />
@@ -499,7 +495,7 @@ export const ActivityDetails: React.FC = () => {
                       variant="outline"
                       size="sm"
                       disabled={documentApi.isLoading}
-                      onClick={handleDownloadActivityDocx}
+                      onClick={handleOpenActivityDocx}
                       title="Download combined activity as Word document"
                       className="flex items-center gap-1.5"
                     >

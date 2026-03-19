@@ -447,25 +447,25 @@ public class ActivityController {
 
 	@GetMapping("/{activityId}/download-pdf")
 	@PreAuthorize("permitAll()")
-	@Operation(summary = "Download activity as combined PDF", description = "Download all markdown files (Deckblatt, Artikulationsschema, Hintergrundwissen) as a single PDF")
+	@Operation(summary = "Download activity as combined PDF", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single PDF")
 	public ResponseEntity<?> downloadActivityPdf(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/download-pdf - Download combined activity PDF", activityId);
 		try {
 			ActivityResponse activity = activityService.getActivityById(activityId);
-			String combinedMarkdown = buildCombinedMarkdown(activity);
+			List<byte[]> pdfParts = buildOrderedPdfParts(activity);
 
-			if (combinedMarkdown.isEmpty()) {
+			if (pdfParts.isEmpty()) {
 				return ResponseEntity.status(404).body(ErrorResponse.of("No markdown content available for this activity"));
 			}
 
-			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(combinedMarkdown);
+			byte[] pdfBytes = pdfParts.size() == 1 ? pdfParts.get(0) : markdownToPdfService.mergePdfs(pdfParts);
 
 			String activityName = activity.getName() != null ? activity.getName() : "activity";
 			String downloadName = sanitizeDownloadFilename(activityName) + ".pdf";
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_PDF);
-			headers.setContentDispositionFormData("attachment", downloadName);
+			headers.setContentDispositionFormData("inline", downloadName);
 			headers.setContentLength(pdfBytes.length);
 
 			return ResponseEntity.ok().headers(headers).body(pdfBytes);
@@ -478,7 +478,7 @@ public class ActivityController {
 
 	@GetMapping("/{activityId}/download-docx")
 	@PreAuthorize("permitAll()")
-	@Operation(summary = "Download activity as combined DOCX", description = "Download all markdown files (Deckblatt, Artikulationsschema, Hintergrundwissen) as a single DOCX")
+	@Operation(summary = "Download activity as combined DOCX", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single DOCX")
 	public ResponseEntity<?> downloadActivityDocx(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/download-docx - Download combined activity DOCX", activityId);
 		try {
@@ -489,6 +489,7 @@ public class ActivityController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("No markdown content available for this activity"));
 			}
 
+			// DOCX: render as landscape (Artikulationsschema is the main content)
 			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(combinedMarkdown);
 
 			String activityName = activity.getName() != null ? activity.getName() : "activity";
@@ -506,6 +507,32 @@ public class ActivityController {
 			return ResponseEntity.status(500)
 					.body(ErrorResponse.of("Failed to generate combined DOCX: " + e.getMessage()));
 		}
+	}
+
+	/**
+	 * Build ordered list of PDF parts, each rendered with the correct orientation.
+	 * Order: Deckblatt (portrait), Artikulationsschema (landscape), Hintergrundwissen (portrait).
+	 */
+	private List<byte[]> buildOrderedPdfParts(ActivityResponse activity) {
+		record TypeOrientation(String type, boolean landscape) {
+		}
+		TypeOrientation[] sections = {new TypeOrientation("deckblatt", false),
+				new TypeOrientation("artikulationsschema", true), new TypeOrientation("hintergrundwissen", false),};
+
+		java.util.List<byte[]> parts = new java.util.ArrayList<>();
+		if (activity.getMarkdowns() == null) {
+			return parts;
+		}
+
+		for (TypeOrientation section : sections) {
+			for (MarkdownResponse md : activity.getMarkdowns()) {
+				if (section.type().equals(md.getType()) && md.getContent() != null
+						&& !md.getContent().trim().isEmpty()) {
+					parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), section.landscape()));
+				}
+			}
+		}
+		return parts;
 	}
 
 	/**

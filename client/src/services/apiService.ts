@@ -487,14 +487,20 @@ export class ApiService {
   /**
    * Render markdown text to a preview PDF.
    * Returns a Blob containing the PDF bytes.
+   *
+   * @param markdown - the markdown text to render
+   * @param orientation - optional orientation: "portrait" or "landscape" (default: "landscape")
    */
-  static async previewMarkdownPdf(markdown: string) {
+  static async previewMarkdownPdf(
+    markdown: string,
+    orientation?: "portrait" | "landscape",
+  ) {
     const response = await authService.makeAuthenticatedRequest(
       "/api/markdowns/preview-pdf",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markdown }),
+        body: JSON.stringify({ markdown, orientation }),
       },
     );
 
