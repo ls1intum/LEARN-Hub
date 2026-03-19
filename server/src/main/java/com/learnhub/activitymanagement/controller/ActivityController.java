@@ -528,8 +528,8 @@ public class ActivityController {
 		for (String type : typeOrder) {
 			for (MarkdownResponse md : activity.getMarkdowns()) {
 				if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
-					parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape(),
-							activityName));
+					parts.add(
+							markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape(), activityName));
 				}
 			}
 		}

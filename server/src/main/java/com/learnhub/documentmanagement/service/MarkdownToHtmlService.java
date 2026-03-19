@@ -83,9 +83,8 @@ public class MarkdownToHtmlService {
 		String css = landscape ? cssTemplate : cssPortraitTemplate;
 		String name = activityName != null ? activityName : "";
 		String downloadDate = LocalDateTime.now().format(DATE_FORMATTER);
-		return htmlTemplate.replace("{{styles}}", css).replace("{{body}}", body)
-				.replace("{{activityName}}", name).replace("{{logoDataUri}}", logoDataUri)
-				.replace("{{downloadDate}}", downloadDate);
+		return htmlTemplate.replace("{{styles}}", css).replace("{{body}}", body).replace("{{activityName}}", name)
+				.replace("{{logoDataUri}}", logoDataUri).replace("{{downloadDate}}", downloadDate);
 	}
 
 	/**

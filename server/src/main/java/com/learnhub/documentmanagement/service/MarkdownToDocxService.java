@@ -149,7 +149,8 @@ public class MarkdownToDocxService {
 		tableWidth.setType(STTblWidth.PCT);
 		tableWidth.setW(BigInteger.valueOf(5000));
 
-		CTTblBorders borders = tableProperties.isSetTblBorders() ? tableProperties.getTblBorders()
+		CTTblBorders borders = tableProperties.isSetTblBorders()
+				? tableProperties.getTblBorders()
 				: tableProperties.addNewTblBorders();
 		setNilBorder(borders.addNewTop());
 		setNilBorder(borders.addNewBottom());
@@ -646,10 +647,9 @@ public class MarkdownToDocxService {
 					getString(properties, "heading.2.style"), getInt(properties, "heading.2.fontSize"),
 					getString(properties, "heading.3.style"), getInt(properties, "heading.3.fontSize"),
 					getString(properties, "heading.default.style"), getInt(properties, "heading.default.fontSize"),
-					getString(properties, "heading.color"),
-					getInt(properties, "list.indent.left"), getInt(properties, "code.block.indent.left"),
-					getString(properties, "code.font.family"), getInt(properties, "code.font.size"),
-					getInt(properties, "blockquote.indent.left"),
+					getString(properties, "heading.color"), getInt(properties, "list.indent.left"),
+					getInt(properties, "code.block.indent.left"), getString(properties, "code.font.family"),
+					getInt(properties, "code.font.size"), getInt(properties, "blockquote.indent.left"),
 					Borders.valueOf(getString(properties, "blockquote.border.left")),
 					Borders.valueOf(getString(properties, "thematic.break.border.bottom")),
 					getInt(properties, "table.width.pct"), getString(properties, "table.header.background"),
