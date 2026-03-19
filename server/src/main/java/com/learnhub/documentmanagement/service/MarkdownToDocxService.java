@@ -39,6 +39,7 @@ public class MarkdownToDocxService {
 
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToDocxService.class);
 	private static final String LOGO_PATH = "templates/markdown/header-logo.png";
+	private static final String SECTION_BREAK_NEXT_PAGE = "nextPage";
 	private static final DateTimeFormatter FOOTER_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 	private static final String FOOTER_BRANDING_TEXT = "LEARN-Hub \u2013 a TUM Applied Education Technologies application \u00B7 aet.cit.tum.de";
 
@@ -207,7 +208,7 @@ public class MarkdownToDocxService {
 		sectPr.setPgMar(pgMar);
 
 		sectPr.setType(WML_FACTORY.createSectPrType());
-		sectPr.getType().setVal("nextPage");
+		sectPr.getType().setVal(SECTION_BREAK_NEXT_PAGE);
 
 		// Append as a new paragraph with this section break
 		P sectionBreakPara = WML_FACTORY.createP();
