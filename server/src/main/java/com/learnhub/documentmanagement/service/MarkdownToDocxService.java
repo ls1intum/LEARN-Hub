@@ -40,6 +40,7 @@ public class MarkdownToDocxService {
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToDocxService.class);
 	private static final String LOGO_PATH = "templates/markdown/header-logo.png";
 	private static final DateTimeFormatter FOOTER_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+	private static final String FOOTER_BRANDING_TEXT = "LEARN-Hub \u2013 a TUM Applied Education Technologies application \u00B7 aet.cit.tum.de";
 
 	/** A4 landscape dimensions in twentieths of a point (twips). */
 	private static final BigInteger PAGE_WIDTH_LANDSCAPE = BigInteger.valueOf(16838);
@@ -51,6 +52,9 @@ public class MarkdownToDocxService {
 	private static final BigInteger MARGIN_LEFT = BigInteger.valueOf(600);
 	private static final BigInteger MARGIN_RIGHT = BigInteger.valueOf(600);
 	private static final BigInteger HEADER_FOOTER_MARGIN = BigInteger.valueOf(720);
+
+	/** Logo dimensions in EMU: width=110pt (~1397000 EMU), height=24pt (~304800 EMU). */
+	private static final long LOGO_WIDTH_EMU = 1397000;
 
 	private static final ObjectFactory WML_FACTORY = Context.getWmlObjectFactory();
 
@@ -207,8 +211,7 @@ public class MarkdownToDocxService {
 			byte[] logoBytes = logoStream.readAllBytes();
 			BinaryPartAbstractImage imagePart = BinaryPartAbstractImage.createImagePart(wordMLPackage, headerPart,
 					logoBytes);
-			// Logo dimensions: width=110pt (~1397000 EMU), height=24pt (~304800 EMU)
-			Inline inline = imagePart.createImageInline("header-logo", "LEARN-Hub Logo", 1, 2, 1397000, false);
+			Inline inline = imagePart.createImageInline("header-logo", "LEARN-Hub Logo", 1, 2, LOGO_WIDTH_EMU, false);
 			Drawing drawing = WML_FACTORY.createDrawing();
 			drawing.getAnchorOrInline().add(inline);
 			R imageRun = WML_FACTORY.createR();
@@ -234,10 +237,7 @@ public class MarkdownToDocxService {
 		row.getContent().add(createFooterCell(LocalDateTime.now().format(FOOTER_DATE_FORMATTER), JcEnumeration.LEFT));
 
 		// Center cell: branding text
-		row.getContent()
-				.add(createFooterCell(
-						"LEARN-Hub \u2013 a TUM Applied Education Technologies application \u00B7 aet.cit.tum.de",
-						JcEnumeration.CENTER));
+		row.getContent().add(createFooterCell(FOOTER_BRANDING_TEXT, JcEnumeration.CENTER));
 
 		// Right cell: page number
 		row.getContent().add(createFooterPageNumberCell());
