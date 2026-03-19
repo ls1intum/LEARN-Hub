@@ -17,22 +17,26 @@ import org.springframework.stereotype.Service;
 /**
  * Shared service for converting Markdown to styled HTML. Used by both
  * {@link MarkdownToPdfService} (via iText html2pdf) and
- * {@link MarkdownToDocxService} (for shared AST parsing).
+ * {@link MarkdownToDocxService} (via docx4j XHTMLImporter).
  */
 @Service
 public class MarkdownToHtmlService {
 
 	private static final String HTML_TEMPLATE_PATH = "templates/markdown/html-document.html";
+	private static final String DOCX_HTML_TEMPLATE_PATH = "templates/markdown/docx-document.html";
 	private static final String CSS_TEMPLATE_PATH = "templates/markdown/pdf-styles.css";
 	private static final String CSS_PORTRAIT_TEMPLATE_PATH = "templates/markdown/pdf-styles-portrait.css";
+	private static final String DOCX_CSS_TEMPLATE_PATH = "templates/markdown/docx-styles.css";
 	private static final String LOGO_PATH = "templates/markdown/header-logo.png";
 	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
 	private final Parser parser;
 	private final HtmlRenderer renderer;
 	private final String htmlTemplate;
+	private final String docxHtmlTemplate;
 	private final String cssTemplate;
 	private final String cssPortraitTemplate;
+	private final String docxCssTemplate;
 	private final String logoDataUri;
 
 	public MarkdownToHtmlService() {
@@ -40,8 +44,10 @@ public class MarkdownToHtmlService {
 		this.parser = Parser.builder().extensions(extensions).build();
 		this.renderer = HtmlRenderer.builder().extensions(extensions).build();
 		this.htmlTemplate = loadTemplate(HTML_TEMPLATE_PATH);
+		this.docxHtmlTemplate = loadTemplate(DOCX_HTML_TEMPLATE_PATH);
 		this.cssTemplate = loadTemplate(CSS_TEMPLATE_PATH);
 		this.cssPortraitTemplate = loadTemplate(CSS_PORTRAIT_TEMPLATE_PATH);
+		this.docxCssTemplate = loadTemplate(DOCX_CSS_TEMPLATE_PATH);
 		this.logoDataUri = loadLogoAsDataUri();
 	}
 
@@ -88,8 +94,21 @@ public class MarkdownToHtmlService {
 	}
 
 	/**
-	 * Parse Markdown into a CommonMark AST node. Used by services that need the AST
-	 * for further processing (e.g. DOCX generation via Apache POI).
+	 * Convert Markdown to a styled HTML document suitable for DOCX conversion via
+	 * docx4j XHTMLImporter. Uses a DOCX-specific template without @page rules or
+	 * running header/footer elements (those are added via the DOCX API).
+	 *
+	 * @param markdown
+	 *            the markdown content
+	 */
+	public String renderMarkdownToDocxHtml(String markdown) {
+		Node document = parser.parse(markdown);
+		String body = renderer.render(document);
+		return docxHtmlTemplate.replace("{{styles}}", docxCssTemplate).replace("{{body}}", body);
+	}
+
+	/**
+	 * Parse Markdown into a CommonMark AST node.
 	 */
 	public Node parseToNode(String markdown) {
 		return parser.parse(markdown);

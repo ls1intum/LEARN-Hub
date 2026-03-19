@@ -1,43 +1,63 @@
 package com.learnhub.documentmanagement.service;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Properties;
-import org.apache.poi.util.Units;
-import org.apache.poi.xwpf.model.XWPFHeaderFooterPolicy;
-import org.apache.poi.xwpf.usermodel.*;
-import org.commonmark.ext.gfm.tables.*;
-import org.commonmark.node.*;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
+import java.util.List;
+import jakarta.xml.bind.JAXBElement;
+import org.docx4j.convert.in.xhtml.XHTMLImporterImpl;
+import org.docx4j.dml.wordprocessingDrawing.Inline;
+import org.docx4j.jaxb.Context;
+import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
+import org.docx4j.openpackaging.parts.WordprocessingML.BinaryPartAbstractImage;
+import org.docx4j.openpackaging.parts.WordprocessingML.FooterPart;
+import org.docx4j.openpackaging.parts.WordprocessingML.HeaderPart;
+import org.docx4j.relationships.Relationship;
+import org.docx4j.wml.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 /**
- * Service for rendering Markdown content to DOCX (Word) format using Apache
- * POI. Uses {@link MarkdownToHtmlService} for shared Markdown parsing via its
- * {@link MarkdownToHtmlService#parseToNode(String)} method.
+ * Service for rendering Markdown content to DOCX (Word) format using docx4j
+ * with HTML-based conversion. Uses {@link MarkdownToHtmlService} to generate
+ * styled HTML from Markdown, then converts it to DOCX via
+ * {@link XHTMLImporterImpl}. Headers and footers are added via the docx4j API
+ * since DOCX does not support CSS-based running elements.
+ *
+ * <p>
+ * This approach shares the HTML rendering pipeline with
+ * {@link MarkdownToPdfService}, using CSS templates for consistent styling
+ * across both PDF and DOCX output formats.
+ * </p>
  */
 @Service
 public class MarkdownToDocxService {
 
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToDocxService.class);
-	private static final String DOCX_TEMPLATE_PATH = "templates/markdown/docx-template.properties";
 	private static final String LOGO_PATH = "templates/markdown/header-logo.png";
 	private static final DateTimeFormatter FOOTER_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
+	/** A4 landscape dimensions in twentieths of a point (twips). */
+	private static final BigInteger PAGE_WIDTH_LANDSCAPE = BigInteger.valueOf(16838);
+	private static final BigInteger PAGE_HEIGHT_LANDSCAPE = BigInteger.valueOf(11906);
+
+	/** Page margins in twips (matching CSS margins: 55pt top, 30pt sides, 50pt bottom). */
+	private static final BigInteger MARGIN_TOP = BigInteger.valueOf(1100);
+	private static final BigInteger MARGIN_BOTTOM = BigInteger.valueOf(1000);
+	private static final BigInteger MARGIN_LEFT = BigInteger.valueOf(600);
+	private static final BigInteger MARGIN_RIGHT = BigInteger.valueOf(600);
+	private static final BigInteger HEADER_FOOTER_MARGIN = BigInteger.valueOf(720);
+
+	private static final ObjectFactory WML_FACTORY = Context.getWmlObjectFactory();
+
 	private final MarkdownToHtmlService markdownToHtmlService;
-	private final DocxTemplateSettings templateSettings;
 
 	public MarkdownToDocxService(MarkdownToHtmlService markdownToHtmlService) {
 		this.markdownToHtmlService = markdownToHtmlService;
-		this.templateSettings = DocxTemplateSettings.load(DOCX_TEMPLATE_PATH);
 	}
 
 	/**
@@ -71,600 +91,294 @@ public class MarkdownToDocxService {
 	 *            the activity name shown in the page header
 	 */
 	public byte[] renderMarkdownToDocx(String markdown, boolean landscape, String activityName) {
-		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); XWPFDocument document = new XWPFDocument()) {
+		try {
+			// 1. Generate styled HTML from markdown (shared pipeline with PDF)
+			String html = markdownToHtmlService.renderMarkdownToDocxHtml(markdown);
 
-			CTSectPr sectPr = document.getDocument().getBody().addNewSectPr();
-			CTPageSz pageSize = sectPr.addNewPgSz();
-			if (landscape) {
-				pageSize.setW(BigInteger.valueOf(templateSettings.pageWidthTwips()));
-				pageSize.setH(BigInteger.valueOf(templateSettings.pageHeightTwips()));
-				pageSize.setOrient(STPageOrientation.LANDSCAPE);
-			} else {
-				// Portrait: swap width/height compared to landscape
-				pageSize.setW(BigInteger.valueOf(templateSettings.pageHeightTwips()));
-				pageSize.setH(BigInteger.valueOf(templateSettings.pageWidthTwips()));
-				pageSize.setOrient(STPageOrientation.PORTRAIT);
+			// 2. Create DOCX package and configure page layout
+			WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.createPackage();
+			SectPr sectPr = configurePage(wordMLPackage, landscape);
+
+			// 3. Convert HTML body content to DOCX elements
+			XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
+			List<Object> elements = importer.convert(html, null);
+			wordMLPackage.getMainDocumentPart().getContent().addAll(elements);
+
+			// 4. Add header (activity name + logo) and footer (date, branding, page numbers)
+			configureHeaderAndFooter(wordMLPackage, sectPr, activityName);
+
+			// 5. Write to bytes
+			try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+				wordMLPackage.save(baos);
+				return baos.toByteArray();
 			}
-
-			configureHeaderAndFooter(document, sectPr, activityName);
-
-			Node docNode = markdownToHtmlService.parseToNode(markdown);
-			renderNode(document, docNode);
-
-			document.write(baos);
-			return baos.toByteArray();
 		} catch (Exception e) {
 			logger.error("Failed to render markdown to DOCX: {}", e.getMessage(), e);
 			throw new RuntimeException("Failed to render markdown to DOCX: " + e.getMessage(), e);
 		}
 	}
 
-	private void configureHeaderAndFooter(XWPFDocument document, CTSectPr sectPr, String activityName)
-			throws IOException {
-		XWPFHeaderFooterPolicy headerFooterPolicy = new XWPFHeaderFooterPolicy(document, sectPr);
-		XWPFHeader header = headerFooterPolicy.createHeader(XWPFHeaderFooterPolicy.DEFAULT);
-		XWPFFooter footer = headerFooterPolicy.createFooter(XWPFHeaderFooterPolicy.DEFAULT);
+	// ---- Page configuration ----
 
-		configureHeader(header, activityName);
-		configureFooter(footer);
-	}
-
-	private void configureHeader(XWPFHeader header, String activityName) throws IOException {
-		XWPFTable table = header.createTable(1, 1);
-		configureBorderlessTable(table, new int[]{10000});
-
-		XWPFTableCell cell = table.getRow(0).getCell(0);
-		setCellWidth(cell, 10000);
-		setCellVerticalAlignment(cell, STVerticalJc.CENTER);
-		setHeaderContent(cell, activityName);
-	}
-
-	private void configureFooter(XWPFFooter footer) {
-		XWPFTable table = footer.createTable(1, 3);
-		configureBorderlessTable(table, new int[]{3200, 3600, 3200});
-
-		XWPFTableCell leftCell = table.getRow(0).getCell(0);
-		setCellWidth(leftCell, 3200);
-		setFooterDate(leftCell);
-
-		XWPFTableCell centerCell = table.getRow(0).getCell(1);
-		setCellWidth(centerCell, 3600);
-		setFooterCenter(centerCell);
-
-		XWPFTableCell rightCell = table.getRow(0).getCell(2);
-		setCellWidth(rightCell, 3200);
-		setFooterPageNumber(rightCell);
-	}
-
-	private void configureBorderlessTable(XWPFTable table, int[] widths) {
-		CTTblPr tableProperties = table.getCTTbl().getTblPr();
-		if (tableProperties == null) {
-			tableProperties = table.getCTTbl().addNewTblPr();
+	private SectPr configurePage(WordprocessingMLPackage wordMLPackage, boolean landscape) {
+		Body body = wordMLPackage.getMainDocumentPart().getJaxbElement().getBody();
+		SectPr sectPr = body.getSectPr();
+		if (sectPr == null) {
+			sectPr = WML_FACTORY.createSectPr();
+			body.setSectPr(sectPr);
 		}
 
-		CTTblWidth tableWidth = tableProperties.isSetTblW() ? tableProperties.getTblW() : tableProperties.addNewTblW();
-		tableWidth.setType(STTblWidth.PCT);
-		tableWidth.setW(BigInteger.valueOf(5000));
-
-		CTTblBorders borders = tableProperties.isSetTblBorders()
-				? tableProperties.getTblBorders()
-				: tableProperties.addNewTblBorders();
-		setNilBorder(borders.addNewTop());
-		setNilBorder(borders.addNewBottom());
-		setNilBorder(borders.addNewLeft());
-		setNilBorder(borders.addNewRight());
-		setNilBorder(borders.addNewInsideH());
-		setNilBorder(borders.addNewInsideV());
-
-		for (int i = 0; i < widths.length; i++) {
-			setCellWidth(table.getRow(0).getCell(i), widths[i]);
-		}
-	}
-
-	private void setNilBorder(CTBorder border) {
-		border.setVal(STBorder.NIL);
-	}
-
-	private void setCellWidth(XWPFTableCell cell, int widthTwips) {
-		CTTcPr cellProperties = cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : cell.getCTTc().addNewTcPr();
-		CTTblWidth width = cellProperties.isSetTcW() ? cellProperties.getTcW() : cellProperties.addNewTcW();
-		width.setType(STTblWidth.DXA);
-		width.setW(BigInteger.valueOf(widthTwips));
-	}
-
-	private void setHeaderContent(XWPFTableCell cell, String activityName) throws IOException {
-		clearCell(cell);
-		XWPFParagraph paragraph = cell.addParagraph();
-		paragraph.setAlignment(ParagraphAlignment.RIGHT);
-
-		XWPFRun textRun = paragraph.createRun();
-		textRun.setText(activityName != null ? activityName : "");
-		textRun.setFontSize(10);
-		textRun.setColor("555555");
-
-		try (InputStream inputStream = new ClassPathResource(LOGO_PATH).getInputStream()) {
-			// Add spacing between activity name and logo
-			XWPFRun spacerRun = paragraph.createRun();
-			spacerRun.setText("  ");
-			XWPFRun imageRun = paragraph.createRun();
-			imageRun.addPicture(inputStream, org.apache.poi.xwpf.usermodel.Document.PICTURE_TYPE_PNG, "header-logo.png",
-					Units.toEMU(110), Units.toEMU(24));
-		} catch (Exception e) {
-			throw new IOException("Failed to add DOCX header logo", e);
-		}
-	}
-
-	private void setCellVerticalAlignment(XWPFTableCell cell, STVerticalJc.Enum alignment) {
-		CTTcPr cellProperties = cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : cell.getCTTc().addNewTcPr();
-		CTVerticalJc vAlign = cellProperties.isSetVAlign() ? cellProperties.getVAlign() : cellProperties.addNewVAlign();
-		vAlign.setVal(alignment);
-	}
-
-	private void setFooterDate(XWPFTableCell cell) {
-		clearCell(cell);
-		XWPFParagraph paragraph = cell.addParagraph();
-		paragraph.setAlignment(ParagraphAlignment.LEFT);
-
-		XWPFRun run = paragraph.createRun();
-		run.setText(LocalDateTime.now().format(FOOTER_DATE_FORMATTER));
-		run.setFontSize(7);
-		run.setColor("555555");
-	}
-
-	private void setFooterCenter(XWPFTableCell cell) {
-		clearCell(cell);
-
-		XWPFParagraph paragraph = cell.addParagraph();
-		paragraph.setAlignment(ParagraphAlignment.CENTER);
-		XWPFRun run = paragraph.createRun();
-		run.setText("LEARN-Hub \u2013 a TUM Applied Education Technologies application \u00B7 aet.cit.tum.de");
-		run.setFontSize(7);
-		run.setColor("555555");
-	}
-
-	private void setFooterPageNumber(XWPFTableCell cell) {
-		clearCell(cell);
-		XWPFParagraph paragraph = cell.addParagraph();
-		paragraph.setAlignment(ParagraphAlignment.RIGHT);
-
-		XWPFRun labelRun = paragraph.createRun();
-		labelRun.setText("Page ");
-		labelRun.setFontSize(7);
-		labelRun.setColor("555555");
-
-		CTSimpleField pageField = paragraph.getCTP().addNewFldSimple();
-		pageField.setInstr("PAGE");
-		CTR pageRun = pageField.addNewR();
-		CTRPr pageRunProps = pageRun.addNewRPr();
-		pageRunProps.addNewSz().setVal(BigInteger.valueOf(14));
-		pageRunProps.addNewColor().setVal("555555");
-		CTText pageText = pageRun.addNewT();
-		pageText.setStringValue("1");
-
-		XWPFRun ofRun = paragraph.createRun();
-		ofRun.setText(" of ");
-		ofRun.setFontSize(7);
-		ofRun.setColor("555555");
-
-		CTSimpleField totalPagesField = paragraph.getCTP().addNewFldSimple();
-		totalPagesField.setInstr("NUMPAGES");
-		CTR totalPagesRun = totalPagesField.addNewR();
-		CTRPr totalPagesRunProps = totalPagesRun.addNewRPr();
-		totalPagesRunProps.addNewSz().setVal(BigInteger.valueOf(14));
-		totalPagesRunProps.addNewColor().setVal("555555");
-		CTText totalPagesText = totalPagesRun.addNewT();
-		totalPagesText.setStringValue("1");
-	}
-
-	private void clearCell(XWPFTableCell cell) {
-		for (int i = cell.getParagraphs().size() - 1; i >= 0; i--) {
-			cell.removeParagraph(i);
-		}
-	}
-
-	private void renderNode(XWPFDocument document, Node node) {
-		Node child = node.getFirstChild();
-		while (child != null) {
-			if (child instanceof Heading heading) {
-				renderHeading(document, heading);
-			} else if (child instanceof org.commonmark.node.Paragraph para) {
-				renderParagraph(document, para);
-			} else if (child instanceof BulletList bulletList) {
-				renderBulletList(document, bulletList);
-			} else if (child instanceof OrderedList orderedList) {
-				renderOrderedList(document, orderedList);
-			} else if (child instanceof FencedCodeBlock codeBlock) {
-				renderCodeBlock(document, codeBlock.getLiteral());
-			} else if (child instanceof IndentedCodeBlock codeBlock) {
-				renderCodeBlock(document, codeBlock.getLiteral());
-			} else if (child instanceof BlockQuote blockQuote) {
-				renderBlockQuote(document, blockQuote);
-			} else if (child instanceof ThematicBreak) {
-				renderThematicBreak(document);
-			} else if (child instanceof TableBlock tableBlock) {
-				renderTable(document, tableBlock);
-			}
-			child = child.getNext();
-		}
-	}
-
-	private void renderHeading(XWPFDocument document, Heading heading) {
-		XWPFParagraph para = document.createParagraph();
-		int level = heading.getLevel();
-		switch (level) {
-			case 1 :
-				para.setStyle(templateSettings.heading1Style());
-				break;
-			case 2 :
-				para.setStyle(templateSettings.heading2Style());
-				break;
-			case 3 :
-				para.setStyle(templateSettings.heading3Style());
-				break;
-			default :
-				para.setStyle(templateSettings.defaultHeadingStyle());
-				break;
-		}
-		renderInlineContent(para, heading);
-		// Apply font size and color for heading
-		for (XWPFRun run : para.getRuns()) {
-			run.setBold(true);
-			run.setColor(templateSettings.headingColor());
-			switch (level) {
-				case 1 :
-					run.setFontSize(templateSettings.heading1FontSize());
-					break;
-				case 2 :
-					run.setFontSize(templateSettings.heading2FontSize());
-					break;
-				case 3 :
-					run.setFontSize(templateSettings.heading3FontSize());
-					break;
-				default :
-					run.setFontSize(templateSettings.defaultHeadingFontSize());
-					break;
-			}
-		}
-	}
-
-	private void renderParagraph(XWPFDocument document, org.commonmark.node.Paragraph para) {
-		XWPFParagraph xwpfPara = document.createParagraph();
-		renderInlineContent(xwpfPara, para);
-	}
-
-	private void renderBulletList(XWPFDocument document, BulletList bulletList) {
-		Node item = bulletList.getFirstChild();
-		while (item != null) {
-			if (item instanceof ListItem listItem) {
-				renderListItem(document, listItem, "• ");
-			}
-			item = item.getNext();
-		}
-	}
-
-	private void renderOrderedList(XWPFDocument document, OrderedList orderedList) {
-		Node item = orderedList.getFirstChild();
-		int index = orderedList.getMarkerStartNumber();
-		while (item != null) {
-			if (item instanceof ListItem listItem) {
-				renderListItem(document, listItem, index + ". ");
-				index++;
-			}
-			item = item.getNext();
-		}
-	}
-
-	private void renderListItem(XWPFDocument document, ListItem listItem, String marker) {
-		Node child = listItem.getFirstChild();
-		boolean first = true;
-		while (child != null) {
-			if (child instanceof org.commonmark.node.Paragraph para) {
-				XWPFParagraph xwpfPara = document.createParagraph();
-				xwpfPara.setIndentationLeft(templateSettings.listIndentLeft());
-				if (first) {
-					XWPFRun markerRun = xwpfPara.createRun();
-					markerRun.setText(marker);
-					first = false;
-				}
-				renderInlineContent(xwpfPara, para);
-			} else if (child instanceof BulletList nested) {
-				renderBulletList(document, nested);
-			} else if (child instanceof OrderedList nested) {
-				renderOrderedList(document, nested);
-			}
-			child = child.getNext();
-		}
-	}
-
-	private void renderCodeBlock(XWPFDocument document, String code) {
-		XWPFParagraph para = document.createParagraph();
-		para.setIndentationLeft(templateSettings.codeBlockIndentLeft());
-		XWPFRun run = para.createRun();
-		run.setFontFamily(templateSettings.codeFontFamily());
-		run.setFontSize(templateSettings.codeFontSize());
-		// Handle multi-line code blocks
-		String[] lines = code.split("\\n");
-		for (int i = 0; i < lines.length; i++) {
-			if (i > 0) {
-				run.addBreak();
-			}
-			run.setText(lines[i]);
-		}
-	}
-
-	private void renderBlockQuote(XWPFDocument document, BlockQuote blockQuote) {
-		Node child = blockQuote.getFirstChild();
-		while (child != null) {
-			if (child instanceof org.commonmark.node.Paragraph para) {
-				XWPFParagraph xwpfPara = document.createParagraph();
-				xwpfPara.setIndentationLeft(templateSettings.blockQuoteIndentLeft());
-				xwpfPara.setBorderLeft(templateSettings.blockQuoteBorderLeft());
-				renderInlineContent(xwpfPara, para);
-				// Italicize block quote text
-				for (XWPFRun run : xwpfPara.getRuns()) {
-					run.setItalic(true);
-				}
-			}
-			child = child.getNext();
-		}
-	}
-
-	private void renderThematicBreak(XWPFDocument document) {
-		XWPFParagraph para = document.createParagraph();
-		para.setBorderBottom(templateSettings.thematicBreakBorderBottom());
-	}
-
-	private void renderTable(XWPFDocument document, TableBlock tableBlock) {
-		// Count columns from header
-		TableHead head = null;
-		TableBody body = null;
-		Node child = tableBlock.getFirstChild();
-		while (child != null) {
-			if (child instanceof TableHead h) {
-				head = h;
-			}
-			if (child instanceof TableBody b) {
-				body = b;
-			}
-			child = child.getNext();
-		}
-
-		if (head == null) {
-			return;
-		}
-
-		// Count columns
-		int numCols = 0;
-		TableRow headerRow = (TableRow) head.getFirstChild();
-		if (headerRow != null) {
-			Node cell = headerRow.getFirstChild();
-			while (cell != null) {
-				numCols++;
-				cell = cell.getNext();
-			}
-		}
-
-		if (numCols == 0) {
-			return;
-		}
-
-		XWPFTable table = document.createTable();
-		// Remove default empty row
-		if (table.getNumberOfRows() > 0) {
-			table.removeRow(0);
-		}
-
-		// Set table width to 100%
-		CTTblPr tblPr = table.getCTTbl().getTblPr();
-		if (tblPr == null) {
-			tblPr = table.getCTTbl().addNewTblPr();
-		}
-		CTTblWidth tblWidth = tblPr.addNewTblW();
-		tblWidth.setW(BigInteger.valueOf(templateSettings.tableWidthPct()));
-		tblWidth.setType(STTblWidth.PCT);
-
-		// Render header row
-		if (headerRow != null) {
-			XWPFTableRow xwpfRow = table.createRow();
-			Node cell = headerRow.getFirstChild();
-			int colIdx = 0;
-			while (cell != null) {
-				if (cell instanceof TableCell tableCell) {
-					XWPFTableCell xwpfCell = colIdx < xwpfRow.getTableCells().size()
-							? xwpfRow.getCell(colIdx)
-							: xwpfRow.addNewTableCell();
-					setCellText(xwpfCell, tableCell, true);
-					// Dark blue background for header
-					CTTcPr tcPr = xwpfCell.getCTTc().addNewTcPr();
-					CTShd shd = tcPr.addNewShd();
-					shd.setFill(templateSettings.tableHeaderBackground());
-					shd.setVal(STShd.CLEAR);
-					colIdx++;
-				}
-				cell = cell.getNext();
-			}
-		}
-
-		// Render body rows
-		if (body != null) {
-			Node row = body.getFirstChild();
-			int rowIdx = 0;
-			while (row != null) {
-				if (row instanceof TableRow tableRow) {
-					XWPFTableRow xwpfRow = table.createRow();
-					Node cell = tableRow.getFirstChild();
-					int colIdx = 0;
-					while (cell != null) {
-						if (cell instanceof TableCell tableCell) {
-							XWPFTableCell xwpfCell = colIdx < xwpfRow.getTableCells().size()
-									? xwpfRow.getCell(colIdx)
-									: xwpfRow.addNewTableCell();
-							setCellText(xwpfCell, tableCell, false);
-							// Alternating row colors
-							if (rowIdx % 2 == 1) {
-								CTTcPr tcPr = xwpfCell.getCTTc().addNewTcPr();
-								CTShd shd = tcPr.addNewShd();
-								shd.setFill(templateSettings.tableBodyAlternateBackground());
-								shd.setVal(STShd.CLEAR);
-							}
-							colIdx++;
-						}
-						cell = cell.getNext();
-					}
-					rowIdx++;
-				}
-				row = row.getNext();
-			}
-		}
-
-		// Add spacing after table
-		document.createParagraph();
-	}
-
-	private void setCellText(XWPFTableCell xwpfCell, TableCell tableCell, boolean isHeader) {
-		// Clear existing paragraphs
-		for (int i = xwpfCell.getParagraphs().size() - 1; i >= 0; i--) {
-			xwpfCell.removeParagraph(i);
-		}
-		XWPFParagraph para = xwpfCell.addParagraph();
-		// Render inline content from the cell's child nodes
-		Node child = tableCell.getFirstChild();
-		while (child != null) {
-			if (child instanceof org.commonmark.node.Paragraph p) {
-				renderInlineContent(para, p);
-			} else if (child instanceof Text text) {
-				XWPFRun run = para.createRun();
-				run.setText(text.getLiteral());
-			}
-			child = child.getNext();
-		}
-		// Style the runs
-		for (XWPFRun run : para.getRuns()) {
-			run.setFontSize(templateSettings.tableBodyFontSize());
-			if (isHeader) {
-				run.setBold(true);
-				run.setColor(templateSettings.tableHeaderFontColor());
-				run.setFontSize(templateSettings.tableHeaderFontSize());
-			}
-		}
-	}
-
-	private void renderInlineContent(XWPFParagraph para, Node parent) {
-		Node child = parent.getFirstChild();
-		while (child != null) {
-			renderInline(para, child, false, false);
-			child = child.getNext();
-		}
-	}
-
-	private void renderInline(XWPFParagraph para, Node node, boolean bold, boolean italic) {
-		if (node instanceof Text text) {
-			XWPFRun run = para.createRun();
-			run.setText(text.getLiteral());
-			if (bold) {
-				run.setBold(true);
-			}
-			if (italic) {
-				run.setItalic(true);
-			}
-		} else if (node instanceof StrongEmphasis) {
-			Node child = node.getFirstChild();
-			while (child != null) {
-				renderInline(para, child, true, italic);
-				child = child.getNext();
-			}
-		} else if (node instanceof Emphasis) {
-			Node child = node.getFirstChild();
-			while (child != null) {
-				renderInline(para, child, bold, true);
-				child = child.getNext();
-			}
-		} else if (node instanceof Code code) {
-			XWPFRun run = para.createRun();
-			run.setText(code.getLiteral());
-			run.setFontFamily(templateSettings.codeFontFamily());
-		} else if (node instanceof SoftLineBreak) {
-			XWPFRun run = para.createRun();
-			run.setText(" ");
-		} else if (node instanceof HardLineBreak) {
-			XWPFRun run = para.createRun();
-			run.addBreak();
-		} else if (node instanceof Link link) {
-			XWPFRun run = para.createRun();
-			run.setText(extractText(link));
-			run.setUnderline(templateSettings.linkUnderline());
-			run.setColor(templateSettings.linkColor());
+		SectPr.PgSz pgSz = WML_FACTORY.createSectPrPgSz();
+		if (landscape) {
+			pgSz.setW(PAGE_WIDTH_LANDSCAPE);
+			pgSz.setH(PAGE_HEIGHT_LANDSCAPE);
+			pgSz.setOrient(STPageOrientation.LANDSCAPE);
 		} else {
-			// For any other inline node, try to render its children
-			Node child = node.getFirstChild();
-			while (child != null) {
-				renderInline(para, child, bold, italic);
-				child = child.getNext();
-			}
+			pgSz.setW(PAGE_HEIGHT_LANDSCAPE);
+			pgSz.setH(PAGE_WIDTH_LANDSCAPE);
+			pgSz.setOrient(STPageOrientation.PORTRAIT);
 		}
+		sectPr.setPgSz(pgSz);
+
+		SectPr.PgMar pgMar = WML_FACTORY.createSectPrPgMar();
+		pgMar.setTop(MARGIN_TOP);
+		pgMar.setBottom(MARGIN_BOTTOM);
+		pgMar.setLeft(MARGIN_LEFT);
+		pgMar.setRight(MARGIN_RIGHT);
+		pgMar.setHeader(HEADER_FOOTER_MARGIN);
+		pgMar.setFooter(HEADER_FOOTER_MARGIN);
+		sectPr.setPgMar(pgMar);
+
+		return sectPr;
 	}
 
-	private String extractText(Node node) {
-		StringBuilder sb = new StringBuilder();
-		Node child = node.getFirstChild();
-		while (child != null) {
-			if (child instanceof Text text) {
-				sb.append(text.getLiteral());
-			} else {
-				sb.append(extractText(child));
-			}
-			child = child.getNext();
-		}
-		return sb.toString();
+	// ---- Header and footer ----
+
+	private void configureHeaderAndFooter(WordprocessingMLPackage wordMLPackage, SectPr sectPr, String activityName)
+			throws Exception {
+		// Header — add part to document FIRST so images can be created
+		HeaderPart headerPart = new HeaderPart();
+		Relationship headerRel = wordMLPackage.getMainDocumentPart().addTargetPart(headerPart);
+		headerPart.setJaxbElement(createHeader(wordMLPackage, headerPart, activityName));
+
+		HeaderReference headerRef = WML_FACTORY.createHeaderReference();
+		headerRef.setId(headerRel.getId());
+		headerRef.setType(HdrFtrRef.DEFAULT);
+		sectPr.getEGHdrFtrReferences().add(headerRef);
+
+		// Footer
+		FooterPart footerPart = new FooterPart();
+		footerPart.setJaxbElement(createFooter());
+		Relationship footerRel = wordMLPackage.getMainDocumentPart().addTargetPart(footerPart);
+
+		FooterReference footerRef = WML_FACTORY.createFooterReference();
+		footerRef.setId(footerRel.getId());
+		footerRef.setType(HdrFtrRef.DEFAULT);
+		sectPr.getEGHdrFtrReferences().add(footerRef);
 	}
 
-	record DocxTemplateSettings(int pageWidthTwips, int pageHeightTwips, STPageOrientation.Enum pageOrientation,
-			String heading1Style, int heading1FontSize, String heading2Style, int heading2FontSize,
-			String heading3Style, int heading3FontSize, String defaultHeadingStyle, int defaultHeadingFontSize,
-			String headingColor, int listIndentLeft, int codeBlockIndentLeft, String codeFontFamily, int codeFontSize,
-			int blockQuoteIndentLeft, Borders blockQuoteBorderLeft, Borders thematicBreakBorderBottom,
-			int tableWidthPct, String tableHeaderBackground, String tableHeaderFontColor, int tableHeaderFontSize,
-			int tableBodyFontSize, String tableBodyAlternateBackground, String linkColor,
-			UnderlinePatterns linkUnderline) {
+	private Hdr createHeader(WordprocessingMLPackage wordMLPackage, HeaderPart headerPart, String activityName)
+			throws Exception {
+		Hdr header = WML_FACTORY.createHdr();
 
-		static DocxTemplateSettings load(String path) {
-			Properties properties = new Properties();
-			ClassPathResource resource = new ClassPathResource(path);
-			try (InputStream inputStream = resource.getInputStream()) {
-				properties.load(new java.io.InputStreamReader(inputStream, StandardCharsets.UTF_8));
-			} catch (IOException e) {
-				throw new IllegalStateException("Failed to load DOCX template settings: " + path, e);
-			}
+		P paragraph = WML_FACTORY.createP();
 
-			return new DocxTemplateSettings(getInt(properties, "page.width.twips"),
-					getInt(properties, "page.height.twips"),
-					STPageOrientation.Enum.forString(getString(properties, "page.orientation")),
-					getString(properties, "heading.1.style"), getInt(properties, "heading.1.fontSize"),
-					getString(properties, "heading.2.style"), getInt(properties, "heading.2.fontSize"),
-					getString(properties, "heading.3.style"), getInt(properties, "heading.3.fontSize"),
-					getString(properties, "heading.default.style"), getInt(properties, "heading.default.fontSize"),
-					getString(properties, "heading.color"), getInt(properties, "list.indent.left"),
-					getInt(properties, "code.block.indent.left"), getString(properties, "code.font.family"),
-					getInt(properties, "code.font.size"), getInt(properties, "blockquote.indent.left"),
-					Borders.valueOf(getString(properties, "blockquote.border.left")),
-					Borders.valueOf(getString(properties, "thematic.break.border.bottom")),
-					getInt(properties, "table.width.pct"), getString(properties, "table.header.background"),
-					getString(properties, "table.header.font.color"), getInt(properties, "table.header.font.size"),
-					getInt(properties, "table.body.font.size"),
-					getString(properties, "table.body.alternate.background"), getString(properties, "link.color"),
-					UnderlinePatterns.valueOf(getString(properties, "link.underline")));
+		// Right-align the header paragraph
+		PPr pPr = WML_FACTORY.createPPr();
+		Jc jc = WML_FACTORY.createJc();
+		jc.setVal(JcEnumeration.RIGHT);
+		pPr.setJc(jc);
+		paragraph.setPPr(pPr);
+
+		// Activity name text
+		R textRun = createStyledRun(activityName != null ? activityName : "", 10, "555555");
+		paragraph.getContent().add(textRun);
+
+		// Spacer
+		R spacerRun = WML_FACTORY.createR();
+		Text spacer = WML_FACTORY.createText();
+		spacer.setValue("  ");
+		spacer.setSpace("preserve");
+		spacerRun.getContent().add(spacer);
+		paragraph.getContent().add(spacerRun);
+
+		// Logo image
+		try (InputStream logoStream = new ClassPathResource(LOGO_PATH).getInputStream()) {
+			byte[] logoBytes = logoStream.readAllBytes();
+			BinaryPartAbstractImage imagePart = BinaryPartAbstractImage.createImagePart(wordMLPackage, headerPart,
+					logoBytes);
+			// Logo dimensions: width=110pt (~1397000 EMU), height=24pt (~304800 EMU)
+			Inline inline = imagePart.createImageInline("header-logo", "LEARN-Hub Logo", 1, 2, 1397000, false);
+			Drawing drawing = WML_FACTORY.createDrawing();
+			drawing.getAnchorOrInline().add(inline);
+			R imageRun = WML_FACTORY.createR();
+			imageRun.getContent().add(drawing);
+			paragraph.getContent().add(imageRun);
 		}
 
-		private static int getInt(Properties properties, String key) {
-			return Integer.parseInt(getString(properties, key));
-		}
+		header.getContent().add(paragraph);
+		return header;
+	}
 
-		private static String getString(Properties properties, String key) {
-			String value = properties.getProperty(key);
-			if (value == null || value.isBlank()) {
-				throw new IllegalStateException("Missing DOCX template setting: " + key);
-			}
-			return value.trim();
-		}
+	private Ftr createFooter() {
+		Ftr footer = WML_FACTORY.createFtr();
+
+		// Footer uses a 3-column table: date (left) | branding (center) | page number
+		// (right)
+		Tbl table = WML_FACTORY.createTbl();
+		configureFooterTableProperties(table);
+
+		Tr row = WML_FACTORY.createTr();
+
+		// Left cell: download date
+		row.getContent().add(createFooterCell(LocalDateTime.now().format(FOOTER_DATE_FORMATTER), JcEnumeration.LEFT));
+
+		// Center cell: branding text
+		row.getContent()
+				.add(createFooterCell(
+						"LEARN-Hub \u2013 a TUM Applied Education Technologies application \u00B7 aet.cit.tum.de",
+						JcEnumeration.CENTER));
+
+		// Right cell: page number
+		row.getContent().add(createFooterPageNumberCell());
+
+		table.getContent().add(row);
+		footer.getContent().add(table);
+		return footer;
+	}
+
+	private void configureFooterTableProperties(Tbl table) {
+		TblPr tblPr = WML_FACTORY.createTblPr();
+
+		// Full width table
+		TblWidth tblWidth = WML_FACTORY.createTblWidth();
+		tblWidth.setType("pct");
+		tblWidth.setW(BigInteger.valueOf(5000));
+		tblPr.setTblW(tblWidth);
+
+		// No borders
+		TblBorders borders = WML_FACTORY.createTblBorders();
+		borders.setTop(createNilBorder());
+		borders.setBottom(createNilBorder());
+		borders.setLeft(createNilBorder());
+		borders.setRight(createNilBorder());
+		borders.setInsideH(createNilBorder());
+		borders.setInsideV(createNilBorder());
+		tblPr.setTblBorders(borders);
+
+		table.setTblPr(tblPr);
+	}
+
+	private CTBorder createNilBorder() {
+		CTBorder border = WML_FACTORY.createCTBorder();
+		border.setVal(STBorder.NIL);
+		return border;
+	}
+
+	private Tc createFooterCell(String text, JcEnumeration alignment) {
+		Tc cell = WML_FACTORY.createTc();
+		P para = WML_FACTORY.createP();
+
+		PPr pPr = WML_FACTORY.createPPr();
+		Jc jc = WML_FACTORY.createJc();
+		jc.setVal(alignment);
+		pPr.setJc(jc);
+		para.setPPr(pPr);
+
+		R run = createStyledRun(text, 7, "555555");
+		para.getContent().add(run);
+
+		cell.getContent().add(para);
+		return cell;
+	}
+
+	private Tc createFooterPageNumberCell() {
+		Tc cell = WML_FACTORY.createTc();
+		P para = WML_FACTORY.createP();
+
+		PPr pPr = WML_FACTORY.createPPr();
+		Jc jc = WML_FACTORY.createJc();
+		jc.setVal(JcEnumeration.RIGHT);
+		pPr.setJc(jc);
+		para.setPPr(pPr);
+
+		// "Page "
+		para.getContent().add(createStyledRun("Page ", 7, "555555"));
+
+		// PAGE field
+		para.getContent().addAll(createFieldRuns("PAGE", 7, "555555"));
+
+		// " of "
+		para.getContent().add(createStyledRun(" of ", 7, "555555"));
+
+		// NUMPAGES field
+		para.getContent().addAll(createFieldRuns("NUMPAGES", 7, "555555"));
+
+		cell.getContent().add(para);
+		return cell;
+	}
+
+	// ---- Utility methods ----
+
+	private R createStyledRun(String text, int fontSizePt, String color) {
+		R run = WML_FACTORY.createR();
+
+		RPr rPr = WML_FACTORY.createRPr();
+		HpsMeasure fontSize = WML_FACTORY.createHpsMeasure();
+		fontSize.setVal(BigInteger.valueOf(fontSizePt * 2L)); // half-points
+		rPr.setSz(fontSize);
+		rPr.setSzCs(fontSize);
+		Color c = WML_FACTORY.createColor();
+		c.setVal(color);
+		rPr.setColor(c);
+		run.setRPr(rPr);
+
+		Text t = WML_FACTORY.createText();
+		t.setValue(text);
+		t.setSpace("preserve");
+		run.getContent().add(t);
+
+		return run;
+	}
+
+	/**
+	 * Create the run sequence for a Word field code (BEGIN + INSTR + END).
+	 */
+	private List<R> createFieldRuns(String fieldInstruction, int fontSizePt, String color) {
+		RPr rPr = WML_FACTORY.createRPr();
+		HpsMeasure fontSize = WML_FACTORY.createHpsMeasure();
+		fontSize.setVal(BigInteger.valueOf(fontSizePt * 2L));
+		rPr.setSz(fontSize);
+		rPr.setSzCs(fontSize);
+		Color c = WML_FACTORY.createColor();
+		c.setVal(color);
+		rPr.setColor(c);
+
+		// BEGIN
+		R beginRun = WML_FACTORY.createR();
+		beginRun.setRPr(rPr);
+		FldChar begin = WML_FACTORY.createFldChar();
+		begin.setFldCharType(STFldCharType.BEGIN);
+		JAXBElement<FldChar> beginEl = WML_FACTORY.createRFldChar(begin);
+		beginRun.getContent().add(beginEl);
+
+		// INSTRUCTION
+		R instrRun = WML_FACTORY.createR();
+		instrRun.setRPr(rPr);
+		Text instrText = WML_FACTORY.createText();
+		instrText.setValue(" " + fieldInstruction + " ");
+		instrText.setSpace("preserve");
+		JAXBElement<Text> instrEl = WML_FACTORY.createRInstrText(instrText);
+		instrRun.getContent().add(instrEl);
+
+		// END
+		R endRun = WML_FACTORY.createR();
+		endRun.setRPr(rPr);
+		FldChar end = WML_FACTORY.createFldChar();
+		end.setFldCharType(STFldCharType.END);
+		JAXBElement<FldChar> endEl = WML_FACTORY.createRFldChar(end);
+		endRun.getContent().add(endEl);
+
+		return List.of(beginRun, instrRun, endRun);
 	}
 }
