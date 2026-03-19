@@ -231,6 +231,43 @@ class MarkdownToDocxServiceTest {
 	}
 
 	@Test
+	void renderMergedDocxHasHeaderFooterOnAllSections() throws Exception {
+		List<String> markdowns = List.of("# Deckblatt\n\nCover.", "# Artikulationsschema\n\n| A | B |\n|---|---|\n| 1 | 2 |",
+				"# Hintergrundwissen\n\nBackground.");
+		List<Boolean> landscapes = List.of(false, true, false);
+
+		byte[] result = service.renderMergedDocx(markdowns, landscapes, "Test Activity");
+
+		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(result))) {
+			// With 3 sections, there should be 2 inline section breaks + 1 body-level
+			// SectPr. Each inline section break SectPr and the body SectPr should
+			// reference the same header and footer.
+			CTSectPr bodySectPr = doc.getDocument().getBody().getSectPr();
+			assertThat(bodySectPr).isNotNull();
+			assertThat(bodySectPr.getHeaderReferenceList()).isNotEmpty();
+			assertThat(bodySectPr.getFooterReferenceList()).isNotEmpty();
+
+			// Count inline SectPr elements (inside paragraph PPr)
+			var paragraphs = doc.getDocument().getBody().getPList();
+			int inlineSectPrCount = 0;
+			for (var para : paragraphs) {
+				if (para.getPPr() != null && para.getPPr().getSectPr() != null) {
+					CTSectPr inlineSectPr = para.getPPr().getSectPr();
+					assertThat(inlineSectPr.getHeaderReferenceList())
+							.as("Inline section break should reference header")
+							.isNotEmpty();
+					assertThat(inlineSectPr.getFooterReferenceList())
+							.as("Inline section break should reference footer")
+							.isNotEmpty();
+					inlineSectPrCount++;
+				}
+			}
+			// 3 sections = 2 section breaks between them
+			assertThat(inlineSectPrCount).isEqualTo(2);
+		}
+	}
+
+	@Test
 	void renderMergedDocxRejectsMismatchedLists() {
 		assertThatThrownBy(() -> service.renderMergedDocx(List.of("# A", "# B"), List.of(false), "Test"))
 				.isInstanceOf(IllegalArgumentException.class);

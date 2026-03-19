@@ -130,7 +130,8 @@ public class MarkdownToDocxService {
 	/**
 	 * Render multiple markdown sections into a single DOCX with per-section
 	 * orientation (portrait/landscape). Each section is separated by a section
-	 * break. The header and footer are shared across all sections.
+	 * break (next page). Headers and footers appear on all pages across all
+	 * sections.
 	 *
 	 * @param markdowns
 	 *            the markdown contents, in order
@@ -147,6 +148,15 @@ public class MarkdownToDocxService {
 			WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.createPackage();
 			XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
 
+			// Create header/footer parts once — they will be referenced by every section
+			HeaderPart headerPart = new HeaderPart();
+			Relationship headerRel = wordMLPackage.getMainDocumentPart().addTargetPart(headerPart);
+			headerPart.setJaxbElement(createHeader(wordMLPackage, headerPart, activityName));
+
+			FooterPart footerPart = new FooterPart();
+			footerPart.setJaxbElement(createFooter());
+			Relationship footerRel = wordMLPackage.getMainDocumentPart().addTargetPart(footerPart);
+
 			for (int i = 0; i < markdowns.size(); i++) {
 				String html = markdownToHtmlService.renderMarkdownToDocxHtml(markdowns.get(i));
 				List<Object> elements = importer.convert(html, null);
@@ -155,16 +165,14 @@ public class MarkdownToDocxService {
 				// Add a section break after each section EXCEPT the last one.
 				// The last section's properties are set in the body-level SectPr.
 				if (i < markdowns.size() - 1) {
-					addSectionBreak(wordMLPackage, landscapes.get(i));
+					addSectionBreak(wordMLPackage, landscapes.get(i), headerRel.getId(), footerRel.getId());
 				}
 			}
 
 			// Configure the body-level SectPr for the last section's orientation
 			boolean lastLandscape = landscapes.get(landscapes.size() - 1);
 			SectPr sectPr = configurePage(wordMLPackage, lastLandscape);
-
-			// Add header/footer to the body-level SectPr (applies to all sections)
-			configureHeaderAndFooter(wordMLPackage, sectPr, activityName);
+			addHeaderFooterReferences(sectPr, headerRel.getId(), footerRel.getId());
 
 			try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 				wordMLPackage.save(baos);
@@ -181,9 +189,11 @@ public class MarkdownToDocxService {
 	/**
 	 * Insert a section break (next page) after the current content, setting the
 	 * given orientation. In DOCX, a mid-document section break is stored as a
-	 * {@link SectPr} inside the last paragraph's {@link PPr}.
+	 * {@link SectPr} inside the last paragraph's {@link PPr}. Header/footer
+	 * references are added so every section displays them.
 	 */
-	private void addSectionBreak(WordprocessingMLPackage wordMLPackage, boolean landscape) {
+	private void addSectionBreak(WordprocessingMLPackage wordMLPackage, boolean landscape, String headerRelId,
+			String footerRelId) {
 		SectPr sectPr = WML_FACTORY.createSectPr();
 
 		SectPr.PgSz pgSz = WML_FACTORY.createSectPrPgSz();
@@ -210,12 +220,32 @@ public class MarkdownToDocxService {
 		sectPr.setType(WML_FACTORY.createSectPrType());
 		sectPr.getType().setVal(SECTION_BREAK_NEXT_PAGE);
 
+		// Reference the shared header/footer so they appear in this section too
+		addHeaderFooterReferences(sectPr, headerRelId, footerRelId);
+
 		// Append as a new paragraph with this section break
 		P sectionBreakPara = WML_FACTORY.createP();
 		PPr pPr = WML_FACTORY.createPPr();
 		pPr.setSectPr(sectPr);
 		sectionBreakPara.setPPr(pPr);
 		wordMLPackage.getMainDocumentPart().getContent().add(sectionBreakPara);
+	}
+
+	/**
+	 * Add header and footer references to a section properties element. This
+	 * ensures headers and footers are displayed in the section controlled by this
+	 * SectPr.
+	 */
+	private void addHeaderFooterReferences(SectPr sectPr, String headerRelId, String footerRelId) {
+		HeaderReference headerRef = WML_FACTORY.createHeaderReference();
+		headerRef.setId(headerRelId);
+		headerRef.setType(HdrFtrRef.DEFAULT);
+		sectPr.getEGHdrFtrReferences().add(headerRef);
+
+		FooterReference footerRef = WML_FACTORY.createFooterReference();
+		footerRef.setId(footerRelId);
+		footerRef.setType(HdrFtrRef.DEFAULT);
+		sectPr.getEGHdrFtrReferences().add(footerRef);
 	}
 
 	private SectPr configurePage(WordprocessingMLPackage wordMLPackage, boolean landscape) {
@@ -259,20 +289,12 @@ public class MarkdownToDocxService {
 		Relationship headerRel = wordMLPackage.getMainDocumentPart().addTargetPart(headerPart);
 		headerPart.setJaxbElement(createHeader(wordMLPackage, headerPart, activityName));
 
-		HeaderReference headerRef = WML_FACTORY.createHeaderReference();
-		headerRef.setId(headerRel.getId());
-		headerRef.setType(HdrFtrRef.DEFAULT);
-		sectPr.getEGHdrFtrReferences().add(headerRef);
-
 		// Footer
 		FooterPart footerPart = new FooterPart();
 		footerPart.setJaxbElement(createFooter());
 		Relationship footerRel = wordMLPackage.getMainDocumentPart().addTargetPart(footerPart);
 
-		FooterReference footerRef = WML_FACTORY.createFooterReference();
-		footerRef.setId(footerRel.getId());
-		footerRef.setType(HdrFtrRef.DEFAULT);
-		sectPr.getEGHdrFtrReferences().add(footerRef);
+		addHeaderFooterReferences(sectPr, headerRel.getId(), footerRel.getId());
 	}
 
 	private Hdr createHeader(WordprocessingMLPackage wordMLPackage, HeaderPart headerPart, String activityName)
