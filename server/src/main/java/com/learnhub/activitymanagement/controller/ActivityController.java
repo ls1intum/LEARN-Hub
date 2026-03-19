@@ -11,8 +11,8 @@ import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.service.ActivityService;
 import com.learnhub.activitymanagement.service.RecommendationService;
 import com.learnhub.documentmanagement.service.LLMService;
-import com.learnhub.documentmanagement.service.MarkdownToPdfService;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
+import com.learnhub.documentmanagement.service.MarkdownToPdfService;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.usermanagement.service.UserSearchHistoryService;
@@ -455,7 +455,8 @@ public class ActivityController {
 			List<byte[]> pdfParts = buildOrderedPdfParts(activity);
 
 			if (pdfParts.isEmpty()) {
-				return ResponseEntity.status(404).body(ErrorResponse.of("No markdown content available for this activity"));
+				return ResponseEntity.status(404)
+						.body(ErrorResponse.of("No markdown content available for this activity"));
 			}
 
 			byte[] pdfBytes = pdfParts.size() == 1 ? pdfParts.get(0) : markdownToPdfService.mergePdfs(pdfParts);
@@ -486,7 +487,8 @@ public class ActivityController {
 			String combinedMarkdown = buildCombinedMarkdown(activity);
 
 			if (combinedMarkdown.isEmpty()) {
-				return ResponseEntity.status(404).body(ErrorResponse.of("No markdown content available for this activity"));
+				return ResponseEntity.status(404)
+						.body(ErrorResponse.of("No markdown content available for this activity"));
 			}
 
 			// DOCX: render as landscape (Artikulationsschema is the main content)
@@ -510,8 +512,8 @@ public class ActivityController {
 	}
 
 	/**
-	 * Build ordered list of PDF parts, each rendered with the orientation stored in the DB.
-	 * Order: Deckblatt, Artikulationsschema, Hintergrundwissen.
+	 * Build ordered list of PDF parts, each rendered with the orientation stored in
+	 * the DB. Order: Deckblatt, Artikulationsschema, Hintergrundwissen.
 	 */
 	private List<byte[]> buildOrderedPdfParts(ActivityResponse activity) {
 		String[] typeOrder = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
@@ -523,8 +525,7 @@ public class ActivityController {
 
 		for (String type : typeOrder) {
 			for (MarkdownResponse md : activity.getMarkdowns()) {
-				if (type.equals(md.getType()) && md.getContent() != null
-						&& !md.getContent().trim().isEmpty()) {
+				if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
 					parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape()));
 				}
 			}
@@ -533,8 +534,8 @@ public class ActivityController {
 	}
 
 	/**
-	 * Build combined markdown from all activity markdowns in order:
-	 * Deckblatt, Artikulationsschema, Hintergrundwissen.
+	 * Build combined markdown from all activity markdowns in order: Deckblatt,
+	 * Artikulationsschema, Hintergrundwissen.
 	 */
 	private String buildCombinedMarkdown(ActivityResponse activity) {
 		StringBuilder combined = new StringBuilder();

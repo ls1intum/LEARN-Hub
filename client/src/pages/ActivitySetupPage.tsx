@@ -195,9 +195,7 @@ export const ActivitySetupPage: React.FC = () => {
     } catch (error) {
       logger.error("Schema generation error", error, "ActivitySetupPage");
       setSchemaError(
-        error instanceof Error
-          ? error.message
-          : "Failed to generate documents",
+        error instanceof Error ? error.message : "Failed to generate documents",
       );
     } finally {
       setIsGeneratingSchema(false);
@@ -639,9 +637,7 @@ export const ActivitySetupPage: React.FC = () => {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-                <p className="text-lg font-medium">
-                  Generating documents...
-                </p>
+                <p className="text-lg font-medium">Generating documents...</p>
                 <p className="text-sm text-muted-foreground mt-1">
                   The AI is analyzing the PDF and creating Deckblatt,
                   Artikulationsschema, and Hintergrundwissen.

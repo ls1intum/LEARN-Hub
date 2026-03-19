@@ -193,13 +193,13 @@ public class ActivityService {
 	}
 
 	private void updateMarkdownByType(Activity activity, Activity activityUpdate, MarkdownType type) {
-		Optional<ActivityMarkdown> newMarkdown = activityUpdate.getMarkdowns().stream()
-				.filter(m -> m.getType() == type).findFirst();
+		Optional<ActivityMarkdown> newMarkdown = activityUpdate.getMarkdowns().stream().filter(m -> m.getType() == type)
+				.findFirst();
 		if (newMarkdown.isPresent()) {
 			String newContent = newMarkdown.get().getContent();
 			boolean newLandscape = newMarkdown.get().isLandscape();
-			Optional<ActivityMarkdown> existing = activity.getMarkdowns().stream()
-					.filter(m -> m.getType() == type).findFirst();
+			Optional<ActivityMarkdown> existing = activity.getMarkdowns().stream().filter(m -> m.getType() == type)
+					.findFirst();
 			if (existing.isPresent()) {
 				existing.get().setContent(newContent);
 				existing.get().setLandscape(newLandscape);
