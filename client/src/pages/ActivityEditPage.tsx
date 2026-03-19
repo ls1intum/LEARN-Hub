@@ -8,7 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Save, Edit3, AlertCircle } from "lucide-react";
+import {
+  Save,
+  Edit3,
+  AlertCircle,
+  Loader2,
+  RefreshCw,
+  Sparkles,
+} from "lucide-react";
 import { apiService } from "@/services/apiService";
 import {
   ActivityForm,
@@ -70,6 +77,15 @@ export const ActivityEditPage: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
+  // Generation state
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
+  const [isRegeneratingMetadata, setIsRegeneratingMetadata] = useState(false);
+
+  // Document ID for AI regeneration (from persisted source_pdf)
+  const documentId =
+    activity?.documents?.find((d) => d.type === "source_pdf")?.id || null;
+
   // ─── Load Activity ──────────────────────────────────────────────
 
   useEffect(() => {
@@ -106,6 +122,66 @@ export const ActivityEditPage: React.FC = () => {
   const handleMetadataNext = async (formData: ActivityFormData) => {
     setSavedMetadata(formData);
     setCurrentStep("documents");
+  };
+
+  // ─── AI Regeneration Handlers ───────────────────────────────────
+
+  const handleRegenerateMetadata = async () => {
+    if (!documentId) return;
+
+    setIsRegeneratingMetadata(true);
+    setSaveError(null);
+    try {
+      const result = await apiService.regenerateMetadata(documentId);
+      if (result.extractedData) {
+        setSavedMetadata((prev) => ({
+          ...prev,
+          ...(result.extractedData as Partial<ActivityFormData>),
+          documentId: documentId,
+        }) as ActivityFormData);
+      }
+    } catch (error) {
+      logger.error("Metadata regeneration error", error, "ActivityEditPage");
+      setSaveError(
+        error instanceof Error
+          ? error.message
+          : "Failed to regenerate metadata",
+      );
+    } finally {
+      setIsRegeneratingMetadata(false);
+    }
+  };
+
+  const generateActiveMarkdown = async () => {
+    if (!documentId) return;
+
+    setIsGenerating(true);
+    setGenerateError(null);
+    try {
+      const result = await apiService.generateActivityMarkdowns(
+        documentId,
+        savedMetadata as unknown as Record<string, unknown> | undefined,
+        [activeMarkdownTab],
+      );
+      if (result.deckblattMarkdown) {
+        setDeckblattMarkdown(result.deckblattMarkdown);
+      }
+      if (result.artikulationsschemaMarkdown) {
+        setArtikulationsschemaMarkdown(result.artikulationsschemaMarkdown);
+      }
+      if (result.hintergrundwissenMarkdown) {
+        setHintergrundwissenMarkdown(result.hintergrundwissenMarkdown);
+      }
+    } catch (error) {
+      logger.error("Markdown generation error", error, "ActivityEditPage");
+      setGenerateError(
+        error instanceof Error
+          ? error.message
+          : "Failed to generate document",
+      );
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   // ─── Preview Rendering ──────────────────────────────────────────
@@ -268,7 +344,7 @@ export const ActivityEditPage: React.FC = () => {
                     variant: "default",
                     onClick: handleSave,
                     icon: <Save className="h-4 w-4" />,
-                    disabled: isSaving,
+                    disabled: isSaving || isGenerating,
                     loading: isSaving,
                     loadingLabel: "Saving...",
                   }
@@ -282,15 +358,46 @@ export const ActivityEditPage: React.FC = () => {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Edit3 className="h-5 w-5" />
-                Edit Activity Metadata
-              </CardTitle>
-              <CardDescription>
-                Update the metadata for "{activity.name}".
-              </CardDescription>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Edit3 className="h-5 w-5" />
+                    Edit Activity Metadata
+                  </CardTitle>
+                  <CardDescription>
+                    Update the metadata for &quot;{activity.name}&quot;.
+                  </CardDescription>
+                </div>
+                {documentId && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={handleRegenerateMetadata}
+                    disabled={!documentId || isRegeneratingMetadata}
+                  >
+                    {isRegeneratingMetadata ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Regenerating...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4" />
+                        Re-run AI metadata
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
+              {saveError && currentStep === "metadata" && (
+                <div className="flex items-center gap-2 p-3 mb-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <AlertCircle className="h-4 w-4 text-destructive" />
+                  <p className="text-sm text-destructive">{saveError}</p>
+                </div>
+              )}
               <ActivityForm
                 initialData={
                   savedMetadata ||
@@ -340,51 +447,125 @@ export const ActivityEditPage: React.FC = () => {
 
           <Card>
             <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <Select
-                value={activeMarkdownTab}
-                onValueChange={(value) =>
-                  setActiveMarkdownTab(value as MarkdownTab)
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(
-                    Object.entries(MARKDOWN_TAB_LABELS) as [
-                      MarkdownTab,
-                      string,
-                    ][]
-                  ).map(([key, label]) => (
-                    <SelectItem key={key} value={key}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-3">
+                <Select
+                  value={activeMarkdownTab}
+                  onValueChange={(value) =>
+                    setActiveMarkdownTab(value as MarkdownTab)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(
+                      Object.entries(MARKDOWN_TAB_LABELS) as [
+                        MarkdownTab,
+                        string,
+                      ][]
+                    ).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {documentId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2"
+                  onClick={() => void generateActiveMarkdown()}
+                  disabled={!documentId || isGenerating}
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      {(activeMarkdownTab === "deckblatt" &&
+                        deckblattMarkdown) ||
+                      (activeMarkdownTab === "artikulationsschema" &&
+                        artikulationsschemaMarkdown) ||
+                      (activeMarkdownTab === "hintergrundwissen" &&
+                        hintergrundwissenMarkdown) ? (
+                        <RefreshCw className="h-4 w-4" />
+                      ) : (
+                        <Sparkles className="h-4 w-4" />
+                      )}
+                      {(activeMarkdownTab === "deckblatt" &&
+                        deckblattMarkdown) ||
+                      (activeMarkdownTab === "artikulationsschema" &&
+                        artikulationsschemaMarkdown) ||
+                      (activeMarkdownTab === "hintergrundwissen" &&
+                        hintergrundwissenMarkdown)
+                        ? `Re-generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`
+                        : `Generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`}
+                    </>
+                  )}
+                </Button>
+              )}
             </CardContent>
           </Card>
 
-          {activeMarkdownTab === "deckblatt" && (
-            <MarkdownEditorWithPreview
-              value={deckblattMarkdown}
-              onChange={setDeckblattMarkdown}
-              renderPreviewFn={renderPreviewPortrait}
-            />
-          )}
-          {activeMarkdownTab === "artikulationsschema" && (
-            <MarkdownEditorWithPreview
-              value={artikulationsschemaMarkdown}
-              onChange={setArtikulationsschemaMarkdown}
-              renderPreviewFn={renderPreviewLandscape}
-            />
-          )}
-          {activeMarkdownTab === "hintergrundwissen" && (
-            <MarkdownEditorWithPreview
-              value={hintergrundwissenMarkdown}
-              onChange={setHintergrundwissenMarkdown}
-              renderPreviewFn={renderPreviewPortrait}
-            />
+          {isGenerating ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                <p className="text-lg font-medium">
+                  Generating {MARKDOWN_TAB_LABELS[activeMarkdownTab]}...
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  The AI is analyzing the PDF and creating the document.
+                </p>
+              </CardContent>
+            </Card>
+          ) : generateError ? (
+            <Card>
+              <CardContent className="py-8">
+                <div className="flex flex-col items-center gap-4">
+                  <AlertCircle className="h-8 w-8 text-destructive" />
+                  <p className="text-destructive font-medium">
+                    {generateError}
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      void generateActiveMarkdown();
+                    }}
+                  >
+                    Retry Generation
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {activeMarkdownTab === "deckblatt" && (
+                <MarkdownEditorWithPreview
+                  value={deckblattMarkdown}
+                  onChange={setDeckblattMarkdown}
+                  renderPreviewFn={renderPreviewPortrait}
+                />
+              )}
+              {activeMarkdownTab === "artikulationsschema" && (
+                <MarkdownEditorWithPreview
+                  value={artikulationsschemaMarkdown}
+                  onChange={setArtikulationsschemaMarkdown}
+                  renderPreviewFn={renderPreviewLandscape}
+                />
+              )}
+              {activeMarkdownTab === "hintergrundwissen" && (
+                <MarkdownEditorWithPreview
+                  value={hintergrundwissenMarkdown}
+                  onChange={setHintergrundwissenMarkdown}
+                  renderPreviewFn={renderPreviewPortrait}
+                />
+              )}
+            </>
           )}
         </div>
       )}
