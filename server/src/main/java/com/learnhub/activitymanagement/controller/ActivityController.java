@@ -484,19 +484,20 @@ public class ActivityController {
 		logger.info("GET /api/activities/{}/download-docx - Download combined activity DOCX", activityId);
 		try {
 			ActivityResponse activity = activityService.getActivityById(activityId);
-			String combinedMarkdown = buildCombinedMarkdown(activity);
+			List<String> markdowns = new ArrayList<>();
+			List<Boolean> landscapes = new ArrayList<>();
+			buildOrderedDocxParts(activity, markdowns, landscapes);
 
-			if (combinedMarkdown.isEmpty()) {
+			if (markdowns.isEmpty()) {
 				return ResponseEntity.status(404)
 						.body(ErrorResponse.of("No markdown content available for this activity"));
 			}
 
-			// DOCX: render as landscape (Artikulationsschema is the main content)
-			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(combinedMarkdown, true,
-					activity.getName() != null ? activity.getName() : "");
+			String activityName = activity.getName() != null ? activity.getName() : "";
+			byte[] docxBytes = markdownToDocxService.renderMergedDocx(markdowns, landscapes, activityName);
 
-			String activityName = activity.getName() != null ? activity.getName() : "activity";
-			String downloadName = sanitizeDownloadFilename(activityName) + ".docx";
+			String downloadName = sanitizeDownloadFilename(
+					activityName.isEmpty() ? "activity" : activityName) + ".docx";
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType
@@ -534,6 +535,25 @@ public class ActivityController {
 			}
 		}
 		return parts;
+	}
+
+	/**
+	 * Build ordered markdown/landscape lists for DOCX merged rendering. Order:
+	 * Deckblatt, Artikulationsschema, Hintergrundwissen.
+	 */
+	private void buildOrderedDocxParts(ActivityResponse activity, List<String> markdowns, List<Boolean> landscapes) {
+		String[] typeOrder = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
+		if (activity.getMarkdowns() == null) {
+			return;
+		}
+		for (String type : typeOrder) {
+			for (MarkdownResponse md : activity.getMarkdowns()) {
+				if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
+					markdowns.add(md.getContent());
+					landscapes.add(md.isLandscape());
+				}
+			}
+		}
 	}
 
 	/**

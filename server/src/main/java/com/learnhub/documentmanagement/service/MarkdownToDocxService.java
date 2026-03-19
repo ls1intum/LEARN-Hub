@@ -177,6 +177,46 @@ public class MarkdownToDocxService {
 
 	// ---- Page configuration ----
 
+	/**
+	 * Insert a section break (next page) after the current content, setting the
+	 * given orientation. In DOCX, a mid-document section break is stored as a
+	 * {@link SectPr} inside the last paragraph's {@link PPr}.
+	 */
+	private void addSectionBreak(WordprocessingMLPackage wordMLPackage, boolean landscape) {
+		SectPr sectPr = WML_FACTORY.createSectPr();
+
+		SectPr.PgSz pgSz = WML_FACTORY.createSectPrPgSz();
+		if (landscape) {
+			pgSz.setW(PAGE_WIDTH_LANDSCAPE);
+			pgSz.setH(PAGE_HEIGHT_LANDSCAPE);
+			pgSz.setOrient(STPageOrientation.LANDSCAPE);
+		} else {
+			pgSz.setW(PAGE_HEIGHT_LANDSCAPE);
+			pgSz.setH(PAGE_WIDTH_LANDSCAPE);
+			pgSz.setOrient(STPageOrientation.PORTRAIT);
+		}
+		sectPr.setPgSz(pgSz);
+
+		SectPr.PgMar pgMar = WML_FACTORY.createSectPrPgMar();
+		pgMar.setTop(MARGIN_TOP);
+		pgMar.setBottom(MARGIN_BOTTOM);
+		pgMar.setLeft(MARGIN_LEFT);
+		pgMar.setRight(MARGIN_RIGHT);
+		pgMar.setHeader(HEADER_FOOTER_MARGIN);
+		pgMar.setFooter(HEADER_FOOTER_MARGIN);
+		sectPr.setPgMar(pgMar);
+
+		sectPr.setType(WML_FACTORY.createSectPrType());
+		sectPr.getType().setVal("nextPage");
+
+		// Append as a new paragraph with this section break
+		P sectionBreakPara = WML_FACTORY.createP();
+		PPr pPr = WML_FACTORY.createPPr();
+		pPr.setSectPr(sectPr);
+		sectionBreakPara.setPPr(pPr);
+		wordMLPackage.getMainDocumentPart().getContent().add(sectionBreakPara);
+	}
+
 	private SectPr configurePage(WordprocessingMLPackage wordMLPackage, boolean landscape) {
 		Body body = wordMLPackage.getMainDocumentPart().getJaxbElement().getBody();
 		SectPr sectPr = body.getSectPr();
