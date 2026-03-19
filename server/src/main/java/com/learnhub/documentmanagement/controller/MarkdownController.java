@@ -41,7 +41,7 @@ public class MarkdownController {
 	public ResponseEntity<?> getMarkdownPdf(@PathVariable UUID markdownId) {
 		logger.info("GET /api/markdowns/{}/pdf - Render markdown as PDF", markdownId);
 		try {
-			ActivityMarkdown markdown = markdownRepository.findById(markdownId).orElse(null);
+			ActivityMarkdown markdown = markdownRepository.findWithActivityById(markdownId).orElse(null);
 			if (markdown == null) {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown not found"));
 			}
@@ -50,7 +50,8 @@ public class MarkdownController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown content is empty"));
 			}
 
-			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape());
+			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape(),
+					markdown.getActivity() != null ? markdown.getActivity().getName() : "");
 
 			String downloadName = sanitizeFilename(markdown.getType().getValue()) + ".pdf";
 
@@ -72,7 +73,7 @@ public class MarkdownController {
 	public ResponseEntity<?> getMarkdownDocx(@PathVariable UUID markdownId) {
 		logger.info("GET /api/markdowns/{}/docx - Render markdown as DOCX", markdownId);
 		try {
-			ActivityMarkdown markdown = markdownRepository.findById(markdownId).orElse(null);
+			ActivityMarkdown markdown = markdownRepository.findWithActivityById(markdownId).orElse(null);
 			if (markdown == null) {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown not found"));
 			}
@@ -81,7 +82,8 @@ public class MarkdownController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown content is empty"));
 			}
 
-			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(content, markdown.isLandscape());
+			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(content, markdown.isLandscape(),
+					markdown.getActivity() != null ? markdown.getActivity().getName() : "");
 
 			String downloadName = sanitizeFilename(markdown.getType().getValue()) + ".docx";
 
