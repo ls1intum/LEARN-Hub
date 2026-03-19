@@ -12,4 +12,5 @@ public class MarkdownResponse {
 	private UUID id;
 	private String type;
 	private String content;
+	private boolean landscape;
 }

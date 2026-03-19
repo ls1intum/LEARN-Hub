@@ -510,25 +510,22 @@ public class ActivityController {
 	}
 
 	/**
-	 * Build ordered list of PDF parts, each rendered with the correct orientation.
-	 * Order: Deckblatt (portrait), Artikulationsschema (landscape), Hintergrundwissen (portrait).
+	 * Build ordered list of PDF parts, each rendered with the orientation stored in the DB.
+	 * Order: Deckblatt, Artikulationsschema, Hintergrundwissen.
 	 */
 	private List<byte[]> buildOrderedPdfParts(ActivityResponse activity) {
-		record TypeOrientation(String type, boolean landscape) {
-		}
-		TypeOrientation[] sections = {new TypeOrientation("deckblatt", false),
-				new TypeOrientation("artikulationsschema", true), new TypeOrientation("hintergrundwissen", false),};
+		String[] typeOrder = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
 
 		List<byte[]> parts = new ArrayList<>();
 		if (activity.getMarkdowns() == null) {
 			return parts;
 		}
 
-		for (TypeOrientation section : sections) {
+		for (String type : typeOrder) {
 			for (MarkdownResponse md : activity.getMarkdowns()) {
-				if (section.type().equals(md.getType()) && md.getContent() != null
+				if (type.equals(md.getType()) && md.getContent() != null
 						&& !md.getContent().trim().isEmpty()) {
-					parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), section.landscape()));
+					parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape()));
 				}
 			}
 		}

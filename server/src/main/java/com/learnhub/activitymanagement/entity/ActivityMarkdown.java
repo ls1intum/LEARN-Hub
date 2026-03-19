@@ -34,6 +34,9 @@ public class ActivityMarkdown {
 	@Column(columnDefinition = "TEXT")
 	private String content;
 
+	@Column(nullable = false)
+	private boolean landscape = false;
+
 	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;

@@ -346,7 +346,7 @@ export const ActivityEditPage: React.FC = () => {
                   setActiveMarkdownTab(value as MarkdownTab)
                 }
               >
-                <SelectTrigger className="w-[220px]">
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
