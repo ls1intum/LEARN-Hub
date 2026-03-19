@@ -2,6 +2,8 @@ package com.learnhub.documentmanagement.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.io.ByteArrayInputStream;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -140,5 +142,23 @@ class MarkdownToDocxServiceTest {
 		byte[] result = service.renderMarkdownToDocx(markdown);
 		assertThat(result).isNotNull();
 		assertThat(result.length).isGreaterThan(0);
+	}
+
+	@Test
+	void renderMarkdownToDocxIncludesHeaderAndFooterMetadata() throws Exception {
+		byte[] result = service.renderMarkdownToDocx("# Header", true, "Binary Search Game");
+
+		try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(result))) {
+			assertThat(document.getHeaderList()).hasSize(1);
+			assertThat(document.getFooterList()).hasSize(1);
+
+			String headerText = document.getHeaderList().get(0).getText();
+			String footerText = document.getFooterList().get(0).getText();
+
+			assertThat(headerText).contains("Binary Search Game");
+			assertThat(footerText).contains("LEARN-Hub - a TUM Applied Education Technologies application");
+			assertThat(footerText).contains("aet.cit.tum.de");
+			assertThat(footerText).contains("Page");
+		}
 	}
 }

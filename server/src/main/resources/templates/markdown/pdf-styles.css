@@ -15,11 +15,7 @@
     }
 
     @bottom-center {
-        content: "LEARN-Hub \2013 a TUM Applied Education Technologies application";
-        font-size: 7pt;
-        font-family: Helvetica, Arial, sans-serif;
-        color: #2f70b3;
-        vertical-align: middle;
+        content: element(footer-center);
     }
 
     @bottom-right {
@@ -36,13 +32,11 @@
     width: 100%;
     text-align: right;
     padding-bottom: 4pt;
-    border-bottom: 1pt solid #2f70b3;
 }
 
 #page-header .activity-name {
     font-size: 10pt;
-    font-weight: bold;
-    color: #2f70b3;
+    color: #777777;
     vertical-align: middle;
     margin-right: 6pt;
 }
@@ -50,12 +44,27 @@
 #page-header img {
     height: 22pt;
     vertical-align: middle;
+    border: none;
+    outline: none;
+    box-shadow: none;
 }
 
 #footer-date {
     position: running(footer-date);
     font-size: 7pt;
     color: #555555;
+}
+
+#footer-center {
+    position: running(footer-center);
+    font-size: 7pt;
+    font-family: Helvetica, Arial, sans-serif;
+    color: #555555;
+    text-align: center;
+}
+
+#footer-center div {
+    line-height: 1.2;
 }
 
 body {
@@ -65,11 +74,40 @@ body {
     padding: 0;
 }
 
-h1 { font-size: 18pt; text-align: center; margin-top: 0; margin-bottom: 10pt; color: #2f70b3; }
-h2 { font-size: 15pt; margin-top: 12pt; margin-bottom: 6pt; color: #2f70b3; }
-h3 { font-size: 13pt; margin-top: 10pt; margin-bottom: 4pt; color: #2f70b3; }
-h4, h5, h6 { font-size: 11pt; margin-top: 8pt; margin-bottom: 4pt; color: #2f70b3; }
-p { margin-bottom: 6pt; }
+h1 {
+    font-size: 18pt;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 10pt;
+    color: #2f70b3;
+}
+
+h2 {
+    font-size: 15pt;
+    margin-top: 12pt;
+    margin-bottom: 6pt;
+    color: #2f70b3;
+}
+
+h3 {
+    font-size: 13pt;
+    margin-top: 10pt;
+    margin-bottom: 4pt;
+    color: #2f70b3;
+}
+
+h4,
+h5,
+h6 {
+    font-size: 11pt;
+    margin-top: 8pt;
+    margin-bottom: 4pt;
+    color: #2f70b3;
+}
+
+p {
+    margin-bottom: 6pt;
+}
 
 table {
     width: 100%;
@@ -78,7 +116,10 @@ table {
     font-size: 9pt;
 }
 
-thead tr { background-color: #2f70b3; color: #ffffff; }
+thead tr {
+    background-color: #2f70b3;
+    color: #ffffff;
+}
 
 thead th {
     padding: 6pt;
@@ -87,8 +128,14 @@ thead th {
     border: 0.5pt solid #ffffff;
 }
 
-tbody tr:nth-child(even) { background-color: #eaf1f8; }
-tbody td { padding: 5pt; border: 0.5pt solid #C8C8C8; }
+tbody tr:nth-child(even) {
+    background-color: #eaf1f8;
+}
+
+tbody td {
+    padding: 5pt;
+    border: 0.5pt solid #C8C8C8;
+}
 
 code {
     font-family: Courier, monospace;
@@ -106,7 +153,10 @@ pre {
     white-space: pre-wrap;
 }
 
-pre code { background-color: transparent; padding: 0; }
+pre code {
+    background-color: transparent;
+    padding: 0;
+}
 
 blockquote {
     border-left: 2pt solid #2f70b3;
@@ -116,9 +166,32 @@ blockquote {
     margin-bottom: 6pt;
 }
 
-a { color: #2f70b3; text-decoration: underline; }
-hr { border: none; border-bottom: 0.5pt solid #2f70b3; margin-bottom: 10pt; }
+a {
+    color: #2f70b3;
+    text-decoration: underline;
+}
 
-ul, ol { margin-bottom: 6pt; padding-left: 20pt; }
-ul ul, ol ol, ul ol, ol ul { margin-top: 2pt; margin-bottom: 2pt; padding-left: 20pt; }
-li { margin-bottom: 2pt; }
+hr {
+    border: none;
+    border-bottom: 0.5pt solid #2f70b3;
+    margin-bottom: 10pt;
+}
+
+ul,
+ol {
+    margin-bottom: 6pt;
+    padding-left: 20pt;
+}
+
+ul ul,
+ol ol,
+ul ol,
+ol ul {
+    margin-top: 2pt;
+    margin-bottom: 2pt;
+    padding-left: 20pt;
+}
+
+li {
+    margin-bottom: 2pt;
+}

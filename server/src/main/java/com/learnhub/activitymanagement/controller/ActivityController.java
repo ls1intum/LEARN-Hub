@@ -492,7 +492,8 @@ public class ActivityController {
 			}
 
 			// DOCX: render as landscape (Artikulationsschema is the main content)
-			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(combinedMarkdown);
+			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(combinedMarkdown, true,
+					activity.getName() != null ? activity.getName() : "");
 
 			String activityName = activity.getName() != null ? activity.getName() : "activity";
 			String downloadName = sanitizeDownloadFilename(activityName) + ".docx";
