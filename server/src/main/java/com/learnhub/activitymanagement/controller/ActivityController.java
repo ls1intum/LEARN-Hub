@@ -492,7 +492,8 @@ public class ActivityController {
 			}
 
 			// DOCX: render as landscape (Artikulationsschema is the main content)
-			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(combinedMarkdown);
+			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(combinedMarkdown, true,
+					activity.getName() != null ? activity.getName() : "");
 
 			String activityName = activity.getName() != null ? activity.getName() : "activity";
 			String downloadName = sanitizeDownloadFilename(activityName) + ".docx";
@@ -517,6 +518,7 @@ public class ActivityController {
 	 */
 	private List<byte[]> buildOrderedPdfParts(ActivityResponse activity) {
 		String[] typeOrder = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
+		String activityName = activity.getName() != null ? activity.getName() : "";
 
 		List<byte[]> parts = new ArrayList<>();
 		if (activity.getMarkdowns() == null) {
@@ -526,7 +528,8 @@ public class ActivityController {
 		for (String type : typeOrder) {
 			for (MarkdownResponse md : activity.getMarkdowns()) {
 				if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
-					parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape()));
+					parts.add(
+							markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape(), activityName));
 				}
 			}
 		}
