@@ -183,27 +183,36 @@ public class ActivityService {
 		activity.setResourcesNeeded(activityUpdate.getResourcesNeeded());
 		activity.setTopics(activityUpdate.getTopics());
 
-		// Update artikulationsschema markdown if provided
-		Optional<ActivityMarkdown> newMarkdown = activityUpdate.getMarkdowns().stream()
-				.filter(m -> m.getType() == MarkdownType.ARTIKULATIONSSCHEMA).findFirst();
+		// Update markdowns if provided
+		updateMarkdownByType(activity, activityUpdate, MarkdownType.ARTIKULATIONSSCHEMA);
+		updateMarkdownByType(activity, activityUpdate, MarkdownType.DECKBLATT);
+		updateMarkdownByType(activity, activityUpdate, MarkdownType.HINTERGRUNDWISSEN);
+
+		Activity saved = activityRepository.save(activity);
+		return mapToResponse(saved);
+	}
+
+	private void updateMarkdownByType(Activity activity, Activity activityUpdate, MarkdownType type) {
+		Optional<ActivityMarkdown> newMarkdown = activityUpdate.getMarkdowns().stream().filter(m -> m.getType() == type)
+				.findFirst();
 		if (newMarkdown.isPresent()) {
 			String newContent = newMarkdown.get().getContent();
-			Optional<ActivityMarkdown> existing = activity.getMarkdowns().stream()
-					.filter(m -> m.getType() == MarkdownType.ARTIKULATIONSSCHEMA).findFirst();
+			boolean newLandscape = newMarkdown.get().isLandscape();
+			Optional<ActivityMarkdown> existing = activity.getMarkdowns().stream().filter(m -> m.getType() == type)
+					.findFirst();
 			if (existing.isPresent()) {
 				existing.get().setContent(newContent);
+				existing.get().setLandscape(newLandscape);
 			} else {
 				ActivityMarkdown md = new ActivityMarkdown();
 				md.setActivity(activity);
-				md.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+				md.setType(type);
 				md.setContent(newContent);
+				md.setLandscape(newLandscape);
 				md.setCreatedAt(LocalDateTime.now());
 				activity.getMarkdowns().add(md);
 			}
 		}
-
-		Activity saved = activityRepository.save(activity);
-		return mapToResponse(saved);
 	}
 
 	/**
@@ -292,8 +301,29 @@ public class ActivityService {
 			actMd.setActivity(activity);
 			actMd.setType(MarkdownType.ARTIKULATIONSSCHEMA);
 			actMd.setContent(data.get("artikulationsschemaMarkdown").toString());
+			actMd.setLandscape(true);
 			actMd.setCreatedAt(LocalDateTime.now());
 			activity.getMarkdowns().add(actMd);
+		}
+
+		if (data.get("deckblattMarkdown") != null) {
+			ActivityMarkdown deckblattMd = new ActivityMarkdown();
+			deckblattMd.setActivity(activity);
+			deckblattMd.setType(MarkdownType.DECKBLATT);
+			deckblattMd.setContent(data.get("deckblattMarkdown").toString());
+			deckblattMd.setLandscape(false);
+			deckblattMd.setCreatedAt(LocalDateTime.now());
+			activity.getMarkdowns().add(deckblattMd);
+		}
+
+		if (data.get("hintergrundwissenMarkdown") != null) {
+			ActivityMarkdown hintergrundwissenMd = new ActivityMarkdown();
+			hintergrundwissenMd.setActivity(activity);
+			hintergrundwissenMd.setType(MarkdownType.HINTERGRUNDWISSEN);
+			hintergrundwissenMd.setContent(data.get("hintergrundwissenMarkdown").toString());
+			hintergrundwissenMd.setLandscape(false);
+			hintergrundwissenMd.setCreatedAt(LocalDateTime.now());
+			activity.getMarkdowns().add(hintergrundwissenMd);
 		}
 
 		return activity;
@@ -332,7 +362,7 @@ public class ActivityService {
 		// Map all markdowns to response list
 		List<MarkdownResponse> mdResponses = activity
 				.getMarkdowns().stream().map(m -> new MarkdownResponse(m.getId(),
-						m.getType() != null ? m.getType().getValue() : null, m.getContent()))
+						m.getType() != null ? m.getType().getValue() : null, m.getContent(), m.isLandscape()))
 				.collect(Collectors.toList());
 		response.setMarkdowns(mdResponses);
 

@@ -21,11 +21,13 @@ public class MarkdownToHtmlService {
 
 	private static final String HTML_TEMPLATE_PATH = "templates/markdown/html-document.html";
 	private static final String CSS_TEMPLATE_PATH = "templates/markdown/pdf-styles.css";
+	private static final String CSS_PORTRAIT_TEMPLATE_PATH = "templates/markdown/pdf-styles-portrait.css";
 
 	private final Parser parser;
 	private final HtmlRenderer renderer;
 	private final String htmlTemplate;
 	private final String cssTemplate;
+	private final String cssPortraitTemplate;
 
 	public MarkdownToHtmlService() {
 		var extensions = List.of(TablesExtension.create());
@@ -33,16 +35,31 @@ public class MarkdownToHtmlService {
 		this.renderer = HtmlRenderer.builder().extensions(extensions).build();
 		this.htmlTemplate = loadTemplate(HTML_TEMPLATE_PATH);
 		this.cssTemplate = loadTemplate(CSS_TEMPLATE_PATH);
+		this.cssPortraitTemplate = loadTemplate(CSS_PORTRAIT_TEMPLATE_PATH);
 	}
 
 	/**
 	 * Convert Markdown to a complete, styled HTML document suitable for PDF
-	 * conversion via iText html2pdf.
+	 * conversion via iText html2pdf. Uses landscape orientation by default.
 	 */
 	public String renderMarkdownToHtml(String markdown) {
+		return renderMarkdownToHtml(markdown, true);
+	}
+
+	/**
+	 * Convert Markdown to a complete, styled HTML document with specified
+	 * orientation.
+	 *
+	 * @param markdown
+	 *            the markdown content
+	 * @param landscape
+	 *            true for landscape, false for portrait
+	 */
+	public String renderMarkdownToHtml(String markdown, boolean landscape) {
 		Node document = parser.parse(markdown);
 		String body = renderer.render(document);
-		return wrapHtml(body);
+		String css = landscape ? cssTemplate : cssPortraitTemplate;
+		return htmlTemplate.replace("{{styles}}", css).replace("{{body}}", body);
 	}
 
 	/**
@@ -51,10 +68,6 @@ public class MarkdownToHtmlService {
 	 */
 	public Node parseToNode(String markdown) {
 		return parser.parse(markdown);
-	}
-
-	private String wrapHtml(String body) {
-		return htmlTemplate.replace("{{styles}}", cssTemplate).replace("{{body}}", body);
 	}
 
 	private String loadTemplate(String path) {

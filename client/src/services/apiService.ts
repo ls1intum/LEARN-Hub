@@ -11,6 +11,7 @@ import type {
   UploadPdfDraftResponse,
   UploadPdfDraftOptions,
   ArtikulationsschemaResponse,
+  ActivityMarkdownsResponse,
   CreateActivityRequest,
   UpdateActivityRequest,
   UserRequest,
@@ -431,16 +432,75 @@ export class ApiService {
   }
 
   /**
+   * Generate all activity markdowns (Deckblatt, Artikulationsschema, Hintergrundwissen)
+   * from an uploaded PDF. Sends user-adjusted metadata to inform the generation.
+   */
+  static async generateActivityMarkdowns(
+    documentId: string,
+    metadata?: Record<string, unknown>,
+    types?: string[],
+  ) {
+    return this.request<ActivityMarkdownsResponse>(
+      "/api/activities/generate-activity-markdowns",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId: documentId,
+          metadata: metadata,
+          types: types,
+        }),
+      },
+    );
+  }
+
+  /**
+   * Download combined activity PDF (Deckblatt + Artikulationsschema + Hintergrundwissen)
+   */
+  static async downloadActivityPdf(activityId: string) {
+    const response = await authService.makeAuthenticatedRequest(
+      `/api/activities/${activityId}/download-pdf`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.blob();
+  }
+
+  /**
+   * Download combined activity DOCX (Deckblatt + Artikulationsschema + Hintergrundwissen)
+   */
+  static async downloadActivityDocx(activityId: string) {
+    const response = await authService.makeAuthenticatedRequest(
+      `/api/activities/${activityId}/download-docx`,
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.blob();
+  }
+
+  /**
    * Render markdown text to a preview PDF.
    * Returns a Blob containing the PDF bytes.
+   *
+   * @param markdown - the markdown text to render
+   * @param orientation - optional orientation: "portrait" or "landscape" (default: "landscape")
    */
-  static async previewMarkdownPdf(markdown: string) {
+  static async previewMarkdownPdf(
+    markdown: string,
+    orientation?: "portrait" | "landscape",
+  ) {
     const response = await authService.makeAuthenticatedRequest(
       "/api/markdowns/preview-pdf",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markdown }),
+        body: JSON.stringify({ markdown, orientation }),
       },
     );
 

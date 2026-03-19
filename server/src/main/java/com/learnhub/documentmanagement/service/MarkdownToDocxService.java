@@ -35,17 +35,35 @@ public class MarkdownToDocxService {
 	}
 
 	/**
-	 * Render markdown content to DOCX bytes.
+	 * Render markdown content to DOCX bytes (default landscape).
 	 */
 	public byte[] renderMarkdownToDocx(String markdown) {
+		return renderMarkdownToDocx(markdown, true);
+	}
+
+	/**
+	 * Render markdown content to DOCX bytes with specified orientation.
+	 *
+	 * @param markdown
+	 *            the markdown content
+	 * @param landscape
+	 *            true for landscape, false for portrait
+	 */
+	public byte[] renderMarkdownToDocx(String markdown, boolean landscape) {
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream(); XWPFDocument document = new XWPFDocument()) {
 
-			// Set default page to landscape
 			CTSectPr sectPr = document.getDocument().getBody().addNewSectPr();
 			CTPageSz pageSize = sectPr.addNewPgSz();
-			pageSize.setW(BigInteger.valueOf(templateSettings.pageWidthTwips()));
-			pageSize.setH(BigInteger.valueOf(templateSettings.pageHeightTwips()));
-			pageSize.setOrient(templateSettings.pageOrientation());
+			if (landscape) {
+				pageSize.setW(BigInteger.valueOf(templateSettings.pageWidthTwips()));
+				pageSize.setH(BigInteger.valueOf(templateSettings.pageHeightTwips()));
+				pageSize.setOrient(STPageOrientation.LANDSCAPE);
+			} else {
+				// Portrait: swap width/height compared to landscape
+				pageSize.setW(BigInteger.valueOf(templateSettings.pageHeightTwips()));
+				pageSize.setH(BigInteger.valueOf(templateSettings.pageWidthTwips()));
+				pageSize.setOrient(STPageOrientation.PORTRAIT);
+			}
 
 			Node docNode = markdownToHtmlService.parseToNode(markdown);
 			renderNode(document, docNode);

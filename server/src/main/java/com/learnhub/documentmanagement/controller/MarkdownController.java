@@ -50,7 +50,7 @@ public class MarkdownController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown content is empty"));
 			}
 
-			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content);
+			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape());
 
 			String downloadName = sanitizeFilename(markdown.getType().getValue()) + ".pdf";
 
@@ -81,7 +81,7 @@ public class MarkdownController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown content is empty"));
 			}
 
-			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(content);
+			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(content, markdown.isLandscape());
 
 			String downloadName = sanitizeFilename(markdown.getType().getValue()) + ".docx";
 
@@ -110,7 +110,10 @@ public class MarkdownController {
 				return ResponseEntity.badRequest().body(ErrorResponse.of("markdown is required"));
 			}
 
-			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown);
+			// Preview uses landscape by default; orientation param is optional
+			String orientation = request.get("orientation");
+			boolean landscape = orientation == null || !"portrait".equalsIgnoreCase(orientation);
+			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown, landscape);
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_PDF);

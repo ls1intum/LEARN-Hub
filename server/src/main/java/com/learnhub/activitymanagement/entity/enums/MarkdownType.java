@@ -2,7 +2,7 @@ package com.learnhub.activitymanagement.entity.enums;
 
 public enum MarkdownType {
 
-	ARTIKULATIONSSCHEMA("artikulationsschema");
+	ARTIKULATIONSSCHEMA("artikulationsschema"), DECKBLATT("deckblatt"), HINTERGRUNDWISSEN("hintergrundwissen");
 
 	private final String value;
 

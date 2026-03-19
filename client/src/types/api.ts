@@ -23,6 +23,14 @@ export interface ArtikulationsschemaResponse {
   documentId: string;
 }
 
+// Activity markdowns generation response (all three types)
+export interface ActivityMarkdownsResponse {
+  documentId: string;
+  deckblattMarkdown?: string;
+  artikulationsschemaMarkdown?: string;
+  hintergrundwissenMarkdown?: string;
+}
+
 // Activity creation request
 export interface CreateActivityRequest {
   name: string;
@@ -42,6 +50,8 @@ export interface CreateActivityRequest {
   topics: string[];
   documentId?: number | string;
   artikulationsschemaMarkdown?: string;
+  deckblattMarkdown?: string;
+  hintergrundwissenMarkdown?: string;
 }
 
 // Activity update request
@@ -62,6 +72,8 @@ export interface UpdateActivityRequest {
   physicalEnergy?: string;
   topics: string[];
   artikulationsschemaMarkdown?: string;
+  deckblattMarkdown?: string;
+  hintergrundwissenMarkdown?: string;
 }
 
 // User creation/update request

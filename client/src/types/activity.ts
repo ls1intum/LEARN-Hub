@@ -11,6 +11,7 @@ export interface ActivityMarkdown {
   id: string;
   type: string;
   content: string;
+  landscape: boolean;
 }
 
 export interface BreakAfter {

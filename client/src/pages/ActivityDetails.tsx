@@ -111,6 +111,26 @@ export const ActivityDetails: React.FC = () => {
     });
   };
 
+  const handleOpenActivityPdf = async () => {
+    if (!activity?.id) return;
+
+    await documentApi.call(async () => {
+      await openBlobInNewTab(() => apiService.downloadActivityPdf(activity.id));
+    });
+  };
+
+  const handleOpenActivityDocx = async () => {
+    if (!activity?.id) return;
+
+    await documentApi.call(async () => {
+      const filename = `${activity.name || "activity"}.docx`;
+      await downloadBlob(
+        () => apiService.downloadActivityDocx(activity.id),
+        filename,
+      );
+    });
+  };
+
   const handleBack = () => {
     if (fromBrowser) {
       navigate(-1); // Go back to library when navigated from there
@@ -355,13 +375,13 @@ export const ActivityDetails: React.FC = () => {
             </div>
           )}
 
-          {/* Documents & Markdowns */}
+          {/* Downloads */}
           {((activity.documents && activity.documents.length > 0) ||
             (activity.markdowns && activity.markdowns.length > 0)) && (
             <div className="rounded-lg border border-border bg-muted/20">
               <div className="border-b border-border px-4 py-3">
                 <h3 className="text-lg font-semibold text-card-foreground">
-                  Documents & Markdowns
+                  Downloads
                 </h3>
               </div>
 
@@ -443,6 +463,48 @@ export const ActivityDetails: React.FC = () => {
                   </div>
                 </div>
               ))}
+
+              {/* Download Activity (combined) */}
+              {activity.markdowns && activity.markdowns.length > 0 && (
+                <div className="flex flex-col gap-4 border-t border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between bg-muted/30">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 text-card-foreground">
+                      <Download className="h-4 w-4 text-primary" />
+                      <p className="font-medium">Download Activity</p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Combined document (Deckblatt + Artikulationsschema +
+                      Hintergrundwissen)
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 sm:shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={documentApi.isLoading}
+                      onClick={handleOpenActivityPdf}
+                      title="Open combined activity as PDF"
+                      className="flex items-center gap-1.5"
+                    >
+                      <Download className="h-4 w-4 text-red-600" />
+                      <span>PDF</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={documentApi.isLoading}
+                      onClick={handleOpenActivityDocx}
+                      title="Download combined activity as Word document"
+                      className="flex items-center gap-1.5"
+                    >
+                      <Download className="h-4 w-4 text-blue-600" />
+                      <span>DOCX</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

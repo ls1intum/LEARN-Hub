@@ -28,6 +28,12 @@ public class LLMService {
 	@Value("classpath:prompts/ArtikulationsschemaGeneration.st")
 	private Resource artikulationsschemaPromptResource;
 
+	@Value("classpath:prompts/DeckblattGeneration.st")
+	private Resource deckblattPromptResource;
+
+	@Value("classpath:prompts/HintergrundwissenGeneration.st")
+	private Resource hintergrundwissenPromptResource;
+
 	private final ChatClient chatClient;
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -87,6 +93,63 @@ public class LLMService {
 			return extractMarkdownPayload(responseText);
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to generate Artikulationsschema: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Generate a Deckblatt (cover page) from PDF text. Returns markdown text.
+	 *
+	 * @param pdfText
+	 *            extracted text from the PDF
+	 * @param metadata
+	 *            user-adjusted activity metadata to inform the generation
+	 */
+	public String generateDeckblatt(String pdfText, Map<String, Object> metadata) {
+		if (chatClient == null) {
+			throw new IllegalStateException("ChatClient is not available. Please configure a ChatModel.");
+		}
+
+		String metadataSection = buildMetadataSection(metadata);
+		String promptText = new PromptTemplate(deckblattPromptResource)
+				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
+
+		try {
+			String responseText = chatClient.prompt().user(promptText).call().content();
+
+			logger.debug("LLM Deckblatt Response: {}", responseText);
+
+			return extractMarkdownPayload(responseText);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to generate Deckblatt: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Generate Hintergrundwissen (background knowledge) from PDF text. Returns
+	 * markdown text.
+	 *
+	 * @param pdfText
+	 *            extracted text from the PDF
+	 * @param metadata
+	 *            user-adjusted activity metadata to inform the generation
+	 */
+	public String generateHintergrundwissen(String pdfText, Map<String, Object> metadata) {
+		if (chatClient == null) {
+			throw new IllegalStateException("ChatClient is not available. Please configure a ChatModel.");
+		}
+
+		String metadataSection = buildMetadataSection(metadata);
+		String promptText = new PromptTemplate(hintergrundwissenPromptResource)
+				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
+
+		try {
+			String responseText = chatClient.prompt().user(promptText).call().content();
+
+			logger.debug("LLM Hintergrundwissen Response: {}", responseText);
+
+			return extractMarkdownPayload(responseText);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to generate Hintergrundwissen: " + e.getMessage(), e);
 		}
 	}
 
