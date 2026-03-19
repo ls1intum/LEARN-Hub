@@ -53,8 +53,12 @@ public class MarkdownToDocxService {
 	private static final BigInteger MARGIN_RIGHT = BigInteger.valueOf(600);
 	private static final BigInteger HEADER_FOOTER_MARGIN = BigInteger.valueOf(720);
 
-	/** Logo dimensions in EMU: width=110pt (~1397000 EMU), height=24pt (~304800 EMU). */
-	private static final long LOGO_WIDTH_EMU = 1397000;
+	/**
+	 * Logo dimensions in EMU. Matches the PDF CSS (height: 22pt). The source PNG is
+	 * 107×112 pixels, so width is calculated from the aspect ratio.
+	 */
+	private static final long LOGO_HEIGHT_EMU = 279400; // 22pt × 12700 EMU/pt
+	private static final long LOGO_WIDTH_EMU = 267208; // 22pt × (107/112) × 12700 EMU/pt
 
 	private static final ObjectFactory WML_FACTORY = Context.getWmlObjectFactory();
 
@@ -119,6 +123,55 @@ public class MarkdownToDocxService {
 		} catch (Exception e) {
 			logger.error("Failed to render markdown to DOCX: {}", e.getMessage(), e);
 			throw new RuntimeException("Failed to render markdown to DOCX: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Render multiple markdown sections into a single DOCX with per-section
+	 * orientation (portrait/landscape). Each section is separated by a section
+	 * break. The header and footer are shared across all sections.
+	 *
+	 * @param markdowns
+	 *            the markdown contents, in order
+	 * @param landscapes
+	 *            whether each section is landscape, in the same order
+	 * @param activityName
+	 *            the activity name shown in the page header
+	 */
+	public byte[] renderMergedDocx(List<String> markdowns, List<Boolean> landscapes, String activityName) {
+		if (markdowns.size() != landscapes.size()) {
+			throw new IllegalArgumentException("markdowns and landscapes lists must have the same size");
+		}
+		try {
+			WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.createPackage();
+			XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
+
+			for (int i = 0; i < markdowns.size(); i++) {
+				String html = markdownToHtmlService.renderMarkdownToDocxHtml(markdowns.get(i));
+				List<Object> elements = importer.convert(html, null);
+				wordMLPackage.getMainDocumentPart().getContent().addAll(elements);
+
+				// Add a section break after each section EXCEPT the last one.
+				// The last section's properties are set in the body-level SectPr.
+				if (i < markdowns.size() - 1) {
+					addSectionBreak(wordMLPackage, landscapes.get(i));
+				}
+			}
+
+			// Configure the body-level SectPr for the last section's orientation
+			boolean lastLandscape = landscapes.get(landscapes.size() - 1);
+			SectPr sectPr = configurePage(wordMLPackage, lastLandscape);
+
+			// Add header/footer to the body-level SectPr (applies to all sections)
+			configureHeaderAndFooter(wordMLPackage, sectPr, activityName);
+
+			try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+				wordMLPackage.save(baos);
+				return baos.toByteArray();
+			}
+		} catch (Exception e) {
+			logger.error("Failed to render merged markdown to DOCX: {}", e.getMessage(), e);
+			throw new RuntimeException("Failed to render merged markdown to DOCX: " + e.getMessage(), e);
 		}
 	}
 
@@ -211,7 +264,11 @@ public class MarkdownToDocxService {
 			byte[] logoBytes = logoStream.readAllBytes();
 			BinaryPartAbstractImage imagePart = BinaryPartAbstractImage.createImagePart(wordMLPackage, headerPart,
 					logoBytes);
-			Inline inline = imagePart.createImageInline("header-logo", "LEARN-Hub Logo", 1, 2, LOGO_WIDTH_EMU, false);
+			Inline inline = imagePart.createImageInline("header-logo", "LEARN-Hub Logo", 1, 2, false);
+			// Manually set logo dimensions (createImageInline miscalculates for PNGs
+			// without DPI metadata)
+			inline.getExtent().setCx(LOGO_WIDTH_EMU);
+			inline.getExtent().setCy(LOGO_HEIGHT_EMU);
 			Drawing drawing = WML_FACTORY.createDrawing();
 			drawing.getAnchorOrInline().add(inline);
 			R imageRun = WML_FACTORY.createR();

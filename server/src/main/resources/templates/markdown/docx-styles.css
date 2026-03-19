@@ -57,6 +57,8 @@ thead th {
     font-size: 10pt;
     font-weight: bold;
     border: 0.5pt solid #ffffff;
+    background-color: #2f70b3;
+    color: #ffffff;
 }
 
 tbody td {
