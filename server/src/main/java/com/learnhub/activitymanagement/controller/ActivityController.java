@@ -20,7 +20,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -519,7 +519,7 @@ public class ActivityController {
 		TypeOrientation[] sections = {new TypeOrientation("deckblatt", false),
 				new TypeOrientation("artikulationsschema", true), new TypeOrientation("hintergrundwissen", false),};
 
-		java.util.List<byte[]> parts = new java.util.ArrayList<>();
+		List<byte[]> parts = new ArrayList<>();
 		if (activity.getMarkdowns() == null) {
 			return parts;
 		}
