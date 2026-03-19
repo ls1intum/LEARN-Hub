@@ -93,6 +93,13 @@ export const ActivitySetupPage: React.FC = () => {
   // Final save state
   const [isSaving, setIsSaving] = useState(false);
 
+  /** Whether the currently active markdown tab already has content */
+  const activeTabHasContent =
+    (activeMarkdownTab === "deckblatt" && !!deckblattMarkdown) ||
+    (activeMarkdownTab === "artikulationsschema" &&
+      !!artikulationsschemaMarkdown) ||
+    (activeMarkdownTab === "hintergrundwissen" && !!hintergrundwissenMarkdown);
+
   // ─── Upload Handlers ────────────────────────────────────────────
 
   const handleFileSelect = (file: File) => {
@@ -646,22 +653,12 @@ export const ActivitySetupPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    {(activeMarkdownTab === "deckblatt" &&
-                      deckblattMarkdown) ||
-                    (activeMarkdownTab === "artikulationsschema" &&
-                      artikulationsschemaMarkdown) ||
-                    (activeMarkdownTab === "hintergrundwissen" &&
-                      hintergrundwissenMarkdown) ? (
+                    {activeTabHasContent ? (
                       <RefreshCw className="h-4 w-4" />
                     ) : (
                       <Sparkles className="h-4 w-4" />
                     )}
-                    {(activeMarkdownTab === "deckblatt" &&
-                      deckblattMarkdown) ||
-                    (activeMarkdownTab === "artikulationsschema" &&
-                      artikulationsschemaMarkdown) ||
-                    (activeMarkdownTab === "hintergrundwissen" &&
-                      hintergrundwissenMarkdown)
+                    {activeTabHasContent
                       ? `Re-generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`
                       : `Generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`}
                   </>

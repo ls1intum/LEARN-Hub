@@ -86,6 +86,13 @@ export const ActivityEditPage: React.FC = () => {
   const documentId =
     activity?.documents?.find((d) => d.type === "source_pdf")?.id || null;
 
+  /** Whether the currently active markdown tab already has content */
+  const activeTabHasContent =
+    (activeMarkdownTab === "deckblatt" && !!deckblattMarkdown) ||
+    (activeMarkdownTab === "artikulationsschema" &&
+      !!artikulationsschemaMarkdown) ||
+    (activeMarkdownTab === "hintergrundwissen" && !!hintergrundwissenMarkdown);
+
   // ─── Load Activity ──────────────────────────────────────────────
 
   useEffect(() => {
@@ -365,7 +372,7 @@ export const ActivityEditPage: React.FC = () => {
                     Edit Activity Metadata
                   </CardTitle>
                   <CardDescription>
-                    Update the metadata for &quot;{activity.name}&quot;.
+                    Update the metadata for &ldquo;{activity.name}&rdquo;.
                   </CardDescription>
                 </div>
                 {documentId && (
@@ -486,22 +493,12 @@ export const ActivityEditPage: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      {(activeMarkdownTab === "deckblatt" &&
-                        deckblattMarkdown) ||
-                      (activeMarkdownTab === "artikulationsschema" &&
-                        artikulationsschemaMarkdown) ||
-                      (activeMarkdownTab === "hintergrundwissen" &&
-                        hintergrundwissenMarkdown) ? (
+                      {activeTabHasContent ? (
                         <RefreshCw className="h-4 w-4" />
                       ) : (
                         <Sparkles className="h-4 w-4" />
                       )}
-                      {(activeMarkdownTab === "deckblatt" &&
-                        deckblattMarkdown) ||
-                      (activeMarkdownTab === "artikulationsschema" &&
-                        artikulationsschemaMarkdown) ||
-                      (activeMarkdownTab === "hintergrundwissen" &&
-                        hintergrundwissenMarkdown)
+                      {activeTabHasContent
                         ? `Re-generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`
                         : `Generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`}
                     </>
