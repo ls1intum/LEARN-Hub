@@ -32,12 +32,13 @@ public class MarkdownToHtmlService {
 	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 
 	/**
-	 * Patterns to convert HTML5 void elements to XHTML self-closing form. Matches
-	 * {@code <br>}, {@code <hr>}, and {@code <img ...>} (with optional attributes)
-	 * that are NOT already self-closed.
+	 * Pattern to match HTML5 void elements that are NOT already self-closed.
+	 * Matches {@code <br>}, {@code <hr>}, {@code <img ...>} etc. but not
+	 * {@code <br />} or {@code <br/>}. The negative lookbehind {@code (?<!/)}
+	 * before {@code >} ensures already self-closed tags are excluded.
 	 */
 	private static final Pattern VOID_ELEMENT_PATTERN = Pattern
-			.compile("<(br|hr|img|input|col|source|track|wbr)(\\s[^>]*?)?>", Pattern.CASE_INSENSITIVE);
+			.compile("<(br|hr|img|input|col|source|track|wbr)(\\s[^>]*?)?(?<!/)>", Pattern.CASE_INSENSITIVE);
 
 	private final Parser parser;
 	private final HtmlRenderer renderer;
@@ -141,10 +142,6 @@ public class MarkdownToHtmlService {
 		return VOID_ELEMENT_PATTERN.matcher(html).replaceAll(match -> {
 			String tag = match.group(1);
 			String attrs = match.group(2);
-			if (attrs != null && attrs.endsWith("/")) {
-				// Already self-closed
-				return match.group();
-			}
 			return "<" + tag + (attrs != null ? attrs : "") + " />";
 		});
 	}
