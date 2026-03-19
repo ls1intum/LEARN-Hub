@@ -120,9 +120,10 @@ public class MarkdownToDocxService {
 				break;
 		}
 		renderInlineContent(para, heading);
-		// Apply font size for heading
+		// Apply font size and color for heading
 		for (XWPFRun run : para.getRuns()) {
 			run.setBold(true);
+			run.setColor(templateSettings.headingColor());
 			switch (level) {
 				case 1 :
 					run.setFontSize(templateSettings.heading1FontSize());
@@ -434,7 +435,7 @@ public class MarkdownToDocxService {
 	record DocxTemplateSettings(int pageWidthTwips, int pageHeightTwips, STPageOrientation.Enum pageOrientation,
 			String heading1Style, int heading1FontSize, String heading2Style, int heading2FontSize,
 			String heading3Style, int heading3FontSize, String defaultHeadingStyle, int defaultHeadingFontSize,
-			int listIndentLeft, int codeBlockIndentLeft, String codeFontFamily, int codeFontSize,
+			String headingColor, int listIndentLeft, int codeBlockIndentLeft, String codeFontFamily, int codeFontSize,
 			int blockQuoteIndentLeft, Borders blockQuoteBorderLeft, Borders thematicBreakBorderBottom,
 			int tableWidthPct, String tableHeaderBackground, String tableHeaderFontColor, int tableHeaderFontSize,
 			int tableBodyFontSize, String tableBodyAlternateBackground, String linkColor,
@@ -456,6 +457,7 @@ public class MarkdownToDocxService {
 					getString(properties, "heading.2.style"), getInt(properties, "heading.2.fontSize"),
 					getString(properties, "heading.3.style"), getInt(properties, "heading.3.fontSize"),
 					getString(properties, "heading.default.style"), getInt(properties, "heading.default.fontSize"),
+					getString(properties, "heading.color"),
 					getInt(properties, "list.indent.left"), getInt(properties, "code.block.indent.left"),
 					getString(properties, "code.font.family"), getInt(properties, "code.font.size"),
 					getInt(properties, "blockquote.indent.left"),

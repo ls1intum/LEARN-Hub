@@ -50,7 +50,8 @@ public class MarkdownController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown content is empty"));
 			}
 
-			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape());
+			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape(),
+					markdown.getActivity() != null ? markdown.getActivity().getName() : "");
 
 			String downloadName = sanitizeFilename(markdown.getType().getValue()) + ".pdf";
 

@@ -31,7 +31,7 @@ public class MarkdownToPdfService {
 	 * Render markdown content to PDF bytes (default landscape).
 	 */
 	public byte[] renderMarkdownToPdf(String markdown) {
-		return renderMarkdownToPdf(markdown, true);
+		return renderMarkdownToPdf(markdown, true, "");
 	}
 
 	/**
@@ -43,7 +43,22 @@ public class MarkdownToPdfService {
 	 *            true for landscape, false for portrait
 	 */
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape) {
-		String html = markdownToHtmlService.renderMarkdownToHtml(markdown, landscape);
+		return renderMarkdownToPdf(markdown, landscape, "");
+	}
+
+	/**
+	 * Render markdown content to PDF bytes with specified orientation and activity
+	 * name in header.
+	 *
+	 * @param markdown
+	 *            the markdown content
+	 * @param landscape
+	 *            true for landscape, false for portrait
+	 * @param activityName
+	 *            the activity name shown in the page header
+	 */
+	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName) {
+		String html = markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName);
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 			HtmlConverter.convertToPdf(html, baos);
 			return baos.toByteArray();
