@@ -110,16 +110,13 @@ public class MarkdownToDocxService {
 	}
 
 	private void configureHeader(XWPFHeader header, String activityName) throws IOException {
-		XWPFTable table = header.createTable(1, 2);
-		configureBorderlessTable(table, new int[]{7600, 2400});
+		XWPFTable table = header.createTable(1, 1);
+		configureBorderlessTable(table, new int[]{10000});
 
-		XWPFTableCell leftCell = table.getRow(0).getCell(0);
-		setCellWidth(leftCell, 7600);
-		setHeaderCellText(leftCell, activityName);
-
-		XWPFTableCell rightCell = table.getRow(0).getCell(1);
-		setCellWidth(rightCell, 2400);
-		setHeaderLogo(rightCell);
+		XWPFTableCell cell = table.getRow(0).getCell(0);
+		setCellWidth(cell, 10000);
+		setCellVerticalAlignment(cell, STVerticalJc.CENTER);
+		setHeaderContent(cell, activityName);
 	}
 
 	private void configureFooter(XWPFFooter footer) {
@@ -175,32 +172,32 @@ public class MarkdownToDocxService {
 		width.setW(BigInteger.valueOf(widthTwips));
 	}
 
-	private void setHeaderCellText(XWPFTableCell cell, String activityName) {
-		clearCell(cell);
-		XWPFParagraph paragraph = cell.addParagraph();
-		paragraph.setAlignment(ParagraphAlignment.LEFT);
-		paragraph.setBorderBottom(Borders.SINGLE);
-
-		XWPFRun run = paragraph.createRun();
-		run.setText(activityName != null ? activityName : "");
-		run.setBold(true);
-		run.setFontSize(10);
-		run.setColor("333333");
-	}
-
-	private void setHeaderLogo(XWPFTableCell cell) throws IOException {
+	private void setHeaderContent(XWPFTableCell cell, String activityName) throws IOException {
 		clearCell(cell);
 		XWPFParagraph paragraph = cell.addParagraph();
 		paragraph.setAlignment(ParagraphAlignment.RIGHT);
-		paragraph.setBorderBottom(Borders.SINGLE);
+
+		XWPFRun textRun = paragraph.createRun();
+		textRun.setText(activityName != null ? activityName : "");
+		textRun.setFontSize(10);
+		textRun.setColor("555555");
 
 		try (InputStream inputStream = new ClassPathResource(LOGO_PATH).getInputStream()) {
-			XWPFRun run = paragraph.createRun();
-			run.addPicture(inputStream, org.apache.poi.xwpf.usermodel.Document.PICTURE_TYPE_PNG, "header-logo.png",
+			// Add spacing between activity name and logo
+			XWPFRun spacerRun = paragraph.createRun();
+			spacerRun.setText("  ");
+			XWPFRun imageRun = paragraph.createRun();
+			imageRun.addPicture(inputStream, org.apache.poi.xwpf.usermodel.Document.PICTURE_TYPE_PNG, "header-logo.png",
 					Units.toEMU(110), Units.toEMU(24));
 		} catch (Exception e) {
 			throw new IOException("Failed to add DOCX header logo", e);
 		}
+	}
+
+	private void setCellVerticalAlignment(XWPFTableCell cell, STVerticalJc.Enum alignment) {
+		CTTcPr cellProperties = cell.getCTTc().isSetTcPr() ? cell.getCTTc().getTcPr() : cell.getCTTc().addNewTcPr();
+		CTVerticalJc vAlign = cellProperties.isSetVAlign() ? cellProperties.getVAlign() : cellProperties.addNewVAlign();
+		vAlign.setVal(alignment);
 	}
 
 	private void setFooterDate(XWPFTableCell cell) {
@@ -210,26 +207,19 @@ public class MarkdownToDocxService {
 
 		XWPFRun run = paragraph.createRun();
 		run.setText(LocalDateTime.now().format(FOOTER_DATE_FORMATTER));
-		run.setFontSize(8);
+		run.setFontSize(7);
 		run.setColor("555555");
 	}
 
 	private void setFooterCenter(XWPFTableCell cell) {
 		clearCell(cell);
 
-		XWPFParagraph titleParagraph = cell.addParagraph();
-		titleParagraph.setAlignment(ParagraphAlignment.CENTER);
-		XWPFRun titleRun = titleParagraph.createRun();
-		titleRun.setText("LEARN-Hub - a TUM Applied Education Technologies application");
-		titleRun.setFontSize(8);
-		titleRun.setColor("555555");
-
-		XWPFParagraph websiteParagraph = cell.addParagraph();
-		websiteParagraph.setAlignment(ParagraphAlignment.CENTER);
-		XWPFRun websiteRun = websiteParagraph.createRun();
-		websiteRun.setText("aet.cit.tum.de");
-		websiteRun.setFontSize(8);
-		websiteRun.setColor("555555");
+		XWPFParagraph paragraph = cell.addParagraph();
+		paragraph.setAlignment(ParagraphAlignment.CENTER);
+		XWPFRun run = paragraph.createRun();
+		run.setText("LEARN-Hub \u2013 a TUM Applied Education Technologies application \u00B7 aet.cit.tum.de");
+		run.setFontSize(7);
+		run.setColor("555555");
 	}
 
 	private void setFooterPageNumber(XWPFTableCell cell) {
@@ -239,23 +229,29 @@ public class MarkdownToDocxService {
 
 		XWPFRun labelRun = paragraph.createRun();
 		labelRun.setText("Page ");
-		labelRun.setFontSize(8);
+		labelRun.setFontSize(7);
 		labelRun.setColor("555555");
 
 		CTSimpleField pageField = paragraph.getCTP().addNewFldSimple();
 		pageField.setInstr("PAGE");
 		CTR pageRun = pageField.addNewR();
+		CTRPr pageRunProps = pageRun.addNewRPr();
+		pageRunProps.addNewSz().setVal(BigInteger.valueOf(14));
+		pageRunProps.addNewColor().setVal("555555");
 		CTText pageText = pageRun.addNewT();
 		pageText.setStringValue("1");
 
 		XWPFRun ofRun = paragraph.createRun();
 		ofRun.setText(" of ");
-		ofRun.setFontSize(8);
+		ofRun.setFontSize(7);
 		ofRun.setColor("555555");
 
 		CTSimpleField totalPagesField = paragraph.getCTP().addNewFldSimple();
 		totalPagesField.setInstr("NUMPAGES");
 		CTR totalPagesRun = totalPagesField.addNewR();
+		CTRPr totalPagesRunProps = totalPagesRun.addNewRPr();
+		totalPagesRunProps.addNewSz().setVal(BigInteger.valueOf(14));
+		totalPagesRunProps.addNewColor().setVal("555555");
 		CTText totalPagesText = totalPagesRun.addNewT();
 		totalPagesText.setStringValue("1");
 	}

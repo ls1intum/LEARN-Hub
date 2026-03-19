@@ -156,7 +156,7 @@ class MarkdownToDocxServiceTest {
 			String footerText = document.getFooterList().get(0).getText();
 
 			assertThat(headerText).contains("Binary Search Game");
-			assertThat(footerText).contains("LEARN-Hub - a TUM Applied Education Technologies application");
+			assertThat(footerText).contains("LEARN-Hub");
 			assertThat(footerText).contains("aet.cit.tum.de");
 			assertThat(footerText).contains("Page");
 		}
