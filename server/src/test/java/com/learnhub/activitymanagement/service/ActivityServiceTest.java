@@ -38,6 +38,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 class ActivityServiceTest {
 
 	private ActivityService activityService;
+	private ActivityExtractionService extractionService;
 	private ActivityRepository activityRepository;
 	private PDFDocumentRepository pdfDocumentRepository;
 	private PDFService pdfService;
@@ -46,6 +47,7 @@ class ActivityServiceTest {
 	@BeforeEach
 	void setUp() {
 		activityService = new ActivityService();
+		extractionService = new ActivityExtractionService();
 		activityRepository = mock(ActivityRepository.class);
 		pdfDocumentRepository = mock(PDFDocumentRepository.class);
 		pdfService = mock(PDFService.class);
@@ -54,7 +56,9 @@ class ActivityServiceTest {
 		ReflectionTestUtils.setField(activityService, "activityRepository", activityRepository);
 		ReflectionTestUtils.setField(activityService, "pdfDocumentRepository", pdfDocumentRepository);
 		ReflectionTestUtils.setField(activityService, "pdfService", pdfService);
-		ReflectionTestUtils.setField(activityService, "llmService", llmService);
+		ReflectionTestUtils.setField(activityService, "extractionService", extractionService);
+		ReflectionTestUtils.setField(extractionService, "pdfService", pdfService);
+		ReflectionTestUtils.setField(extractionService, "llmService", llmService);
 	}
 
 	@Test

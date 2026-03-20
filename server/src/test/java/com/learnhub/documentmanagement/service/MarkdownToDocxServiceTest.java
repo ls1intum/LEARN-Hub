@@ -18,7 +18,8 @@ class MarkdownToDocxServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		service = new MarkdownToDocxService(new MarkdownToHtmlService());
+		service = new MarkdownToDocxService(new MarkdownToHtmlService(), new DocxHeaderFooterHelper(),
+				new DocxTableHelper());
 	}
 
 	@Test

@@ -2,23 +2,14 @@ package com.learnhub.documentmanagement.service;
 
 import jakarta.xml.bind.JAXBElement;
 import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
 import java.math.BigInteger;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import org.docx4j.convert.in.xhtml.XHTMLImporterImpl;
-import org.docx4j.dml.wordprocessingDrawing.Inline;
 import org.docx4j.jaxb.Context;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
-import org.docx4j.openpackaging.parts.WordprocessingML.BinaryPartAbstractImage;
-import org.docx4j.openpackaging.parts.WordprocessingML.FooterPart;
-import org.docx4j.openpackaging.parts.WordprocessingML.HeaderPart;
-import org.docx4j.relationships.Relationship;
 import org.docx4j.wml.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 /**
@@ -33,16 +24,17 @@ import org.springframework.stereotype.Service;
  * {@link MarkdownToPdfService}, using CSS templates for consistent styling
  * across both PDF and DOCX output formats.
  * </p>
+ *
+ * <p>
+ * Header/footer creation is delegated to {@link DocxHeaderFooterHelper} and
+ * table layout to {@link DocxTableHelper}.
+ * </p>
  */
 @Service
 public class MarkdownToDocxService {
 
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToDocxService.class);
-	private static final String LOGO_PATH = "templates/markdown/header-logo.png";
 	private static final String SECTION_BREAK_NEXT_PAGE = "nextPage";
-	private static final DateTimeFormatter FOOTER_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
-	private static final String FOOTER_BRANDING_TEXT = "LEARN-Hub \u2013 a TUM Applied Education Technologies application \u00B7 aet.cit.tum.de";
-	private static final int[] ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT = {8, 12, 38, 10, 16, 16};
 
 	/** A4 landscape dimensions in twentieths of a point (twips). */
 	private static final BigInteger PAGE_WIDTH_LANDSCAPE = BigInteger.valueOf(16838);
@@ -57,19 +49,17 @@ public class MarkdownToDocxService {
 	private static final BigInteger MARGIN_RIGHT = BigInteger.valueOf(600);
 	private static final BigInteger HEADER_FOOTER_MARGIN = BigInteger.valueOf(300);
 
-	/**
-	 * Logo dimensions in EMU. Matches the PDF CSS (height: 22pt). The source PNG is
-	 * 107×112 pixels, so width is calculated from the aspect ratio.
-	 */
-	private static final long LOGO_HEIGHT_EMU = 279400; // 22pt × 12700 EMU/pt
-	private static final long LOGO_WIDTH_EMU = 267208; // 22pt × (107/112) × 12700 EMU/pt
-
 	private static final ObjectFactory WML_FACTORY = Context.getWmlObjectFactory();
 
 	private final MarkdownToHtmlService markdownToHtmlService;
+	private final DocxHeaderFooterHelper headerFooterHelper;
+	private final DocxTableHelper tableHelper;
 
-	public MarkdownToDocxService(MarkdownToHtmlService markdownToHtmlService) {
+	public MarkdownToDocxService(MarkdownToHtmlService markdownToHtmlService,
+			DocxHeaderFooterHelper headerFooterHelper, DocxTableHelper tableHelper) {
 		this.markdownToHtmlService = markdownToHtmlService;
+		this.headerFooterHelper = headerFooterHelper;
+		this.tableHelper = tableHelper;
 	}
 
 	/**
@@ -104,19 +94,14 @@ public class MarkdownToDocxService {
 	 */
 	public byte[] renderMarkdownToDocx(String markdown, boolean landscape, String activityName) {
 		try {
-			// 2. Create DOCX package and configure page layout
 			WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.createPackage();
 			SectPr sectPr = configurePage(wordMLPackage, landscape);
 
-			// 3. Convert HTML body content to DOCX elements
 			List<Object> elements = importMarkdownSection(wordMLPackage, markdown, landscape);
 			wordMLPackage.getMainDocumentPart().getContent().addAll(elements);
 
-			// 4. Add header (activity name + logo) and footer (date, branding, page
-			// numbers)
-			configureHeaderAndFooter(wordMLPackage, sectPr, activityName);
+			headerFooterHelper.configureHeaderAndFooter(wordMLPackage, sectPr, activityName);
 
-			// 5. Write to bytes
 			try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 				wordMLPackage.save(baos);
 				return baos.toByteArray();
@@ -148,13 +133,9 @@ public class MarkdownToDocxService {
 			WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.createPackage();
 
 			// Create header/footer parts once — they will be referenced by every section
-			HeaderPart headerPart = new HeaderPart();
-			Relationship headerRel = wordMLPackage.getMainDocumentPart().addTargetPart(headerPart);
-			headerPart.setJaxbElement(createHeader(wordMLPackage, headerPart, activityName));
-
-			FooterPart footerPart = new FooterPart();
-			footerPart.setJaxbElement(createFooter());
-			Relationship footerRel = wordMLPackage.getMainDocumentPart().addTargetPart(footerPart);
+			String[] relIds = headerFooterHelper.createSharedHeaderFooter(wordMLPackage, activityName);
+			String headerRelId = relIds[0];
+			String footerRelId = relIds[1];
 
 			for (int i = 0; i < markdowns.size(); i++) {
 				List<Object> elements = importMarkdownSection(wordMLPackage, markdowns.get(i), landscapes.get(i));
@@ -163,14 +144,14 @@ public class MarkdownToDocxService {
 				// Add a section break after each section EXCEPT the last one.
 				// The last section's properties are set in the body-level SectPr.
 				if (i < markdowns.size() - 1) {
-					addSectionBreak(wordMLPackage, landscapes.get(i), headerRel.getId(), footerRel.getId());
+					addSectionBreak(wordMLPackage, landscapes.get(i), headerRelId, footerRelId);
 				}
 			}
 
 			// Configure the body-level SectPr for the last section's orientation
 			boolean lastLandscape = landscapes.get(landscapes.size() - 1);
 			SectPr sectPr = configurePage(wordMLPackage, lastLandscape);
-			addHeaderFooterReferences(sectPr, headerRel.getId(), footerRel.getId());
+			headerFooterHelper.addHeaderFooterReferences(sectPr, headerRelId, footerRelId);
 
 			try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 				wordMLPackage.save(baos);
@@ -196,115 +177,11 @@ public class MarkdownToDocxService {
 		XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
 		List<Object> elements = importer.convert(html, null);
 		if (isArtikulationsschemaMarkdown(markdown)) {
-			applyArtikulationsschemaTableLayout(elements, landscape);
+			tableHelper.applyArtikulationsschemaTableLayout(elements, landscape,
+					PAGE_WIDTH_LANDSCAPE.intValue(), PAGE_HEIGHT_LANDSCAPE.intValue(),
+					MARGIN_LEFT.intValue(), MARGIN_RIGHT.intValue());
 		}
 		return elements;
-	}
-
-	private void applyArtikulationsschemaTableLayout(List<Object> elements, boolean landscape) {
-		int totalWidthTwips = (landscape ? PAGE_WIDTH_LANDSCAPE.intValue() : PAGE_HEIGHT_LANDSCAPE.intValue())
-				- MARGIN_LEFT.intValue() - MARGIN_RIGHT.intValue();
-		int[] columnWidths = toAbsoluteColumnWidths(totalWidthTwips);
-
-		for (Object element : elements) {
-			Object value = unwrap(element);
-			if (value instanceof Tbl table) {
-				configureFullWidthTable(table, totalWidthTwips, columnWidths);
-			}
-		}
-	}
-
-	private int[] toAbsoluteColumnWidths(int totalWidthTwips) {
-		int[] widths = new int[ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT.length];
-		int consumed = 0;
-
-		for (int i = 0; i < ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT.length; i++) {
-			if (i == ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT.length - 1) {
-				widths[i] = totalWidthTwips - consumed;
-			} else {
-				widths[i] = totalWidthTwips * ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT[i] / 100;
-				consumed += widths[i];
-			}
-		}
-
-		return widths;
-	}
-
-	private void configureFullWidthTable(Tbl table, int totalWidthTwips, int[] columnWidths) {
-		TblPr tblPr = table.getTblPr();
-		if (tblPr == null) {
-			tblPr = WML_FACTORY.createTblPr();
-			table.setTblPr(tblPr);
-		}
-
-		TblWidth tblWidth = WML_FACTORY.createTblWidth();
-		tblWidth.setType(TblWidth.TYPE_DXA);
-		tblWidth.setW(BigInteger.valueOf(totalWidthTwips));
-		tblPr.setTblW(tblWidth);
-
-		CTTblLayoutType layout = WML_FACTORY.createCTTblLayoutType();
-		layout.setType(STTblLayoutType.FIXED);
-		tblPr.setTblLayout(layout);
-
-		TblGrid tblGrid = table.getTblGrid();
-		if (tblGrid == null) {
-			tblGrid = WML_FACTORY.createTblGrid();
-			table.setTblGrid(tblGrid);
-		}
-		tblGrid.getGridCol().clear();
-		for (int width : columnWidths) {
-			TblGridCol gridCol = WML_FACTORY.createTblGridCol();
-			gridCol.setW(BigInteger.valueOf(width));
-			tblGrid.getGridCol().add(gridCol);
-		}
-
-		for (Object rowObject : table.getContent()) {
-			Object rowValue = unwrap(rowObject);
-			if (!(rowValue instanceof Tr row)) {
-				continue;
-			}
-
-			int columnIndex = 0;
-			for (Object cellObject : row.getContent()) {
-				Object cellValue = unwrap(cellObject);
-				if (!(cellValue instanceof Tc cell)) {
-					continue;
-				}
-
-				int span = getGridSpan(cell);
-				int cellWidthTwips = 0;
-				for (int i = 0; i < span && columnIndex + i < columnWidths.length; i++) {
-					cellWidthTwips += columnWidths[columnIndex + i];
-				}
-				setCellWidth(cell, cellWidthTwips);
-				columnIndex += Math.max(span, 1);
-			}
-		}
-	}
-
-	private int getGridSpan(Tc cell) {
-		TcPr tcPr = cell.getTcPr();
-		if (tcPr == null || tcPr.getGridSpan() == null || tcPr.getGridSpan().getVal() == null) {
-			return 1;
-		}
-		return Math.max(tcPr.getGridSpan().getVal().intValue(), 1);
-	}
-
-	private void setCellWidth(Tc cell, int widthTwips) {
-		TcPr tcPr = cell.getTcPr();
-		if (tcPr == null) {
-			tcPr = WML_FACTORY.createTcPr();
-			cell.setTcPr(tcPr);
-		}
-
-		TblWidth tcWidth = WML_FACTORY.createTblWidth();
-		tcWidth.setType(TblWidth.TYPE_DXA);
-		tcWidth.setW(BigInteger.valueOf(widthTwips));
-		tcPr.setTcW(tcWidth);
-	}
-
-	private Object unwrap(Object value) {
-		return value instanceof JAXBElement<?> element ? element.getValue() : value;
 	}
 
 	/**
@@ -322,7 +199,7 @@ public class MarkdownToDocxService {
 		sectPr.getType().setVal(SECTION_BREAK_NEXT_PAGE);
 
 		// Reference the shared header/footer so they appear in this section too
-		addHeaderFooterReferences(sectPr, headerRelId, footerRelId);
+		headerFooterHelper.addHeaderFooterReferences(sectPr, headerRelId, footerRelId);
 
 		// In DOCX, a mid-document section break must be attached to the last
 		// paragraph of the current section. Adding a separate trailing paragraph can
@@ -354,23 +231,6 @@ public class MarkdownToDocxService {
 			targetParagraph.setPPr(pPr);
 		}
 		pPr.setSectPr(sectPr);
-	}
-
-	/**
-	 * Add header and footer references to a section properties element. This
-	 * ensures headers and footers are displayed in the section controlled by this
-	 * SectPr.
-	 */
-	private void addHeaderFooterReferences(SectPr sectPr, String headerRelId, String footerRelId) {
-		HeaderReference headerRef = WML_FACTORY.createHeaderReference();
-		headerRef.setId(headerRelId);
-		headerRef.setType(HdrFtrRef.DEFAULT);
-		sectPr.getEGHdrFtrReferences().add(headerRef);
-
-		FooterReference footerRef = WML_FACTORY.createFooterReference();
-		footerRef.setId(footerRelId);
-		footerRef.setType(HdrFtrRef.DEFAULT);
-		sectPr.getEGHdrFtrReferences().add(footerRef);
 	}
 
 	private SectPr configurePage(WordprocessingMLPackage wordMLPackage, boolean landscape) {
@@ -406,227 +266,5 @@ public class MarkdownToDocxService {
 		pgMar.setHeader(HEADER_FOOTER_MARGIN);
 		pgMar.setFooter(HEADER_FOOTER_MARGIN);
 		sectPr.setPgMar(pgMar);
-	}
-
-	// ---- Header and footer ----
-
-	private void configureHeaderAndFooter(WordprocessingMLPackage wordMLPackage, SectPr sectPr, String activityName)
-			throws Exception {
-		// Header — add part to document FIRST so images can be created
-		HeaderPart headerPart = new HeaderPart();
-		Relationship headerRel = wordMLPackage.getMainDocumentPart().addTargetPart(headerPart);
-		headerPart.setJaxbElement(createHeader(wordMLPackage, headerPart, activityName));
-
-		// Footer
-		FooterPart footerPart = new FooterPart();
-		footerPart.setJaxbElement(createFooter());
-		Relationship footerRel = wordMLPackage.getMainDocumentPart().addTargetPart(footerPart);
-
-		addHeaderFooterReferences(sectPr, headerRel.getId(), footerRel.getId());
-	}
-
-	private Hdr createHeader(WordprocessingMLPackage wordMLPackage, HeaderPart headerPart, String activityName)
-			throws Exception {
-		Hdr header = WML_FACTORY.createHdr();
-
-		P paragraph = WML_FACTORY.createP();
-
-		// Right-align the header paragraph
-		PPr pPr = WML_FACTORY.createPPr();
-		Jc jc = WML_FACTORY.createJc();
-		jc.setVal(JcEnumeration.RIGHT);
-		pPr.setJc(jc);
-		paragraph.setPPr(pPr);
-
-		// Activity name text
-		R textRun = createStyledRun(activityName != null ? activityName : "", 10, "555555");
-		paragraph.getContent().add(textRun);
-
-		// Spacer
-		R spacerRun = WML_FACTORY.createR();
-		Text spacer = WML_FACTORY.createText();
-		spacer.setValue("  ");
-		spacer.setSpace("preserve");
-		spacerRun.getContent().add(spacer);
-		paragraph.getContent().add(spacerRun);
-
-		// Logo image
-		try (InputStream logoStream = new ClassPathResource(LOGO_PATH).getInputStream()) {
-			byte[] logoBytes = logoStream.readAllBytes();
-			BinaryPartAbstractImage imagePart = BinaryPartAbstractImage.createImagePart(wordMLPackage, headerPart,
-					logoBytes);
-			Inline inline = imagePart.createImageInline("header-logo", "LEARN-Hub Logo", 1, 2, false);
-			// Manually set logo dimensions (createImageInline miscalculates for PNGs
-			// without DPI metadata)
-			inline.getExtent().setCx(LOGO_WIDTH_EMU);
-			inline.getExtent().setCy(LOGO_HEIGHT_EMU);
-			Drawing drawing = WML_FACTORY.createDrawing();
-			drawing.getAnchorOrInline().add(inline);
-			R imageRun = WML_FACTORY.createR();
-			imageRun.getContent().add(drawing);
-			paragraph.getContent().add(imageRun);
-		}
-
-		header.getContent().add(paragraph);
-		return header;
-	}
-
-	private Ftr createFooter() {
-		Ftr footer = WML_FACTORY.createFtr();
-
-		// Footer uses a 3-column table: date (left) | branding (center) | page number
-		// (right)
-		Tbl table = WML_FACTORY.createTbl();
-		configureFooterTableProperties(table);
-
-		Tr row = WML_FACTORY.createTr();
-
-		// Left cell: download date
-		row.getContent().add(createFooterCell(LocalDateTime.now().format(FOOTER_DATE_FORMATTER), JcEnumeration.LEFT));
-
-		// Center cell: branding text
-		row.getContent().add(createFooterCell(FOOTER_BRANDING_TEXT, JcEnumeration.CENTER));
-
-		// Right cell: page number
-		row.getContent().add(createFooterPageNumberCell());
-
-		table.getContent().add(row);
-		footer.getContent().add(table);
-		return footer;
-	}
-
-	private void configureFooterTableProperties(Tbl table) {
-		TblPr tblPr = WML_FACTORY.createTblPr();
-
-		// Full width table
-		TblWidth tblWidth = WML_FACTORY.createTblWidth();
-		tblWidth.setType("pct");
-		tblWidth.setW(BigInteger.valueOf(5000));
-		tblPr.setTblW(tblWidth);
-
-		// No borders
-		TblBorders borders = WML_FACTORY.createTblBorders();
-		borders.setTop(createNilBorder());
-		borders.setBottom(createNilBorder());
-		borders.setLeft(createNilBorder());
-		borders.setRight(createNilBorder());
-		borders.setInsideH(createNilBorder());
-		borders.setInsideV(createNilBorder());
-		tblPr.setTblBorders(borders);
-
-		table.setTblPr(tblPr);
-	}
-
-	private CTBorder createNilBorder() {
-		CTBorder border = WML_FACTORY.createCTBorder();
-		border.setVal(STBorder.NIL);
-		return border;
-	}
-
-	private Tc createFooterCell(String text, JcEnumeration alignment) {
-		Tc cell = WML_FACTORY.createTc();
-		P para = WML_FACTORY.createP();
-
-		PPr pPr = WML_FACTORY.createPPr();
-		Jc jc = WML_FACTORY.createJc();
-		jc.setVal(alignment);
-		pPr.setJc(jc);
-		para.setPPr(pPr);
-
-		R run = createStyledRun(text, 7, "555555");
-		para.getContent().add(run);
-
-		cell.getContent().add(para);
-		return cell;
-	}
-
-	private Tc createFooterPageNumberCell() {
-		Tc cell = WML_FACTORY.createTc();
-		P para = WML_FACTORY.createP();
-
-		PPr pPr = WML_FACTORY.createPPr();
-		Jc jc = WML_FACTORY.createJc();
-		jc.setVal(JcEnumeration.RIGHT);
-		pPr.setJc(jc);
-		para.setPPr(pPr);
-
-		// "Page "
-		para.getContent().add(createStyledRun("Page ", 7, "555555"));
-
-		// PAGE field
-		para.getContent().addAll(createFieldRuns("PAGE", 7, "555555"));
-
-		// " of "
-		para.getContent().add(createStyledRun(" of ", 7, "555555"));
-
-		// NUMPAGES field
-		para.getContent().addAll(createFieldRuns("NUMPAGES", 7, "555555"));
-
-		cell.getContent().add(para);
-		return cell;
-	}
-
-	// ---- Utility methods ----
-
-	private R createStyledRun(String text, int fontSizePt, String color) {
-		R run = WML_FACTORY.createR();
-
-		RPr rPr = WML_FACTORY.createRPr();
-		HpsMeasure fontSize = WML_FACTORY.createHpsMeasure();
-		fontSize.setVal(BigInteger.valueOf(fontSizePt * 2L)); // half-points
-		rPr.setSz(fontSize);
-		rPr.setSzCs(fontSize);
-		Color c = WML_FACTORY.createColor();
-		c.setVal(color);
-		rPr.setColor(c);
-		run.setRPr(rPr);
-
-		Text t = WML_FACTORY.createText();
-		t.setValue(text);
-		t.setSpace("preserve");
-		run.getContent().add(t);
-
-		return run;
-	}
-
-	/**
-	 * Create the run sequence for a Word field code (BEGIN + INSTR + END).
-	 */
-	private List<R> createFieldRuns(String fieldInstruction, int fontSizePt, String color) {
-		RPr rPr = WML_FACTORY.createRPr();
-		HpsMeasure fontSize = WML_FACTORY.createHpsMeasure();
-		fontSize.setVal(BigInteger.valueOf(fontSizePt * 2L));
-		rPr.setSz(fontSize);
-		rPr.setSzCs(fontSize);
-		Color c = WML_FACTORY.createColor();
-		c.setVal(color);
-		rPr.setColor(c);
-
-		// BEGIN
-		R beginRun = WML_FACTORY.createR();
-		beginRun.setRPr(rPr);
-		FldChar begin = WML_FACTORY.createFldChar();
-		begin.setFldCharType(STFldCharType.BEGIN);
-		JAXBElement<FldChar> beginEl = WML_FACTORY.createRFldChar(begin);
-		beginRun.getContent().add(beginEl);
-
-		// INSTRUCTION
-		R instrRun = WML_FACTORY.createR();
-		instrRun.setRPr(rPr);
-		Text instrText = WML_FACTORY.createText();
-		instrText.setValue(" " + fieldInstruction + " ");
-		instrText.setSpace("preserve");
-		JAXBElement<Text> instrEl = WML_FACTORY.createRInstrText(instrText);
-		instrRun.getContent().add(instrEl);
-
-		// END
-		R endRun = WML_FACTORY.createR();
-		endRun.setRPr(rPr);
-		FldChar end = WML_FACTORY.createFldChar();
-		end.setFldCharType(STFldCharType.END);
-		JAXBElement<FldChar> endEl = WML_FACTORY.createRFldChar(end);
-		endRun.getContent().add(endEl);
-
-		return List.of(beginRun, instrRun, endRun);
 	}
 }

@@ -1,42 +1,17 @@
 import { authService } from "./authService";
-import type {
-  Activity,
-  ActivitiesResponse,
-  ResultsData,
-  SearchHistoryResponse,
-  User,
-  FieldValues,
-} from "@/types/activity";
-import type {
-  UploadPdfDraftResponse,
-  UploadPdfDraftOptions,
-  ArtikulationsschemaResponse,
-  ActivityMarkdownsResponse,
-  CreateActivityRequest,
-  UpdateActivityRequest,
-  UserRequest,
-  FavoriteActivityRequest,
-  FavoriteLessonPlanRequest,
-  LessonPlanRequest,
-  SearchCriteria,
-  ActivityFavoritesResponse,
-  LessonPlanFavoritesResponse,
-  FavoriteStatusResponse,
-  UsersResponse,
-} from "@/types/api";
-
-// Legacy interfaces removed - now using types from activity.ts
+import { ActivityApi } from "./activityApiService";
+import { HistoryApi } from "./historyApiService";
+import { UserApi } from "./userApiService";
 
 /**
- * Standardized API response handler
- * All API calls should use this instead of direct authService calls
+ * Core request handler, exported for use by domain-specific API modules.
  */
-export class ApiService {
+export const ApiRequestMixin = {
   /**
-   * Make authenticated API request with standardized response handling
-   * Server now returns data directly without ApiResponse wrapper
+   * Make authenticated API request with standardized response handling.
+   * Server now returns data directly without ApiResponse wrapper.
    */
-  static async request<T = Record<string, unknown>>(
+  async request<T = Record<string, unknown>>(
     url: string,
     options: RequestInit = {},
   ): Promise<T> {
@@ -72,450 +47,60 @@ export class ApiService {
 
     // Server now returns data directly without wrapper
     return responseData as T;
-  }
+  },
+};
 
-  /**
-   * Get activities with pagination
-   */
-  static async getActivities(params: SearchCriteria = {}) {
-    const queryParams = new URLSearchParams();
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        if (Array.isArray(value)) {
-          value.forEach((v) => queryParams.append(key, String(v)));
-        } else {
-          queryParams.append(key, String(value));
-        }
-      }
-    });
+/**
+ * Unified API service that re-exports all domain-specific methods.
+ * Maintains backward compatibility — all existing callers continue to work.
+ */
+export class ApiService {
+  // Core request handler
+  static request = ApiRequestMixin.request;
 
-    return this.request<ActivitiesResponse>(
-      `/api/activities/?${queryParams.toString()}`,
-    );
-  }
+  // --- Activity API ---
+  static getActivities = ActivityApi.getActivities;
+  static getActivity = ActivityApi.getActivity;
+  static getActivitiesByIds = ActivityApi.getActivitiesByIds;
+  static getRecommendations = ActivityApi.getRecommendations;
+  static createActivity = ActivityApi.createActivity;
+  static deleteActivity = ActivityApi.deleteActivity;
+  static updateActivity = ActivityApi.updateActivity;
+  static generateLessonPlan = ActivityApi.generateLessonPlan;
+  static getActivityPdf = ActivityApi.getActivityPdf;
+  static getMarkdownPdf = ActivityApi.getMarkdownPdf;
+  static getMarkdownDocx = ActivityApi.getMarkdownDocx;
+  static getFieldValues = ActivityApi.getFieldValues;
+  static getEnvironment = ActivityApi.getEnvironment;
+  static uploadPdfDraft = ActivityApi.uploadPdfDraft;
+  static regenerateMetadata = ActivityApi.regenerateMetadata;
+  static generateArtikulationsschema = ActivityApi.generateArtikulationsschema;
+  static generateActivityMarkdowns = ActivityApi.generateActivityMarkdowns;
+  static downloadActivityPdf = ActivityApi.downloadActivityPdf;
+  static downloadActivityDocx = ActivityApi.downloadActivityDocx;
+  static previewMarkdownPdf = ActivityApi.previewMarkdownPdf;
 
-  /**
-   * Get activity by ID
-   */
-  static async getActivity(id: string) {
-    return this.request<Activity>(`/api/activities/${id}`);
-  }
+  // --- History API ---
+  static getSearchHistory = HistoryApi.getSearchHistory;
+  static deleteSearchHistoryEntry = HistoryApi.deleteSearchHistoryEntry;
+  static getActivityFavourites = HistoryApi.getActivityFavourites;
+  static getLessonPlanFavourites = HistoryApi.getLessonPlanFavourites;
+  static saveActivityFavourite = HistoryApi.saveActivityFavourite;
+  static saveLessonPlanFavourite = HistoryApi.saveLessonPlanFavourite;
+  static removeActivityFavourite = HistoryApi.removeActivityFavourite;
+  static deleteFavourite = HistoryApi.deleteFavourite;
+  static checkActivityFavouriteStatus = HistoryApi.checkActivityFavouriteStatus;
 
-  /**
-   * Get multiple activities by IDs
-   */
-  static async getActivitiesByIds(ids: string[]) {
-    const promises = ids.map((id) => this.getActivity(id));
-    const results = await Promise.all(promises);
-    return results;
-  }
-
-  /**
-   * Get recommendations
-   */
-  static async getRecommendations(params: string): Promise<ResultsData> {
-    return this.request<ResultsData>(
-      `/api/activities/recommendations?${params}`,
-    );
-  }
-
-  /**
-   * Get search history
-   */
-  static async getSearchHistory(limit = 50, offset = 0) {
-    return this.request<SearchHistoryResponse>(
-      `/api/history/search?limit=${limit}&offset=${offset}`,
-    );
-  }
-
-  /**
-   * Delete search history entry
-   */
-  static async deleteSearchHistoryEntry(historyId: number) {
-    return this.request(`/api/history/search/${historyId}`, {
-      method: "DELETE",
-    });
-  }
-
-  /**
-   * Get activity favourites
-   */
-  static async getActivityFavourites(limit = 50, offset = 0) {
-    return this.request<ActivityFavoritesResponse>(
-      `/api/history/favourites/activities?limit=${limit}&offset=${offset}`,
-    );
-  }
-
-  /**
-   * Get lesson plan favourites
-   */
-  static async getLessonPlanFavourites(limit = 50, offset = 0) {
-    return this.request<LessonPlanFavoritesResponse>(
-      `/api/history/favourites/lesson-plans?limit=${limit}&offset=${offset}`,
-    );
-  }
-
-  /**
-   * Save activity favourite
-   */
-  static async saveActivityFavourite(data: FavoriteActivityRequest) {
-    return this.request("/api/history/favourites/activities", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-  }
-
-  /**
-   * Save lesson plan favourite
-   */
-  static async saveLessonPlanFavourite(data: FavoriteLessonPlanRequest) {
-    return this.request("/api/history/favourites/lesson-plans", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-  }
-
-  /**
-   * Remove activity favourite
-   */
-  static async removeActivityFavourite(activityId: string) {
-    return this.request(`/api/history/favourites/activities/${activityId}`, {
-      method: "DELETE",
-    });
-  }
-
-  /**
-   * Delete favourite (by favourite ID)
-   */
-  static async deleteFavourite(favouriteId: string) {
-    return this.request(`/api/history/favourites/${favouriteId}`, {
-      method: "DELETE",
-    });
-  }
-
-  /**
-   * Check if activity is favourited
-   */
-  static async checkActivityFavouriteStatus(activityId: string) {
-    return this.request<FavoriteStatusResponse>(
-      `/api/history/favourites/activities/${activityId}/status`,
-    );
-  }
-
-  // Legacy methods removed
-
-  /**
-   * Get current user
-   */
-  static async getCurrentUser() {
-    return this.request<User>("/api/auth/me");
-  }
-
-  /**
-   * Get users (admin only)
-   */
-  static async getUsers() {
-    return this.request<UsersResponse>("/api/auth/users");
-  }
-
-  /**
-   * Create user (admin only)
-   */
-  static async createUser(data: UserRequest) {
-    return this.request("/api/auth/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-  }
-
-  /**
-   * Update user (admin only)
-   */
-  static async updateUser(userId: number, data: UserRequest) {
-    return this.request(`/api/auth/users/${userId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-  }
-
-  /**
-   * Delete user (admin only)
-   */
-  static async deleteUser(userId: number) {
-    return this.request(`/api/auth/users/${userId}`, {
-      method: "DELETE",
-    });
-  }
-
-  /**
-   * Update current user's profile
-   */
-  static async updateProfile(data: import("@/types/api").UpdateProfileRequest) {
-    return this.request("/api/auth/me", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-  }
-
-  /**
-   * Delete current user's account
-   */
-  static async deleteProfile() {
-    return this.request("/api/auth/me", {
-      method: "DELETE",
-    });
-  }
-
-  /**
-   * Create activity
-   */
-  static async createActivity(data: CreateActivityRequest) {
-    return this.request("/api/activities/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-  }
-
-  /**
-   * Delete activity (admin only)
-   */
-  static async deleteActivity(activityId: string) {
-    return this.request(`/api/activities/${activityId}`, {
-      method: "DELETE",
-    });
-  }
-
-  /**
-   * Update activity (admin only)
-   */
-  static async updateActivity(activityId: string, data: UpdateActivityRequest) {
-    return this.request<Activity>(`/api/activities/${activityId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-  }
-
-  /**
-   * Generate lesson plan PDF
-   */
-  static async generateLessonPlan(data: LessonPlanRequest) {
-    const response = await authService.makeAuthenticatedRequest(
-      "/api/activities/lesson-plan",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      },
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        errorData.message || `HTTP error! status: ${response.status}`,
-      );
-    }
-
-    return response.blob();
-  }
-
-  /**
-   * Get PDF by activity ID
-   */
-  static async getActivityPdf(activityId: string) {
-    const response = await authService.makeAuthenticatedRequest(
-      `/api/activities/${activityId}/pdf`,
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.blob();
-  }
-
-  /**
-   * Get a stored markdown rendered as PDF by markdown ID
-   */
-  static async getMarkdownPdf(markdownId: string) {
-    const response = await authService.makeAuthenticatedRequest(
-      `/api/markdowns/${markdownId}/pdf`,
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.blob();
-  }
-
-  /**
-   * Get a stored markdown rendered as DOCX (Word) by markdown ID
-   */
-  static async getMarkdownDocx(markdownId: string) {
-    const response = await authService.makeAuthenticatedRequest(
-      `/api/markdowns/${markdownId}/docx`,
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.blob();
-  }
-
-  /**
-   * Get field values from server
-   */
-  static async getFieldValues() {
-    return this.request<FieldValues>("/api/meta/field-values");
-  }
-
-  /**
-   * Get current environment from server
-   */
-  static async getEnvironment() {
-    return this.request<{ environment: string }>("/api/meta/environment");
-  }
-
-  /**
-   * Upload PDF for the 2-step activity creation flow.
-   * Caches the PDF and extracts metadata without creating an activity.
-   */
-  static async uploadPdfDraft(file: File, options: UploadPdfDraftOptions = {}) {
-    const formData = new FormData();
-    formData.append("pdf_file", file);
-    formData.append("extractMetadata", String(options.extractMetadata ?? true));
-
-    return this.request<UploadPdfDraftResponse>(
-      "/api/activities/upload-pdf-draft",
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
-  }
-
-  static async regenerateMetadata(documentId: string) {
-    return this.request<UploadPdfDraftResponse>(
-      "/api/activities/regenerate-metadata",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId }),
-      },
-    );
-  }
-
-  /**
-   * Generate Artikulationsschema markdown from an uploaded PDF.
-   * Sends user-adjusted metadata to inform the schema generation.
-   */
-  static async generateArtikulationsschema(
-    documentId: string,
-    metadata?: Record<string, unknown>,
-  ) {
-    return this.request<ArtikulationsschemaResponse>(
-      "/api/activities/generate-artikulationsschema",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: documentId, metadata: metadata }),
-      },
-    );
-  }
-
-  /**
-   * Generate all activity markdowns (Deckblatt, Artikulationsschema, Hintergrundwissen)
-   * from an uploaded PDF. Sends user-adjusted metadata to inform the generation.
-   */
-  static async generateActivityMarkdowns(
-    documentId: string,
-    metadata?: Record<string, unknown>,
-    types?: string[],
-  ) {
-    return this.request<ActivityMarkdownsResponse>(
-      "/api/activities/generate-activity-markdowns",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          documentId: documentId,
-          metadata: metadata,
-          types: types,
-        }),
-      },
-    );
-  }
-
-  /**
-   * Download combined activity PDF (Deckblatt + Artikulationsschema + Hintergrundwissen)
-   */
-  static async downloadActivityPdf(activityId: string) {
-    const response = await authService.makeAuthenticatedRequest(
-      `/api/activities/${activityId}/download-pdf`,
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.blob();
-  }
-
-  /**
-   * Download combined activity DOCX (Deckblatt + Artikulationsschema + Hintergrundwissen)
-   */
-  static async downloadActivityDocx(activityId: string) {
-    const response = await authService.makeAuthenticatedRequest(
-      `/api/activities/${activityId}/download-docx`,
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.blob();
-  }
-
-  /**
-   * Render markdown text to a preview PDF.
-   * Returns a Blob containing the PDF bytes.
-   *
-   * @param markdown - the markdown text to render
-   * @param orientation - optional orientation: "portrait" or "landscape" (default: "landscape")
-   */
-  static async previewMarkdownPdf(
-    markdown: string,
-    orientation?: "portrait" | "landscape",
-    activityName?: string,
-  ) {
-    const response = await authService.makeAuthenticatedRequest(
-      "/api/markdowns/preview-pdf",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markdown, orientation, activityName }),
-      },
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        (errorData as Record<string, string>).error ||
-          `HTTP error! status: ${response.status}`,
-      );
-    }
-
-    return response.blob();
-  }
+  // --- User API ---
+  static getCurrentUser = UserApi.getCurrentUser;
+  static getUsers = UserApi.getUsers;
+  static createUser = UserApi.createUser;
+  static updateUser = UserApi.updateUser;
+  static deleteUser = UserApi.deleteUser;
+  static updateProfile = UserApi.updateProfile;
+  static deleteProfile = UserApi.deleteProfile;
 }
 
 // Export singleton instance for backward compatibility
 export const apiService = ApiService;
+
