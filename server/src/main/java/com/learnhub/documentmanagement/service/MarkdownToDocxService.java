@@ -104,19 +104,12 @@ public class MarkdownToDocxService {
 	 */
 	public byte[] renderMarkdownToDocx(String markdown, boolean landscape, String activityName) {
 		try {
-			// 1. Generate styled HTML from markdown (shared pipeline with PDF)
-			String html = markdownToHtmlService.renderMarkdownToDocxHtml(markdown);
-
 			// 2. Create DOCX package and configure page layout
 			WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.createPackage();
 			SectPr sectPr = configurePage(wordMLPackage, landscape);
 
 			// 3. Convert HTML body content to DOCX elements
-			XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
-			List<Object> elements = importer.convert(html, null);
-			if (isArtikulationsschemaMarkdown(markdown)) {
-				applyArtikulationsschemaTableLayout(elements, landscape);
-			}
+			List<Object> elements = importMarkdownSection(wordMLPackage, markdown, landscape);
 			wordMLPackage.getMainDocumentPart().getContent().addAll(elements);
 
 			// 4. Add header (activity name + logo) and footer (date, branding, page
@@ -164,14 +157,7 @@ public class MarkdownToDocxService {
 			Relationship footerRel = wordMLPackage.getMainDocumentPart().addTargetPart(footerPart);
 
 			for (int i = 0; i < markdowns.size(); i++) {
-				String html = markdownToHtmlService.renderMarkdownToDocxHtml(markdowns.get(i));
-				// XHTMLImporterImpl keeps conversion state across calls, so a fresh
-				// importer is required per section to avoid re-importing earlier content.
-				XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
-				List<Object> elements = importer.convert(html, null);
-				if (isArtikulationsschemaMarkdown(markdowns.get(i))) {
-					applyArtikulationsschemaTableLayout(elements, landscapes.get(i));
-				}
+				List<Object> elements = importMarkdownSection(wordMLPackage, markdowns.get(i), landscapes.get(i));
 				wordMLPackage.getMainDocumentPart().getContent().addAll(elements);
 
 				// Add a section break after each section EXCEPT the last one.
@@ -200,6 +186,19 @@ public class MarkdownToDocxService {
 
 	private boolean isArtikulationsschemaMarkdown(String markdown) {
 		return markdown != null && markdown.matches("(?is)^\\s*#\\s+Artikulationsschema\\b.*");
+	}
+
+	private List<Object> importMarkdownSection(WordprocessingMLPackage wordMLPackage, String markdown,
+			boolean landscape) throws Exception {
+		String html = markdownToHtmlService.renderMarkdownToDocxHtml(markdown);
+		// XHTMLImporterImpl keeps conversion state across calls, so a fresh importer
+		// is required per section to avoid re-importing earlier content.
+		XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
+		List<Object> elements = importer.convert(html, null);
+		if (isArtikulationsschemaMarkdown(markdown)) {
+			applyArtikulationsschemaTableLayout(elements, landscape);
+		}
+		return elements;
 	}
 
 	private void applyArtikulationsschemaTableLayout(List<Object> elements, boolean landscape) {
@@ -317,27 +316,7 @@ public class MarkdownToDocxService {
 	private void addSectionBreak(WordprocessingMLPackage wordMLPackage, boolean landscape, String headerRelId,
 			String footerRelId) {
 		SectPr sectPr = WML_FACTORY.createSectPr();
-
-		SectPr.PgSz pgSz = WML_FACTORY.createSectPrPgSz();
-		if (landscape) {
-			pgSz.setW(PAGE_WIDTH_LANDSCAPE);
-			pgSz.setH(PAGE_HEIGHT_LANDSCAPE);
-			pgSz.setOrient(STPageOrientation.LANDSCAPE);
-		} else {
-			pgSz.setW(PAGE_HEIGHT_LANDSCAPE);
-			pgSz.setH(PAGE_WIDTH_LANDSCAPE);
-			pgSz.setOrient(STPageOrientation.PORTRAIT);
-		}
-		sectPr.setPgSz(pgSz);
-
-		SectPr.PgMar pgMar = WML_FACTORY.createSectPrPgMar();
-		pgMar.setTop(MARGIN_TOP);
-		pgMar.setBottom(MARGIN_BOTTOM);
-		pgMar.setLeft(MARGIN_LEFT);
-		pgMar.setRight(MARGIN_RIGHT);
-		pgMar.setHeader(HEADER_FOOTER_MARGIN);
-		pgMar.setFooter(HEADER_FOOTER_MARGIN);
-		sectPr.setPgMar(pgMar);
+		applyPageGeometry(sectPr, landscape);
 
 		sectPr.setType(WML_FACTORY.createSectPrType());
 		sectPr.getType().setVal(SECTION_BREAK_NEXT_PAGE);
@@ -401,7 +380,12 @@ public class MarkdownToDocxService {
 			sectPr = WML_FACTORY.createSectPr();
 			body.setSectPr(sectPr);
 		}
+		applyPageGeometry(sectPr, landscape);
 
+		return sectPr;
+	}
+
+	private void applyPageGeometry(SectPr sectPr, boolean landscape) {
 		SectPr.PgSz pgSz = WML_FACTORY.createSectPrPgSz();
 		if (landscape) {
 			pgSz.setW(PAGE_WIDTH_LANDSCAPE);
@@ -422,8 +406,6 @@ public class MarkdownToDocxService {
 		pgMar.setHeader(HEADER_FOOTER_MARGIN);
 		pgMar.setFooter(HEADER_FOOTER_MARGIN);
 		sectPr.setPgMar(pgMar);
-
-		return sectPr;
 	}
 
 	// ---- Header and footer ----

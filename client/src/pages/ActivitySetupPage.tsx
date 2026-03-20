@@ -287,6 +287,16 @@ export const ActivitySetupPage: React.FC = () => {
     }
   };
 
+  const metadataInitialData = useMemo(
+    () =>
+      savedMetadata ||
+      ({
+        ...(extractedData ?? {}),
+        documentId: documentId || null,
+      } as Partial<ActivityFormData>),
+    [documentId, extractedData, savedMetadata],
+  );
+
   // ─── Preview Rendering ──────────────────────────────────────────
 
   const previewActivityName =
@@ -347,15 +357,6 @@ export const ActivitySetupPage: React.FC = () => {
   ];
 
   const currentStepIndex = steps.findIndex((s) => s.key === currentStep);
-  const metadataInitialData = useMemo(
-    () =>
-      savedMetadata ||
-      ({
-        ...(extractedData ?? {}),
-        documentId: documentId || null,
-      } as Partial<ActivityFormData>),
-    [documentId, extractedData, savedMetadata],
-  );
 
   // ─── Render ─────────────────────────────────────────────────────
 
@@ -380,23 +381,23 @@ export const ActivitySetupPage: React.FC = () => {
           onForward={
             currentStep === "metadata"
               ? {
-                  label: "Next: Documents",
-                  variant: "outline",
-                  size: "icon",
-                  ariaLabel: "Next step",
-                  className: "h-9 w-9",
-                  formId: "activity-setup-form",
-                }
+                label: "Next: Documents",
+                variant: "outline",
+                size: "icon",
+                ariaLabel: "Next step",
+                className: "h-9 w-9",
+                formId: "activity-setup-form",
+              }
               : currentStep === "documents"
                 ? {
-                    label: "Save Activity",
-                    variant: "default",
-                    onClick: handleSave,
-                    icon: <Save className="h-4 w-4" />,
-                    loading: isSaving,
-                    loadingLabel: "Saving...",
-                    disabled: isSaving || isGeneratingSchema,
-                  }
+                  label: "Save Activity",
+                  variant: "default",
+                  onClick: handleSave,
+                  icon: <Save className="h-4 w-4" />,
+                  loading: isSaving,
+                  loadingLabel: "Saving...",
+                  disabled: isSaving || isGeneratingSchema,
+                }
                 : undefined
           }
         />
@@ -430,11 +431,10 @@ export const ActivitySetupPage: React.FC = () => {
               </div>
 
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-                  dragActive
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50"
-                }`}
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50"
+                  }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
@@ -556,21 +556,20 @@ export const ActivitySetupPage: React.FC = () => {
                     Review and edit the metadata extracted from your PDF.
                     {extractionQuality && (
                       <span
-                        className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                          extractionQuality === "high"
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : extractionQuality === "medium"
-                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                              : extractionQuality === "not_run"
-                                ? "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300"
-                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                        }`}
+                        className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${extractionQuality === "high"
+                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                          : extractionQuality === "medium"
+                            ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                            : extractionQuality === "not_run"
+                              ? "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300"
+                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          }`}
                       >
                         {extractionQuality === "not_run"
                           ? "AI skipped"
                           : `${extractionQuality} quality (${(
-                              extractionConfidence * 100
-                            ).toFixed(0)}%)`}
+                            extractionConfidence * 100
+                          ).toFixed(0)}%)`}
                       </span>
                     )}
                   </CardDescription>
@@ -621,7 +620,7 @@ export const ActivitySetupPage: React.FC = () => {
         <div className="space-y-4 lg:relative lg:left-1/2 lg:w-[calc(100vw-16rem-4rem)] lg:max-w-none lg:-translate-x-1/2">
           <Card>
             <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex grow items-center gap-3">
                 <Select
                   value={activeMarkdownTab}
                   onValueChange={(value) =>

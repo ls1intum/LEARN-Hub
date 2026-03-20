@@ -19,6 +19,10 @@
 
     <!-- Config / seeder: INFO for startup visibility -->
     <logger name="com.learnhub.config" level="INFO"/>
+    <!-- DOCX HTML import is chatty and logs normal conversion steps as WARN/INFO -->
+    <logger name="org.docx4j.convert.in.xhtml" level="ERROR"/>
+    <logger name="com.openhtmltopdf" level="ERROR"/>
+    <logger name="org.apache.pdfbox.pdmodel.font.FileSystemFontProvider" level="ERROR"/>
 
     <!-- Services: WARN by default, DEBUG when verbose=true -->
     <!-- Framework internals: WARN by default, DEBUG when verbose=true -->

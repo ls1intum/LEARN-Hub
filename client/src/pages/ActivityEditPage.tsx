@@ -349,23 +349,23 @@ export const ActivityEditPage: React.FC = () => {
           onForward={
             currentStep === "metadata"
               ? {
-                  label: "Next: Documents",
-                  variant: "outline",
-                  size: "icon",
-                  ariaLabel: "Next step",
-                  className: "h-9 w-9",
-                  formId: "activity-edit-form",
-                }
+                label: "Next: Documents",
+                variant: "outline",
+                size: "icon",
+                ariaLabel: "Next step",
+                className: "h-9 w-9",
+                formId: "activity-edit-form",
+              }
               : currentStep === "documents"
                 ? {
-                    label: "Save Changes",
-                    variant: "default",
-                    onClick: handleSave,
-                    icon: <Save className="h-4 w-4" />,
-                    disabled: isSaving || isGenerating,
-                    loading: isSaving,
-                    loadingLabel: "Saving...",
-                  }
+                  label: "Save Changes",
+                  variant: "default",
+                  onClick: handleSave,
+                  icon: <Save className="h-4 w-4" />,
+                  disabled: isSaving || isGenerating,
+                  loading: isSaving,
+                  loadingLabel: "Saving...",
+                }
                 : undefined
           }
         />

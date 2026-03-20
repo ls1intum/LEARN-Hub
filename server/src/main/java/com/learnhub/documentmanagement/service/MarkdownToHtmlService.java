@@ -96,8 +96,7 @@ public class MarkdownToHtmlService {
 	 *            the activity name shown in the page header
 	 */
 	public String renderMarkdownToHtml(String markdown, boolean landscape, String activityName) {
-		Node document = parser.parse(markdown);
-		String body = decorateRenderedBody(markdown, renderer.render(document), false);
+		String body = renderDecoratedBody(markdown, false);
 		String css = landscape ? cssTemplate : cssPortraitTemplate;
 		String name = activityName != null ? activityName : "";
 		String downloadDate = LocalDateTime.now().format(DATE_FORMATTER);
@@ -120,8 +119,7 @@ public class MarkdownToHtmlService {
 	 *            the markdown content
 	 */
 	public String renderMarkdownToDocxHtml(String markdown) {
-		Node document = parser.parse(markdown);
-		String body = decorateRenderedBody(markdown, renderer.render(document), true);
+		String body = renderDecoratedBody(markdown, true);
 		String html = docxHtmlTemplate.replace("{{styles}}", docxCssTemplate).replace("{{body}}", body);
 		return sanitizeToXhtml(html);
 	}
@@ -160,6 +158,11 @@ public class MarkdownToHtmlService {
 					"<table class=\"artikulationsschema-table\" style=\"width:100%; table-layout:fixed;\">");
 		}
 		return body.replaceFirst("<table>", "<table class=\"artikulationsschema-table\">");
+	}
+
+	private String renderDecoratedBody(String markdown, boolean forDocx) {
+		Node document = parser.parse(markdown != null ? markdown : "");
+		return decorateRenderedBody(markdown, renderer.render(document), forDocx);
 	}
 
 	private String loadTemplate(String path) {
