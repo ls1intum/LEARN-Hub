@@ -42,17 +42,20 @@ public class MarkdownToDocxService {
 	private static final String SECTION_BREAK_NEXT_PAGE = "nextPage";
 	private static final DateTimeFormatter FOOTER_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 	private static final String FOOTER_BRANDING_TEXT = "LEARN-Hub \u2013 a TUM Applied Education Technologies application \u00B7 aet.cit.tum.de";
+	private static final int[] ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT = { 8, 12, 38, 10, 16, 16 };
 
 	/** A4 landscape dimensions in twentieths of a point (twips). */
 	private static final BigInteger PAGE_WIDTH_LANDSCAPE = BigInteger.valueOf(16838);
 	private static final BigInteger PAGE_HEIGHT_LANDSCAPE = BigInteger.valueOf(11906);
 
-	/** Page margins in twips (matching CSS margins: 55pt top, 30pt sides, 50pt bottom). */
-	private static final BigInteger MARGIN_TOP = BigInteger.valueOf(1100);
-	private static final BigInteger MARGIN_BOTTOM = BigInteger.valueOf(1000);
+	/**
+	 * Page margins in twips. Kept tighter in DOCX to use more vertical page space.
+	 */
+	private static final BigInteger MARGIN_TOP = BigInteger.valueOf(300);
+	private static final BigInteger MARGIN_BOTTOM = BigInteger.valueOf(300);
 	private static final BigInteger MARGIN_LEFT = BigInteger.valueOf(600);
 	private static final BigInteger MARGIN_RIGHT = BigInteger.valueOf(600);
-	private static final BigInteger HEADER_FOOTER_MARGIN = BigInteger.valueOf(720);
+	private static final BigInteger HEADER_FOOTER_MARGIN = BigInteger.valueOf(300);
 
 	/**
 	 * Logo dimensions in EMU. Matches the PDF CSS (height: 22pt). The source PNG is
@@ -80,9 +83,9 @@ public class MarkdownToDocxService {
 	 * Render markdown content to DOCX bytes with specified orientation.
 	 *
 	 * @param markdown
-	 *            the markdown content
+	 *                  the markdown content
 	 * @param landscape
-	 *            true for landscape, false for portrait
+	 *                  true for landscape, false for portrait
 	 */
 	public byte[] renderMarkdownToDocx(String markdown, boolean landscape) {
 		return renderMarkdownToDocx(markdown, landscape, "");
@@ -93,11 +96,11 @@ public class MarkdownToDocxService {
 	 * name in the header.
 	 *
 	 * @param markdown
-	 *            the markdown content
+	 *                     the markdown content
 	 * @param landscape
-	 *            true for landscape, false for portrait
+	 *                     true for landscape, false for portrait
 	 * @param activityName
-	 *            the activity name shown in the page header
+	 *                     the activity name shown in the page header
 	 */
 	public byte[] renderMarkdownToDocx(String markdown, boolean landscape, String activityName) {
 		try {
@@ -111,9 +114,13 @@ public class MarkdownToDocxService {
 			// 3. Convert HTML body content to DOCX elements
 			XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
 			List<Object> elements = importer.convert(html, null);
+			if (isArtikulationsschemaMarkdown(markdown)) {
+				applyArtikulationsschemaTableLayout(elements, landscape);
+			}
 			wordMLPackage.getMainDocumentPart().getContent().addAll(elements);
 
-			// 4. Add header (activity name + logo) and footer (date, branding, page numbers)
+			// 4. Add header (activity name + logo) and footer (date, branding, page
+			// numbers)
 			configureHeaderAndFooter(wordMLPackage, sectPr, activityName);
 
 			// 5. Write to bytes
@@ -134,11 +141,11 @@ public class MarkdownToDocxService {
 	 * sections.
 	 *
 	 * @param markdowns
-	 *            the markdown contents, in order
+	 *                     the markdown contents, in order
 	 * @param landscapes
-	 *            whether each section is landscape, in the same order
+	 *                     whether each section is landscape, in the same order
 	 * @param activityName
-	 *            the activity name shown in the page header
+	 *                     the activity name shown in the page header
 	 */
 	public byte[] renderMergedDocx(List<String> markdowns, List<Boolean> landscapes, String activityName) {
 		if (markdowns.size() != landscapes.size()) {
@@ -146,7 +153,6 @@ public class MarkdownToDocxService {
 		}
 		try {
 			WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.createPackage();
-			XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
 
 			// Create header/footer parts once — they will be referenced by every section
 			HeaderPart headerPart = new HeaderPart();
@@ -159,7 +165,13 @@ public class MarkdownToDocxService {
 
 			for (int i = 0; i < markdowns.size(); i++) {
 				String html = markdownToHtmlService.renderMarkdownToDocxHtml(markdowns.get(i));
+				// XHTMLImporterImpl keeps conversion state across calls, so a fresh
+				// importer is required per section to avoid re-importing earlier content.
+				XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
 				List<Object> elements = importer.convert(html, null);
+				if (isArtikulationsschemaMarkdown(markdowns.get(i))) {
+					applyArtikulationsschemaTableLayout(elements, landscapes.get(i));
+				}
 				wordMLPackage.getMainDocumentPart().getContent().addAll(elements);
 
 				// Add a section break after each section EXCEPT the last one.
@@ -185,6 +197,116 @@ public class MarkdownToDocxService {
 	}
 
 	// ---- Page configuration ----
+
+	private boolean isArtikulationsschemaMarkdown(String markdown) {
+		return markdown != null && markdown.matches("(?is)^\\s*#\\s+Artikulationsschema\\b.*");
+	}
+
+	private void applyArtikulationsschemaTableLayout(List<Object> elements, boolean landscape) {
+		int totalWidthTwips = (landscape ? PAGE_WIDTH_LANDSCAPE.intValue() : PAGE_HEIGHT_LANDSCAPE.intValue())
+				- MARGIN_LEFT.intValue() - MARGIN_RIGHT.intValue();
+		int[] columnWidths = toAbsoluteColumnWidths(totalWidthTwips);
+
+		for (Object element : elements) {
+			Object value = unwrap(element);
+			if (value instanceof Tbl table) {
+				configureFullWidthTable(table, totalWidthTwips, columnWidths);
+			}
+		}
+	}
+
+	private int[] toAbsoluteColumnWidths(int totalWidthTwips) {
+		int[] widths = new int[ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT.length];
+		int consumed = 0;
+
+		for (int i = 0; i < ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT.length; i++) {
+			if (i == ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT.length - 1) {
+				widths[i] = totalWidthTwips - consumed;
+			} else {
+				widths[i] = totalWidthTwips * ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT[i] / 100;
+				consumed += widths[i];
+			}
+		}
+
+		return widths;
+	}
+
+	private void configureFullWidthTable(Tbl table, int totalWidthTwips, int[] columnWidths) {
+		TblPr tblPr = table.getTblPr();
+		if (tblPr == null) {
+			tblPr = WML_FACTORY.createTblPr();
+			table.setTblPr(tblPr);
+		}
+
+		TblWidth tblWidth = WML_FACTORY.createTblWidth();
+		tblWidth.setType(TblWidth.TYPE_DXA);
+		tblWidth.setW(BigInteger.valueOf(totalWidthTwips));
+		tblPr.setTblW(tblWidth);
+
+		CTTblLayoutType layout = WML_FACTORY.createCTTblLayoutType();
+		layout.setType(STTblLayoutType.FIXED);
+		tblPr.setTblLayout(layout);
+
+		TblGrid tblGrid = table.getTblGrid();
+		if (tblGrid == null) {
+			tblGrid = WML_FACTORY.createTblGrid();
+			table.setTblGrid(tblGrid);
+		}
+		tblGrid.getGridCol().clear();
+		for (int width : columnWidths) {
+			TblGridCol gridCol = WML_FACTORY.createTblGridCol();
+			gridCol.setW(BigInteger.valueOf(width));
+			tblGrid.getGridCol().add(gridCol);
+		}
+
+		for (Object rowObject : table.getContent()) {
+			Object rowValue = unwrap(rowObject);
+			if (!(rowValue instanceof Tr row)) {
+				continue;
+			}
+
+			int columnIndex = 0;
+			for (Object cellObject : row.getContent()) {
+				Object cellValue = unwrap(cellObject);
+				if (!(cellValue instanceof Tc cell)) {
+					continue;
+				}
+
+				int span = getGridSpan(cell);
+				int cellWidthTwips = 0;
+				for (int i = 0; i < span && columnIndex + i < columnWidths.length; i++) {
+					cellWidthTwips += columnWidths[columnIndex + i];
+				}
+				setCellWidth(cell, cellWidthTwips);
+				columnIndex += Math.max(span, 1);
+			}
+		}
+	}
+
+	private int getGridSpan(Tc cell) {
+		TcPr tcPr = cell.getTcPr();
+		if (tcPr == null || tcPr.getGridSpan() == null || tcPr.getGridSpan().getVal() == null) {
+			return 1;
+		}
+		return Math.max(tcPr.getGridSpan().getVal().intValue(), 1);
+	}
+
+	private void setCellWidth(Tc cell, int widthTwips) {
+		TcPr tcPr = cell.getTcPr();
+		if (tcPr == null) {
+			tcPr = WML_FACTORY.createTcPr();
+			cell.setTcPr(tcPr);
+		}
+
+		TblWidth tcWidth = WML_FACTORY.createTblWidth();
+		tcWidth.setType(TblWidth.TYPE_DXA);
+		tcWidth.setW(BigInteger.valueOf(widthTwips));
+		tcPr.setTcW(tcWidth);
+	}
+
+	private Object unwrap(Object value) {
+		return value instanceof JAXBElement<?> element ? element.getValue() : value;
+	}
 
 	/**
 	 * Insert a section break (next page) after the current content, setting the
@@ -223,12 +345,36 @@ public class MarkdownToDocxService {
 		// Reference the shared header/footer so they appear in this section too
 		addHeaderFooterReferences(sectPr, headerRelId, footerRelId);
 
-		// Append as a new paragraph with this section break
-		P sectionBreakPara = WML_FACTORY.createP();
-		PPr pPr = WML_FACTORY.createPPr();
+		// In DOCX, a mid-document section break must be attached to the last
+		// paragraph of the current section. Adding a separate trailing paragraph can
+		// cause Word to lay out the document incorrectly across section boundaries.
+		List<Object> content = wordMLPackage.getMainDocumentPart().getContent();
+		P targetParagraph;
+
+		if (content.isEmpty()) {
+			targetParagraph = WML_FACTORY.createP();
+			content.add(targetParagraph);
+		} else {
+			Object lastItem = content.get(content.size() - 1);
+			Object lastValue = lastItem instanceof JAXBElement<?> element ? element.getValue() : lastItem;
+
+			if (lastValue instanceof P paragraph) {
+				targetParagraph = paragraph;
+			} else {
+				// If the section ends in a table or another block type, place an empty
+				// paragraph after it and attach the section break there so all preceding
+				// content stays in the current section.
+				targetParagraph = WML_FACTORY.createP();
+				content.add(targetParagraph);
+			}
+		}
+
+		PPr pPr = targetParagraph.getPPr();
+		if (pPr == null) {
+			pPr = WML_FACTORY.createPPr();
+			targetParagraph.setPPr(pPr);
+		}
 		pPr.setSectPr(sectPr);
-		sectionBreakPara.setPPr(pPr);
-		wordMLPackage.getMainDocumentPart().getContent().add(sectionBreakPara);
 	}
 
 	/**

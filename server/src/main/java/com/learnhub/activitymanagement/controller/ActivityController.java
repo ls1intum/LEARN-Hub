@@ -41,7 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ActivityController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivityController.class);
-	private static final String[] MARKDOWN_TYPE_ORDER = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
+	private static final String[] MARKDOWN_TYPE_ORDER = { "deckblatt", "artikulationsschema", "hintergrundwissen" };
 
 	@Autowired
 	private ActivityService activityService;
@@ -519,7 +519,7 @@ public class ActivityController {
 	 * the DB. Order: Deckblatt, Artikulationsschema, Hintergrundwissen.
 	 */
 	private List<byte[]> buildOrderedPdfParts(ActivityResponse activity) {
-		
+
 		String activityName = activity.getName() != null ? activity.getName() : "";
 
 		List<byte[]> parts = new ArrayList<>();
@@ -543,7 +543,7 @@ public class ActivityController {
 	 * Deckblatt, Artikulationsschema, Hintergrundwissen.
 	 */
 	private void buildOrderedDocxParts(ActivityResponse activity, List<String> markdowns, List<Boolean> landscapes) {
-		
+
 		if (activity.getMarkdowns() == null) {
 			return;
 		}
@@ -555,6 +555,7 @@ public class ActivityController {
 				}
 			}
 		}
+		logger.debug("Ordered DOCX parts - Markdowns: {}, Landscapes: {}", markdowns, landscapes);
 	}
 
 	/**
@@ -563,7 +564,6 @@ public class ActivityController {
 	 */
 	private String buildCombinedMarkdown(ActivityResponse activity) {
 		StringBuilder combined = new StringBuilder();
-		
 
 		for (String type : MARKDOWN_TYPE_ORDER) {
 			if (activity.getMarkdowns() != null) {

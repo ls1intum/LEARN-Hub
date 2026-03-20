@@ -30,6 +30,8 @@ public class MarkdownToHtmlService {
 	private static final String DOCX_CSS_TEMPLATE_PATH = "templates/markdown/docx-styles.css";
 	private static final String LOGO_PATH = "templates/markdown/header-logo.png";
 	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+	private static final Pattern ARTIKULATIONSSCHEMA_TITLE_PATTERN = Pattern.compile("^\\s*#\\s+Artikulationsschema\\b",
+			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 
 	/**
 	 * Pattern to match HTML5 void elements that are NOT already self-closed.
@@ -95,7 +97,7 @@ public class MarkdownToHtmlService {
 	 */
 	public String renderMarkdownToHtml(String markdown, boolean landscape, String activityName) {
 		Node document = parser.parse(markdown);
-		String body = renderer.render(document);
+		String body = decorateRenderedBody(markdown, renderer.render(document), false);
 		String css = landscape ? cssTemplate : cssPortraitTemplate;
 		String name = activityName != null ? activityName : "";
 		String downloadDate = LocalDateTime.now().format(DATE_FORMATTER);
@@ -119,7 +121,7 @@ public class MarkdownToHtmlService {
 	 */
 	public String renderMarkdownToDocxHtml(String markdown) {
 		Node document = parser.parse(markdown);
-		String body = renderer.render(document);
+		String body = decorateRenderedBody(markdown, renderer.render(document), true);
 		String html = docxHtmlTemplate.replace("{{styles}}", docxCssTemplate).replace("{{body}}", body);
 		return sanitizeToXhtml(html);
 	}
@@ -144,6 +146,20 @@ public class MarkdownToHtmlService {
 			String attrs = match.group(2);
 			return "<" + tag + (attrs != null ? attrs : "") + " />";
 		});
+	}
+
+	private String decorateRenderedBody(String markdown, String body, boolean forDocx) {
+		if (markdown == null || body == null) {
+			return body;
+		}
+		if (!ARTIKULATIONSSCHEMA_TITLE_PATTERN.matcher(markdown).find()) {
+			return body;
+		}
+		if (forDocx) {
+			return body.replaceFirst("<table>",
+					"<table class=\"artikulationsschema-table\" style=\"width:100%; table-layout:fixed;\">");
+		}
+		return body.replaceFirst("<table>", "<table class=\"artikulationsschema-table\">");
 	}
 
 	private String loadTemplate(String path) {

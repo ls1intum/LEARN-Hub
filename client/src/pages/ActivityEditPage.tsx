@@ -195,13 +195,23 @@ export const ActivityEditPage: React.FC = () => {
   // ─── Preview Rendering ──────────────────────────────────────────
 
   const renderPreviewLandscape = useCallback(
-    (markdown: string) => apiService.previewMarkdownPdf(markdown, "landscape"),
-    [],
+    (markdown: string) =>
+      apiService.previewMarkdownPdf(
+        markdown,
+        "landscape",
+        savedMetadata?.name || activity?.name || "",
+      ),
+    [activity?.name, savedMetadata?.name],
   );
 
   const renderPreviewPortrait = useCallback(
-    (markdown: string) => apiService.previewMarkdownPdf(markdown, "portrait"),
-    [],
+    (markdown: string) =>
+      apiService.previewMarkdownPdf(
+        markdown,
+        "portrait",
+        savedMetadata?.name || activity?.name || "",
+      ),
+    [activity?.name, savedMetadata?.name],
   );
 
   // ─── Save ───────────────────────────────────────────────────────

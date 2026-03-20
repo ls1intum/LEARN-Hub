@@ -375,5 +375,30 @@ describe("ApiService", () => {
         },
       );
     });
+
+    it("should include activity name when rendering preview pdf", async () => {
+      vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
+        new Response(new Blob(["pdf"]), { status: 200 }),
+      );
+
+      await ApiService.previewMarkdownPdf(
+        "# Deckblatt",
+        "portrait",
+        "Binary Bracelets",
+      );
+
+      expect(authService.makeAuthenticatedRequest).toHaveBeenCalledWith(
+        "/api/markdowns/preview-pdf",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            markdown: "# Deckblatt",
+            orientation: "portrait",
+            activityName: "Binary Bracelets",
+          }),
+        },
+      );
+    });
   });
 });

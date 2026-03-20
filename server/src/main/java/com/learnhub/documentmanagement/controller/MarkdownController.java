@@ -115,7 +115,9 @@ public class MarkdownController {
 			// Preview uses landscape by default; orientation param is optional
 			String orientation = request.get("orientation");
 			boolean landscape = orientation == null || !"portrait".equalsIgnoreCase(orientation);
-			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown, landscape);
+			String activityName = request.get("activityName");
+			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown, landscape,
+					activityName != null ? activityName : "");
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_PDF);

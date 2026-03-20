@@ -289,14 +289,23 @@ export const ActivitySetupPage: React.FC = () => {
 
   // ─── Preview Rendering ──────────────────────────────────────────
 
+  const previewActivityName =
+    typeof metadataInitialData.name === "string" ? metadataInitialData.name : "";
+
   const renderPreviewLandscape = useCallback(
-    (markdown: string) => apiService.previewMarkdownPdf(markdown, "landscape"),
-    [],
+    (markdown: string) =>
+      apiService.previewMarkdownPdf(
+        markdown,
+        "landscape",
+        previewActivityName,
+      ),
+    [previewActivityName],
   );
 
   const renderPreviewPortrait = useCallback(
-    (markdown: string) => apiService.previewMarkdownPdf(markdown, "portrait"),
-    [],
+    (markdown: string) =>
+      apiService.previewMarkdownPdf(markdown, "portrait", previewActivityName),
+    [previewActivityName],
   );
 
   // ─── Final Save ─────────────────────────────────────────────────

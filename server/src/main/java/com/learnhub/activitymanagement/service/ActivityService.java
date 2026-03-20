@@ -13,7 +13,9 @@ import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -360,9 +362,14 @@ public class ActivityService {
 		response.setDocuments(docResponses);
 
 		// Map all markdowns to response list
-		List<MarkdownResponse> mdResponses = activity
-				.getMarkdowns().stream().map(m -> new MarkdownResponse(m.getId(),
-						m.getType() != null ? m.getType().getValue() : null, m.getContent(), m.isLandscape()))
+		Map<String, ActivityMarkdown> latestMarkdownByType = activity.getMarkdowns().stream()
+				.filter(m -> m.getType() != null)
+				.sorted(Comparator.comparing(ActivityMarkdown::getCreatedAt,
+						Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+				.collect(Collectors.toMap(m -> m.getType().getValue(), m -> m, (existing, ignored) -> existing,
+						LinkedHashMap::new));
+		List<MarkdownResponse> mdResponses = latestMarkdownByType.values().stream()
+				.map(m -> new MarkdownResponse(m.getId(), m.getType().getValue(), m.getContent(), m.isLandscape()))
 				.collect(Collectors.toList());
 		response.setMarkdowns(mdResponses);
 

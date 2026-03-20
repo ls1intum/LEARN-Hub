@@ -176,6 +176,34 @@ class ActivityServiceTest {
 	}
 
 	@Test
+	void mapToResponseKeepsOnlyLatestMarkdownPerType() {
+		Activity activity = createTestActivity();
+
+		ActivityMarkdown olderMarkdown = new ActivityMarkdown();
+		olderMarkdown.setId(UUID.randomUUID());
+		olderMarkdown.setActivity(activity);
+		olderMarkdown.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+		olderMarkdown.setContent("# Old Schema");
+		olderMarkdown.setCreatedAt(LocalDateTime.of(2026, 3, 1, 10, 0));
+
+		ActivityMarkdown newerMarkdown = new ActivityMarkdown();
+		newerMarkdown.setId(UUID.randomUUID());
+		newerMarkdown.setActivity(activity);
+		newerMarkdown.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+		newerMarkdown.setContent("# New Schema");
+		newerMarkdown.setCreatedAt(LocalDateTime.of(2026, 3, 2, 10, 0));
+
+		activity.getMarkdowns().add(olderMarkdown);
+		activity.getMarkdowns().add(newerMarkdown);
+
+		ActivityResponse response = activityService.convertToResponse(activity);
+
+		assertThat(response.getMarkdowns()).hasSize(1);
+		assertThat(response.getMarkdowns().get(0).getId()).isEqualTo(newerMarkdown.getId());
+		assertThat(response.getMarkdowns().get(0).getContent()).isEqualTo("# New Schema");
+	}
+
+	@Test
 	void mapToResponseReturnsEmptyListsWhenNoDocumentsOrMarkdowns() {
 		Activity activity = createTestActivity();
 
