@@ -6,6 +6,8 @@ import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
+import com.learnhub.documentmanagement.service.DocxHeaderFooterHelper;
+import com.learnhub.documentmanagement.service.DocxTableHelper;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToHtmlService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
@@ -29,7 +31,8 @@ class MarkdownControllerTest {
 		ReflectionTestUtils.setField(markdownController, "markdownToPdfService",
 				new MarkdownToPdfService(markdownToHtmlService));
 		ReflectionTestUtils.setField(markdownController, "markdownToDocxService",
-				new MarkdownToDocxService(markdownToHtmlService));
+				new MarkdownToDocxService(markdownToHtmlService, new DocxHeaderFooterHelper(),
+						new DocxTableHelper()));
 	}
 
 	@Test
