@@ -11,6 +11,7 @@ import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
+import com.learnhub.exception.ResourceNotFoundException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -153,7 +154,7 @@ public class ActivityService {
 	public ActivityResponse getActivityById(UUID id) {
 		logger.debug("Fetching activity by id={}", id);
 		Activity activity = activityRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Activity not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 		return mapToResponse(activity);
 	}
 
@@ -166,7 +167,7 @@ public class ActivityService {
 
 	public ActivityResponse updateActivity(UUID id, Activity activityUpdate) {
 		Activity activity = activityRepository.findById(id)
-				.orElseThrow(() -> new RuntimeException("Activity not found"));
+				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 
 		// Update fields
 		activity.setName(activityUpdate.getName());

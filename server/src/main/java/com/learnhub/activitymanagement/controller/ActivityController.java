@@ -14,12 +14,13 @@ import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
 import com.learnhub.documentmanagement.service.PDFService;
-import com.learnhub.dto.response.ErrorResponse;
+import com.learnhub.exception.ResourceNotFoundException;
 import com.learnhub.usermanagement.service.UserSearchHistoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,25 +73,20 @@ public class ActivityController {
 				"GET /api/activities/ - Get activities called with filters: name={}, ageMin={}, ageMax={}, format={}, limit={}, offset={}",
 				request.name(), request.ageMin(), request.ageMax(), request.format(), request.limit(),
 				request.offset());
-		try {
-			List<ActivityResponse> activities = activityService.getActivitiesWithFilters(request.name(),
-					request.ageMin(), request.ageMax(), request.durationMin(), request.durationMax(), request.format(),
-					request.bloomLevel(), request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(),
-					request.topics(), request.limit(), request.offset());
-			Map<String, Object> response = new HashMap<>();
-			response.put("total",
-					activityService.countActivitiesWithFilters(request.name(), request.ageMin(), request.ageMax(),
-							request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
-							request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(),
-							request.topics()));
-			response.put("activities", activities);
-			response.put("limit", request.limit());
-			response.put("offset", request.offset());
-			return ResponseEntity.ok(response);
-		} catch (Exception e) {
-			logger.error("GET /api/activities/ - Failed to retrieve activities: {}", e.getMessage());
-			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-		}
+		List<ActivityResponse> activities = activityService.getActivitiesWithFilters(request.name(),
+				request.ageMin(), request.ageMax(), request.durationMin(), request.durationMax(), request.format(),
+				request.bloomLevel(), request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(),
+				request.topics(), request.limit(), request.offset());
+		Map<String, Object> response = new HashMap<>();
+		response.put("total",
+				activityService.countActivitiesWithFilters(request.name(), request.ageMin(), request.ageMax(),
+						request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
+						request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(),
+						request.topics()));
+		response.put("activities", activities);
+		response.put("limit", request.limit());
+		response.put("offset", request.offset());
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/{id}")
@@ -98,13 +94,8 @@ public class ActivityController {
 	@Operation(summary = "Get activity by ID", description = "Get a single activity by its ID")
 	public ResponseEntity<?> getActivity(@PathVariable UUID id) {
 		logger.info("GET /api/activities/{} - Get activity by ID called", id);
-		try {
-			ActivityResponse activity = activityService.getActivityById(id);
-			return ResponseEntity.ok(activity);
-		} catch (Exception e) {
-			logger.error("GET /api/activities/{} - Activity not found: {}", id, e.getMessage());
-			return ResponseEntity.status(404).body(ErrorResponse.of(e.getMessage()));
-		}
+		ActivityResponse activity = activityService.getActivityById(id);
+		return ResponseEntity.ok(activity);
 	}
 
 	@PostMapping("/create")
@@ -113,19 +104,11 @@ public class ActivityController {
 	@Operation(summary = "Create activity", description = "Create a new activity (admin only)")
 	public ResponseEntity<?> createActivity(@RequestBody Map<String, Object> request) {
 		logger.info("POST /api/activities/create - Create activity called");
-		try {
-			ActivityResponse saved = activityService.createActivityWithValidation(request);
-			logger.info("POST /api/activities/create - Activity created with id={}", saved.getId());
-			Map<String, Object> response = new HashMap<>();
-			response.put("activity", saved);
-			return ResponseEntity.status(201).body(response);
-		} catch (IllegalArgumentException e) {
-			logger.error("POST /api/activities/create - Invalid activity data: {}", e.getMessage());
-			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-		} catch (Exception e) {
-			logger.error("POST /api/activities/create - Failed to create activity: {}", e.getMessage());
-			return ResponseEntity.status(500).body(ErrorResponse.of("Failed to create activity: " + e.getMessage()));
-		}
+		ActivityResponse saved = activityService.createActivityWithValidation(request);
+		logger.info("POST /api/activities/create - Activity created with id={}", saved.getId());
+		Map<String, Object> response = new HashMap<>();
+		response.put("activity", saved);
+		return ResponseEntity.status(201).body(response);
 	}
 
 	@DeleteMapping("/{id}")
@@ -134,16 +117,11 @@ public class ActivityController {
 	@Operation(summary = "Delete activity", description = "Delete an activity by its ID (admin only)")
 	public ResponseEntity<?> deleteActivity(@PathVariable UUID id) {
 		logger.info("DELETE /api/activities/{} - Delete activity called", id);
-		try {
-			activityService.deleteActivity(id);
-			logger.info("DELETE /api/activities/{} - Activity deleted successfully", id);
-			Map<String, String> response = new HashMap<>();
-			response.put("message", "Activity deleted successfully");
-			return ResponseEntity.ok(response);
-		} catch (Exception e) {
-			logger.error("DELETE /api/activities/{} - Failed to delete activity: {}", id, e.getMessage());
-			return ResponseEntity.status(404).body(ErrorResponse.of(e.getMessage()));
-		}
+		activityService.deleteActivity(id);
+		logger.info("DELETE /api/activities/{} - Activity deleted successfully", id);
+		Map<String, String> response = new HashMap<>();
+		response.put("message", "Activity deleted successfully");
+		return ResponseEntity.ok(response);
 	}
 
 	@PutMapping("/{id}")
@@ -152,54 +130,25 @@ public class ActivityController {
 	@Operation(summary = "Update activity", description = "Update an existing activity's metadata and artikulationsschema (admin only)")
 	public ResponseEntity<?> updateActivity(@PathVariable UUID id, @RequestBody Map<String, Object> request) {
 		logger.info("PUT /api/activities/{} - Update activity called", id);
-		try {
-			ActivityResponse updated = activityService.updateActivityFromMap(id, request);
-			logger.info("PUT /api/activities/{} - Activity updated successfully", id);
-			return ResponseEntity.ok(updated);
-		} catch (IllegalArgumentException e) {
-			logger.error("PUT /api/activities/{} - Invalid activity data: {}", id, e.getMessage());
-			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-		} catch (Exception e) {
-			String msg = e.getMessage();
-			if (msg != null && msg.contains("Activity not found")) {
-				logger.error("PUT /api/activities/{} - Activity not found: {}", id, msg);
-				return ResponseEntity.status(404).body(ErrorResponse.of(msg));
-			}
-			logger.error("PUT /api/activities/{} - Failed to update activity: {}", id, msg);
-			return ResponseEntity.status(500).body(ErrorResponse.of("Failed to update activity: " + msg));
-		}
+		ActivityResponse updated = activityService.updateActivityFromMap(id, request);
+		logger.info("PUT /api/activities/{} - Activity updated successfully", id);
+		return ResponseEntity.ok(updated);
 	}
 
 	@GetMapping("/{activityId}/pdf")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get activity PDF", description = "Get PDF file for a specific activity")
-	public ResponseEntity<?> getActivityPdf(@PathVariable UUID activityId) {
+	public ResponseEntity<?> getActivityPdf(@PathVariable UUID activityId) throws IOException {
 		logger.info("GET /api/activities/{}/pdf - Get activity PDF called", activityId);
-		try {
-			ActivityResponse activity = activityService.getActivityById(activityId);
-			DocumentResponse sourcePdf = activity.getDocuments().stream().filter(d -> "source_pdf".equals(d.getType()))
-					.findFirst().orElse(null);
-			if (sourcePdf == null) {
-				logger.error("GET /api/activities/{}/pdf - No PDF associated with this activity", activityId);
-				return ResponseEntity.status(404).body(ErrorResponse.of("PDF not found for this activity"));
-			}
-
-			byte[] pdfContent = pdfService.getPdfContent(sourcePdf.getId());
-
-			// Use activity name as download filename, sanitized for safety
-			String activityName = activity.getName() != null ? activity.getName() : "activity";
-			String downloadName = sanitizeDownloadFilename(activityName) + ".pdf";
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_PDF);
-			headers.setContentDispositionFormData("inline", downloadName);
-			headers.setContentLength(pdfContent.length);
-
-			return ResponseEntity.ok().headers(headers).body(pdfContent);
-		} catch (Exception e) {
-			logger.error("GET /api/activities/{}/pdf - PDF not found: {}", activityId, e.getMessage());
-			return ResponseEntity.status(404).body(ErrorResponse.of("PDF not found: " + e.getMessage()));
+		ActivityResponse activity = activityService.getActivityById(activityId);
+		DocumentResponse sourcePdf = activity.getDocuments().stream().filter(d -> "source_pdf".equals(d.getType()))
+				.findFirst().orElse(null);
+		if (sourcePdf == null) {
+			throw new ResourceNotFoundException("PDF not found for this activity");
 		}
+
+		byte[] pdfContent = pdfService.getPdfContent(sourcePdf.getId());
+		return buildFileDownloadResponse(pdfContent, activity.getName(), ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
 	@GetMapping("/recommendations")
@@ -210,68 +159,50 @@ public class ActivityController {
 		logger.info(
 				"GET /api/activities/recommendations - Get recommendations called with targetAge={}, format={}, maxActivityCount={}, limit={}",
 				request.targetAge(), request.format(), request.maxActivityCount(), request.limit());
-		try {
-			// Build criteria map using service
-			Map<String, Object> criteria = activityService.buildRecommendationCriteria(request.name(),
-					request.targetAge(), request.format(), request.bloomLevels(), request.targetDuration(),
-					request.availableResources(), request.preferredTopics(), request.priorityCategories());
+		// Build criteria map using service
+		Map<String, Object> criteria = activityService.buildRecommendationCriteria(request.name(),
+				request.targetAge(), request.format(), request.bloomLevels(), request.targetDuration(),
+				request.availableResources(), request.preferredTopics(), request.priorityCategories());
 
-			// Save search history if user is authenticated
-			UUID userId = (UUID) httpRequest.getAttribute("userId");
-			if (userId != null) {
-				searchHistoryService.saveSearchQuery(userId, criteria);
-			}
-
-			// Get recommendations from service
-			Map<String, Object> response = recommendationService.getRecommendations(criteria, request.includeBreaks(),
-					request.maxActivityCount(), request.limit());
-
-			return ResponseEntity.ok(response);
-		} catch (Exception e) {
-			logger.error("GET /api/activities/recommendations - Failed to get recommendations: {}", e.getMessage());
-			return ResponseEntity.status(500)
-					.body(ErrorResponse.of("Failed to get recommendations: " + e.getMessage()));
+		// Save search history if user is authenticated
+		UUID userId = (UUID) httpRequest.getAttribute("userId");
+		if (userId != null) {
+			searchHistoryService.saveSearchQuery(userId, criteria);
 		}
+
+		// Get recommendations from service
+		Map<String, Object> response = recommendationService.getRecommendations(criteria, request.includeBreaks(),
+				request.maxActivityCount(), request.limit());
+
+		return ResponseEntity.ok(response);
 	}
 
 	@PostMapping("/lesson-plan")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Generate lesson plan", description = "Generate a lesson plan from selected activities")
-	public ResponseEntity<?> generateLessonPlan(@RequestBody LessonPlanRequest request) {
+	public ResponseEntity<?> generateLessonPlan(@RequestBody LessonPlanRequest request) throws IOException {
 		logger.info("POST /api/activities/lesson-plan - Generate lesson plan called with {} activities",
 				request.getActivities() != null ? request.getActivities().size() : 0);
-		try {
-			List<Map<String, Object>> activities = request.getActivities();
+		List<Map<String, Object>> activities = request.getActivities();
 
-			// Check if PDFs are available
-			LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(activities);
-			if (!info.isCanGenerateLessonPlan()) {
-				logger.error("POST /api/activities/lesson-plan - No PDFs available for the selected activities");
-				return ResponseEntity.badRequest()
-						.body(ErrorResponse.of("No PDFs available for the selected activities"));
-			}
-
-			// Process breaks using service
-			List<Map<String, Object>> breaks = activityService.processLessonPlanBreaks(activities, request.getBreaks());
-
-			// Generate lesson plan PDF
-			byte[] lessonPlanPdf = pdfService.generateLessonPlan(activities, request.getSearchCriteria(), breaks,
-					request.getTotalDuration());
-
-			logger.info("POST /api/activities/lesson-plan - Lesson plan PDF generated successfully, size={} bytes",
-					lessonPlanPdf.length);
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_PDF);
-			headers.setContentDispositionFormData("attachment", "lesson_plan.pdf");
-			headers.setContentLength(lessonPlanPdf.length);
-
-			return ResponseEntity.ok().headers(headers).body(lessonPlanPdf);
-		} catch (Exception e) {
-			logger.error("POST /api/activities/lesson-plan - Failed to generate lesson plan: {}", e.getMessage());
-			return ResponseEntity.status(500)
-					.body(ErrorResponse.of("Failed to generate lesson plan: " + e.getMessage()));
+		// Check if PDFs are available
+		LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(activities);
+		if (!info.isCanGenerateLessonPlan()) {
+			throw new IllegalArgumentException("No PDFs available for the selected activities");
 		}
+
+		// Process breaks using service
+		List<Map<String, Object>> breaks = activityService.processLessonPlanBreaks(activities, request.getBreaks());
+
+		// Generate lesson plan PDF
+		byte[] lessonPlanPdf = pdfService.generateLessonPlan(activities, request.getSearchCriteria(), breaks,
+				request.getTotalDuration());
+
+		logger.info("POST /api/activities/lesson-plan - Lesson plan PDF generated successfully, size={} bytes",
+				lessonPlanPdf.length);
+
+		return buildFileDownloadResponse(lessonPlanPdf, "lesson_plan", ".pdf", MediaType.APPLICATION_PDF,
+				"attachment");
 	}
 
 	@PostMapping("/lesson-plan/info")
@@ -280,14 +211,8 @@ public class ActivityController {
 	public ResponseEntity<?> getLessonPlanInfo(@RequestBody LessonPlanInfoRequest request) {
 		logger.info("POST /api/activities/lesson-plan/info - Get lesson plan info called with {} activities",
 				request.getActivities() != null ? request.getActivities().size() : 0);
-		try {
-			LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(request.getActivities());
-			return ResponseEntity.ok(info);
-		} catch (Exception e) {
-			logger.error("POST /api/activities/lesson-plan/info - Failed to get lesson plan info: {}", e.getMessage());
-			return ResponseEntity.status(500)
-					.body(ErrorResponse.of("Failed to get lesson plan info: " + e.getMessage()));
-		}
+		LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(request.getActivities());
+		return ResponseEntity.ok(info);
 	}
 
 	@PostMapping("/generate-artikulationsschema")
@@ -296,44 +221,27 @@ public class ActivityController {
 	@Operation(summary = "Generate Artikulationsschema", description = "Generate or extract an Artikulationsschema markdown from an uploaded PDF (admin only)")
 	public ResponseEntity<?> generateArtikulationsschema(@RequestBody Map<String, Object> request) {
 		logger.info("POST /api/activities/generate-artikulationsschema called");
-		try {
-			Object documentIdObj = request.get("documentId");
-			if (documentIdObj == null) {
-				return ResponseEntity.badRequest().body(ErrorResponse.of("documentId is required"));
-			}
+		UUID documentId = parseRequiredDocumentId(request);
 
-			UUID documentId;
-			try {
-				documentId = UUID.fromString(documentIdObj.toString());
-			} catch (IllegalArgumentException e) {
-				return ResponseEntity.badRequest().body(ErrorResponse.of("Invalid documentId format"));
-			}
-
-			// Get PDF text from cached or persisted PDF
-			String pdfText = pdfService.extractTextFromPdf(documentId);
-			if (pdfText == null || pdfText.trim().length() < 10) {
-				return ResponseEntity.badRequest()
-						.body(ErrorResponse.of("PDF does not contain sufficient text for schema generation"));
-			}
-
-			// Extract user-adjusted metadata if provided
-			@SuppressWarnings("unchecked")
-			Map<String, Object> metadata = request.get("metadata") instanceof Map
-					? (Map<String, Object>) request.get("metadata")
-					: null;
-
-			String markdown = llmService.generateArtikulationsschema(pdfText, metadata);
-
-			Map<String, Object> response = new HashMap<>();
-			response.put("markdown", markdown);
-			response.put("documentId", documentId.toString());
-
-			return ResponseEntity.ok(response);
-		} catch (Exception e) {
-			logger.error("POST /api/activities/generate-artikulationsschema - Failed: {}", e.getMessage());
-			return ResponseEntity.status(500)
-					.body(ErrorResponse.of("Failed to generate Artikulationsschema: " + e.getMessage()));
+		// Get PDF text from cached or persisted PDF
+		String pdfText = pdfService.extractTextFromPdf(documentId);
+		if (pdfText == null || pdfText.trim().length() < 10) {
+			throw new IllegalArgumentException("PDF does not contain sufficient text for schema generation");
 		}
+
+		// Extract user-adjusted metadata if provided
+		@SuppressWarnings("unchecked")
+		Map<String, Object> metadata = request.get("metadata") instanceof Map
+				? (Map<String, Object>) request.get("metadata")
+				: null;
+
+		String markdown = llmService.generateArtikulationsschema(pdfText, metadata);
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("markdown", markdown);
+		response.put("documentId", documentId.toString());
+
+		return ResponseEntity.ok(response);
 	}
 
 	@PostMapping("/upload-pdf-draft")
@@ -344,16 +252,8 @@ public class ActivityController {
 			@RequestParam(value = "extractMetadata", defaultValue = "true") boolean extractMetadata) {
 		logger.info("POST /api/activities/upload-pdf-draft - Upload PDF draft called with file={}",
 				pdfFile.getOriginalFilename());
-		try {
-			Map<String, Object> result = activityService.uploadPdfAndExtractMetadata(pdfFile, extractMetadata);
-			return ResponseEntity.status(201).body(result);
-		} catch (IllegalArgumentException e) {
-			logger.error("POST /api/activities/upload-pdf-draft - Invalid input: {}", e.getMessage());
-			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-		} catch (Exception e) {
-			logger.error("POST /api/activities/upload-pdf-draft - Failed: {}", e.getMessage());
-			return ResponseEntity.status(500).body(ErrorResponse.of("Failed to upload PDF draft: " + e.getMessage()));
-		}
+		Map<String, Object> result = activityService.uploadPdfAndExtractMetadata(pdfFile, extractMetadata);
+		return ResponseEntity.status(201).body(result);
 	}
 
 	@PostMapping("/regenerate-metadata")
@@ -362,26 +262,9 @@ public class ActivityController {
 	@Operation(summary = "Regenerate metadata", description = "Re-run metadata extraction for a cached or persisted PDF (admin only)")
 	public ResponseEntity<?> regenerateMetadata(@RequestBody Map<String, Object> request) {
 		logger.info("POST /api/activities/regenerate-metadata called");
-		try {
-			Object documentIdObj = request.get("documentId");
-			if (documentIdObj == null) {
-				return ResponseEntity.badRequest().body(ErrorResponse.of("documentId is required"));
-			}
-
-			UUID documentId;
-			try {
-				documentId = UUID.fromString(documentIdObj.toString());
-			} catch (IllegalArgumentException e) {
-				return ResponseEntity.badRequest().body(ErrorResponse.of("Invalid documentId format"));
-			}
-
-			Map<String, Object> result = activityService.extractMetadataFromDocument(documentId);
-			return ResponseEntity.ok(result);
-		} catch (Exception e) {
-			logger.error("POST /api/activities/regenerate-metadata - Failed: {}", e.getMessage());
-			return ResponseEntity.status(500)
-					.body(ErrorResponse.of("Failed to regenerate metadata: " + e.getMessage()));
-		}
+		UUID documentId = parseRequiredDocumentId(request);
+		Map<String, Object> result = activityService.extractMetadataFromDocument(documentId);
+		return ResponseEntity.ok(result);
 	}
 
 	@PostMapping("/generate-activity-markdowns")
@@ -390,60 +273,43 @@ public class ActivityController {
 	@Operation(summary = "Generate all activity markdowns", description = "Generate Deckblatt, Artikulationsschema, and Hintergrundwissen markdowns from an uploaded PDF (admin only)")
 	public ResponseEntity<?> generateActivityMarkdowns(@RequestBody Map<String, Object> request) {
 		logger.info("POST /api/activities/generate-activity-markdowns called");
-		try {
-			Object documentIdObj = request.get("documentId");
-			if (documentIdObj == null) {
-				return ResponseEntity.badRequest().body(ErrorResponse.of("documentId is required"));
-			}
+		UUID documentId = parseRequiredDocumentId(request);
 
-			UUID documentId;
-			try {
-				documentId = UUID.fromString(documentIdObj.toString());
-			} catch (IllegalArgumentException e) {
-				return ResponseEntity.badRequest().body(ErrorResponse.of("Invalid documentId format"));
-			}
-
-			String pdfText = pdfService.extractTextFromPdf(documentId);
-			if (pdfText == null || pdfText.trim().length() < 10) {
-				return ResponseEntity.badRequest()
-						.body(ErrorResponse.of("PDF does not contain sufficient text for generation"));
-			}
-
-			@SuppressWarnings("unchecked")
-			Map<String, Object> metadata = request.get("metadata") instanceof Map
-					? (Map<String, Object>) request.get("metadata")
-					: null;
-
-			// Determine which types to generate
-			@SuppressWarnings("unchecked")
-			List<String> types = request.get("types") instanceof List ? (List<String>) request.get("types") : null;
-
-			Map<String, Object> response = new HashMap<>();
-			response.put("documentId", documentId.toString());
-
-			boolean generateAll = types == null || types.isEmpty();
-
-			if (generateAll || types.contains("deckblatt")) {
-				String deckblatt = llmService.generateDeckblatt(pdfText, metadata);
-				response.put("deckblattMarkdown", deckblatt);
-			}
-
-			if (generateAll || types.contains("artikulationsschema")) {
-				String artikulationsschema = llmService.generateArtikulationsschema(pdfText, metadata);
-				response.put("artikulationsschemaMarkdown", artikulationsschema);
-			}
-
-			if (generateAll || types.contains("hintergrundwissen")) {
-				String hintergrundwissen = llmService.generateHintergrundwissen(pdfText, metadata);
-				response.put("hintergrundwissenMarkdown", hintergrundwissen);
-			}
-
-			return ResponseEntity.ok(response);
-		} catch (Exception e) {
-			logger.error("POST /api/activities/generate-activity-markdowns - Failed: {}", e.getMessage());
-			return ResponseEntity.status(500)
-					.body(ErrorResponse.of("Failed to generate activity markdowns: " + e.getMessage()));
+		String pdfText = pdfService.extractTextFromPdf(documentId);
+		if (pdfText == null || pdfText.trim().length() < 10) {
+			throw new IllegalArgumentException("PDF does not contain sufficient text for generation");
 		}
+
+		@SuppressWarnings("unchecked")
+		Map<String, Object> metadata = request.get("metadata") instanceof Map
+				? (Map<String, Object>) request.get("metadata")
+				: null;
+
+		// Determine which types to generate
+		@SuppressWarnings("unchecked")
+		List<String> types = request.get("types") instanceof List ? (List<String>) request.get("types") : null;
+
+		Map<String, Object> response = new HashMap<>();
+		response.put("documentId", documentId.toString());
+
+		boolean generateAll = types == null || types.isEmpty();
+
+		if (generateAll || types.contains("deckblatt")) {
+			String deckblatt = llmService.generateDeckblatt(pdfText, metadata);
+			response.put("deckblattMarkdown", deckblatt);
+		}
+
+		if (generateAll || types.contains("artikulationsschema")) {
+			String artikulationsschema = llmService.generateArtikulationsschema(pdfText, metadata);
+			response.put("artikulationsschemaMarkdown", artikulationsschema);
+		}
+
+		if (generateAll || types.contains("hintergrundwissen")) {
+			String hintergrundwissen = llmService.generateHintergrundwissen(pdfText, metadata);
+			response.put("hintergrundwissenMarkdown", hintergrundwissen);
+		}
+
+		return ResponseEntity.ok(response);
 	}
 
 	@GetMapping("/{activityId}/download-pdf")
@@ -451,31 +317,16 @@ public class ActivityController {
 	@Operation(summary = "Download activity as combined PDF", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single PDF")
 	public ResponseEntity<?> downloadActivityPdf(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/download-pdf - Download combined activity PDF", activityId);
-		try {
-			ActivityResponse activity = activityService.getActivityById(activityId);
-			List<byte[]> pdfParts = buildOrderedPdfParts(activity);
+		ActivityResponse activity = activityService.getActivityById(activityId);
+		List<byte[]> pdfParts = buildOrderedPdfParts(activity);
 
-			if (pdfParts.isEmpty()) {
-				return ResponseEntity.status(404)
-						.body(ErrorResponse.of("No markdown content available for this activity"));
-			}
-
-			byte[] pdfBytes = pdfParts.size() == 1 ? pdfParts.get(0) : markdownToPdfService.mergePdfs(pdfParts);
-
-			String activityName = activity.getName() != null ? activity.getName() : "activity";
-			String downloadName = sanitizeDownloadFilename(activityName) + ".pdf";
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_PDF);
-			headers.setContentDispositionFormData("inline", downloadName);
-			headers.setContentLength(pdfBytes.length);
-
-			return ResponseEntity.ok().headers(headers).body(pdfBytes);
-		} catch (Exception e) {
-			logger.error("GET /api/activities/{}/download-pdf - Failed: {}", activityId, e.getMessage());
-			return ResponseEntity.status(500)
-					.body(ErrorResponse.of("Failed to generate combined PDF: " + e.getMessage()));
+		if (pdfParts.isEmpty()) {
+			throw new ResourceNotFoundException("No markdown content available for this activity");
 		}
+
+		byte[] pdfBytes = pdfParts.size() == 1 ? pdfParts.get(0) : markdownToPdfService.mergePdfs(pdfParts);
+
+		return buildFileDownloadResponse(pdfBytes, activity.getName(), ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
 	@GetMapping("/{activityId}/download-docx")
@@ -483,35 +334,22 @@ public class ActivityController {
 	@Operation(summary = "Download activity as combined DOCX", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single DOCX")
 	public ResponseEntity<?> downloadActivityDocx(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/download-docx - Download combined activity DOCX", activityId);
-		try {
-			ActivityResponse activity = activityService.getActivityById(activityId);
-			List<String> markdowns = new ArrayList<>();
-			List<Boolean> landscapes = new ArrayList<>();
-			buildOrderedDocxParts(activity, markdowns, landscapes);
+		ActivityResponse activity = activityService.getActivityById(activityId);
+		List<String> markdowns = new ArrayList<>();
+		List<Boolean> landscapes = new ArrayList<>();
+		buildOrderedDocxParts(activity, markdowns, landscapes);
 
-			if (markdowns.isEmpty()) {
-				return ResponseEntity.status(404)
-						.body(ErrorResponse.of("No markdown content available for this activity"));
-			}
-
-			String activityName = activity.getName() != null ? activity.getName() : "";
-			byte[] docxBytes = markdownToDocxService.renderMergedDocx(markdowns, landscapes, activityName);
-
-			String downloadName = sanitizeDownloadFilename(activityName.isEmpty() ? "activity" : activityName)
-					+ ".docx";
-
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType
-					.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
-			headers.setContentDispositionFormData("attachment", downloadName);
-			headers.setContentLength(docxBytes.length);
-
-			return ResponseEntity.ok().headers(headers).body(docxBytes);
-		} catch (Exception e) {
-			logger.error("GET /api/activities/{}/download-docx - Failed: {}", activityId, e.getMessage());
-			return ResponseEntity.status(500)
-					.body(ErrorResponse.of("Failed to generate combined DOCX: " + e.getMessage()));
+		if (markdowns.isEmpty()) {
+			throw new ResourceNotFoundException("No markdown content available for this activity");
 		}
+
+		String activityName = activity.getName() != null ? activity.getName() : "";
+		byte[] docxBytes = markdownToDocxService.renderMergedDocx(markdowns, landscapes, activityName);
+
+		MediaType docxMediaType = MediaType
+				.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+		return buildFileDownloadResponse(docxBytes, activityName.isEmpty() ? "activity" : activityName, ".docx",
+				docxMediaType, "attachment");
 	}
 
 	/**
@@ -559,26 +397,31 @@ public class ActivityController {
 	}
 
 	/**
-	 * Build combined markdown from all activity markdowns in order: Deckblatt,
-	 * Artikulationsschema, Hintergrundwissen.
+	 * Parse and validate the "documentId" field from a request body map.
 	 */
-	private String buildCombinedMarkdown(ActivityResponse activity) {
-		StringBuilder combined = new StringBuilder();
-
-		for (String type : MARKDOWN_TYPE_ORDER) {
-			if (activity.getMarkdowns() != null) {
-				for (MarkdownResponse md : activity.getMarkdowns()) {
-					if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
-						if (combined.length() > 0) {
-							combined.append("\n\n---\n\n");
-						}
-						combined.append(md.getContent());
-					}
-				}
-			}
+	private UUID parseRequiredDocumentId(Map<String, Object> request) {
+		Object documentIdObj = request.get("documentId");
+		if (documentIdObj == null) {
+			throw new IllegalArgumentException("documentId is required");
 		}
+		try {
+			return UUID.fromString(documentIdObj.toString());
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("Invalid documentId format");
+		}
+	}
 
-		return combined.toString();
+	/**
+	 * Build a file download response with appropriate headers.
+	 */
+	private ResponseEntity<byte[]> buildFileDownloadResponse(byte[] content, String name, String extension,
+			MediaType mediaType, String disposition) {
+		String downloadName = sanitizeDownloadFilename(name != null ? name : "activity") + extension;
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(mediaType);
+		headers.setContentDispositionFormData(disposition, downloadName);
+		headers.setContentLength(content.length);
+		return ResponseEntity.ok().headers(headers).body(content);
 	}
 
 	private String sanitizeDownloadFilename(String name) {
