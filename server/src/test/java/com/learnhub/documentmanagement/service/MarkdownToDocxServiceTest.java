@@ -197,8 +197,8 @@ class MarkdownToDocxServiceTest {
 
 	@Test
 	void renderMergedDocxProducesValidDocx() throws Exception {
-		List<String> markdowns = List.of("# Deckblatt\n\nCover page content.", "# Artikulationsschema\n\n| A | B |\n|---|---|\n| 1 | 2 |",
-				"# Hintergrundwissen\n\nBackground info.");
+		List<String> markdowns = List.of("# Deckblatt\n\nCover page content.",
+				"# Artikulationsschema\n\n| A | B |\n|---|---|\n| 1 | 2 |", "# Hintergrundwissen\n\nBackground info.");
 		List<Boolean> landscapes = List.of(false, true, false);
 
 		byte[] result = service.renderMergedDocx(markdowns, landscapes, "My Activity");
@@ -232,8 +232,8 @@ class MarkdownToDocxServiceTest {
 
 	@Test
 	void renderMergedDocxHasHeaderFooterOnAllSections() throws Exception {
-		List<String> markdowns = List.of("# Deckblatt\n\nCover.", "# Artikulationsschema\n\n| A | B |\n|---|---|\n| 1 | 2 |",
-				"# Hintergrundwissen\n\nBackground.");
+		List<String> markdowns = List.of("# Deckblatt\n\nCover.",
+				"# Artikulationsschema\n\n| A | B |\n|---|---|\n| 1 | 2 |", "# Hintergrundwissen\n\nBackground.");
 		List<Boolean> landscapes = List.of(false, true, false);
 
 		byte[] result = service.renderMergedDocx(markdowns, landscapes, "Test Activity");
@@ -253,11 +253,9 @@ class MarkdownToDocxServiceTest {
 			for (var para : paragraphs) {
 				if (para.getPPr() != null && para.getPPr().getSectPr() != null) {
 					CTSectPr inlineSectPr = para.getPPr().getSectPr();
-					assertThat(inlineSectPr.getHeaderReferenceList())
-							.as("Inline section break should reference header")
+					assertThat(inlineSectPr.getHeaderReferenceList()).as("Inline section break should reference header")
 							.isNotEmpty();
-					assertThat(inlineSectPr.getFooterReferenceList())
-							.as("Inline section break should reference footer")
+					assertThat(inlineSectPr.getFooterReferenceList()).as("Inline section break should reference footer")
 							.isNotEmpty();
 					inlineSectPrCount++;
 				}

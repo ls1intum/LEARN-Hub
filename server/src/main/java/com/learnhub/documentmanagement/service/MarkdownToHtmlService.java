@@ -35,9 +35,14 @@ public class MarkdownToHtmlService {
 
 	/**
 	 * Pattern to match HTML5 void elements that are NOT already self-closed.
-	 * Matches {@code <br>}, {@code <hr>}, {@code <img ...>} etc. but not
-	 * {@code <br />} or {@code <br/>}. The negative lookbehind {@code (?<!/)}
-	 * before {@code >} ensures already self-closed tags are excluded.
+	 * Matches {@code <br>
+	 * }, {@code
+	 *
+	<hr>
+	 * }, {@code <img ...>} etc. but not {@code <br />
+	 * } or {@code <br/>
+	 * }. The negative lookbehind {@code (?<!/)} before {@code >} ensures already
+	 * self-closed tags are excluded.
 	 */
 	private static final Pattern VOID_ELEMENT_PATTERN = Pattern
 			.compile("<(br|hr|img|input|col|source|track|wbr)(\\s[^>]*?)?(?<!/)>", Pattern.CASE_INSENSITIVE);
@@ -110,9 +115,12 @@ public class MarkdownToHtmlService {
 	 * running header/footer elements (those are added via the DOCX API).
 	 *
 	 * <p>
-	 * The output is sanitized to XHTML: void elements like {@code <br>},
-	 * {@code <hr>}, and {@code <img>} are converted to self-closing form so that
-	 * docx4j's XML parser can process them.
+	 * The output is sanitized to XHTML: void elements like {@code <br>
+	 * }, {@code
+	 *
+	<hr>
+	 * }, and {@code <img>} are converted to self-closing form so that docx4j's XML
+	 * parser can process them.
 	 * </p>
 	 *
 	 * @param markdown
@@ -132,9 +140,15 @@ public class MarkdownToHtmlService {
 	}
 
 	/**
-	 * Sanitize HTML to XHTML by converting HTML5 void elements (e.g. {@code <br>},
-	 * {@code <hr>}, {@code <img ...>}) to self-closing XHTML form ({@code <br />},
-	 * {@code <hr />}, {@code <img ... />}). This is required because docx4j's
+	 * Sanitize HTML to XHTML by converting HTML5 void elements (e.g. {@code <br>
+	 * }, {@code
+	 *
+	<hr>
+	 * }, {@code <img ...>}) to self-closing XHTML form ({@code <br />
+	 * }, {@code
+	 *
+	<hr />
+	 * }, {@code <img ... />}). This is required because docx4j's
 	 * {@link org.docx4j.convert.in.xhtml.XHTMLImporterImpl} parses HTML as strict
 	 * XML, which rejects unclosed void elements.
 	 */

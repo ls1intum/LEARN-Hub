@@ -300,15 +300,13 @@ export const ActivitySetupPage: React.FC = () => {
   // ─── Preview Rendering ──────────────────────────────────────────
 
   const previewActivityName =
-    typeof metadataInitialData.name === "string" ? metadataInitialData.name : "";
+    typeof metadataInitialData.name === "string"
+      ? metadataInitialData.name
+      : "";
 
   const renderPreviewLandscape = useCallback(
     (markdown: string) =>
-      apiService.previewMarkdownPdf(
-        markdown,
-        "landscape",
-        previewActivityName,
-      ),
+      apiService.previewMarkdownPdf(markdown, "landscape", previewActivityName),
     [previewActivityName],
   );
 
@@ -381,23 +379,23 @@ export const ActivitySetupPage: React.FC = () => {
           onForward={
             currentStep === "metadata"
               ? {
-                label: "Next: Documents",
-                variant: "outline",
-                size: "icon",
-                ariaLabel: "Next step",
-                className: "h-9 w-9",
-                formId: "activity-setup-form",
-              }
+                  label: "Next: Documents",
+                  variant: "outline",
+                  size: "icon",
+                  ariaLabel: "Next step",
+                  className: "h-9 w-9",
+                  formId: "activity-setup-form",
+                }
               : currentStep === "documents"
                 ? {
-                  label: "Save Activity",
-                  variant: "default",
-                  onClick: handleSave,
-                  icon: <Save className="h-4 w-4" />,
-                  loading: isSaving,
-                  loadingLabel: "Saving...",
-                  disabled: isSaving || isGeneratingSchema,
-                }
+                    label: "Save Activity",
+                    variant: "default",
+                    onClick: handleSave,
+                    icon: <Save className="h-4 w-4" />,
+                    loading: isSaving,
+                    loadingLabel: "Saving...",
+                    disabled: isSaving || isGeneratingSchema,
+                  }
                 : undefined
           }
         />
@@ -431,10 +429,11 @@ export const ActivitySetupPage: React.FC = () => {
               </div>
 
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${dragActive
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:border-primary/50"
-                  }`}
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                  dragActive
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
+                }`}
                 onDragEnter={handleDrag}
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
@@ -556,20 +555,21 @@ export const ActivitySetupPage: React.FC = () => {
                     Review and edit the metadata extracted from your PDF.
                     {extractionQuality && (
                       <span
-                        className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${extractionQuality === "high"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                          : extractionQuality === "medium"
-                            ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                            : extractionQuality === "not_run"
-                              ? "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-                          }`}
+                        className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                          extractionQuality === "high"
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : extractionQuality === "medium"
+                              ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                              : extractionQuality === "not_run"
+                                ? "bg-slate-100 text-slate-700 dark:bg-slate-900/30 dark:text-slate-300"
+                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                        }`}
                       >
                         {extractionQuality === "not_run"
                           ? "AI skipped"
                           : `${extractionQuality} quality (${(
-                            extractionConfidence * 100
-                          ).toFixed(0)}%)`}
+                              extractionConfidence * 100
+                            ).toFixed(0)}%)`}
                       </span>
                     )}
                   </CardDescription>

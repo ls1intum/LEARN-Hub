@@ -364,8 +364,9 @@ public class ActivityService {
 		// Map all markdowns to response list
 		Map<String, ActivityMarkdown> latestMarkdownByType = activity.getMarkdowns().stream()
 				.filter(m -> m.getType() != null)
-				.sorted(Comparator.comparing(ActivityMarkdown::getCreatedAt,
-						Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+				.sorted(Comparator
+						.comparing(ActivityMarkdown::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))
+						.reversed())
 				.collect(Collectors.toMap(m -> m.getType().getValue(), m -> m, (existing, ignored) -> existing,
 						LinkedHashMap::new));
 		List<MarkdownResponse> mdResponses = latestMarkdownByType.values().stream()

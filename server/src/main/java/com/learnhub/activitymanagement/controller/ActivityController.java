@@ -41,7 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ActivityController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivityController.class);
-	private static final String[] MARKDOWN_TYPE_ORDER = { "deckblatt", "artikulationsschema", "hintergrundwissen" };
+	private static final String[] MARKDOWN_TYPE_ORDER = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
 
 	@Autowired
 	private ActivityService activityService;
@@ -497,8 +497,8 @@ public class ActivityController {
 			String activityName = activity.getName() != null ? activity.getName() : "";
 			byte[] docxBytes = markdownToDocxService.renderMergedDocx(markdowns, landscapes, activityName);
 
-			String downloadName = sanitizeDownloadFilename(
-					activityName.isEmpty() ? "activity" : activityName) + ".docx";
+			String downloadName = sanitizeDownloadFilename(activityName.isEmpty() ? "activity" : activityName)
+					+ ".docx";
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType

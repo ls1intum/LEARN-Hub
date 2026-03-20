@@ -1,12 +1,12 @@
 package com.learnhub.documentmanagement.service;
 
+import jakarta.xml.bind.JAXBElement;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import jakarta.xml.bind.JAXBElement;
 import org.docx4j.convert.in.xhtml.XHTMLImporterImpl;
 import org.docx4j.dml.wordprocessingDrawing.Inline;
 import org.docx4j.jaxb.Context;
@@ -42,7 +42,7 @@ public class MarkdownToDocxService {
 	private static final String SECTION_BREAK_NEXT_PAGE = "nextPage";
 	private static final DateTimeFormatter FOOTER_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 	private static final String FOOTER_BRANDING_TEXT = "LEARN-Hub \u2013 a TUM Applied Education Technologies application \u00B7 aet.cit.tum.de";
-	private static final int[] ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT = { 8, 12, 38, 10, 16, 16 };
+	private static final int[] ARTIKULATIONSSCHEMA_COLUMN_WIDTHS_PERCENT = {8, 12, 38, 10, 16, 16};
 
 	/** A4 landscape dimensions in twentieths of a point (twips). */
 	private static final BigInteger PAGE_WIDTH_LANDSCAPE = BigInteger.valueOf(16838);
@@ -83,9 +83,9 @@ public class MarkdownToDocxService {
 	 * Render markdown content to DOCX bytes with specified orientation.
 	 *
 	 * @param markdown
-	 *                  the markdown content
+	 *            the markdown content
 	 * @param landscape
-	 *                  true for landscape, false for portrait
+	 *            true for landscape, false for portrait
 	 */
 	public byte[] renderMarkdownToDocx(String markdown, boolean landscape) {
 		return renderMarkdownToDocx(markdown, landscape, "");
@@ -96,11 +96,11 @@ public class MarkdownToDocxService {
 	 * name in the header.
 	 *
 	 * @param markdown
-	 *                     the markdown content
+	 *            the markdown content
 	 * @param landscape
-	 *                     true for landscape, false for portrait
+	 *            true for landscape, false for portrait
 	 * @param activityName
-	 *                     the activity name shown in the page header
+	 *            the activity name shown in the page header
 	 */
 	public byte[] renderMarkdownToDocx(String markdown, boolean landscape, String activityName) {
 		try {
@@ -134,11 +134,11 @@ public class MarkdownToDocxService {
 	 * sections.
 	 *
 	 * @param markdowns
-	 *                     the markdown contents, in order
+	 *            the markdown contents, in order
 	 * @param landscapes
-	 *                     whether each section is landscape, in the same order
+	 *            whether each section is landscape, in the same order
 	 * @param activityName
-	 *                     the activity name shown in the page header
+	 *            the activity name shown in the page header
 	 */
 	public byte[] renderMergedDocx(List<String> markdowns, List<Boolean> landscapes, String activityName) {
 		if (markdowns.size() != landscapes.size()) {
