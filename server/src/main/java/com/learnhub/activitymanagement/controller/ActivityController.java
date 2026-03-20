@@ -41,6 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ActivityController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivityController.class);
+	private static final String[] MARKDOWN_TYPE_ORDER = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
 
 	@Autowired
 	private ActivityService activityService;
@@ -484,19 +485,20 @@ public class ActivityController {
 		logger.info("GET /api/activities/{}/download-docx - Download combined activity DOCX", activityId);
 		try {
 			ActivityResponse activity = activityService.getActivityById(activityId);
-			String combinedMarkdown = buildCombinedMarkdown(activity);
+			List<String> markdowns = new ArrayList<>();
+			List<Boolean> landscapes = new ArrayList<>();
+			buildOrderedDocxParts(activity, markdowns, landscapes);
 
-			if (combinedMarkdown.isEmpty()) {
+			if (markdowns.isEmpty()) {
 				return ResponseEntity.status(404)
 						.body(ErrorResponse.of("No markdown content available for this activity"));
 			}
 
-			// DOCX: render as landscape (Artikulationsschema is the main content)
-			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(combinedMarkdown, true,
-					activity.getName() != null ? activity.getName() : "");
+			String activityName = activity.getName() != null ? activity.getName() : "";
+			byte[] docxBytes = markdownToDocxService.renderMergedDocx(markdowns, landscapes, activityName);
 
-			String activityName = activity.getName() != null ? activity.getName() : "activity";
-			String downloadName = sanitizeDownloadFilename(activityName) + ".docx";
+			String downloadName = sanitizeDownloadFilename(activityName.isEmpty() ? "activity" : activityName)
+					+ ".docx";
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType
@@ -517,7 +519,7 @@ public class ActivityController {
 	 * the DB. Order: Deckblatt, Artikulationsschema, Hintergrundwissen.
 	 */
 	private List<byte[]> buildOrderedPdfParts(ActivityResponse activity) {
-		String[] typeOrder = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
+
 		String activityName = activity.getName() != null ? activity.getName() : "";
 
 		List<byte[]> parts = new ArrayList<>();
@@ -525,7 +527,7 @@ public class ActivityController {
 			return parts;
 		}
 
-		for (String type : typeOrder) {
+		for (String type : MARKDOWN_TYPE_ORDER) {
 			for (MarkdownResponse md : activity.getMarkdowns()) {
 				if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
 					parts.add(
@@ -537,14 +539,33 @@ public class ActivityController {
 	}
 
 	/**
+	 * Build ordered markdown/landscape lists for DOCX merged rendering. Order:
+	 * Deckblatt, Artikulationsschema, Hintergrundwissen.
+	 */
+	private void buildOrderedDocxParts(ActivityResponse activity, List<String> markdowns, List<Boolean> landscapes) {
+
+		if (activity.getMarkdowns() == null) {
+			return;
+		}
+		for (String type : MARKDOWN_TYPE_ORDER) {
+			for (MarkdownResponse md : activity.getMarkdowns()) {
+				if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
+					markdowns.add(md.getContent());
+					landscapes.add(md.isLandscape());
+				}
+			}
+		}
+		logger.debug("Ordered DOCX parts - Markdowns: {}, Landscapes: {}", markdowns, landscapes);
+	}
+
+	/**
 	 * Build combined markdown from all activity markdowns in order: Deckblatt,
 	 * Artikulationsschema, Hintergrundwissen.
 	 */
 	private String buildCombinedMarkdown(ActivityResponse activity) {
 		StringBuilder combined = new StringBuilder();
-		String[] typeOrder = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
 
-		for (String type : typeOrder) {
+		for (String type : MARKDOWN_TYPE_ORDER) {
 			if (activity.getMarkdowns() != null) {
 				for (MarkdownResponse md : activity.getMarkdowns()) {
 					if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {

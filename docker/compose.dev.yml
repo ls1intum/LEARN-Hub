@@ -1,6 +1,8 @@
 services:
   postgres:
     image: postgres:17
+    env_file:
+      - ../.env
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-learn_hub_activities}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -8,4 +10,4 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - ${POSTGRES_DATA:-./pg_data}:/var/lib/postgresql/data
+      - ${POSTGRES_DATA:-../pg_data}:/var/lib/postgresql/data

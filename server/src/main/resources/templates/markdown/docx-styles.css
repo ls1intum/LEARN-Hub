@@ -1,68 +1,3 @@
-@page {
-    size: A4 landscape;
-    margin: 55pt 30pt 50pt 30pt;
-
-    @top-left {
-        content: element(page-header);
-    }
-
-    @bottom-left {
-        content: element(footer-date);
-        font-size: 7pt;
-        font-family: Helvetica, Arial, sans-serif;
-        color: #555555;
-        vertical-align: middle;
-    }
-
-    @bottom-center {
-        content: element(footer-center);
-    }
-
-    @bottom-right {
-        content: "Page " counter(page) " of " counter(pages);
-        font-size: 7pt;
-        font-family: Helvetica, Arial, sans-serif;
-        color: #555555;
-        vertical-align: middle;
-    }
-}
-
-#page-header {
-    position: running(page-header);
-    width: 100%;
-    text-align: right;
-    padding-bottom: 4pt;
-}
-
-#page-header .activity-name {
-    font-size: 10pt;
-    color: #777777;
-    vertical-align: middle;
-    margin-right: 6pt;
-}
-
-#page-header img {
-    height: 22pt;
-    vertical-align: middle;
-    border: none;
-    outline: none;
-    box-shadow: none;
-}
-
-#footer-date {
-    position: running(footer-date);
-    font-size: 7pt;
-    color: #555555;
-}
-
-#footer-center {
-    position: running(footer-center);
-    font-size: 7pt;
-    font-family: Helvetica, Arial, sans-serif;
-    color: #555555;
-    text-align: center;
-}
-
 body {
     font-family: Helvetica, Arial, sans-serif;
     font-size: 11pt;
@@ -127,15 +62,13 @@ thead th {
     font-size: 10pt;
     font-weight: bold;
     border: 0.5pt solid #ffffff;
+    background-color: #2f70b3;
+    color: #ffffff;
 }
 
 table.artikulationsschema-table thead th {
     padding: 3pt 4pt;
     font-size: 8pt;
-}
-
-tbody tr:nth-child(even) {
-    background-color: #eaf1f8;
 }
 
 tbody td {

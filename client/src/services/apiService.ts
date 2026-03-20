@@ -494,13 +494,14 @@ export class ApiService {
   static async previewMarkdownPdf(
     markdown: string,
     orientation?: "portrait" | "landscape",
+    activityName?: string,
   ) {
     const response = await authService.makeAuthenticatedRequest(
       "/api/markdowns/preview-pdf",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markdown, orientation }),
+        body: JSON.stringify({ markdown, orientation, activityName }),
       },
     );
 

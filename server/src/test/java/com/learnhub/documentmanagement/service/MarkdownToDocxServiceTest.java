@@ -1,11 +1,16 @@
 package com.learnhub.documentmanagement.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 
 class MarkdownToDocxServiceTest {
 
@@ -159,6 +164,133 @@ class MarkdownToDocxServiceTest {
 			assertThat(footerText).contains("LEARN-Hub");
 			assertThat(footerText).contains("aet.cit.tum.de");
 			assertThat(footerText).contains("Page");
+		}
+	}
+
+	@Test
+	void renderMarkdownToDocxWithRawHtmlBreaksAndHorizontalRules() {
+		String markdown = """
+				# Title
+
+				First line<br>Second line<br>Third line
+
+				<hr>
+
+				Paragraph after rule.
+				""";
+		byte[] result = service.renderMarkdownToDocx(markdown);
+		assertThat(result).isNotNull();
+		assertThat(result.length).isGreaterThan(0);
+		assertThat(result[0]).isEqualTo((byte) 'P');
+		assertThat(result[1]).isEqualTo((byte) 'K');
+	}
+
+	@Test
+	void renderMarkdownToDocxHeaderIncludesLogo() throws Exception {
+		byte[] result = service.renderMarkdownToDocx("# Test", true, "My Activity");
+
+		try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(result))) {
+			assertThat(document.getHeaderList()).hasSize(1);
+			assertThat(document.getHeaderList().get(0).getAllPictures()).isNotEmpty();
+		}
+	}
+
+	@Test
+	void renderMergedDocxProducesValidDocx() throws Exception {
+		List<String> markdowns = List.of("# Deckblatt\n\nCover page content.",
+				"# Artikulationsschema\n\n| A | B |\n|---|---|\n| 1 | 2 |", "# Hintergrundwissen\n\nBackground info.");
+		List<Boolean> landscapes = List.of(false, true, false);
+
+		byte[] result = service.renderMergedDocx(markdowns, landscapes, "My Activity");
+
+		assertThat(result).isNotNull();
+		assertThat(result[0]).isEqualTo((byte) 'P');
+		assertThat(result[1]).isEqualTo((byte) 'K');
+
+		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(result))) {
+			assertThat(doc.getHeaderList()).isNotEmpty();
+			assertThat(doc.getFooterList()).isNotEmpty();
+			String headerText = doc.getHeaderList().get(0).getText();
+			assertThat(headerText).contains("My Activity");
+		}
+	}
+
+	@Test
+	void renderMergedDocxHasCorrectSectionOrientations() throws Exception {
+		List<String> markdowns = List.of("# Portrait Section", "# Landscape Section", "# Portrait Section 2");
+		List<Boolean> landscapes = List.of(false, true, false);
+
+		byte[] result = service.renderMergedDocx(markdowns, landscapes, "Test");
+
+		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(result))) {
+			// The body-level section (last section) should be portrait
+			CTSectPr bodySectPr = doc.getDocument().getBody().getSectPr();
+			assertThat(bodySectPr).isNotNull();
+			assertThat(bodySectPr.getPgSz().getOrient().toString()).isEqualTo("portrait");
+		}
+	}
+
+	@Test
+	void renderMergedDocxHasHeaderFooterOnAllSections() throws Exception {
+		List<String> markdowns = List.of("# Deckblatt\n\nCover.",
+				"# Artikulationsschema\n\n| A | B |\n|---|---|\n| 1 | 2 |", "# Hintergrundwissen\n\nBackground.");
+		List<Boolean> landscapes = List.of(false, true, false);
+
+		byte[] result = service.renderMergedDocx(markdowns, landscapes, "Test Activity");
+
+		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(result))) {
+			// With 3 sections, there should be 2 inline section breaks + 1 body-level
+			// SectPr. Each inline section break SectPr and the body SectPr should
+			// reference the same header and footer.
+			CTSectPr bodySectPr = doc.getDocument().getBody().getSectPr();
+			assertThat(bodySectPr).isNotNull();
+			assertThat(bodySectPr.getHeaderReferenceList()).isNotEmpty();
+			assertThat(bodySectPr.getFooterReferenceList()).isNotEmpty();
+
+			// Count inline SectPr elements (inside paragraph PPr)
+			var paragraphs = doc.getDocument().getBody().getPList();
+			int inlineSectPrCount = 0;
+			for (var para : paragraphs) {
+				if (para.getPPr() != null && para.getPPr().getSectPr() != null) {
+					CTSectPr inlineSectPr = para.getPPr().getSectPr();
+					assertThat(inlineSectPr.getHeaderReferenceList()).as("Inline section break should reference header")
+							.isNotEmpty();
+					assertThat(inlineSectPr.getFooterReferenceList()).as("Inline section break should reference footer")
+							.isNotEmpty();
+					inlineSectPrCount++;
+				}
+			}
+			// 3 sections = 2 section breaks between them
+			assertThat(inlineSectPrCount).isEqualTo(2);
+		}
+	}
+
+	@Test
+	void renderMergedDocxRejectsMismatchedLists() {
+		assertThatThrownBy(() -> service.renderMergedDocx(List.of("# A", "# B"), List.of(false), "Test"))
+				.isInstanceOf(IllegalArgumentException.class);
+	}
+
+	@Test
+	void renderMarkdownToDocxTableHasHeaderStyling() throws Exception {
+		String markdown = """
+				| Header A | Header B |
+				|----------|----------|
+				| Cell 1   | Cell 2   |
+				""";
+		byte[] result = service.renderMarkdownToDocx(markdown, false, "");
+
+		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(result))) {
+			List<XWPFTable> tables = doc.getTables();
+			assertThat(tables).isNotEmpty();
+			XWPFTable table = tables.get(0);
+			XWPFTableRow headerRow = table.getRow(0);
+			assertThat(headerRow).isNotNull();
+			// Header row should have cells
+			assertThat(headerRow.getTableCells()).hasSizeGreaterThanOrEqualTo(2);
+			// Check that header cell text is present
+			assertThat(headerRow.getCell(0).getText()).contains("Header A");
+			assertThat(headerRow.getCell(1).getText()).contains("Header B");
 		}
 	}
 }

@@ -120,11 +120,26 @@
             <version>0.24.0</version>
         </dependency>
 
-        <!-- DOCX generation (Apache POI) -->
+        <!-- DOCX generation (docx4j with HTML import) -->
+        <!-- Both docx4j artifacts MUST use the same version to avoid fontbox conflicts.
+             docx4j-ImportXHTML latest is 11.4.8, so docx4j-JAXB-ReferenceImpl must match. -->
+        <dependency>
+            <groupId>org.docx4j</groupId>
+            <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
+            <version>11.4.8</version>
+        </dependency>
+        <dependency>
+            <groupId>org.docx4j</groupId>
+            <artifactId>docx4j-ImportXHTML</artifactId>
+            <version>11.4.8</version>
+        </dependency>
+
+        <!-- Apache POI (test-only: used to read DOCX files in tests) -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>5.3.0</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- OpenAPI Documentation -->

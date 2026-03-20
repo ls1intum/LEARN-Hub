@@ -287,16 +287,33 @@ export const ActivitySetupPage: React.FC = () => {
     }
   };
 
+  const metadataInitialData = useMemo(
+    () =>
+      savedMetadata ||
+      ({
+        ...(extractedData ?? {}),
+        documentId: documentId || null,
+      } as Partial<ActivityFormData>),
+    [documentId, extractedData, savedMetadata],
+  );
+
   // ─── Preview Rendering ──────────────────────────────────────────
 
+  const previewActivityName =
+    typeof metadataInitialData.name === "string"
+      ? metadataInitialData.name
+      : "";
+
   const renderPreviewLandscape = useCallback(
-    (markdown: string) => apiService.previewMarkdownPdf(markdown, "landscape"),
-    [],
+    (markdown: string) =>
+      apiService.previewMarkdownPdf(markdown, "landscape", previewActivityName),
+    [previewActivityName],
   );
 
   const renderPreviewPortrait = useCallback(
-    (markdown: string) => apiService.previewMarkdownPdf(markdown, "portrait"),
-    [],
+    (markdown: string) =>
+      apiService.previewMarkdownPdf(markdown, "portrait", previewActivityName),
+    [previewActivityName],
   );
 
   // ─── Final Save ─────────────────────────────────────────────────
@@ -338,15 +355,6 @@ export const ActivitySetupPage: React.FC = () => {
   ];
 
   const currentStepIndex = steps.findIndex((s) => s.key === currentStep);
-  const metadataInitialData = useMemo(
-    () =>
-      savedMetadata ||
-      ({
-        ...(extractedData ?? {}),
-        documentId: documentId || null,
-      } as Partial<ActivityFormData>),
-    [documentId, extractedData, savedMetadata],
-  );
 
   // ─── Render ─────────────────────────────────────────────────────
 
@@ -612,7 +620,7 @@ export const ActivitySetupPage: React.FC = () => {
         <div className="space-y-4 lg:relative lg:left-1/2 lg:w-[calc(100vw-16rem-4rem)] lg:max-w-none lg:-translate-x-1/2">
           <Card>
             <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex grow items-center gap-3">
                 <Select
                   value={activeMarkdownTab}
                   onValueChange={(value) =>
