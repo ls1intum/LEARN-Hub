@@ -71,21 +71,11 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
         breaks: breaksForPdf,
       });
 
-      // Download the PDF
+      // Open the PDF in a new browser tab via a blob URL
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${lessonPlanData.title || "lessonPlan"}.pdf`;
-
-      try {
-        document.body.appendChild(a);
-        a.click();
-      } finally {
-        window.URL.revokeObjectURL(url);
-        if (document.body.contains(a)) {
-          document.body.removeChild(a);
-        }
-      }
+      window.open(url, "_blank");
+      // Revoke after a short delay so the new tab has time to load the resource
+      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
     } catch (error) {
       logger.error("Error downloading lesson plan", error, "LessonPlanModal");
       alert("Failed to download lesson plan. Please try again.");

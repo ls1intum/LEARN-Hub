@@ -293,6 +293,12 @@ public class PDFService {
 	 * document available for lesson-plan PDF generation.
 	 */
 	private boolean hasMarkdownsOrSourcePdf(Map<String, Object> activityMap) {
+		// 1. Check markdowns embedded directly in the request map
+		if (requestMapHasMarkdowns(activityMap)) {
+			return true;
+		}
+
+		// 2. Check DB for markdowns or SOURCE_PDF
 		UUID activityId = parseUuid(activityMap.get("id"));
 		if (activityId != null) {
 			Activity activity = activityRepository.findById(activityId).orElse(null);
@@ -300,13 +306,13 @@ public class PDFService {
 				if (activity.getMarkdowns() != null && !activity.getMarkdowns().isEmpty()) {
 					return true;
 				}
-				// Fallback: check for SOURCE_PDF
-				return activity.getDocuments().stream()
-						.anyMatch(d -> d.getType() == DocumentType.SOURCE_PDF);
+				if (activity.getDocuments().stream().anyMatch(d -> d.getType() == DocumentType.SOURCE_PDF)) {
+					return true;
+				}
 			}
 		}
 
-		// If no persisted activity found, fall back to the legacy document-id check
+		// 3. Legacy fallback: direct documentId or embedded SOURCE_PDF doc in map
 		UUID documentId = resolveLessonPlanDocumentId(activityMap);
 		if (documentId == null) {
 			return false;
@@ -317,6 +323,27 @@ public class PDFService {
 		} catch (Exception e) {
 			return false;
 		}
+	}
+
+	/**
+	 * Returns true if the activity map contains at least one markdown entry with
+	 * non-empty content.
+	 */
+	private boolean requestMapHasMarkdowns(Map<String, Object> activityMap) {
+		Object markdownsObj = activityMap.get("markdowns");
+		if (!(markdownsObj instanceof List<?> markdownsList)) {
+			return false;
+		}
+		for (Object mdObj : markdownsList) {
+			if (!(mdObj instanceof Map<?, ?> mdMap)) {
+				continue;
+			}
+			Object contentObj = mdMap.get("content");
+			if (contentObj != null && !contentObj.toString().trim().isEmpty()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private UUID resolveLessonPlanDocumentId(Map<String, Object> activity) {
@@ -420,40 +447,36 @@ public class PDFService {
 
 		for (Map<String, Object> activityMap : activities) {
 			try {
-				Object idObj = activityMap.get("id");
-				if (idObj == null)
-					continue;
+				String activityName = activityMap.getOrDefault("name", "").toString();
 
-				UUID activityId;
-				try {
-					activityId = UUID.fromString(idObj.toString());
-				} catch (IllegalArgumentException e) {
-					continue;
+				// 1. Use markdown content from the request map (fastest – already in memory)
+				List<byte[]> markdownPdfs = generatePdfsFromRequestMarkdowns(activityMap, activityName);
+
+				// 2. If request didn't carry markdowns, look them up in the DB
+				if (markdownPdfs.isEmpty()) {
+					UUID activityId = parseUuid(activityMap.get("id"));
+					if (activityId != null) {
+						Activity dbActivity = activityRepository.findById(activityId).orElse(null);
+						if (dbActivity != null) {
+							markdownPdfs = generatePdfsFromMarkdowns(dbActivity);
+						}
+					}
 				}
 
-				Activity activity = activityRepository.findById(activityId).orElse(null);
-				if (activity == null)
-					continue;
-
-				// Primary source: generate PDFs from activity markdowns
-				List<byte[]> markdownPdfs = generatePdfsFromMarkdowns(activity);
+				// Merge the per-section PDFs and add to result
 				if (!markdownPdfs.isEmpty()) {
 					try {
 						byte[] merged = markdownPdfs.size() == 1 ? markdownPdfs.get(0) : mergeList(markdownPdfs);
 						pdfs.add(merged);
 						continue;
 					} catch (IOException e) {
-						logger.warn("Failed to merge markdown PDFs for activity {}, falling back to SOURCE_PDF: {}",
-								activityId, e.getMessage());
+						logger.warn("Failed to merge markdown PDFs for activity '{}', falling back to SOURCE_PDF: {}",
+								activityName, e.getMessage());
 					}
 				}
 
-				// Fallback: use SOURCE_PDF document
-				UUID docId = activity.getDocuments().stream()
-						.filter(d -> d.getType() == DocumentType.SOURCE_PDF)
-						.findFirst()
-						.map(PDFDocument::getId)
-						.orElse(null);
+				// 3. Fallback: SOURCE_PDF (from request documents array or DB)
+				UUID docId = resolveLessonPlanDocumentId(activityMap);
 				if (docId != null) {
 					try {
 						byte[] pdfContent = getPdfContent(docId);
@@ -461,7 +484,7 @@ public class PDFService {
 							pdfs.add(pdfContent);
 						}
 					} catch (Exception e) {
-						logger.warn("Could not get SOURCE_PDF for activity {}: {}", activityId, e.getMessage());
+						logger.warn("Could not get SOURCE_PDF for activity '{}': {}", activityName, e.getMessage());
 					}
 				}
 
@@ -471,6 +494,42 @@ public class PDFService {
 		}
 
 		return pdfs;
+	}
+
+	/**
+	 * Render PDFs from markdown sections carried inside the request activity map.
+	 * The map is expected to contain a {@code markdowns} key with a list of objects
+	 * each having {@code type}, {@code content}, and optionally {@code landscape}.
+	 */
+	private List<byte[]> generatePdfsFromRequestMarkdowns(Map<String, Object> activityMap, String activityName) {
+		List<byte[]> parts = new ArrayList<>();
+		Object markdownsObj = activityMap.get("markdowns");
+		if (!(markdownsObj instanceof List<?> markdownsList) || markdownsList.isEmpty()) {
+			return parts;
+		}
+		for (String typeName : MARKDOWN_TYPE_ORDER) {
+			for (Object mdObj : markdownsList) {
+				if (!(mdObj instanceof Map<?, ?> mdMap)) {
+					continue;
+				}
+				Object typeObj = mdMap.get("type");
+				if (typeObj == null || !typeName.equalsIgnoreCase(typeObj.toString())) {
+					continue;
+				}
+				Object contentObj = mdMap.get("content");
+				if (contentObj == null || contentObj.toString().trim().isEmpty()) {
+					continue;
+				}
+				Object landscapeObj = mdMap.get("landscape");
+				boolean landscape = landscapeObj instanceof Boolean ? (Boolean) landscapeObj : false;
+				try {
+					parts.add(markdownToPdfService.renderMarkdownToPdf(contentObj.toString(), landscape, activityName));
+				} catch (Exception e) {
+					logger.warn("Failed to render markdown PDF from request for type {}: {}", typeName, e.getMessage());
+				}
+			}
+		}
+		return parts;
 	}
 
 	/**

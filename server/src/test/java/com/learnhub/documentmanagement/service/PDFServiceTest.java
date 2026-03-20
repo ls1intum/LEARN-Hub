@@ -375,4 +375,23 @@ class PDFServiceTest {
 		assertThat(response.getAvailablePdfs()).isEqualTo(1);
 		assertThat(response.getMissingPdfs()).isEmpty();
 	}
+
+	@Test
+	void getLessonPlanInfoReturnsTrueWhenRequestMapHasMarkdowns() {
+		// Activity map contains markdowns in the request body (no DB lookup needed)
+		Map<String, Object> activityMap = new HashMap<>();
+		activityMap.put("id", UUID.randomUUID().toString());
+		activityMap.put("name", "Test Activity");
+		activityMap.put("markdowns", List.of(
+				Map.of("type", "deckblatt", "content", "# Deckblatt\nContent", "landscape", false)));
+
+		// No DB activity needed – markdowns are in the request map itself
+		when(activityRepository.findById(any())).thenReturn(Optional.empty());
+
+		LessonPlanInfoResponse response = pdfService.getLessonPlanInfo(List.of(activityMap));
+
+		assertThat(response.isCanGenerateLessonPlan()).isTrue();
+		assertThat(response.getAvailablePdfs()).isEqualTo(1);
+		assertThat(response.getMissingPdfs()).isEmpty();
+	}
 }
