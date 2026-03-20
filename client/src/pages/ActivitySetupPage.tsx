@@ -93,6 +93,13 @@ export const ActivitySetupPage: React.FC = () => {
   // Final save state
   const [isSaving, setIsSaving] = useState(false);
 
+  /** Whether the currently active markdown tab already has content */
+  const activeTabHasContent =
+    (activeMarkdownTab === "deckblatt" && !!deckblattMarkdown) ||
+    (activeMarkdownTab === "artikulationsschema" &&
+      !!artikulationsschemaMarkdown) ||
+    (activeMarkdownTab === "hintergrundwissen" && !!hintergrundwissenMarkdown);
+
   // ─── Upload Handlers ────────────────────────────────────────────
 
   const handleFileSelect = (file: File) => {
@@ -173,7 +180,7 @@ export const ActivitySetupPage: React.FC = () => {
 
   // ─── Metadata Step Handlers ─────────────────────────────────────
 
-  const generateSchema = async (metadata?: ActivityFormData) => {
+  const generateAllMarkdowns = async (metadata?: ActivityFormData) => {
     if (!documentId) return;
 
     setIsGeneratingSchema(true);
@@ -182,6 +189,36 @@ export const ActivitySetupPage: React.FC = () => {
       const result = await apiService.generateActivityMarkdowns(
         documentId,
         metadata as unknown as Record<string, unknown> | undefined,
+      );
+      if (result.deckblattMarkdown) {
+        setDeckblattMarkdown(result.deckblattMarkdown);
+      }
+      if (result.artikulationsschemaMarkdown) {
+        setArtikulationsschemaMarkdown(result.artikulationsschemaMarkdown);
+      }
+      if (result.hintergrundwissenMarkdown) {
+        setHintergrundwissenMarkdown(result.hintergrundwissenMarkdown);
+      }
+    } catch (error) {
+      logger.error("Schema generation error", error, "ActivitySetupPage");
+      setSchemaError(
+        error instanceof Error ? error.message : "Failed to generate documents",
+      );
+    } finally {
+      setIsGeneratingSchema(false);
+    }
+  };
+
+  const generateActiveMarkdown = async () => {
+    if (!documentId) return;
+
+    setIsGeneratingSchema(true);
+    setSchemaError(null);
+    try {
+      const result = await apiService.generateActivityMarkdowns(
+        documentId,
+        savedMetadata as unknown as Record<string, unknown> | undefined,
+        [activeMarkdownTab],
       );
       if (result.deckblattMarkdown) {
         setDeckblattMarkdown(result.deckblattMarkdown);
@@ -246,7 +283,7 @@ export const ActivitySetupPage: React.FC = () => {
       shouldGenerateSchema &&
       !hasAnyMarkdown
     ) {
-      await generateSchema(formData);
+      await generateAllMarkdowns(formData);
     }
   };
 
@@ -606,7 +643,7 @@ export const ActivitySetupPage: React.FC = () => {
                 type="button"
                 variant="outline"
                 className="gap-2"
-                onClick={() => void generateSchema(savedMetadata || undefined)}
+                onClick={() => void generateActiveMarkdown()}
                 disabled={!documentId || !savedMetadata || isGeneratingSchema}
               >
                 {isGeneratingSchema ? (
@@ -616,18 +653,14 @@ export const ActivitySetupPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    {artikulationsschemaMarkdown ||
-                    deckblattMarkdown ||
-                    hintergrundwissenMarkdown ? (
+                    {activeTabHasContent ? (
                       <RefreshCw className="h-4 w-4" />
                     ) : (
                       <Sparkles className="h-4 w-4" />
                     )}
-                    {artikulationsschemaMarkdown ||
-                    deckblattMarkdown ||
-                    hintergrundwissenMarkdown
-                      ? "Re-generate all"
-                      : "Generate all"}
+                    {activeTabHasContent
+                      ? `Re-generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`
+                      : `Generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`}
                   </>
                 )}
               </Button>
@@ -637,10 +670,11 @@ export const ActivitySetupPage: React.FC = () => {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-                <p className="text-lg font-medium">Generating documents...</p>
+                <p className="text-lg font-medium">
+                  Generating {MARKDOWN_TAB_LABELS[activeMarkdownTab]}...
+                </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  The AI is analyzing the PDF and creating Deckblatt,
-                  Artikulationsschema, and Hintergrundwissen.
+                  The AI is analyzing the PDF and creating the document.
                 </p>
               </CardContent>
             </Card>
@@ -653,7 +687,7 @@ export const ActivitySetupPage: React.FC = () => {
                   <Button
                     variant="outline"
                     onClick={() => {
-                      void generateSchema(savedMetadata || undefined);
+                      void generateActiveMarkdown();
                     }}
                   >
                     Retry Generation
