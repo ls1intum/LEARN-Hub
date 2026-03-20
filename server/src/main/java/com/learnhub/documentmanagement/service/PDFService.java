@@ -149,10 +149,7 @@ public class PDFService {
 		PDFDocument document = pdfDocumentRepository.findById(documentId)
 				.orElseThrow(() -> new RuntimeException("PDF document not found"));
 
-		Path filePath = Paths.get(document.getFilePath());
-		if (!Files.exists(filePath)) {
-			throw new RuntimeException("PDF file not found on filesystem");
-		}
+		Path filePath = resolveReadableFilePath(document.getFilePath());
 
 		return Files.readAllBytes(filePath);
 	}
@@ -177,6 +174,22 @@ public class PDFService {
 
 		return pdfDocumentRepository.findById(documentId)
 				.orElseThrow(() -> new RuntimeException("PDF document not found"));
+	}
+
+	private Path resolveReadableFilePath(String storedFilePath) {
+		Path filePath = Paths.get(storedFilePath);
+		if (Files.exists(filePath)) {
+			return filePath;
+		}
+
+		Path fallbackPath = Paths.get(pdfStoragePath).resolve(filePath.getFileName().toString());
+		if (Files.exists(fallbackPath)) {
+			logger.info("PDF file missing at stored path {}. Using current PDF storage path {}", storedFilePath,
+					fallbackPath);
+			return fallbackPath;
+		}
+
+		throw new RuntimeException("PDF file not found on filesystem");
 	}
 
 	/**

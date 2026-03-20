@@ -95,6 +95,24 @@ class PDFServiceTest {
 	}
 
 	@Test
+	void getPdfContentFallsBackToCurrentStorageDirectoryWhenStoredPathIsStale() throws IOException {
+		UUID docId = UUID.randomUUID();
+		String filename = "existing.pdf";
+		Path localFilePath = tempDir.resolve(filename);
+		byte[] content = "db-pdf".getBytes(StandardCharsets.UTF_8);
+		Files.write(localFilePath, content);
+
+		PDFDocument document = new PDFDocument();
+		document.setId(docId);
+		document.setFilePath("/app/data/pdfs/" + filename);
+		when(pdfDocumentRepository.findById(docId)).thenReturn(Optional.of(document));
+
+		byte[] retrieved = pdfService.getPdfContent(docId);
+
+		assertThat(retrieved).isEqualTo(content);
+	}
+
+	@Test
 	void getPdfDocumentReturnsCachedMetadata() {
 		byte[] content = "cached-pdf".getBytes(StandardCharsets.UTF_8);
 		UUID key = pdfService.cachePdf(content, "original_name.pdf");
