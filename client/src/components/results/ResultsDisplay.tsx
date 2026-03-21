@@ -308,7 +308,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                     <div className="rounded-lg border border-border/50 bg-card/50 p-5 shadow-xs">
                       <div className="mb-1 flex items-center gap-2">
                         <Users className="h-4 w-4 text-primary" />
-                        <Label className="font-semibold">{ t("resultsDisplay.activityNumber") }</Label>
+                        <Label className="font-semibold">{t("resultsDisplay.activityNumber")}</Label>
                       </div>
                       <div className="mb-4 flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">
