@@ -83,7 +83,7 @@ export const ActivityDetails: React.FC = () => {
   };
 
   const handleOpenSourcePdf = async () => {
-    if (!activity?.id) return;
+    if (!activity?.id || !isAdmin) return;
 
     await documentApi.call(async () => {
       await openBlobInNewTab(() => apiService.getActivityPdf(activity.id));
@@ -185,6 +185,12 @@ export const ActivityDetails: React.FC = () => {
     (activity.durationMinMinutes || 0) +
     (activity.prepTimeMinutes || 0) +
     (activity.cleanupTimeMinutes || 0);
+
+  const visibleDocuments =
+    activity.documents?.filter((doc) => isAdmin || doc.type !== "source_pdf") ||
+    [];
+  const hasDownloads =
+    visibleDocuments.length > 0 || (activity.markdowns && activity.markdowns.length > 0);
 
   return (
     <div className="w-full py-6">
@@ -376,8 +382,7 @@ export const ActivityDetails: React.FC = () => {
           )}
 
           {/* Downloads */}
-          {((activity.documents && activity.documents.length > 0) ||
-            (activity.markdowns && activity.markdowns.length > 0)) && (
+          {hasDownloads && (
             <div className="rounded-lg border border-border bg-muted/20">
               <div className="border-b border-border px-4 py-3">
                 <h3 className="text-lg font-semibold text-card-foreground">
@@ -385,7 +390,7 @@ export const ActivityDetails: React.FC = () => {
                 </h3>
               </div>
 
-              {activity.documents?.map((doc, index) => (
+              {visibleDocuments.map((doc, index) => (
                 <div
                   key={doc.id}
                   className={`flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between${index > 0 ? " border-t border-border" : ""}`}
