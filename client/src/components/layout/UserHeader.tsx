@@ -1,7 +1,9 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { LogOut, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface UserHeaderProps {
   user: {
@@ -21,6 +23,7 @@ export const UserHeader: React.FC<UserHeaderProps> = ({
   isMobile = false,
   className = "",
 }) => {
+  const { t } = useTranslation();
   const isAdmin = user?.role === "ADMIN";
   const isGuest = user?.role === "GUEST";
 
@@ -36,21 +39,22 @@ export const UserHeader: React.FC<UserHeaderProps> = ({
           <div className="min-w-0">
             <h1 className="text-sm font-semibold text-foreground leading-tight">
               {isAdmin
-                ? "Admin Panel"
+                ? t("userHeader.adminPanel")
                 : isGuest
-                  ? "Guest Access"
-                  : "Teaching Hub"}
+                  ? t("userHeader.guestAccess")
+                  : t("userHeader.teachingHub")}
             </h1>
             <p className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
               {user?.email && !isGuest
                 ? user.email
                 : isGuest
-                  ? "Guest User"
-                  : "Activity Center"}
+                  ? t("userHeader.guestUser")
+                  : t("userHeader.activityCenter")}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-1 flex-shrink-0">
+          <LanguageSwitcher />
           <ThemeToggle />
           {isMobile && onClose ? (
             <Button

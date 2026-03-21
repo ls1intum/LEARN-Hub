@@ -14,6 +14,7 @@ import {
   getEnvironmentDisplayText,
   getEnvironmentBadgeVariant,
 } from "@/utils/environment";
+import { useTranslation } from "react-i18next";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -30,6 +31,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const location = useLocation();
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const { environment } = useEnvironment();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     await logout();
@@ -133,7 +135,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             className="w-full flex items-center justify-start gap-3 px-3 py-2.5 text-sm font-medium rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors"
           >
             <LogOut className="h-4 w-4" />
-            <span>Logout</span>
+            <span>{t("sidebar.logout")}</span>
           </Button>
           <div className="flex items-center justify-center gap-2">
             <Server className="h-3 w-3 text-muted-foreground" />
@@ -172,10 +174,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               <div>
                 <h1 className="text-sm font-semibold text-foreground leading-tight">
                   {isAdmin
-                    ? "Admin Panel"
+                    ? t("userHeader.adminPanel")
                     : isGuest
-                      ? "Guest Access"
-                      : "Teaching Hub"}
+                      ? t("userHeader.guestAccess")
+                      : t("userHeader.teachingHub")}
                 </h1>
                 {user?.email && (
                   <p className="text-xs text-muted-foreground leading-tight">
@@ -184,7 +186,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 )}
                 {isGuest && !user?.email && (
                   <p className="text-xs text-muted-foreground leading-tight">
-                    Guest User
+                    {t("userHeader.guestUser")}
                   </p>
                 )}
               </div>

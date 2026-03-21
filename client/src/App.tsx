@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { RootRoute } from "@/components/RootRoute";
@@ -35,8 +36,9 @@ function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
-        <AuthProvider>
-          <TooltipProvider>
+        <LanguageProvider>
+          <AuthProvider>
+            <TooltipProvider>
             <Router>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
@@ -139,8 +141,9 @@ function App() {
                 />
               </Routes>
             </Router>
-          </TooltipProvider>
-        </AuthProvider>
+            </TooltipProvider>
+          </AuthProvider>
+        </LanguageProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

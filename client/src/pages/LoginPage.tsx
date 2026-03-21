@@ -25,6 +25,7 @@ import {
   getEnvironmentDisplayText,
   getEnvironmentBadgeVariant,
 } from "@/utils/environment";
+import { useTranslation } from "react-i18next";
 
 type LoginMode =
   | "admin"
@@ -60,6 +61,7 @@ export const LoginPage: React.FC = () => {
   } = useAuth();
   const navigate = useNavigate();
   const { environment } = useEnvironment();
+  const { t } = useTranslation();
 
   // Handle redirect after user state is updated
   useEffect(() => {
@@ -522,11 +524,11 @@ export const LoginPage: React.FC = () => {
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="teacher" className="flex items-center gap-2">
                 <GraduationCap className="h-4 w-4" />
-                Teacher
+                {t("login.teacherLogin")}
               </TabsTrigger>
               <TabsTrigger value="admin" className="flex items-center gap-2">
                 <Shield className="h-4 w-4" />
-                Admin
+                {t("login.adminLogin")}
               </TabsTrigger>
             </TabsList>
 
@@ -534,7 +536,7 @@ export const LoginPage: React.FC = () => {
               <div className="space-y-4">
                 <div className="text-center">
                   <h3 className="text-lg font-semibold text-foreground mb-2">
-                    Teacher Login
+                    {t("login.teacherLogin")}
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Access your teaching resources and activity library
@@ -618,7 +620,7 @@ export const LoginPage: React.FC = () => {
               <div className="space-y-4">
                 <div className="text-center">
                   <h3 className="text-lg font-semibold text-foreground mb-2">
-                    Admin Login
+                    {t("login.adminLogin")}
                   </h3>
                   <p className="text-sm text-muted-foreground">
                     Access administrative functions and user management
@@ -669,7 +671,7 @@ export const LoginPage: React.FC = () => {
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   <span className="text-muted-foreground">
-                    Continue as Guest
+                    {t("login.guestAccess")}
                   </span>
                 </div>
               )}

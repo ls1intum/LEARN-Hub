@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { useTranslation } from "react-i18next";
 
 export const AuthVerifyPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -14,6 +15,7 @@ export const AuthVerifyPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Check if code is in URL parameters and pre-fill it
@@ -54,10 +56,10 @@ export const AuthVerifyPage: React.FC = () => {
     <div className="min-h-screen app-gradient text-foreground flex items-center justify-center p-4">
       <div className="max-w-md w-full panel p-6 sm:p-8">
         <h1 className="text-2xl sm:text-3xl font-semibold text-center mb-2">
-          Verify Your Login
+          {t("authVerify.title")}
         </h1>
         <p className="text-center text-sm text-muted-foreground mb-6">
-          Enter the 6-digit code from your email to complete login
+          {t("authVerify.subtitle")}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -66,14 +68,14 @@ export const AuthVerifyPage: React.FC = () => {
               htmlFor="email"
               className="block text-sm font-medium text-foreground mb-2"
             >
-              Email Address
+              {t("authVerify.emailAddress")}
             </Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email address"
+              placeholder={t("authVerify.enterEmail")}
               required
               className="w-full"
             />
@@ -83,14 +85,14 @@ export const AuthVerifyPage: React.FC = () => {
               htmlFor="verification_code"
               className="block text-sm font-medium text-foreground mb-2"
             >
-              6-Digit Verification Code
+              {t("authVerify.verificationCode")}
             </Label>
             <Input
               id="verification_code"
               type="text"
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              placeholder="Enter 6-digit code"
+              placeholder={t("authVerify.enterCode")}
               maxLength={6}
               pattern="[0-9]{6}"
               required
@@ -99,7 +101,7 @@ export const AuthVerifyPage: React.FC = () => {
           </div>
 
           <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? "Verifying..." : "Verify & Login"}
+            {isLoading ? t("authVerify.verifying") : t("authVerify.verifyLogin")}
           </Button>
         </form>
 
@@ -120,7 +122,7 @@ export const AuthVerifyPage: React.FC = () => {
             to="/login"
             className="text-primary hover:text-primary/80 text-sm"
           >
-            ← Back to Login
+            {t("authVerify.backToLogin")}
           </Link>
         </div>
       </div>

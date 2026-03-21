@@ -1,10 +1,12 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 export const ImpressumPage: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <div className="py-6 max-w-2xl">
       <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-6">
-        Impressum
+        {t("impressum.title")}
       </h1>
 
       <div className="space-y-4 text-sm text-foreground">
@@ -22,7 +24,7 @@ export const ImpressumPage: React.FC = () => {
 
         <div className="space-y-1">
           <p>
-            <span className="font-semibold">Regulating Authority:</span>{" "}
+            <span className="font-semibold">{t("impressum.regulatingAuthority")}:</span>{" "}
             Bayerisches Staatsministerium für Wissenschaft, Forschung und Kunst
           </p>
           <p>Ust-IdNr.: DE 811193231</p>

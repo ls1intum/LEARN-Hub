@@ -12,6 +12,7 @@ import { convertSearchCriteriaToFormData } from "@/utils/searchCriteriaConverter
 import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ResultsData } from "@/types/activity";
+import { useTranslation } from "react-i18next";
 
 interface FormData {
   targetAge: number;
@@ -45,6 +46,7 @@ export const RecommendationsPage: React.FC = () => {
   const [, setActiveTab] = useState<"form" | "results">("form");
   const [results, setResults] = useState<ResultsData | null>(null);
   const searchParamsString = searchParams.toString();
+  const { t } = useTranslation();
 
   const getInitialFormData = () => {
     const state = location.state as {
@@ -180,14 +182,14 @@ export const RecommendationsPage: React.FC = () => {
                   variant="ghost"
                   size="icon"
                   onClick={handleBackToForm}
-                  aria-label="Back to form"
+                  aria-label={t("recommendations.backToForm")}
                   className="h-9 w-9 flex-shrink-0"
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               )}
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                Activity Recommendations
+                {t("recommendations.title")}
               </h1>
             </div>
             <p
@@ -196,7 +198,7 @@ export const RecommendationsPage: React.FC = () => {
                 showResults && "ml-12",
               )}
             >
-              Get personalized activity recommendations for your teaching needs
+              {t("recommendations.subtitle")}
             </p>
           </div>
         </div>
