@@ -55,6 +55,14 @@ public class ActivityService {
 	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
 			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset) {
+		return getActivitiesWithFilters(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels,
+				mentalLoad, physicalEnergy, resourcesNeeded, topics, limit, offset, false);
+	}
+
+	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
+			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
+			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
+			boolean includeSourcePdf) {
 		List<Activity> allMatching = getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats,
 				bloomLevels, mentalLoad, physicalEnergy, resourcesNeeded, topics);
 
@@ -62,7 +70,8 @@ public class ActivityService {
 		int pageSize = (limit != null && limit > 0) ? limit : allMatching.size();
 		int end = Math.min(start + pageSize, allMatching.size());
 
-		return allMatching.subList(start, end).stream().map(this::mapToResponse).collect(Collectors.toList());
+		return allMatching.subList(start, end).stream().map(activity -> mapToResponse(activity, includeSourcePdf))
+				.collect(Collectors.toList());
 	}
 
 	private List<Activity> getFilteredActivities(String name, Integer ageMin, Integer ageMax, Integer durationMin,
@@ -147,17 +156,21 @@ public class ActivityService {
 	}
 
 	public ActivityResponse getActivityById(UUID id) {
+		return getActivityById(id, false);
+	}
+
+	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf) {
 		logger.debug("Fetching activity by id={}", id);
 		Activity activity = activityRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
-		return mapToResponse(activity);
+		return mapToResponse(activity, includeSourcePdf);
 	}
 
 	public ActivityResponse createActivity(Activity activity) {
 		logger.debug("Saving new activity: name={}", activity.getName());
 		Activity saved = activityRepository.save(activity);
 		logger.debug("Activity saved with id={}", saved.getId());
-		return mapToResponse(saved);
+		return mapToResponse(saved, false);
 	}
 
 	public ActivityResponse updateActivity(UUID id, Activity activityUpdate) {
@@ -187,7 +200,7 @@ public class ActivityService {
 		updateMarkdownByType(activity, activityUpdate, MarkdownType.HINTERGRUNDWISSEN);
 
 		Activity saved = activityRepository.save(activity);
-		return mapToResponse(saved);
+		return mapToResponse(saved, false);
 	}
 
 	private void updateMarkdownByType(Activity activity, Activity activityUpdate, MarkdownType type) {
@@ -328,10 +341,14 @@ public class ActivityService {
 	}
 
 	public ActivityResponse convertToResponse(Activity activity) {
-		return mapToResponse(activity);
+		return convertToResponse(activity, false);
 	}
 
-	private ActivityResponse mapToResponse(Activity activity) {
+	public ActivityResponse convertToResponse(Activity activity, boolean includeSourcePdf) {
+		return mapToResponse(activity, includeSourcePdf);
+	}
+
+	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf) {
 		ActivityResponse response = new ActivityResponse();
 		response.setId(activity.getId());
 		response.setName(activity.getName());
@@ -351,9 +368,10 @@ public class ActivityService {
 		response.setResourcesNeeded(activity.getResourcesNeeded());
 		response.setTopics(activity.getTopics());
 
-		// Map all documents to response list
-		List<DocumentResponse> docResponses = activity.getDocuments().stream().map(d -> new DocumentResponse(d.getId(),
-				d.getFilename(), d.getFileSize(), d.getType() != null ? d.getType().getValue() : null))
+		List<DocumentResponse> docResponses = activity.getDocuments().stream()
+				.filter(document -> includeSourcePdf || document.getType() != DocumentType.SOURCE_PDF)
+				.map(d -> new DocumentResponse(d.getId(), d.getFilename(), d.getFileSize(),
+						d.getType() != null ? d.getType().getValue() : null))
 				.collect(Collectors.toList());
 		response.setDocuments(docResponses);
 

@@ -10,7 +10,6 @@ import com.itextpdf.kernel.utils.PdfMerger;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
 import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
-import com.learnhub.activitymanagement.entity.enums.DocumentType;
 import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
@@ -277,7 +276,7 @@ public class PDFService {
 
 		for (int i = 0; i < activities.size(); i++) {
 			Map<String, Object> activity = activities.get(i);
-			if (hasMarkdownsOrSourcePdf(activity)) {
+			if (hasLessonPlanMarkdowns(activity)) {
 				availablePdfs++;
 			} else {
 				missingPdfs.add(i);
@@ -289,40 +288,25 @@ public class PDFService {
 	}
 
 	/**
-	 * Returns true if the activity has at least one markdown or a SOURCE_PDF
-	 * document available for lesson-plan PDF generation.
+	 * Returns true if the activity has at least one markdown available for
+	 * lesson-plan PDF generation.
 	 */
-	private boolean hasMarkdownsOrSourcePdf(Map<String, Object> activityMap) {
+	private boolean hasLessonPlanMarkdowns(Map<String, Object> activityMap) {
 		// 1. Check markdowns embedded directly in the request map
 		if (requestMapHasMarkdowns(activityMap)) {
 			return true;
 		}
 
-		// 2. Check DB for markdowns or SOURCE_PDF
+		// 2. Check DB for persisted markdowns
 		UUID activityId = parseUuid(activityMap.get("id"));
 		if (activityId != null) {
 			Activity activity = activityRepository.findById(activityId).orElse(null);
 			if (activity != null) {
-				if (activity.getMarkdowns() != null && !activity.getMarkdowns().isEmpty()) {
-					return true;
-				}
-				if (activity.getDocuments().stream().anyMatch(d -> d.getType() == DocumentType.SOURCE_PDF)) {
-					return true;
-				}
+				return activity.getMarkdowns() != null && !activity.getMarkdowns().isEmpty();
 			}
 		}
 
-		// 3. Legacy fallback: direct documentId or embedded SOURCE_PDF doc in map
-		UUID documentId = resolveLessonPlanDocumentId(activityMap);
-		if (documentId == null) {
-			return false;
-		}
-		try {
-			byte[] content = getPdfContent(documentId);
-			return content != null && content.length > 0;
-		} catch (Exception e) {
-			return false;
-		}
+		return false;
 	}
 
 	/**
@@ -344,60 +328,6 @@ public class PDFService {
 			}
 		}
 		return false;
-	}
-
-	private UUID resolveLessonPlanDocumentId(Map<String, Object> activity) {
-		UUID directDocumentId = parseUuid(activity.get("documentId"));
-		if (directDocumentId != null) {
-			return directDocumentId;
-		}
-
-		UUID embeddedDocumentId = extractSourcePdfId(activity.get("documents"));
-		if (embeddedDocumentId != null) {
-			return embeddedDocumentId;
-		}
-
-		UUID activityId = parseUuid(activity.get("id"));
-		if (activityId == null) {
-			return null;
-		}
-
-		return activityRepository.findById(activityId)
-				.flatMap(savedActivity -> savedActivity.getDocuments().stream()
-						.filter(document -> document.getType() == DocumentType.SOURCE_PDF).findFirst()
-						.map(PDFDocument::getId))
-				.orElse(null);
-	}
-
-	private UUID extractSourcePdfId(Object documentsObj) {
-		if (!(documentsObj instanceof List<?> documents)) {
-			return null;
-		}
-
-		for (Object documentObj : documents) {
-			if (!(documentObj instanceof Map<?, ?> document)) {
-				continue;
-			}
-
-			Object typeObj = document.get("type");
-			if (typeObj == null) {
-				continue;
-			}
-
-			try {
-				DocumentType documentType = DocumentType.fromValue(typeObj.toString());
-				if (documentType == DocumentType.SOURCE_PDF) {
-					UUID documentId = parseUuid(document.get("id"));
-					if (documentId != null) {
-						return documentId;
-					}
-				}
-			} catch (IllegalArgumentException e) {
-				// Ignore unknown document types from the client payload.
-			}
-		}
-
-		return null;
 	}
 
 	private UUID parseUuid(Object value) {
@@ -442,55 +372,33 @@ public class PDFService {
 		}
 	}
 
-	private List<byte[]> getActivityPdfs(List<Map<String, Object>> activities) {
+	private List<byte[]> getActivityPdfs(List<Map<String, Object>> activities) throws IOException {
 		List<byte[]> pdfs = new ArrayList<>();
 
 		for (Map<String, Object> activityMap : activities) {
-			try {
-				String activityName = activityMap.getOrDefault("name", "").toString();
+			String activityName = activityMap.getOrDefault("name", "").toString();
 
-				// 1. Use markdown content from the request map (fastest – already in memory)
-				List<byte[]> markdownPdfs = generatePdfsFromRequestMarkdowns(activityMap, activityName);
+			// 1. Use markdown content from the request map (fastest – already in memory)
+			List<byte[]> markdownPdfs = generatePdfsFromRequestMarkdowns(activityMap, activityName);
 
-				// 2. If request didn't carry markdowns, look them up in the DB
-				if (markdownPdfs.isEmpty()) {
-					UUID activityId = parseUuid(activityMap.get("id"));
-					if (activityId != null) {
-						Activity dbActivity = activityRepository.findById(activityId).orElse(null);
-						if (dbActivity != null) {
-							markdownPdfs = generatePdfsFromMarkdowns(dbActivity);
-						}
+			// 2. If request didn't carry markdowns, look them up in the DB
+			if (markdownPdfs.isEmpty()) {
+				UUID activityId = parseUuid(activityMap.get("id"));
+				if (activityId != null) {
+					Activity dbActivity = activityRepository.findById(activityId).orElse(null);
+					if (dbActivity != null) {
+						markdownPdfs = generatePdfsFromMarkdowns(dbActivity);
 					}
 				}
-
-				// Merge the per-section PDFs and add to result
-				if (!markdownPdfs.isEmpty()) {
-					try {
-						byte[] merged = markdownPdfs.size() == 1 ? markdownPdfs.get(0) : mergeList(markdownPdfs);
-						pdfs.add(merged);
-						continue;
-					} catch (IOException e) {
-						logger.warn("Failed to merge markdown PDFs for activity '{}', falling back to SOURCE_PDF: {}",
-								activityName, e.getMessage());
-					}
-				}
-
-				// 3. Fallback: SOURCE_PDF (from request documents array or DB)
-				UUID docId = resolveLessonPlanDocumentId(activityMap);
-				if (docId != null) {
-					try {
-						byte[] pdfContent = getPdfContent(docId);
-						if (pdfContent != null && pdfContent.length > 0) {
-							pdfs.add(pdfContent);
-						}
-					} catch (Exception e) {
-						logger.warn("Could not get SOURCE_PDF for activity '{}': {}", activityName, e.getMessage());
-					}
-				}
-
-			} catch (Exception e) {
-				continue;
 			}
+
+			if (markdownPdfs.isEmpty()) {
+				throw new IllegalArgumentException(
+						"No markdown content available for lesson plan activity: " + activityName);
+			}
+
+			byte[] merged = markdownPdfs.size() == 1 ? markdownPdfs.get(0) : mergeList(markdownPdfs);
+			pdfs.add(merged);
 		}
 
 		return pdfs;

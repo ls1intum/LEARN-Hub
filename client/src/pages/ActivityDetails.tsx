@@ -35,7 +35,7 @@ export const ActivityDetails: React.FC = () => {
 
   const documentApi = useApi();
   const fetchActivity = useCallback(async () => {
-    if (stateActivity) {
+    if (stateActivity && !isAdmin) {
       return stateActivity;
     }
 
@@ -48,7 +48,7 @@ export const ActivityDetails: React.FC = () => {
     }
 
     throw new Error("No activity ID provided");
-  }, [stateActivity, id]);
+  }, [stateActivity, id, isAdmin]);
 
   const {
     data: activity,
@@ -82,11 +82,9 @@ export const ActivityDetails: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleOpenSourcePdf = async () => {
-    if (!activity?.id || !isAdmin) return;
-
+  const handleOpenDocument = async (documentId: string) => {
     await documentApi.call(async () => {
-      await openBlobInNewTab(() => apiService.getActivityPdf(activity.id));
+      await openBlobInNewTab(() => apiService.downloadDocument(documentId));
     });
   };
 
@@ -185,12 +183,9 @@ export const ActivityDetails: React.FC = () => {
     (activity.durationMinMinutes || 0) +
     (activity.prepTimeMinutes || 0) +
     (activity.cleanupTimeMinutes || 0);
-
-  const visibleDocuments =
-    activity.documents?.filter((doc) => isAdmin || doc.type !== "source_pdf") ||
-    [];
   const hasDownloads =
-    visibleDocuments.length > 0 || (activity.markdowns && activity.markdowns.length > 0);
+    (activity.documents && activity.documents.length > 0) ||
+    (activity.markdowns && activity.markdowns.length > 0);
 
   return (
     <div className="w-full py-6">
@@ -390,7 +385,7 @@ export const ActivityDetails: React.FC = () => {
                 </h3>
               </div>
 
-              {visibleDocuments.map((doc, index) => (
+              {activity.documents?.map((doc, index) => (
                 <div
                   key={doc.id}
                   className={`flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between${index > 0 ? " border-t border-border" : ""}`}
@@ -407,22 +402,20 @@ export const ActivityDetails: React.FC = () => {
                         : ""}
                     </p>
                   </div>
-                  {doc.type === "source_pdf" && (
-                    <div className="flex items-center gap-2 sm:shrink-0">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={documentApi.isLoading}
-                        onClick={handleOpenSourcePdf}
-                        title="Download as PDF"
-                        className="flex items-center gap-1.5"
-                      >
-                        <Download className="h-4 w-4 text-red-600" />
-                        <span>PDF</span>
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 sm:shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={documentApi.isLoading}
+                      onClick={() => handleOpenDocument(doc.id)}
+                      title="Open document"
+                      className="flex items-center gap-1.5"
+                    >
+                      <Download className="h-4 w-4 text-red-600" />
+                      <span>PDF</span>
+                    </Button>
+                  </div>
                 </div>
               ))}
 
