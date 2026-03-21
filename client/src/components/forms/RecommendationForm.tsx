@@ -8,6 +8,7 @@ import { BadgeSelector } from "@/components/ui/BadgeSelector";
 import { FormSection } from "@/components/ui/FormSection";
 import { RangeSlider } from "@/components/ui/RangeSlider";
 import { PriorityToggle } from "@/components/ui/PriorityToggle";
+import { useTranslation } from "react-i18next";
 
 interface FormData {
   targetAge: number;
@@ -37,6 +38,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
   initialValues,
 }) => {
   const { fieldValues } = useFieldValues();
+  const { t } = useTranslation();
 
   // Note: This form is still using the old state management approach
   // The useForm hook is imported but not yet fully integrated
@@ -174,10 +176,10 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Requirements */}
-      <FormSection title="Basic Requirements" icon={Target}>
+      <FormSection title={t("recommendationForm.basicRequirements")} icon={Target}>
         {/* Target Age */}
         <RangeSlider
-          label="Age Appropriateness"
+          label={t("recommendationForm.ageAppropriateness")}
           value={formData.targetAge}
           min={6}
           max={15}
@@ -195,7 +197,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 
         {/* Target Duration */}
         <RangeSlider
-          label="Duration Fit"
+          label={t("recommendationForm.durationFit")}
           value={formData.targetDuration}
           min={15}
           max={180}
@@ -213,7 +215,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 
         {/* Format Selection */}
         <BadgeSelector
-          label="Activity Format"
+          label={t("recommendationForm.activityFormat")}
           options={actualFormat}
           selectedValues={formData.format}
           onToggle={(value) => toggleArrayValue("format", value)}
@@ -221,7 +223,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 
         {/* Resources Needed */}
         <BadgeSelector
-          label="Resources Available"
+          label={t("recommendationForm.resourcesAvailable")}
           options={actualResources}
           selectedValues={formData.resourcesNeeded}
           onToggle={(value) => toggleArrayValue("resourcesNeeded", value)}
@@ -229,10 +231,10 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
       </FormSection>
 
       {/* Learning Objectives */}
-      <FormSection title="Learning Objectives" icon={BookOpen}>
+      <FormSection title={t("recommendationForm.learningObjectives")} icon={BookOpen}>
         {/* Bloom's Taxonomy Levels */}
         <BadgeSelector
-          label="Bloom Level Match"
+          label={t("recommendationForm.bloomLevelMatch")}
           options={actualBloomLevels}
           selectedValues={formData.bloomLevels}
           onToggle={(value) => toggleArrayValue("bloomLevels", value)}
@@ -247,7 +249,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 
         {/* Topics */}
         <BadgeSelector
-          label="Topic Relevance"
+          label={t("recommendationForm.topicRelevance")}
           options={actualTopics}
           selectedValues={formData.topics}
           onToggle={(value) => toggleArrayValue("topics", value)}
@@ -262,12 +264,12 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
       </FormSection>
 
       {/* Advanced Options */}
-      <FormSection title="Advanced Options" icon={Settings}>
+      <FormSection title={t("recommendationForm.advancedOptions")} icon={Settings}>
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label className="text-base font-medium">Allow Lesson Plans</Label>
+            <Label className="text-base font-medium">{t("recommendationForm.allowLessonPlans")}</Label>
             <p className="text-sm text-muted-foreground">
-              Generate structured lesson plans with multiple activities
+              {t("recommendationForm.allowLessonPlansDesc")}
             </p>
           </div>
           <input
@@ -282,7 +284,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
         {formData.allowLessonPlans && (
           <>
             <RangeSlider
-              label="Max Activities"
+              label={t("recommendationForm.maxActivities")}
               value={formData.maxActivityCount}
               min={1}
               max={5}
@@ -292,9 +294,9 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-base font-medium">Include Breaks</Label>
+                <Label className="text-base font-medium">{t("recommendationForm.includeBreaks")}</Label>
                 <p className="text-sm text-muted-foreground">
-                  Add break recommendations between activities
+                  {t("recommendationForm.includeBreaksDesc")}
                 </p>
               </div>
               <input
@@ -320,12 +322,12 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           {isLoading ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-              Generating...
+              {t("recommendationForm.generating")}
             </>
           ) : (
             <>
               <Sparkles className="h-4 w-4 mr-2" />
-              Get Recommendations
+              {t("recommendationForm.getRecommendations")}
             </>
           )}
         </Button>

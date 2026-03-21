@@ -24,10 +24,12 @@ import {
 } from "lucide-react";
 import { logger } from "@/services/logger";
 import type { UpdateProfileRequest } from "@/types/api";
+import { useTranslation } from "react-i18next";
 
 export const AccountDashboardPage: React.FC = () => {
   const { user, updateProfile, deleteAccount } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -173,10 +175,10 @@ export const AccountDashboardPage: React.FC = () => {
       <div className="py-6">
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
-            Account Dashboard
+            {t("account.title")}
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            Manage your account settings and preferences
+            {t("account.subtitle")}
           </p>
         </div>
 
@@ -189,9 +191,9 @@ export const AccountDashboardPage: React.FC = () => {
                   <User className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">Guest Account</CardTitle>
+                  <CardTitle className="text-lg">{t("account.guestTitle")}</CardTitle>
                   <CardDescription>
-                    You're currently using a guest account
+                    {t("account.guestDesc")}
                   </CardDescription>
                 </div>
               </div>
@@ -199,7 +201,7 @@ export const AccountDashboardPage: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Badge variant="secondary">Guest User</Badge>
+                  <Badge variant="secondary">{t("userHeader.guestUser")}</Badge>
                   <span className="text-sm text-muted-foreground">
                     Limited access
                   </span>
@@ -236,7 +238,7 @@ export const AccountDashboardPage: React.FC = () => {
                   <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
                     <Heart className="h-4 w-4 text-primary" />
                     <div>
-                      <p className="text-sm font-medium">Save Favorites</p>
+                      <p className="text-sm font-medium">{t("account.favourites")}</p>
                       <p className="text-xs text-muted-foreground">
                         Bookmark activities and lesson plans
                       </p>
@@ -245,7 +247,7 @@ export const AccountDashboardPage: React.FC = () => {
                   <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
                     <History className="h-4 w-4 text-primary" />
                     <div>
-                      <p className="text-sm font-medium">Search History</p>
+                      <p className="text-sm font-medium">{t("account.searchHistory")}</p>
                       <p className="text-xs text-muted-foreground">
                         Track your past searches
                       </p>
@@ -267,10 +269,10 @@ export const AccountDashboardPage: React.FC = () => {
     <div className="py-6">
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
-          Account Dashboard
+          {t("account.title")}
         </h1>
         <p className="text-muted-foreground text-sm sm:text-base">
-          Manage your account settings and preferences
+          {t("account.subtitle")}
         </p>
       </div>
 
@@ -283,8 +285,8 @@ export const AccountDashboardPage: React.FC = () => {
                 <User className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <CardTitle className="text-lg">Profile Information</CardTitle>
-                <CardDescription>Your current account details</CardDescription>
+                <CardTitle className="text-lg">{t("account.profileInfo")}</CardTitle>
+                <CardDescription>{t("account.profileDesc")}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -292,7 +294,7 @@ export const AccountDashboardPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-muted-foreground">
-                  Email
+                  {t("account.email")}
                 </Label>
                 <div className="flex items-center gap-2">
                   <Mail className="h-4 w-4 text-muted-foreground" />
@@ -301,7 +303,7 @@ export const AccountDashboardPage: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-muted-foreground">
-                  Role
+                  {t("account.role")}
                 </Label>
                 <div className="flex items-center gap-2">
                   <Badge
@@ -318,47 +320,47 @@ export const AccountDashboardPage: React.FC = () => {
         {/* Edit Profile Form */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Edit Profile</CardTitle>
-            <CardDescription>Update your personal information</CardDescription>
+            <CardTitle className="text-lg">{t("account.editProfile")}</CardTitle>
+            <CardDescription>{t("account.editProfileDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
+                  <Label htmlFor="firstName">{t("account.firstName")}</Label>
                   <Input
                     id="firstName"
                     value={formData.firstName}
                     onChange={(e) =>
                       handleInputChange("firstName", e.target.value)
                     }
-                    placeholder="Enter your first name"
+                    placeholder={t("account.enterFirstName")}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
+                  <Label htmlFor="lastName">{t("account.lastName")}</Label>
                   <Input
                     id="lastName"
                     value={formData.lastName}
                     onChange={(e) =>
                       handleInputChange("lastName", e.target.value)
                     }
-                    placeholder="Enter your last name"
+                    placeholder={t("account.enterLastName")}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">{t("account.emailAddress")}</Label>
                 <Input
                   id="email"
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  placeholder="Enter your email address"
+                  placeholder={t("account.enterEmail")}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">New Password (Optional)</Label>
+                <Label htmlFor="password">{t("account.newPassword")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -366,14 +368,14 @@ export const AccountDashboardPage: React.FC = () => {
                   onChange={(e) =>
                     handleInputChange("password", e.target.value)
                   }
-                  placeholder="Enter new password (leave blank to keep current)"
+                  placeholder={t("account.enterPassword")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Password must be at least 8 characters long
+                  {t("account.passwordHint")}
                 </p>
               </div>
               <Button type="submit" disabled={isLoading} className="w-full">
-                {isLoading ? "Saving..." : "Save Changes"}
+                {isLoading ? t("account.saving") : t("account.saveChanges")}
               </Button>
             </form>
           </CardContent>
@@ -388,10 +390,10 @@ export const AccountDashboardPage: React.FC = () => {
               </div>
               <div>
                 <CardTitle className="text-lg text-destructive">
-                  Danger Zone
+                  {t("account.dangerZone")}
                 </CardTitle>
                 <CardDescription>
-                  Irreversible and destructive actions
+                  {t("account.dangerZoneDesc")}
                 </CardDescription>
               </div>
             </div>
@@ -400,11 +402,10 @@ export const AccountDashboardPage: React.FC = () => {
             <div className="space-y-4">
               <div className="p-4 bg-destructive/5 border border-destructive/20 rounded-lg">
                 <h4 className="font-medium text-destructive mb-2">
-                  Delete Account
+                  {t("account.deleteAccount")}
                 </h4>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Permanently delete your account and all associated data. This
-                  action cannot be undone.
+                  {t("account.deleteAccountDesc")}
                 </p>
                 {!showDeleteConfirm ? (
                   <Button
@@ -412,30 +413,30 @@ export const AccountDashboardPage: React.FC = () => {
                     onClick={() => setShowDeleteConfirm(true)}
                     className="w-full"
                   >
-                    Delete Account
+                    {t("account.deleteAccount")}
                   </Button>
                 ) : (
                   <div className="space-y-3">
                     <div className="p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
                       <p className="text-sm font-medium text-destructive mb-2">
-                        This will permanently delete:
+                        {t("account.deleteConfirmTitle")}
                       </p>
                       <ul className="text-xs text-muted-foreground space-y-1 ml-4">
-                        <li>• Your account and profile information</li>
-                        <li>• All saved favorites and lesson plans</li>
-                        <li>• Your search history</li>
-                        <li>• All other personal data</li>
+                        <li>• {t("account.deleteItem1")}</li>
+                        <li>• {t("account.deleteItem2")}</li>
+                        <li>• {t("account.deleteItem3")}</li>
+                        <li>• {t("account.deleteItem4")}</li>
                       </ul>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="delete_confirm">
-                        Type <strong>DELETE</strong> to confirm:
+                        {t("account.typeDelete")}
                       </Label>
                       <Input
                         id="delete_confirm"
                         value={deleteConfirmText}
                         onChange={(e) => setDeleteConfirmText(e.target.value)}
-                        placeholder="Type DELETE to confirm"
+                        placeholder={t("account.typeDeletePlaceholder")}
                         className="border-destructive/50"
                       />
                     </div>
@@ -446,7 +447,7 @@ export const AccountDashboardPage: React.FC = () => {
                         disabled={isLoading || deleteConfirmText !== "DELETE"}
                         className="flex-1"
                       >
-                        {isLoading ? "Deleting..." : "Confirm Delete"}
+                        {isLoading ? t("account.deleting") : t("account.confirmDelete")}
                       </Button>
                       <Button
                         variant="outline"
@@ -456,7 +457,7 @@ export const AccountDashboardPage: React.FC = () => {
                         }}
                         className="flex-1"
                       >
-                        Cancel
+                        {t("account.cancel")}
                       </Button>
                     </div>
                   </div>
