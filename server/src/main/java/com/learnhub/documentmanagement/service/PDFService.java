@@ -1,26 +1,25 @@
 package com.learnhub.documentmanagement.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itextpdf.kernel.colors.ColorConstants;
-import com.itextpdf.kernel.geom.PageSize;
+import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.canvas.parser.PdfTextExtractor;
 import com.itextpdf.kernel.utils.PdfMerger;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.element.Cell;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.properties.TextAlignment;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
 import com.learnhub.activitymanagement.entity.Activity;
+import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.DocumentType;
+import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -28,7 +27,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -37,9 +35,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PDFService {
@@ -48,6 +46,8 @@ public class PDFService {
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 	private static final int MAX_CACHE_SIZE = 100;
 	private static final long CACHE_TTL_MINUTES = 60;
+	private static final String LESSON_PLAN_COVER_TEMPLATE_PATH = "templates/markdown/lesson-plan-cover.html";
+	private static final String[] MARKDOWN_TYPE_ORDER = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
 
 	@Autowired
 	private PDFDocumentRepository pdfDocumentRepository;
@@ -57,6 +57,12 @@ public class PDFService {
 
 	@Autowired
 	private LLMService llmService;
+
+	@Autowired
+	private MarkdownToHtmlService markdownToHtmlService;
+
+	@Autowired
+	private MarkdownToPdfService markdownToPdfService;
 
 	@Value("${pdf.storage.path:/app/data/pdfs}")
 	private String pdfStoragePath;
@@ -271,26 +277,73 @@ public class PDFService {
 
 		for (int i = 0; i < activities.size(); i++) {
 			Map<String, Object> activity = activities.get(i);
-			UUID documentId = resolveLessonPlanDocumentId(activity);
-			if (documentId == null) {
-				missingPdfs.add(i);
-				continue;
-			}
-
-			try {
-				byte[] content = getPdfContent(documentId);
-				if (content != null && content.length > 0) {
-					availablePdfs++;
-				} else {
-					missingPdfs.add(i);
-				}
-			} catch (Exception e) {
+			if (hasMarkdownsOrSourcePdf(activity)) {
+				availablePdfs++;
+			} else {
 				missingPdfs.add(i);
 			}
 		}
 
 		boolean canGenerate = missingPdfs.isEmpty();
 		return new LessonPlanInfoResponse(canGenerate, availablePdfs, missingPdfs);
+	}
+
+	/**
+	 * Returns true if the activity has at least one markdown or a SOURCE_PDF
+	 * document available for lesson-plan PDF generation.
+	 */
+	private boolean hasMarkdownsOrSourcePdf(Map<String, Object> activityMap) {
+		// 1. Check markdowns embedded directly in the request map
+		if (requestMapHasMarkdowns(activityMap)) {
+			return true;
+		}
+
+		// 2. Check DB for markdowns or SOURCE_PDF
+		UUID activityId = parseUuid(activityMap.get("id"));
+		if (activityId != null) {
+			Activity activity = activityRepository.findById(activityId).orElse(null);
+			if (activity != null) {
+				if (activity.getMarkdowns() != null && !activity.getMarkdowns().isEmpty()) {
+					return true;
+				}
+				if (activity.getDocuments().stream().anyMatch(d -> d.getType() == DocumentType.SOURCE_PDF)) {
+					return true;
+				}
+			}
+		}
+
+		// 3. Legacy fallback: direct documentId or embedded SOURCE_PDF doc in map
+		UUID documentId = resolveLessonPlanDocumentId(activityMap);
+		if (documentId == null) {
+			return false;
+		}
+		try {
+			byte[] content = getPdfContent(documentId);
+			return content != null && content.length > 0;
+		} catch (Exception e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Returns true if the activity map contains at least one markdown entry with
+	 * non-empty content.
+	 */
+	private boolean requestMapHasMarkdowns(Map<String, Object> activityMap) {
+		Object markdownsObj = activityMap.get("markdowns");
+		if (!(markdownsObj instanceof List<?> markdownsList)) {
+			return false;
+		}
+		for (Object mdObj : markdownsList) {
+			if (!(mdObj instanceof Map<?, ?> mdMap)) {
+				continue;
+			}
+			Object contentObj = mdMap.get("content");
+			if (contentObj != null && !contentObj.toString().trim().isEmpty()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private UUID resolveLessonPlanDocumentId(Map<String, Object> activity) {
@@ -394,49 +447,135 @@ public class PDFService {
 
 		for (Map<String, Object> activityMap : activities) {
 			try {
-				// Extract activity ID
-				Object idObj = activityMap.get("id");
-				if (idObj == null)
-					continue;
+				String activityName = activityMap.getOrDefault("name", "").toString();
 
-				UUID activityId;
-				try {
-					activityId = UUID.fromString(idObj.toString());
-				} catch (IllegalArgumentException e) {
-					// Invalid UUID format, skip this activity
-					continue;
-				}
+				// 1. Use markdown content from the request map (fastest – already in memory)
+				List<byte[]> markdownPdfs = generatePdfsFromRequestMarkdowns(activityMap, activityName);
 
-				// Get activity from database
-				Activity activity = activityRepository.findById(activityId).orElse(null);
-				if (activity == null)
-					continue;
-
-				byte[] pdfContent = null;
-
-				// Try to get PDF via the first SOURCE_PDF document
-				UUID docId = activity.getDocuments().stream().filter(
-						d -> d.getType() == com.learnhub.activitymanagement.entity.enums.DocumentType.SOURCE_PDF)
-						.findFirst().map(com.learnhub.documentmanagement.entity.PDFDocument::getId).orElse(null);
-				if (docId != null) {
-					try {
-						pdfContent = getPdfContent(docId);
-					} catch (Exception e) {
-						// PDF not available for this activity
+				// 2. If request didn't carry markdowns, look them up in the DB
+				if (markdownPdfs.isEmpty()) {
+					UUID activityId = parseUuid(activityMap.get("id"));
+					if (activityId != null) {
+						Activity dbActivity = activityRepository.findById(activityId).orElse(null);
+						if (dbActivity != null) {
+							markdownPdfs = generatePdfsFromMarkdowns(dbActivity);
+						}
 					}
 				}
 
-				if (pdfContent != null && pdfContent.length > 0) {
-					pdfs.add(pdfContent);
+				// Merge the per-section PDFs and add to result
+				if (!markdownPdfs.isEmpty()) {
+					try {
+						byte[] merged = markdownPdfs.size() == 1 ? markdownPdfs.get(0) : mergeList(markdownPdfs);
+						pdfs.add(merged);
+						continue;
+					} catch (IOException e) {
+						logger.warn("Failed to merge markdown PDFs for activity '{}', falling back to SOURCE_PDF: {}",
+								activityName, e.getMessage());
+					}
+				}
+
+				// 3. Fallback: SOURCE_PDF (from request documents array or DB)
+				UUID docId = resolveLessonPlanDocumentId(activityMap);
+				if (docId != null) {
+					try {
+						byte[] pdfContent = getPdfContent(docId);
+						if (pdfContent != null && pdfContent.length > 0) {
+							pdfs.add(pdfContent);
+						}
+					} catch (Exception e) {
+						logger.warn("Could not get SOURCE_PDF for activity '{}': {}", activityName, e.getMessage());
+					}
 				}
 
 			} catch (Exception e) {
-				// Skip this activity if any error
 				continue;
 			}
 		}
 
 		return pdfs;
+	}
+
+	/**
+	 * Render PDFs from markdown sections carried inside the request activity map.
+	 * The map is expected to contain a {@code markdowns} key with a list of objects
+	 * each having {@code type}, {@code content}, and optionally {@code landscape}.
+	 */
+	private List<byte[]> generatePdfsFromRequestMarkdowns(Map<String, Object> activityMap, String activityName) {
+		List<byte[]> parts = new ArrayList<>();
+		Object markdownsObj = activityMap.get("markdowns");
+		if (!(markdownsObj instanceof List<?> markdownsList) || markdownsList.isEmpty()) {
+			return parts;
+		}
+		for (String typeName : MARKDOWN_TYPE_ORDER) {
+			for (Object mdObj : markdownsList) {
+				if (!(mdObj instanceof Map<?, ?> mdMap)) {
+					continue;
+				}
+				Object typeObj = mdMap.get("type");
+				if (typeObj == null || !typeName.equalsIgnoreCase(typeObj.toString())) {
+					continue;
+				}
+				Object contentObj = mdMap.get("content");
+				if (contentObj == null || contentObj.toString().trim().isEmpty()) {
+					continue;
+				}
+				Object landscapeObj = mdMap.get("landscape");
+				boolean landscape = landscapeObj instanceof Boolean ? (Boolean) landscapeObj : false;
+				try {
+					parts.add(markdownToPdfService.renderMarkdownToPdf(contentObj.toString(), landscape, activityName));
+				} catch (Exception e) {
+					logger.warn("Failed to render markdown PDF from request for type {}: {}", typeName, e.getMessage());
+				}
+			}
+		}
+		return parts;
+	}
+
+	/**
+	 * Render PDFs for each markdown section (deckblatt, artikulationsschema,
+	 * hintergrundwissen) of the given activity in their stored order.
+	 */
+	private List<byte[]> generatePdfsFromMarkdowns(Activity activity) {
+		List<byte[]> parts = new ArrayList<>();
+		if (activity.getMarkdowns() == null || activity.getMarkdowns().isEmpty()) {
+			return parts;
+		}
+		String activityName = activity.getName() != null ? activity.getName() : "";
+		for (String typeName : MARKDOWN_TYPE_ORDER) {
+			MarkdownType type;
+			try {
+				type = MarkdownType.fromValue(typeName);
+			} catch (IllegalArgumentException e) {
+				continue;
+			}
+			for (ActivityMarkdown md : activity.getMarkdowns()) {
+				if (md.getType() == type && md.getContent() != null && !md.getContent().trim().isEmpty()) {
+					try {
+						parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape(),
+								activityName));
+					} catch (Exception e) {
+						logger.warn("Failed to render markdown PDF for activity {}, type {}: {}", activity.getId(),
+								typeName, e.getMessage());
+					}
+				}
+			}
+		}
+		return parts;
+	}
+
+	private byte[] mergeList(List<byte[]> pdfParts) throws IOException {
+		try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				PdfDocument mergedDoc = new PdfDocument(new PdfWriter(baos))) {
+			PdfMerger merger = new PdfMerger(mergedDoc);
+			for (byte[] part : pdfParts) {
+				try (PdfDocument src = new PdfDocument(new PdfReader(new ByteArrayInputStream(part)))) {
+					merger.merge(src, 1, src.getNumberOfPages());
+				}
+			}
+			mergedDoc.close();
+			return baos.toByteArray();
+		}
 	}
 
 	private byte[] mergePdfs(byte[] summaryPdf, List<byte[]> activityPdfs) throws IOException {
@@ -456,99 +595,117 @@ public class PDFService {
 	}
 
 	private void appendDocumentPages(PdfDocument target, byte[] sourceBytes) throws IOException {
-		try (PdfDocument source = new PdfDocument(new PdfReader(new java.io.ByteArrayInputStream(sourceBytes)))) {
+		try (PdfDocument source = new PdfDocument(new PdfReader(new ByteArrayInputStream(sourceBytes)))) {
 			new PdfMerger(target).merge(source, 1, source.getNumberOfPages());
 		}
 	}
 
+	/**
+	 * Generate the cover / table-of-contents page for the lesson plan PDF using an
+	 * HTML template populated with the supplied activity and break data.
+	 */
 	private byte[] generateSummaryPage(List<Map<String, Object>> activities, Map<String, Object> searchCriteria,
 			List<Map<String, Object>> breaks, Integer totalDuration) throws IOException {
-		try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-				PdfDocument pdfDocument = new PdfDocument(new PdfWriter(outputStream));
-				Document document = new Document(pdfDocument, PageSize.A4)) {
-			document.setMargins(50, 50, 50, 50);
+		String template = loadCoverTemplate();
 
-			document.add(new Paragraph("Lesson Plan Summary").setBold().setFontSize(18)
-					.setTextAlignment(TextAlignment.CENTER).setMarginBottom(24));
+		// Activities table rows
+		StringBuilder activityRows = new StringBuilder();
+		int num = 1;
+		for (Map<String, Object> activity : activities) {
+			String name = escapeHtml(activity.getOrDefault("name", "N/A").toString());
+			Object durationObj = activity.get("durationMinMinutes");
+			String duration = durationObj != null ? durationObj.toString() + " min" : "N/A";
+			String format = escapeHtml(activity.getOrDefault("format", "N/A").toString());
+			String bloomLevel = escapeHtml(
+					activity.getOrDefault("bloomLevel", activity.getOrDefault("bloom_level", "N/A")).toString());
+			activityRows.append("<tr>")
+					.append("<td class=\"num-col\">").append(num++).append("</td>")
+					.append("<td>").append(name).append("</td>")
+					.append("<td class=\"duration-col\">").append(duration).append("</td>")
+					.append("<td class=\"format-col\">").append(format).append("</td>")
+					.append("<td class=\"bloom-col\">").append(bloomLevel).append("</td>")
+					.append("</tr>\n");
+		}
 
-			document.add(buildSectionHeader("Search Criteria:"));
-			if (searchCriteria != null && !searchCriteria.isEmpty()) {
-				List<String[]> criteriaRows = new ArrayList<>();
-				for (Map.Entry<String, Object> entry : searchCriteria.entrySet()) {
-					if (entry.getValue() != null && !entry.getValue().toString().isEmpty()) {
-						String key = entry.getKey().replace("_", " ");
-						key = key.substring(0, 1).toUpperCase() + key.substring(1);
-						criteriaRows.add(new String[]{key, entry.getValue().toString()});
-					}
-				}
-				if (!criteriaRows.isEmpty()) {
-					document.add(buildTable(new float[]{150f, 350f}, criteriaRows, false));
+		// Search criteria section (optional)
+		String searchCriteriaSection = "";
+		if (searchCriteria != null && !searchCriteria.isEmpty()) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("<h2>Suchkriterien</h2>\n<table>\n<tbody>\n");
+			for (Map.Entry<String, Object> entry : searchCriteria.entrySet()) {
+				if (entry.getValue() != null && !entry.getValue().toString().isEmpty()) {
+					String key = entry.getKey().replace("_", " ");
+					key = key.substring(0, 1).toUpperCase() + key.substring(1);
+					sb.append("<tr>")
+							.append("<td class=\"criteria-key\">").append(escapeHtml(key)).append("</td>")
+							.append("<td>").append(escapeHtml(entry.getValue().toString())).append("</td>")
+							.append("</tr>\n");
 				}
 			}
+			sb.append("</tbody>\n</table>\n");
+			searchCriteriaSection = sb.toString();
+		}
 
-			document.add(buildSectionHeader("Activities:"));
-			List<String[]> activityRows = new ArrayList<>();
-			activityRows.add(new String[]{"#", "Name", "Duration", "Format", "Bloom Level"});
-			int activityNum = 1;
-			for (Map<String, Object> activity : activities) {
-				String name = activity.getOrDefault("name", "N/A").toString();
-				Object durationObj = activity.get("durationMinMinutes");
+		// Breaks section (optional)
+		String breaksSection = "";
+		if (breaks != null && !breaks.isEmpty()) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("<h2>Pausen</h2>\n<table>\n");
+			sb.append("<thead><tr>")
+					.append("<th style=\"width:80pt\">Dauer</th>")
+					.append("<th>Beschreibung</th>")
+					.append("</tr></thead>\n<tbody>\n");
+			for (Map<String, Object> breakItem : breaks) {
+				Object durationObj = breakItem.get("duration");
 				String duration = durationObj != null ? durationObj.toString() + " min" : "N/A";
-				String format = activity.getOrDefault("format", "N/A").toString();
-				String bloomLevel = activity.getOrDefault("bloom_level", "N/A").toString();
-				activityRows.add(new String[]{String.valueOf(activityNum++), name, duration, format, bloomLevel});
+				String description = escapeHtml(breakItem.getOrDefault("description", "Pause").toString());
+				sb.append("<tr>")
+						.append("<td>").append(duration).append("</td>")
+						.append("<td>").append(description).append("</td>")
+						.append("</tr>\n");
 			}
-			document.add(buildTable(new float[]{30f, 200f, 80f, 80f, 110f}, activityRows, true));
+			sb.append("</tbody>\n</table>\n");
+			breaksSection = sb.toString();
+		}
 
-			if (breaks != null && !breaks.isEmpty()) {
-				document.add(buildSectionHeader("Breaks:"));
-				List<String[]> breakRows = new ArrayList<>();
-				breakRows.add(new String[]{"Duration", "Description"});
-				for (Map<String, Object> breakItem : breaks) {
-					Object durationObj = breakItem.get("duration");
-					String duration = durationObj != null ? durationObj.toString() + " min" : "N/A";
-					String description = breakItem.getOrDefault("description", "Break").toString();
-					breakRows.add(new String[]{duration, description});
-				}
-				document.add(buildTable(new float[]{100f, 400f}, breakRows, true));
-			}
+		String downloadDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"));
+		String totalDurationStr = totalDuration != null ? totalDuration.toString() : "0";
+		String activityCount = String.valueOf(activities.size());
+		String logoDataUri = markdownToHtmlService.getLogoDataUri();
 
-			document.add(
-					buildSectionHeader("Total Duration: " + (totalDuration != null ? totalDuration : 0) + " minutes"));
-			String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-			document.add(new Paragraph("Generated: " + timestamp).setFontSize(10).setMarginTop(12));
+		String html = template
+				.replace("{{logoDataUri}}", logoDataUri)
+				.replace("{{downloadDate}}", downloadDate)
+				.replace("{{totalDuration}}", totalDurationStr)
+				.replace("{{activityCount}}", activityCount)
+				.replace("{{activitiesTableRows}}", activityRows.toString())
+				.replace("{{searchCriteriaSection}}", searchCriteriaSection)
+				.replace("{{breaksSection}}", breaksSection);
 
-			document.close();
-			return outputStream.toByteArray();
+		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+			HtmlConverter.convertToPdf(html, baos);
+			return baos.toByteArray();
 		}
 	}
 
-	private Paragraph buildSectionHeader(String text) {
-		return new Paragraph(text).setBold().setFontSize(12).setMarginTop(18).setMarginBottom(8);
+	private String loadCoverTemplate() {
+		ClassPathResource resource = new ClassPathResource(LESSON_PLAN_COVER_TEMPLATE_PATH);
+		try (InputStream in = resource.getInputStream()) {
+			return new String(in.readAllBytes(), StandardCharsets.UTF_8);
+		} catch (IOException e) {
+			throw new IllegalStateException("Failed to load lesson-plan-cover template", e);
+		}
 	}
 
-	private Table buildTable(float[] columnWidths, List<String[]> rows, boolean hasHeader) {
-		Table table = new Table(columnWidths);
-		table.useAllAvailableWidth();
-
-		for (int rowIdx = 0; rowIdx < rows.size(); rowIdx++) {
-			String[] row = rows.get(rowIdx);
-			boolean isHeader = hasHeader && rowIdx == 0;
-			for (String value : row) {
-				String cellText = value == null ? "" : value;
-				if (cellText.length() > 40) {
-					cellText = cellText.substring(0, 37) + "...";
-				}
-
-				Cell cell = new Cell().add(new Paragraph(cellText).setFontSize(10)).setPadding(5);
-				if (isHeader) {
-					cell.setBold().setBackgroundColor(ColorConstants.LIGHT_GRAY);
-				}
-				table.addCell(cell);
-			}
+	private static String escapeHtml(String text) {
+		if (text == null) {
+			return "";
 		}
-
-		return table;
+		return text.replace("&", "&amp;")
+				.replace("<", "&lt;")
+				.replace(">", "&gt;")
+				.replace("\"", "&quot;")
+				.replace("'", "&#39;");
 	}
 
 	/**
@@ -566,7 +723,7 @@ public class PDFService {
 				// Fall back to persisted PDF
 				pdfContent = getPdfContent(documentIdOrCacheKey);
 			}
-			try (PdfDocument document = new PdfDocument(new PdfReader(new java.io.ByteArrayInputStream(pdfContent)))) {
+			try (PdfDocument document = new PdfDocument(new PdfReader(new ByteArrayInputStream(pdfContent)))) {
 				StringBuilder extractedText = new StringBuilder();
 				for (int pageNumber = 1; pageNumber <= document.getNumberOfPages(); pageNumber++) {
 					extractedText.append(PdfTextExtractor.getTextFromPage(document.getPage(pageNumber)));

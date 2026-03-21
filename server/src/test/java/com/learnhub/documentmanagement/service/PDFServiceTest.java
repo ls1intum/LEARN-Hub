@@ -9,7 +9,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
+import com.learnhub.activitymanagement.entity.Activity;
+import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.DocumentType;
+import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
@@ -35,6 +38,8 @@ class PDFServiceTest {
 	private PDFDocumentRepository pdfDocumentRepository;
 	private ActivityRepository activityRepository;
 	private LLMService llmService;
+	private MarkdownToHtmlService markdownToHtmlService;
+	private MarkdownToPdfService markdownToPdfService;
 
 	@TempDir
 	Path tempDir;
@@ -45,10 +50,14 @@ class PDFServiceTest {
 		pdfDocumentRepository = mock(PDFDocumentRepository.class);
 		activityRepository = mock(ActivityRepository.class);
 		llmService = mock(LLMService.class);
+		markdownToHtmlService = mock(MarkdownToHtmlService.class);
+		markdownToPdfService = mock(MarkdownToPdfService.class);
 
 		ReflectionTestUtils.setField(pdfService, "pdfDocumentRepository", pdfDocumentRepository);
 		ReflectionTestUtils.setField(pdfService, "activityRepository", activityRepository);
 		ReflectionTestUtils.setField(pdfService, "llmService", llmService);
+		ReflectionTestUtils.setField(pdfService, "markdownToHtmlService", markdownToHtmlService);
+		ReflectionTestUtils.setField(pdfService, "markdownToPdfService", markdownToPdfService);
 		ReflectionTestUtils.setField(pdfService, "pdfStoragePath", tempDir.toString());
 	}
 
@@ -309,6 +318,77 @@ class PDFServiceTest {
 		LessonPlanInfoResponse response = pdfService
 				.getLessonPlanInfo(List.of(Map.of("id", UUID.randomUUID().toString(), "documents",
 						List.of(Map.of("id", documentId.toString(), "type", DocumentType.SOURCE_PDF.getValue())))));
+
+		assertThat(response.isCanGenerateLessonPlan()).isTrue();
+		assertThat(response.getAvailablePdfs()).isEqualTo(1);
+		assertThat(response.getMissingPdfs()).isEmpty();
+	}
+
+	@Test
+	void getLessonPlanInfoReturnsTrueWhenActivityHasMarkdowns() {
+		UUID activityId = UUID.randomUUID();
+
+		ActivityMarkdown md = new ActivityMarkdown();
+		md.setType(MarkdownType.DECKBLATT);
+		md.setContent("# Deckblatt\nSome content");
+		md.setLandscape(false);
+
+		Activity activity = new Activity();
+		activity.setId(activityId);
+		activity.setName("Test Activity");
+		activity.getMarkdowns().add(md);
+
+		when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+
+		LessonPlanInfoResponse response = pdfService
+				.getLessonPlanInfo(List.of(Map.of("id", activityId.toString())));
+
+		assertThat(response.isCanGenerateLessonPlan()).isTrue();
+		assertThat(response.getAvailablePdfs()).isEqualTo(1);
+		assertThat(response.getMissingPdfs()).isEmpty();
+	}
+
+	@Test
+	void getLessonPlanInfoFallsBackToSourcePdfWhenNoMarkdowns() throws IOException {
+		UUID activityId = UUID.randomUUID();
+		UUID documentId = UUID.randomUUID();
+		Path filePath = tempDir.resolve("source.pdf");
+		Files.write(filePath, "source-pdf".getBytes(StandardCharsets.UTF_8));
+
+		PDFDocument sourcePdf = new PDFDocument();
+		sourcePdf.setId(documentId);
+		sourcePdf.setFilePath(filePath.toString());
+		sourcePdf.setType(DocumentType.SOURCE_PDF);
+
+		Activity activity = new Activity();
+		activity.setId(activityId);
+		activity.setName("Test Activity");
+		activity.getDocuments().add(sourcePdf);
+		// No markdowns
+
+		when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+
+		LessonPlanInfoResponse response = pdfService
+				.getLessonPlanInfo(List.of(Map.of("id", activityId.toString())));
+
+		assertThat(response.isCanGenerateLessonPlan()).isTrue();
+		assertThat(response.getAvailablePdfs()).isEqualTo(1);
+		assertThat(response.getMissingPdfs()).isEmpty();
+	}
+
+	@Test
+	void getLessonPlanInfoReturnsTrueWhenRequestMapHasMarkdowns() {
+		// Activity map contains markdowns in the request body (no DB lookup needed)
+		Map<String, Object> activityMap = new HashMap<>();
+		activityMap.put("id", UUID.randomUUID().toString());
+		activityMap.put("name", "Test Activity");
+		activityMap.put("markdowns", List.of(
+				Map.of("type", "deckblatt", "content", "# Deckblatt\nContent", "landscape", false)));
+
+		// No DB activity needed – markdowns are in the request map itself
+		when(activityRepository.findById(any())).thenReturn(Optional.empty());
+
+		LessonPlanInfoResponse response = pdfService.getLessonPlanInfo(List.of(activityMap));
 
 		assertThat(response.isCanGenerateLessonPlan()).isTrue();
 		assertThat(response.getAvailablePdfs()).isEqualTo(1);

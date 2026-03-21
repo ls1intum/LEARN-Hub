@@ -201,8 +201,7 @@ public class ActivityController {
 		logger.info("POST /api/activities/lesson-plan - Lesson plan PDF generated successfully, size={} bytes",
 				lessonPlanPdf.length);
 
-		return buildFileDownloadResponse(lessonPlanPdf, "lesson_plan", ".pdf", MediaType.APPLICATION_PDF,
-				"attachment");
+		return buildFileDownloadResponse(lessonPlanPdf, "lesson_plan", ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
 	@PostMapping("/lesson-plan/info")

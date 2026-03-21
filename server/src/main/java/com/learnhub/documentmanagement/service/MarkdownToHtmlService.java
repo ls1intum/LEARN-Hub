@@ -133,6 +133,14 @@ public class MarkdownToHtmlService {
 	}
 
 	/**
+	 * Return the LEARN-Hub logo as a base64-encoded data URI suitable for embedding
+	 * in HTML {@code <img>} tags.
+	 */
+	public String getLogoDataUri() {
+		return logoDataUri;
+	}
+
+	/**
 	 * Parse Markdown into a CommonMark AST node.
 	 */
 	public Node parseToNode(String markdown) {

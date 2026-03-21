@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 40pt 40pt 50pt 40pt;
+
+            @bottom-left {
+                content: "{{downloadDate}}";
+                font-size: 7pt;
+                font-family: Helvetica, Arial, sans-serif;
+                color: #555555;
+                vertical-align: middle;
+            }
+
+            @bottom-center {
+                content: "LEARN-Hub – a TUM Applied Education Technologies application · aet.cit.tum.de";
+                font-size: 7pt;
+                font-family: Helvetica, Arial, sans-serif;
+                color: #555555;
+                text-align: center;
+                vertical-align: middle;
+            }
+
+            @bottom-right {
+                content: "Seite " counter(page) " von " counter(pages);
+                font-size: 7pt;
+                font-family: Helvetica, Arial, sans-serif;
+                color: #555555;
+                vertical-align: middle;
+            }
+        }
+
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 11pt;
+            margin: 0;
+            padding: 0;
+            color: #333333;
+        }
+
+        .cover-header {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-bottom: 24pt;
+            border-bottom: 1pt solid #2f70b3;
+            padding-bottom: 8pt;
+        }
+
+        .cover-header img {
+            height: 28pt;
+            vertical-align: middle;
+            border: none;
+            outline: none;
+        }
+
+        h1.plan-title {
+            text-align: center;
+            font-size: 24pt;
+            color: #2f70b3;
+            margin: 16pt 0 6pt 0;
+            font-weight: bold;
+        }
+
+        .plan-subtitle {
+            text-align: center;
+            font-size: 11pt;
+            color: #555555;
+            margin-bottom: 24pt;
+        }
+
+        h2 {
+            font-size: 13pt;
+            color: #2f70b3;
+            margin-top: 18pt;
+            margin-bottom: 8pt;
+            padding-bottom: 3pt;
+            border-bottom: 0.5pt solid #c8d8e8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12pt;
+            font-size: 9.5pt;
+        }
+
+        thead tr {
+            background-color: #2f70b3;
+            color: #ffffff;
+        }
+
+        thead th {
+            padding: 6pt 8pt;
+            font-size: 9.5pt;
+            font-weight: bold;
+            border: 0.5pt solid #1e5a9a;
+            text-align: left;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #eaf1f8;
+        }
+
+        tbody td {
+            padding: 5pt 8pt;
+            border: 0.5pt solid #c8c8c8;
+            vertical-align: top;
+        }
+
+        .num-col {
+            width: 24pt;
+            text-align: center;
+        }
+
+        .duration-col {
+            width: 52pt;
+        }
+
+        .format-col {
+            width: 62pt;
+        }
+
+        .bloom-col {
+            width: 68pt;
+        }
+
+        .criteria-key {
+            width: 35%;
+            font-weight: bold;
+            background-color: #f4f8fc;
+        }
+
+        .total-duration {
+            margin-top: 14pt;
+            font-size: 11pt;
+            font-weight: bold;
+            color: #2f70b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cover-header">
+        <img src="{{logoDataUri}}" alt="LEARN-Hub" />
+    </div>
+
+    <h1 class="plan-title">Lernplan</h1>
+    <p class="plan-subtitle">{{totalDuration}} Minuten &middot; {{activityCount}} Aktivit&auml;ten</p>
+
+    {{searchCriteriaSection}}
+
+    <h2>Aktivit&auml;ten</h2>
+    <table>
+        <thead>
+            <tr>
+                <th class="num-col">#</th>
+                <th>Name</th>
+                <th class="duration-col">Dauer</th>
+                <th class="format-col">Format</th>
+                <th class="bloom-col">Bloom-Niveau</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{activitiesTableRows}}
+        </tbody>
+    </table>
+
+    {{breaksSection}}
+
+    <p class="total-duration">Gesamtdauer: {{totalDuration}} Minuten</p>
+</body>
+
+</html>
