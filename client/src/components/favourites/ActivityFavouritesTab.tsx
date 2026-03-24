@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity } from "@/types/activity";
+import { useTranslation } from "react-i18next";
 
 interface ActivityFavourite {
   id: string;
@@ -21,6 +22,13 @@ interface ActivityFavourite {
 export const ActivityFavouritesTab: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const translateEnum = (category: string, value: string): string => {
+    const key = `enums.${category}.${value}`;
+    const translated = t(key);
+    return translated === key ? value : translated;
+  };
   const [favourites, setFavourites] = useState<ActivityFavourite[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,11 +134,10 @@ export const ActivityFavouritesTab: React.FC = () => {
       <div className="text-center py-12">
         <Heart className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
         <h3 className="text-lg font-semibold text-foreground mb-2">
-          No favourite activities yet
+          {t("activityFavourites.noFavourites")}
         </h3>
         <p className="text-muted-foreground">
-          Start favouriting activities from the library or recommendations to
-          see them here.
+          {t("activityFavourites.noFavouritesDesc")}
         </p>
       </div>
     );
@@ -165,7 +172,7 @@ export const ActivityFavouritesTab: React.FC = () => {
                     className="flex items-center gap-1"
                   >
                     <Eye className="h-4 w-4" />
-                    View Details
+                    {t("activityFavourites.viewDetails")}
                   </Button>
                   <Button
                     variant="ghost"
@@ -183,7 +190,8 @@ export const ActivityFavouritesTab: React.FC = () => {
               <div className="flex flex-wrap gap-2 mb-4">
                 <Badge variant="secondary">
                   <Users className="h-3 w-3 mr-1" />
-                  Ages {activity.ageMin}-{activity.ageMax}
+                  {t("activityFavourites.ages")} {activity.ageMin}-
+                  {activity.ageMax}
                 </Badge>
                 <Badge variant="secondary">
                   <Clock className="h-3 w-3 mr-1" />
@@ -192,14 +200,18 @@ export const ActivityFavouritesTab: React.FC = () => {
                     `-${activity.durationMaxMinutes}`}{" "}
                   min
                 </Badge>
-                <Badge variant="secondary">{activity.format}</Badge>
-                <Badge variant="outline">{activity.bloomLevel}</Badge>
+                <Badge variant="secondary">
+                  {translateEnum("format", activity.format)}
+                </Badge>
+                <Badge variant="outline">
+                  {translateEnum("bloomLevel", activity.bloomLevel)}
+                </Badge>
               </div>
 
               <div className="flex flex-wrap gap-1 mb-4">
                 {activity.topics.map((topic) => (
                   <Badge key={topic} variant="outline" className="text-xs">
-                    {topic}
+                    {translateEnum("topics", topic)}
                   </Badge>
                 ))}
               </div>
@@ -207,12 +219,14 @@ export const ActivityFavouritesTab: React.FC = () => {
               <div className="flex items-center justify-between text-sm text-muted-foreground">
                 <div className="flex items-center">
                   <Calendar className="h-4 w-4 mr-1" />
-                  Favourited{" "}
+                  {t("activityFavourites.favourited")}{" "}
                   {new Date(favourite.createdAt).toLocaleDateString()}
                 </div>
                 {favourite.name && (
                   <div className="text-right">
-                    <span className="font-medium">Custom name:</span>{" "}
+                    <span className="font-medium">
+                      {t("activityFavourites.customName")}
+                    </span>{" "}
                     {favourite.name}
                   </div>
                 )}

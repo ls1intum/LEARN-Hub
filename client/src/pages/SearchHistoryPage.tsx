@@ -14,9 +14,18 @@ import {
 import { apiService } from "@/services/apiService";
 import type { SearchHistoryEntry } from "@/types/activity";
 import { logger } from "@/services/logger";
+import { useTranslation } from "react-i18next";
 
 export const SearchHistoryPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const translateEnum = (category: string, value: string): string => {
+    const key = `enums.${category}.${value}`;
+    const translated = t(key);
+    return translated === key ? value : translated;
+  };
+
   const [error, setError] = useState<string | null>(null);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +52,7 @@ export const SearchHistoryPage: React.FC = () => {
         }
       } catch (err) {
         logger.error("Error fetching search history", err, "SearchHistoryPage");
-        setError("Failed to load search history. Please try again.");
+        setError(t("history.failedLoad"));
       } finally {
         setLoading(false);
       }
@@ -64,7 +73,7 @@ export const SearchHistoryPage: React.FC = () => {
         err,
         "SearchHistoryPage",
       );
-      setError("Failed to delete search history entry. Please try again.");
+      setError(t("history.failedDelete"));
     }
   };
 
@@ -78,7 +87,7 @@ export const SearchHistoryPage: React.FC = () => {
       });
     } catch (err) {
       logger.error("Error re-running search", err, "SearchHistoryPage");
-      setError("Failed to re-run search. Please try again.");
+      setError(t("history.failedRerun"));
     }
   };
 
@@ -96,44 +105,74 @@ export const SearchHistoryPage: React.FC = () => {
     const formatted: string[] = [];
 
     if (criteria.target_age) {
-      formatted.push(`Age: ${criteria.target_age}`);
+      formatted.push(t("history.age", { value: criteria.target_age }));
     }
     if (criteria.target_duration) {
-      formatted.push(`Duration: ${criteria.target_duration}min`);
+      formatted.push(
+        t("history.duration", { value: criteria.target_duration }),
+      );
     }
     if (criteria.bloomLevel && criteria.bloomLevel !== "any") {
-      formatted.push(`Bloom Level: ${criteria.bloomLevel}`);
+      formatted.push(
+        t("history.bloomLevel", {
+          value: translateEnum("bloomLevel", criteria.bloomLevel as string),
+        }),
+      );
     }
     if (
       criteria.bloom_levels &&
       Array.isArray(criteria.bloom_levels) &&
       criteria.bloom_levels.length > 0
     ) {
-      formatted.push(`Bloom Level: ${criteria.bloom_levels.join(", ")}`);
+      formatted.push(
+        t("history.bloomLevel", {
+          value: (criteria.bloom_levels as string[])
+            .map((v) => translateEnum("bloomLevel", v))
+            .join(", "),
+        }),
+      );
     }
     if (
       criteria.format &&
       Array.isArray(criteria.format) &&
       criteria.format.length > 0
     ) {
-      formatted.push(`Format: ${criteria.format.join(", ")}`);
+      formatted.push(
+        t("history.format", {
+          value: (criteria.format as string[])
+            .map((v) => translateEnum("format", v))
+            .join(", "),
+        }),
+      );
     }
     if (
       criteria.topics &&
       Array.isArray(criteria.topics) &&
       criteria.topics.length > 0
     ) {
-      formatted.push(`Topics: ${criteria.topics.join(", ")}`);
+      formatted.push(
+        t("history.topics", {
+          value: (criteria.topics as string[])
+            .map((v) => translateEnum("topics", v))
+            .join(", "),
+        }),
+      );
     }
     if (
       criteria.resourcesNeeded &&
       Array.isArray(criteria.resourcesNeeded) &&
       criteria.resourcesNeeded.length > 0
     ) {
-      formatted.push(`Resources: ${criteria.resourcesNeeded.join(", ")}`);
+      formatted.push(
+        t("history.resources", {
+          value: (criteria.resourcesNeeded as string[])
+            .map((v) => translateEnum("resources", v))
+            .join(", "),
+        }),
+      );
     }
 
-    return formatted.length > 0 ? formatted : ["No specific criteria"];
+    return formatted.length > 0 ? formatted : [t("history.noSpecificCriteria")];
   };
 
   if (loading) {
@@ -142,7 +181,7 @@ export const SearchHistoryPage: React.FC = () => {
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading search history...</p>
+            <p className="text-muted-foreground">{t("history.loading")}</p>
           </div>
         </div>
       </div>
@@ -154,17 +193,17 @@ export const SearchHistoryPage: React.FC = () => {
       <div className="w-full py-6">
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
-            Search History
+            {t("history.title")}
           </h1>
           <p className="text-muted-foreground text-sm sm:text-base">
-            View and manage your previous activity searches
+            {t("history.subtitle")}
           </p>
         </div>
         <div className="text-center py-8">
-          <p className="text-destructive mb-4">
-            {error || "An error occurred"}
-          </p>
-          <Button onClick={() => window.location.reload()}>Try Again</Button>
+          <p className="text-destructive mb-4">{error || t("common.error")}</p>
+          <Button onClick={() => window.location.reload()}>
+            {t("history.tryAgain")}
+          </Button>
         </div>
       </div>
     );
@@ -174,12 +213,14 @@ export const SearchHistoryPage: React.FC = () => {
     <div className="w-full py-6">
       <div className="mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
-          Search History
+          {t("history.title")}
         </h1>
         <p className="text-muted-foreground text-sm sm:text-base">
-          View and manage your previous activity searches
+          {t("history.subtitle")}
           {totalCount > 0 && (
-            <span className="ml-2 text-sm">({totalCount} total entries)</span>
+            <span className="ml-2 text-sm">
+              ({totalCount} {t("history.entries")})
+            </span>
           )}
         </p>
       </div>
@@ -189,11 +230,10 @@ export const SearchHistoryPage: React.FC = () => {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Search className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              No search history yet
+              {t("history.empty")}
             </h3>
             <p className="text-muted-foreground text-center">
-              Your activity searches will appear here once you start using the
-              recommendation system.
+              {t("history.emptyDesc")}
             </p>
           </CardContent>
         </Card>
@@ -210,7 +250,7 @@ export const SearchHistoryPage: React.FC = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="text-sm font-semibold group-hover:text-primary transition-colors truncate">
-                        Search #{entry.id}
+                        {t("history.search", { id: entry.id })}
                       </h3>
                       <div className="flex items-center text-xs text-muted-foreground">
                         <Clock className="h-3 w-3 mr-1" />
@@ -235,10 +275,11 @@ export const SearchHistoryPage: React.FC = () => {
                           variant="outline"
                           className="text-xs px-2 py-0.5"
                         >
-                          +
-                          {formatSearchCriteria(entry.searchCriteria).length -
-                            4}{" "}
-                          more
+                          {t("history.more", {
+                            count:
+                              formatSearchCriteria(entry.searchCriteria)
+                                .length - 4,
+                          })}
                         </Badge>
                       )}
                     </div>
@@ -255,7 +296,7 @@ export const SearchHistoryPage: React.FC = () => {
                       aria-label="Re-run this search"
                     >
                       <Play className="h-3 w-3 mr-1" />
-                      Re-run
+                      {t("history.rerun")}
                     </Button>
                     <Button
                       variant="outline"
@@ -281,9 +322,11 @@ export const SearchHistoryPage: React.FC = () => {
       {searchHistory.length > 0 && (
         <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
           <div className="text-sm text-muted-foreground">
-            Showing {currentPage * ITEMS_PER_PAGE + 1} to{" "}
-            {Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalCount)} of{" "}
-            {totalCount} entries
+            {t("history.showing", {
+              from: currentPage * ITEMS_PER_PAGE + 1,
+              to: Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalCount),
+              total: totalCount,
+            })}
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -294,10 +337,10 @@ export const SearchHistoryPage: React.FC = () => {
               className="h-8 px-3"
             >
               <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
+              {t("history.previous")}
             </Button>
             <span className="text-sm text-muted-foreground px-2">
-              Page {currentPage + 1}
+              {t("history.page")} {currentPage + 1}
             </span>
             <Button
               variant="outline"
@@ -306,7 +349,7 @@ export const SearchHistoryPage: React.FC = () => {
               disabled={!hasMore}
               className="h-8 px-3"
             >
-              Next
+              {t("history.next")}
               <ChevronRight className="h-4 w-4 ml-1" />
             </Button>
           </div>

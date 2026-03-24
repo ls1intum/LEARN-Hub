@@ -1,5 +1,6 @@
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface NavigationItemProps {
   tab: {
@@ -19,6 +20,7 @@ export const NavigationItem: React.FC<NavigationItemProps> = ({
   onClick,
   className = "",
 }) => {
+  const { t } = useTranslation();
   const Icon = tab.icon;
 
   return (
@@ -43,7 +45,7 @@ export const NavigationItem: React.FC<NavigationItemProps> = ({
         )}
         aria-hidden="true"
       />
-      <span>{tab.label}</span>
+      <span>{t(`nav.${tab.id}`)}</span>
       {isActive && (
         <div className="absolute right-3 w-1.5 h-1.5 bg-primary-foreground/70 rounded-full" />
       )}

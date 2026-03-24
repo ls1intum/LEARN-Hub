@@ -18,9 +18,7 @@ import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity } from "@/types/activity";
-
-// Note: PDFInfo interface is defined but not currently used in the refactored version
-// interface PDFInfo { ... }
+import { useTranslation } from "react-i18next";
 
 export const ActivityDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +26,7 @@ export const ActivityDetails: React.FC = () => {
   const location = useLocation();
   const { user } = useAuth();
   const isAdmin = user?.role === "ADMIN";
+  const { t } = useTranslation();
 
   // Get activity data from navigation state or fetch from API
   const stateActivity = location.state?.activity as Activity | undefined;
@@ -131,10 +130,21 @@ export const ActivityDetails: React.FC = () => {
 
   const handleBack = () => {
     if (fromBrowser) {
-      navigate(-1); // Go back to library when navigated from there
+      navigate(-1);
     } else {
-      navigate("/recommendations"); // Go to recommendations form otherwise
+      navigate("/recommendations");
     }
+  };
+
+  const translateEnum = (
+    category: string,
+    value: string | undefined,
+  ): string => {
+    if (!value) return "";
+    const key = `enums.${category}.${value}`;
+    const translated = t(key);
+    // If no translation found, fall back to original value
+    return translated === key ? value : translated;
   };
 
   if (isLoading) {
@@ -142,7 +152,9 @@ export const ActivityDetails: React.FC = () => {
       <div className="w-full">
         <LoadingState isLoading={true} fallback={<SkeletonGrid />}>
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading activity details...</p>
+            <p className="text-muted-foreground">
+              {t("activityDetails.loading")}
+            </p>
           </div>
         </LoadingState>
       </div>
@@ -158,7 +170,7 @@ export const ActivityDetails: React.FC = () => {
             onRetry={refetch}
           />
           <div className="mt-4">
-            <Button onClick={handleBack}>Go Back</Button>
+            <Button onClick={handleBack}>{t("activityDetails.goBack")}</Button>
           </div>
         </div>
       </div>
@@ -174,9 +186,9 @@ export const ActivityDetails: React.FC = () => {
 
   const durationRange =
     activity.durationMinMinutes && activity.durationMaxMinutes
-      ? `${activity.durationMinMinutes}-${activity.durationMaxMinutes} minutes`
+      ? `${activity.durationMinMinutes}-${activity.durationMaxMinutes} ${t("common.minutes")}`
       : activity.durationMinMinutes
-        ? `${activity.durationMinMinutes}+ minutes`
+        ? `${activity.durationMinMinutes}+ ${t("common.minutes")}`
         : "";
 
   const totalTime =
@@ -197,17 +209,21 @@ export const ActivityDetails: React.FC = () => {
                 variant="ghost"
                 size="icon"
                 onClick={handleBack}
-                aria-label={fromBrowser ? "Back to Library" : "Back to Form"}
+                aria-label={
+                  fromBrowser
+                    ? t("activityDetails.backToLibrary")
+                    : t("activityDetails.backToForm")
+                }
                 className="h-9 w-9 flex-shrink-0"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                Activity Details
+                {t("activityDetails.title")}
               </h2>
             </div>
             <p className="text-sm sm:text-base text-muted-foreground mt-1.5 ml-12">
-              Detailed information about this educational activity.
+              {t("activityDetails.description")}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -219,7 +235,7 @@ export const ActivityDetails: React.FC = () => {
                 className="flex items-center gap-2"
               >
                 <Edit3 className="h-4 w-4" />
-                Edit
+                {t("activityDetails.edit")}
               </Button>
             )}
           </div>
@@ -236,7 +252,7 @@ export const ActivityDetails: React.FC = () => {
           {activity.description && (
             <div className="mb-8 p-4 bg-muted/30 rounded-lg border border-border/50">
               <h4 className="text-lg font-semibold mb-3 text-foreground">
-                Description
+                {t("activityDetails.descriptionLabel")}
               </h4>
               <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                 {activity.description}
@@ -250,7 +266,7 @@ export const ActivityDetails: React.FC = () => {
               {ageRange && (
                 <div>
                   <h3 className="font-semibold text-card-foreground">
-                    Age Range
+                    {t("activityDetails.ageRange")}
                   </h3>
                   <p className="text-muted-foreground">{ageRange}</p>
                 </div>
@@ -258,24 +274,30 @@ export const ActivityDetails: React.FC = () => {
 
               {activity.format && (
                 <div>
-                  <h3 className="font-semibold text-card-foreground">Format</h3>
-                  <p className="text-muted-foreground">{activity.format}</p>
+                  <h3 className="font-semibold text-card-foreground">
+                    {t("activityDetails.format")}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {translateEnum("format", activity.format)}
+                  </p>
                 </div>
               )}
 
               {activity.bloomLevel && (
                 <div>
                   <h3 className="font-semibold text-card-foreground">
-                    Bloom's Taxonomy Level
+                    {t("activityDetails.bloomLevel")}
                   </h3>
-                  <p className="text-muted-foreground">{activity.bloomLevel}</p>
+                  <p className="text-muted-foreground">
+                    {translateEnum("bloomLevel", activity.bloomLevel)}
+                  </p>
                 </div>
               )}
 
               {durationRange && (
                 <div>
                   <h3 className="font-semibold text-card-foreground">
-                    Duration
+                    {t("activityDetails.duration")}
                   </h3>
                   <p className="text-muted-foreground">{durationRange}</p>
                 </div>
@@ -284,9 +306,11 @@ export const ActivityDetails: React.FC = () => {
               {totalTime > 0 && (
                 <div>
                   <h3 className="font-semibold text-card-foreground">
-                    Total Time (including prep & cleanup)
+                    {t("activityDetails.totalTime")}
                   </h3>
-                  <p className="text-muted-foreground">{totalTime} minutes</p>
+                  <p className="text-muted-foreground">
+                    {totalTime} {t("common.minutes")}
+                  </p>
                 </div>
               )}
             </div>
@@ -295,19 +319,25 @@ export const ActivityDetails: React.FC = () => {
               {(activity.mentalLoad || activity.physicalEnergy) && (
                 <div>
                   <h3 className="font-semibold text-card-foreground">
-                    Energy Requirements
+                    {t("activityDetails.energyRequirements")}
                   </h3>
                   <div className="text-muted-foreground space-y-2">
                     {activity.mentalLoad && (
                       <div className="flex items-center gap-2">
                         <Brain className="h-4 w-4 text-blue-500" />
-                        <span>Mental: {activity.mentalLoad}</span>
+                        <span>
+                          {t("activityDetails.mental")}:{" "}
+                          {translateEnum("energy", activity.mentalLoad)}
+                        </span>
                       </div>
                     )}
                     {activity.physicalEnergy && (
                       <div className="flex items-center gap-2">
                         <ActivityIcon className="h-4 w-4 text-orange-500" />
-                        <span>Physical: {activity.physicalEnergy}</span>
+                        <span>
+                          {t("activityDetails.physical")}:{" "}
+                          {translateEnum("energy", activity.physicalEnergy)}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -318,11 +348,13 @@ export const ActivityDetails: React.FC = () => {
                 activity.resourcesNeeded.length > 0 && (
                   <div>
                     <h3 className="font-semibold text-card-foreground">
-                      Resources Needed
+                      {t("activityDetails.resourcesNeeded")}
                     </h3>
                     <ul className="text-muted-foreground list-disc list-inside">
                       {activity.resourcesNeeded.map((resource, index) => (
-                        <li key={index}>{resource}</li>
+                        <li key={index}>
+                          {translateEnum("resources", resource)}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -330,7 +362,9 @@ export const ActivityDetails: React.FC = () => {
 
               {activity.source && (
                 <div>
-                  <h3 className="font-semibold text-card-foreground">Source</h3>
+                  <h3 className="font-semibold text-card-foreground">
+                    {t("activityDetails.source")}
+                  </h3>
                   {(() => {
                     try {
                       const url = new URL(activity.source);
@@ -361,7 +395,7 @@ export const ActivityDetails: React.FC = () => {
           {activity.topics && activity.topics.length > 0 && (
             <div className="mb-8">
               <h3 className="text-lg font-semibold mb-4 text-card-foreground">
-                Topics
+                {t("activityDetails.topics")}
               </h3>
               <div className="flex flex-wrap gap-2">
                 {activity.topics.map((topic, index) => (
@@ -369,7 +403,7 @@ export const ActivityDetails: React.FC = () => {
                     key={index}
                     className="inline-block bg-primary text-primary-foreground text-sm font-medium px-3 py-1 rounded-full"
                   >
-                    {topic}
+                    {translateEnum("topics", topic)}
                   </span>
                 ))}
               </div>
@@ -381,7 +415,7 @@ export const ActivityDetails: React.FC = () => {
             <div className="rounded-lg border border-border bg-muted/20">
               <div className="border-b border-border px-4 py-3">
                 <h3 className="text-lg font-semibold text-card-foreground">
-                  Downloads
+                  {t("activityDetails.downloads")}
                 </h3>
               </div>
 
@@ -409,11 +443,11 @@ export const ActivityDetails: React.FC = () => {
                       size="sm"
                       disabled={documentApi.isLoading}
                       onClick={() => handleOpenDocument(doc.id)}
-                      title="Open document"
+                      title={t("activityDetails.downloadPdf")}
                       className="flex items-center gap-1.5"
                     >
                       <Download className="h-4 w-4 text-red-600" />
-                      <span>PDF</span>
+                      <span>{t("activityDetails.downloadPdf")}</span>
                     </Button>
                   </div>
                 </div>
@@ -444,7 +478,7 @@ export const ActivityDetails: React.FC = () => {
                       className="flex items-center gap-1.5"
                     >
                       <Download className="h-4 w-4 text-red-600" />
-                      <span>PDF</span>
+                      <span>{t("activityDetails.downloadPdf")}</span>
                     </Button>
                     <Button
                       type="button"
@@ -456,7 +490,7 @@ export const ActivityDetails: React.FC = () => {
                       className="flex items-center gap-1.5"
                     >
                       <Download className="h-4 w-4 text-blue-600" />
-                      <span>DOCX</span>
+                      <span>{t("activityDetails.downloadDocx")}</span>
                     </Button>
                   </div>
                 </div>
@@ -468,11 +502,12 @@ export const ActivityDetails: React.FC = () => {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 text-card-foreground">
                       <Download className="h-4 w-4 text-primary" />
-                      <p className="font-medium">Download Activity</p>
+                      <p className="font-medium">
+                        {t("activityDetails.downloadActivity")}
+                      </p>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Combined document (Deckblatt + Artikulationsschema +
-                      Hintergrundwissen)
+                      {t("activityDetails.combinedDocument")}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 sm:shrink-0">
@@ -486,7 +521,7 @@ export const ActivityDetails: React.FC = () => {
                       className="flex items-center gap-1.5"
                     >
                       <Download className="h-4 w-4 text-red-600" />
-                      <span>PDF</span>
+                      <span>{t("activityDetails.downloadPdf")}</span>
                     </Button>
                     <Button
                       type="button"
@@ -498,7 +533,7 @@ export const ActivityDetails: React.FC = () => {
                       className="flex items-center gap-1.5"
                     >
                       <Download className="h-4 w-4 text-blue-600" />
-                      <span>DOCX</span>
+                      <span>{t("activityDetails.downloadDocx")}</span>
                     </Button>
                   </div>
                 </div>

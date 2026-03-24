@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Users, BookOpen } from "lucide-react";
 import type { Activity } from "@/types/activity";
+import { useTranslation } from "react-i18next";
 
 interface TimelineItemProps {
   activity: Activity;
@@ -13,6 +14,13 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   activity,
   stepNumber,
 }) => {
+  const { t } = useTranslation();
+
+  const translateEnum = (category: string, value: string): string => {
+    const key = `enums.${category}.${value}`;
+    const translated = t(key);
+    return translated === key ? value : translated;
+  };
   const formatDuration = (minutes: number) => {
     if (minutes < 60) {
       return `${minutes}m`;
@@ -23,7 +31,9 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   };
 
   const formatAgeRange = (min: number, max: number) => {
-    return min === max ? `${min} years` : `${min}-${max} years`;
+    return min === max
+      ? `${min} ${t("common.years")}`
+      : `${min}-${max} ${t("common.years")}`;
   };
 
   return (
@@ -65,12 +75,12 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
 
               {/* Format */}
               <Badge variant="secondary" className="text-xs">
-                {activity.format}
+                {translateEnum("format", activity.format)}
               </Badge>
 
               {/* Bloom Level */}
               <Badge variant="outline" className="text-xs">
-                {activity.bloomLevel}
+                {translateEnum("bloomLevel", activity.bloomLevel)}
               </Badge>
             </div>
 
@@ -81,7 +91,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                 <div className="flex flex-wrap gap-1">
                   {activity.topics.map((topic, index) => (
                     <Badge key={index} variant="outline" className="text-xs">
-                      {topic}
+                      {translateEnum("topics", topic)}
                     </Badge>
                   ))}
                 </div>
@@ -92,9 +102,13 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
             {activity.resourcesNeeded &&
               activity.resourcesNeeded.length > 0 && (
                 <div className="text-sm">
-                  <span className="text-muted-foreground">Resources: </span>
+                  <span className="text-muted-foreground">
+                    {t("timeline.resources")}{" "}
+                  </span>
                   <span className="text-foreground">
-                    {activity.resourcesNeeded.join(", ")}
+                    {activity.resourcesNeeded
+                      .map((r) => translateEnum("resources", r))
+                      .join(", ")}
                   </span>
                 </div>
               )}

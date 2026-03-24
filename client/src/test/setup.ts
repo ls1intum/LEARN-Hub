@@ -10,6 +10,22 @@ import {
   afterAll,
 } from "vitest";
 import React from "react";
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+import de from "@/locales/de.json";
+import en from "@/locales/en.json";
+
+// Initialize i18next for tests so t() calls return actual translations
+i18n.use(initReactI18next).init({
+  resources: {
+    de: { translation: de },
+    en: { translation: en },
+  },
+  lng: "de",
+  fallbackLng: "de",
+  interpolation: { escapeValue: false },
+  react: { useSuspense: false },
+});
 
 // Mock storage BEFORE importing MSW (MSW uses localStorage on init)
 const sessionStorageMock = {

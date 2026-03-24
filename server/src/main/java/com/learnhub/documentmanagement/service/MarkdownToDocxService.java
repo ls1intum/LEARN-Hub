@@ -55,8 +55,8 @@ public class MarkdownToDocxService {
 	private final DocxHeaderFooterHelper headerFooterHelper;
 	private final DocxTableHelper tableHelper;
 
-	public MarkdownToDocxService(MarkdownToHtmlService markdownToHtmlService,
-			DocxHeaderFooterHelper headerFooterHelper, DocxTableHelper tableHelper) {
+	public MarkdownToDocxService(MarkdownToHtmlService markdownToHtmlService, DocxHeaderFooterHelper headerFooterHelper,
+			DocxTableHelper tableHelper) {
 		this.markdownToHtmlService = markdownToHtmlService;
 		this.headerFooterHelper = headerFooterHelper;
 		this.tableHelper = tableHelper;
@@ -177,9 +177,8 @@ public class MarkdownToDocxService {
 		XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
 		List<Object> elements = importer.convert(html, null);
 		if (isArtikulationsschemaMarkdown(markdown)) {
-			tableHelper.applyArtikulationsschemaTableLayout(elements, landscape,
-					PAGE_WIDTH_LANDSCAPE.intValue(), PAGE_HEIGHT_LANDSCAPE.intValue(),
-					MARGIN_LEFT.intValue(), MARGIN_RIGHT.intValue());
+			tableHelper.applyArtikulationsschemaTableLayout(elements, landscape, PAGE_WIDTH_LANDSCAPE.intValue(),
+					PAGE_HEIGHT_LANDSCAPE.intValue(), MARGIN_LEFT.intValue(), MARGIN_RIGHT.intValue());
 		}
 		return elements;
 	}

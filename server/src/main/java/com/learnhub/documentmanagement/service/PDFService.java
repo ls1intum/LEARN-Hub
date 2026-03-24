@@ -526,13 +526,10 @@ public class PDFService {
 			String format = escapeHtml(activity.getOrDefault("format", "N/A").toString());
 			String bloomLevel = escapeHtml(
 					activity.getOrDefault("bloomLevel", activity.getOrDefault("bloom_level", "N/A")).toString());
-			activityRows.append("<tr>")
-					.append("<td class=\"num-col\">").append(num++).append("</td>")
-					.append("<td>").append(name).append("</td>")
-					.append("<td class=\"duration-col\">").append(duration).append("</td>")
+			activityRows.append("<tr>").append("<td class=\"num-col\">").append(num++).append("</td>").append("<td>")
+					.append(name).append("</td>").append("<td class=\"duration-col\">").append(duration).append("</td>")
 					.append("<td class=\"format-col\">").append(format).append("</td>")
-					.append("<td class=\"bloom-col\">").append(bloomLevel).append("</td>")
-					.append("</tr>\n");
+					.append("<td class=\"bloom-col\">").append(bloomLevel).append("</td>").append("</tr>\n");
 		}
 
 		// Search criteria section (optional)
@@ -544,8 +541,7 @@ public class PDFService {
 				if (entry.getValue() != null && !entry.getValue().toString().isEmpty()) {
 					String key = entry.getKey().replace("_", " ");
 					key = key.substring(0, 1).toUpperCase() + key.substring(1);
-					sb.append("<tr>")
-							.append("<td class=\"criteria-key\">").append(escapeHtml(key)).append("</td>")
+					sb.append("<tr>").append("<td class=\"criteria-key\">").append(escapeHtml(key)).append("</td>")
 							.append("<td>").append(escapeHtml(entry.getValue().toString())).append("</td>")
 							.append("</tr>\n");
 				}
@@ -559,18 +555,14 @@ public class PDFService {
 		if (breaks != null && !breaks.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
 			sb.append("<h2>Pausen</h2>\n<table>\n");
-			sb.append("<thead><tr>")
-					.append("<th style=\"width:80pt\">Dauer</th>")
-					.append("<th>Beschreibung</th>")
+			sb.append("<thead><tr>").append("<th style=\"width:80pt\">Dauer</th>").append("<th>Beschreibung</th>")
 					.append("</tr></thead>\n<tbody>\n");
 			for (Map<String, Object> breakItem : breaks) {
 				Object durationObj = breakItem.get("duration");
 				String duration = durationObj != null ? durationObj.toString() + " min" : "N/A";
 				String description = escapeHtml(breakItem.getOrDefault("description", "Pause").toString());
-				sb.append("<tr>")
-						.append("<td>").append(duration).append("</td>")
-						.append("<td>").append(description).append("</td>")
-						.append("</tr>\n");
+				sb.append("<tr>").append("<td>").append(duration).append("</td>").append("<td>").append(description)
+						.append("</td>").append("</tr>\n");
 			}
 			sb.append("</tbody>\n</table>\n");
 			breaksSection = sb.toString();
@@ -581,11 +573,8 @@ public class PDFService {
 		String activityCount = String.valueOf(activities.size());
 		String logoDataUri = markdownToHtmlService.getLogoDataUri();
 
-		String html = template
-				.replace("{{logoDataUri}}", logoDataUri)
-				.replace("{{downloadDate}}", downloadDate)
-				.replace("{{totalDuration}}", totalDurationStr)
-				.replace("{{activityCount}}", activityCount)
+		String html = template.replace("{{logoDataUri}}", logoDataUri).replace("{{downloadDate}}", downloadDate)
+				.replace("{{totalDuration}}", totalDurationStr).replace("{{activityCount}}", activityCount)
 				.replace("{{activitiesTableRows}}", activityRows.toString())
 				.replace("{{searchCriteriaSection}}", searchCriteriaSection)
 				.replace("{{breaksSection}}", breaksSection);
@@ -609,11 +598,8 @@ public class PDFService {
 		if (text == null) {
 			return "";
 		}
-		return text.replace("&", "&amp;")
-				.replace("<", "&lt;")
-				.replace(">", "&gt;")
-				.replace("\"", "&quot;")
-				.replace("'", "&#39;");
+		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'",
+				"&#39;");
 	}
 
 	/**

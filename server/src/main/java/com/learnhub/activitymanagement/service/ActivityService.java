@@ -441,8 +441,8 @@ public class ActivityService {
 	 * Upload PDF, cache it, and extract metadata using LLM. Delegates to
 	 * {@link ActivityExtractionService}.
 	 */
-	public Map<String, Object> uploadPdfAndExtractMetadata(
-			org.springframework.web.multipart.MultipartFile pdfFile, boolean extractMetadata) {
+	public Map<String, Object> uploadPdfAndExtractMetadata(org.springframework.web.multipart.MultipartFile pdfFile,
+			boolean extractMetadata) {
 		return extractionService.uploadPdfAndExtractMetadata(pdfFile, extractMetadata);
 	}
 

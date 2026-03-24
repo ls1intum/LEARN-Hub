@@ -2,6 +2,7 @@ import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Coffee } from "lucide-react";
 import type { BreakAfter } from "@/types/activity";
+import { useTranslation } from "react-i18next";
 
 interface BreakCardProps {
   breakItem: BreakAfter;
@@ -16,6 +17,7 @@ export const BreakCard: React.FC<BreakCardProps> = ({
   isBetweenActivities = false,
   activityIndex,
 }) => {
+  const { t } = useTranslation();
   const { duration, description, reasons = [] } = breakItem;
 
   return (
@@ -46,8 +48,8 @@ export const BreakCard: React.FC<BreakCardProps> = ({
               className={`font-semibold text-blue-900 dark:text-blue-100 ${compact ? "text-sm" : "text-base"}`}
             >
               {isBetweenActivities
-                ? `Break After Activity ${activityIndex}`
-                : "Break"}
+                ? t("breakCard.breakAfterActivity", { index: activityIndex })
+                : t("breakCard.break")}
             </h4>
             <Badge
               variant="outline"
@@ -64,7 +66,7 @@ export const BreakCard: React.FC<BreakCardProps> = ({
 
           {isBetweenActivities && (
             <div className="text-xs text-blue-600/70 dark:text-blue-400/70 mb-2 font-medium">
-              Transition between activities
+              {t("breakCard.transition")}
             </div>
           )}
 
@@ -82,8 +84,9 @@ export const BreakCard: React.FC<BreakCardProps> = ({
                 variant="secondary"
                 className="text-xs px-2 py-0.5 bg-blue-100/70 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
               >
-                {reasons.length} reason
-                {reasons.length !== 1 ? "s" : ""}
+                {reasons.length === 1
+                  ? t("breakCard.reason", { count: 1 })
+                  : t("breakCard.reasons_plural", { count: reasons.length })}
               </Badge>
             </div>
           )}
@@ -91,7 +94,7 @@ export const BreakCard: React.FC<BreakCardProps> = ({
           {reasons.length > 0 && !compact && (
             <div className="mt-3 pt-2 border-t border-blue-200/50 dark:border-blue-800/50">
               <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
-                Reasons:
+                {t("breakCard.reasons")}
               </div>
               <ul className="text-xs text-blue-700/80 dark:text-blue-300/80 space-y-1">
                 {reasons.slice(0, 2).map((reason, index) => (
@@ -104,7 +107,7 @@ export const BreakCard: React.FC<BreakCardProps> = ({
                 ))}
                 {reasons.length > 2 && (
                   <li className="text-blue-600/70 dark:text-blue-400/70 text-xs">
-                    +{reasons.length - 2} more
+                    {t("breakCard.more", { count: reasons.length - 2 })}
                   </li>
                 )}
               </ul>

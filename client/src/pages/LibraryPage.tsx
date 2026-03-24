@@ -32,6 +32,7 @@ import {
   Tag,
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
+import { useTranslation } from "react-i18next";
 
 interface FilterFormData {
   name: string;
@@ -65,6 +66,13 @@ export const LibraryPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { fieldValues } = useFieldValues();
+  const { t } = useTranslation();
+
+  const translateEnum = (category: string, value: string): string => {
+    const key = `enums.${category}.${value}`;
+    const translated = t(key);
+    return translated === key ? value : translated;
+  };
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [favouritedActivityIds, setFavouritedActivityIds] = useState<
@@ -210,11 +218,10 @@ export const LibraryPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Activity Library
+              {t("library.title")}
             </h2>
             <p className="text-muted-foreground mt-1.5 text-sm sm:text-base">
-              Browse, filter, and manage all available activities in your
-              teaching toolkit.
+              {t("library.subtitle")}
             </p>
           </div>
 
@@ -223,7 +230,7 @@ export const LibraryPage: React.FC = () => {
             <Button asChild className="flex-shrink-0">
               <Link to="/upload">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Activity
+                {t("library.addActivity")}
               </Link>
             </Button>
           )}
@@ -239,7 +246,7 @@ export const LibraryPage: React.FC = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search activities..."
+                    placeholder={t("library.searchPlaceholder")}
                     value={filterForm.values.name}
                     onChange={(e) => handleFilterChange("name", e.target.value)}
                     className="pl-10"
@@ -253,10 +260,12 @@ export const LibraryPage: React.FC = () => {
                   className="flex items-center gap-2"
                 >
                   <Filter className="h-4 w-4" />
-                  {showFilters ? "Hide Filters" : "Show Filters"}
+                  {showFilters
+                    ? t("library.hideFilters")
+                    : t("library.showFilters")}
                 </Button>
                 <Button variant="outline" onClick={clearFilters}>
-                  Clear All
+                  {t("library.clearFilters")}
                 </Button>
               </div>
             </div>
@@ -270,7 +279,7 @@ export const LibraryPage: React.FC = () => {
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-primary">
-                      Total Activities
+                      {t("library.totalActivities")}
                     </p>
                     <p className="text-3xl font-bold text-primary">{total}</p>
                   </div>
@@ -282,7 +291,9 @@ export const LibraryPage: React.FC = () => {
                     <Filter className="h-6 w-6 text-success" />
                   </div>
                   <div className="ml-4">
-                    <p className="text-sm font-medium text-success">Showing</p>
+                    <p className="text-sm font-medium text-success">
+                      {t("resultsDisplay.showing")}
+                    </p>
                     <p className="text-3xl font-bold text-success">
                       {activities?.length || 0}
                     </p>
@@ -297,25 +308,27 @@ export const LibraryPage: React.FC = () => {
             <div className="mb-8 p-6 bg-gradient-to-br from-muted/20 to-muted/10 rounded-xl border border-border/50 shadow-sm">
               <div className="flex justify-between items-center mb-8">
                 <h3 className="text-lg font-semibold text-foreground">
-                  Advanced Filters
+                  {t("library.advancedFilters")}
                 </h3>
               </div>
 
               {/* Range Filters Section */}
               <div className="mb-8">
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                  Range Filters
+                  {t("library.rangeFilters")}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Age Range */}
                   <div className="bg-card/50 border border-border/50 rounded-lg p-5 shadow-xs">
                     <div className="flex items-center gap-2 mb-1">
                       <Users className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">Age Range</Label>
+                      <Label className="font-semibold">
+                        {t("library.ageRange")}
+                      </Label>
                     </div>
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-sm text-muted-foreground">
-                        Select age range for learners
+                        {t("library.selectAgeRange")}
                       </span>
                       <span className="text-lg font-bold text-primary">
                         {filterForm.values.ageMin} - {filterForm.values.ageMax}
@@ -342,12 +355,12 @@ export const LibraryPage: React.FC = () => {
                     <div className="flex items-center gap-2 mb-1">
                       <Clock className="h-4 w-4 text-primary" />
                       <Label className="font-semibold">
-                        Duration (minutes)
+                        {t("library.durationRange")}
                       </Label>
                     </div>
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-sm text-muted-foreground">
-                        Select activity duration
+                        {t("library.selectDuration")}
                       </span>
                       <span className="text-lg font-bold text-primary">
                         {filterForm.values.durationMin} -{" "}
@@ -375,14 +388,16 @@ export const LibraryPage: React.FC = () => {
               {/* Activity Characteristics Section */}
               <div className="mb-8">
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                  Activity Characteristics
+                  {t("library.activityCharacteristics")}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Format */}
                   <div className="bg-card/50 border border-border/50 rounded-lg p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Grid3x3 className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">Format</Label>
+                      <Label className="font-semibold">
+                        {t("library.format")}
+                      </Label>
                     </div>
                     <BadgeSelector
                       label=""
@@ -395,6 +410,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.format.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("format", value)}
                     />
                   </div>
 
@@ -402,7 +418,9 @@ export const LibraryPage: React.FC = () => {
                   <div className="bg-card/50 border border-border/50 rounded-lg p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <GraduationCap className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">Bloom's Level</Label>
+                      <Label className="font-semibold">
+                        {t("library.bloomLevel")}
+                      </Label>
                     </div>
                     <BadgeSelector
                       label=""
@@ -415,6 +433,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.bloomLevel.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("bloomLevel", value)}
                     />
                   </div>
 
@@ -422,7 +441,9 @@ export const LibraryPage: React.FC = () => {
                   <div className="bg-card/50 border border-border/50 rounded-lg p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Package className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">Resources Needed</Label>
+                      <Label className="font-semibold">
+                        {t("library.resources")}
+                      </Label>
                     </div>
                     <BadgeSelector
                       label=""
@@ -435,6 +456,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.resourcesNeeded.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("resources", value)}
                     />
                   </div>
 
@@ -442,7 +464,9 @@ export const LibraryPage: React.FC = () => {
                   <div className="bg-card/50 border border-border/50 rounded-lg p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Tag className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">Topics</Label>
+                      <Label className="font-semibold">
+                        {t("library.topics")}
+                      </Label>
                     </div>
                     <BadgeSelector
                       label=""
@@ -455,6 +479,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.topics.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("topics", value)}
                     />
                   </div>
                 </div>
@@ -463,14 +488,16 @@ export const LibraryPage: React.FC = () => {
               {/* Teacher Context Section */}
               <div>
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                  Teacher Context
+                  {t("library.teacherContext")}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Mental Load */}
                   <div className="bg-card/50 border border-border/50 rounded-lg p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <Brain className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">Mental Load</Label>
+                      <Label className="font-semibold">
+                        {t("library.mentalLoad")}
+                      </Label>
                     </div>
                     <BadgeSelector
                       label=""
@@ -483,6 +510,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.mentalLoad.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("energy", value)}
                     />
                   </div>
 
@@ -490,7 +518,9 @@ export const LibraryPage: React.FC = () => {
                   <div className="bg-card/50 border border-border/50 rounded-lg p-5">
                     <div className="flex items-center gap-2 mb-4">
                       <ActivityIcon className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">Physical Energy</Label>
+                      <Label className="font-semibold">
+                        {t("library.physicalEnergy")}
+                      </Label>
                     </div>
                     <BadgeSelector
                       label=""
@@ -503,6 +533,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.physicalEnergy.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("energy", value)}
                     />
                   </div>
                 </div>
@@ -513,8 +544,13 @@ export const LibraryPage: React.FC = () => {
           {/* Results Summary */}
           <div className="mb-8 p-6 bg-primary/5 rounded-xl border border-primary/10">
             <p className="text-primary font-medium">
-              Showing {activities?.length || 0} of {total} activities
-              {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
+              {t("library.showing", {
+                from: (currentPage - 1) * itemsPerPage + 1,
+                to: Math.min(currentPage * itemsPerPage, total),
+                total,
+              })}
+              {totalPages > 1 &&
+                ` (${t("library.page")} ${currentPage} ${t("library.of")} ${totalPages})`}
             </p>
           </div>
 
@@ -529,11 +565,10 @@ export const LibraryPage: React.FC = () => {
                   <Filter className="h-10 w-10 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold text-foreground mb-3">
-                  No activities found
+                  {t("library.noActivities")}
                 </h3>
                 <p className="text-muted-foreground mb-8 leading-relaxed">
-                  No activities match your current filters. Try adjusting your
-                  search criteria.
+                  {t("library.noActivitiesDesc")}
                 </p>
                 <Button
                   variant="outline"
@@ -541,7 +576,7 @@ export const LibraryPage: React.FC = () => {
                   size="lg"
                   className="h-12 px-8"
                 >
-                  Clear Filters
+                  {t("library.clearFilters")}
                 </Button>
               </div>
             ) : (
@@ -573,7 +608,7 @@ export const LibraryPage: React.FC = () => {
                       <div className="grid grid-cols-2 gap-4 mb-4">
                         <div>
                           <span className="text-xs text-muted-foreground">
-                            Age Range
+                            {t("library.ageRange")}
                           </span>
                           <p className="text-sm font-medium">
                             {activity.ageMin}-{activity.ageMax}
@@ -581,7 +616,7 @@ export const LibraryPage: React.FC = () => {
                         </div>
                         <div>
                           <span className="text-xs text-muted-foreground">
-                            Duration
+                            {t("library.durationRange")}
                           </span>
                           <p className="text-sm font-medium">
                             {activity.durationMinMinutes}-
@@ -592,14 +627,14 @@ export const LibraryPage: React.FC = () => {
 
                       <div className="flex flex-wrap gap-2 mb-4">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                          {activity.format}
+                          {translateEnum("format", activity.format)}
                         </span>
                         {activity.topics?.slice(0, 2).map((topic, index) => (
                           <span
                             key={index}
                             className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-muted/30 text-foreground border border-border"
                           >
-                            {topic}
+                            {translateEnum("topics", topic)}
                           </span>
                         ))}
                       </div>
@@ -615,7 +650,7 @@ export const LibraryPage: React.FC = () => {
                           }
                         >
                           <Eye className="h-3 w-3 mr-2" />
-                          View Details
+                          {t("library.viewDetails")}
                         </Button>
                       </div>
                     </div>
@@ -626,7 +661,7 @@ export const LibraryPage: React.FC = () => {
                 <div className="hidden lg:block bg-card rounded-xl shadow-sm border border-border overflow-hidden">
                   <div className="px-4 py-3 border-b border-border bg-muted/20">
                     <h3 className="text-lg font-semibold text-card-foreground">
-                      Activities
+                      {t("library.activitiesTable")}
                     </h3>
                   </div>
 
@@ -638,22 +673,22 @@ export const LibraryPage: React.FC = () => {
                       <thead className="bg-muted/30">
                         <tr>
                           <th className="px-2 py-3 text-left text-sm font-semibold text-foreground min-w-[200px]">
-                            Activity
+                            {t("library.colActivity")}
                           </th>
                           <th className="px-2 py-3 text-left text-sm font-semibold text-foreground w-16">
-                            Age
+                            {t("library.colAge")}
                           </th>
                           <th className="px-2 py-3 text-left text-sm font-semibold text-foreground w-16">
-                            Format
+                            {t("library.colFormat")}
                           </th>
                           <th className="px-2 py-3 text-left text-sm font-semibold text-foreground w-20">
-                            Duration
+                            {t("library.colDuration")}
                           </th>
                           <th className="px-2 py-3 text-left text-sm font-semibold text-foreground min-w-[120px]">
-                            Topics
+                            {t("library.colTopics")}
                           </th>
                           <th className="px-2 py-3 text-right text-sm font-semibold text-foreground w-24">
-                            Actions
+                            {t("library.colActions")}
                           </th>
                         </tr>
                       </thead>
@@ -674,11 +709,19 @@ export const LibraryPage: React.FC = () => {
                                 <div className="flex items-center gap-1 mt-1">
                                   <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
                                     <Brain className="h-2 w-2" />
-                                    {activity.mentalLoad}
+                                    {activity.mentalLoad &&
+                                      translateEnum(
+                                        "energy",
+                                        activity.mentalLoad,
+                                      )}
                                   </span>
                                   <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
                                     <ActivityIcon className="h-2 w-2" />
-                                    {activity.physicalEnergy}
+                                    {activity.physicalEnergy &&
+                                      translateEnum(
+                                        "energy",
+                                        activity.physicalEnergy,
+                                      )}
                                   </span>
                                 </div>
                               </div>
@@ -690,7 +733,7 @@ export const LibraryPage: React.FC = () => {
                             </td>
                             <td className="px-2 py-3 whitespace-nowrap">
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                {activity.format}
+                                {translateEnum("format", activity.format)}
                               </span>
                             </td>
                             <td className="px-2 py-3 whitespace-nowrap">
@@ -740,7 +783,7 @@ export const LibraryPage: React.FC = () => {
                                   }
                                 >
                                   <Eye className="h-3 w-3 mr-2" />
-                                  View Details
+                                  {t("library.viewDetails")}
                                 </Button>
                               </div>
                             </td>
@@ -763,10 +806,11 @@ export const LibraryPage: React.FC = () => {
                       className="flex items-center gap-2"
                     >
                       <ChevronLeft className="h-4 w-4" />
-                      Previous
+                      {t("library.previous")}
                     </Button>
                     <span className="text-muted-foreground">
-                      Page {currentPage} of {totalPages}
+                      {t("library.page")} {currentPage} {t("library.of")}{" "}
+                      {totalPages}
                     </span>
                     <Button
                       variant="outline"
@@ -776,7 +820,7 @@ export const LibraryPage: React.FC = () => {
                       disabled={currentPage === totalPages}
                       className="flex items-center gap-2"
                     >
-                      Next
+                      {t("library.next")}
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>

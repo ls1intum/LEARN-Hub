@@ -86,12 +86,9 @@ export const HistoryApi = {
    * Delete favourite (by favourite ID)
    */
   async deleteFavourite(favouriteId: string) {
-    return ApiRequestMixin.request(
-      `/api/history/favourites/${favouriteId}`,
-      {
-        method: "DELETE",
-      },
-    );
+    return ApiRequestMixin.request(`/api/history/favourites/${favouriteId}`, {
+      method: "DELETE",
+    });
   },
 
   /**

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Clock, Users } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import type { Activity } from "@/types/activity";
+import { useTranslation } from "react-i18next";
 
 interface ActivityCardProps {
   activity: Activity;
@@ -21,6 +22,13 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   isFavourited,
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  const translateEnum = (category: string, value: string): string => {
+    const key = `enums.${category}.${value}`;
+    const translated = t(key);
+    return translated === key ? value : translated;
+  };
 
   const ageRange =
     activity.ageMin && activity.ageMax
@@ -98,7 +106,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               variant="outline"
               className="text-xs px-2 py-0.5 bg-primary/5 text-primary border-primary/20 hover:bg-primary/10 transition-colors"
             >
-              {activity.format}
+              {translateEnum("format", activity.format)}
             </Badge>
           )}
           {activity.bloomLevel && (
@@ -106,7 +114,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               variant="secondary"
               className="text-xs px-2 py-0.5 bg-secondary/50 text-secondary-foreground"
             >
-              {activity.bloomLevel}
+              {translateEnum("bloomLevel", activity.bloomLevel)}
             </Badge>
           )}
         </div>
@@ -117,18 +125,22 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             {activity.mentalLoad && (
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
-                <span className="text-muted-foreground">Mental:</span>
+                <span className="text-muted-foreground">
+                  {t("activityDetails.mental")}:
+                </span>
                 <span className="font-medium text-card-foreground capitalize">
-                  {activity.mentalLoad}
+                  {translateEnum("energy", activity.mentalLoad)}
                 </span>
               </div>
             )}
             {activity.physicalEnergy && (
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-orange-500" />
-                <span className="text-muted-foreground">Physical:</span>
+                <span className="text-muted-foreground">
+                  {t("activityDetails.physical")}:
+                </span>
                 <span className="font-medium text-card-foreground capitalize">
-                  {activity.physicalEnergy}
+                  {translateEnum("energy", activity.physicalEnergy)}
                 </span>
               </div>
             )}
@@ -144,7 +156,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
                 variant="outline"
                 className="text-xs px-2 py-0.5 bg-muted/50 text-muted-foreground border-muted-foreground/20"
               >
-                {topic}
+                {translateEnum("topics", topic)}
               </Badge>
             ))}
             {activity.topics.length > 2 && (
@@ -166,7 +178,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             onClick={handleViewDetails}
             className={`${compact ? "mt-1" : "w-full"} h-8 text-xs hover:bg-primary/5 hover:border-primary/20 transition-colors`}
           >
-            View Details
+            {t("activityCard.viewDetails")}
           </Button>
         )}
       </CardContent>

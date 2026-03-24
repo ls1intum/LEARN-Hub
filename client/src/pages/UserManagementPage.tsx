@@ -22,6 +22,7 @@ import { AlertTriangle, CheckCircle, Loader2, Trash2 } from "lucide-react";
 import { apiService } from "@/services/apiService";
 import type { User as UserType } from "@/types/activity";
 import { logger } from "@/services/logger";
+import { useTranslation } from "react-i18next";
 
 // Use User type from activity types
 
@@ -42,6 +43,7 @@ interface EditUserData {
 }
 
 export const UserManagementPage: React.FC = () => {
+  const { t } = useTranslation();
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<UserType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,7 +109,7 @@ export const UserManagementPage: React.FC = () => {
       };
 
       await apiService.createUser(submitData);
-      setMessage("User created successfully");
+      setMessage(t("userManagement.userCreated"));
       setCreateForm({
         email: "",
         firstName: "",
@@ -146,7 +148,7 @@ export const UserManagementPage: React.FC = () => {
         userId,
         updateData as import("@/types/api").UserRequest,
       );
-      setMessage("User updated successfully");
+      setMessage(t("userManagement.userUpdated"));
       setIsEditing(null);
       setEditForm({
         email: "",
@@ -217,7 +219,9 @@ export const UserManagementPage: React.FC = () => {
 
     try {
       await apiService.deleteUser(userToDelete.id);
-      setMessage(`User "${userToDelete.email}" deleted successfully`);
+      setMessage(
+        t("userManagement.userDeleted", { email: userToDelete.email }),
+      );
       closeDeleteDialog();
       fetchUsers(); // Refresh the list
     } catch (err) {
@@ -256,7 +260,7 @@ export const UserManagementPage: React.FC = () => {
       <div className="w-full">
         <div className="text-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading user management...</p>
+          <p className="text-muted-foreground">{t("userManagement.loading")}</p>
         </div>
       </div>
     );
@@ -266,10 +270,10 @@ export const UserManagementPage: React.FC = () => {
     <div className="w-full py-6">
       <div className="mb-8">
         <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
-          User Management
+          {t("userManagement.title")}
         </h2>
         <p className="text-muted-foreground text-sm sm:text-base">
-          Manage users and their roles in the system.
+          {t("userManagement.subtitle")}
         </p>
       </div>
 
@@ -292,11 +296,15 @@ export const UserManagementPage: React.FC = () => {
 
         {/* Create User Form */}
         <div className="mb-8 p-4 bg-muted/10 rounded-lg">
-          <h2 className="text-lg font-semibold mb-4">Create New User</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            {t("userManagement.createUser")}
+          </h2>
           <form onSubmit={handleCreateUser} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="create-email">Email *</Label>
+                <Label htmlFor="create-email">
+                  {t("userManagement.email")} {t("userManagement.required")}
+                </Label>
                 <Input
                   id="create-email"
                   type="email"
@@ -307,13 +315,15 @@ export const UserManagementPage: React.FC = () => {
                       email: e.target.value,
                     }))
                   }
-                  placeholder="user@example.com"
+                  placeholder={t("userManagement.emailPlaceholder")}
                   required
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="create-first-name">First Name *</Label>
+                <Label htmlFor="create-first-name">
+                  {t("userManagement.firstName")} {t("userManagement.required")}
+                </Label>
                 <Input
                   id="create-first-name"
                   type="text"
@@ -324,13 +334,15 @@ export const UserManagementPage: React.FC = () => {
                       firstName: e.target.value,
                     }))
                   }
-                  placeholder="John"
+                  placeholder={t("userManagement.firstNamePlaceholder")}
                   required
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="create-last-name">Last Name *</Label>
+                <Label htmlFor="create-last-name">
+                  {t("userManagement.lastName")} {t("userManagement.required")}
+                </Label>
                 <Input
                   id="create-last-name"
                   type="text"
@@ -341,13 +353,15 @@ export const UserManagementPage: React.FC = () => {
                       lastName: e.target.value,
                     }))
                   }
-                  placeholder="Doe"
+                  placeholder={t("userManagement.lastNamePlaceholder")}
                   required
                   className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="create-role">Role *</Label>
+                <Label htmlFor="create-role">
+                  {t("userManagement.role")} {t("userManagement.required")}
+                </Label>
                 <Select
                   value={createForm.role}
                   onValueChange={(value: "TEACHER" | "ADMIN") =>
@@ -358,13 +372,19 @@ export const UserManagementPage: React.FC = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="TEACHER">Teacher</SelectItem>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
+                    <SelectItem value="TEACHER">
+                      {t("userManagement.teacher")}
+                    </SelectItem>
+                    <SelectItem value="ADMIN">
+                      {t("userManagement.admin")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="lg:col-span-2">
-                <Label htmlFor="create-password">Password *</Label>
+                <Label htmlFor="create-password">
+                  {t("userManagement.password")} {t("userManagement.required")}
+                </Label>
                 <Input
                   id="create-password"
                   type="password"
@@ -375,20 +395,21 @@ export const UserManagementPage: React.FC = () => {
                       password: e.target.value,
                     }))
                   }
-                  placeholder="Enter password for user"
+                  placeholder={t("userManagement.passwordPlaceholder")}
                   required={true}
                   className="mt-1"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   {createForm.role === "ADMIN"
-                    ? "Admin users will use this password to login"
-                    : "Teacher users will receive this password via email and can use it to login"}
+                    ? t("userManagement.passwordHintAdmin")
+                    : t("userManagement.passwordHintTeacher")}
                 </p>
                 <p
                   className={`text-xs mt-1 ${createForm.password.length < 8 ? "text-orange-600" : "text-green-600"}`}
                 >
-                  Password length: {createForm.password.length}/8 characters
-                  minimum
+                  {t("userManagement.passwordLength", {
+                    count: createForm.password.length,
+                  })}
                 </p>
               </div>
             </div>
@@ -397,14 +418,18 @@ export const UserManagementPage: React.FC = () => {
               className="bg-green-600 hover:bg-green-700"
               disabled={isCreating}
             >
-              {isCreating ? "Creating..." : "Create User"}
+              {isCreating
+                ? t("userManagement.creating")
+                : t("userManagement.createButton")}
             </Button>
           </form>
         </div>
 
         {/* Users List */}
         <div>
-          <h2 className="text-lg font-semibold mb-4">Existing Users</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            {t("userManagement.existingUsers")}
+          </h2>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse border border-border">
               <thead>
@@ -413,19 +438,19 @@ export const UserManagementPage: React.FC = () => {
                     ID
                   </th>
                   <th className="border border-border px-4 py-2 text-left">
-                    Email
+                    {t("userManagement.email")}
                   </th>
                   <th className="border border-border px-4 py-2 text-left">
-                    First Name
+                    {t("userManagement.firstName")}
                   </th>
                   <th className="border border-border px-4 py-2 text-left">
-                    Last Name
+                    {t("userManagement.lastName")}
                   </th>
                   <th className="border border-border px-4 py-2 text-left">
-                    Role
+                    {t("userManagement.role")}
                   </th>
                   <th className="border border-border px-4 py-2 text-left">
-                    Actions
+                    {t("userManagement.actions")}
                   </th>
                 </tr>
               </thead>
@@ -499,8 +524,12 @@ export const UserManagementPage: React.FC = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="TEACHER">Teacher</SelectItem>
-                              <SelectItem value="ADMIN">Admin</SelectItem>
+                              <SelectItem value="TEACHER">
+                                {t("userManagement.teacher")}
+                              </SelectItem>
+                              <SelectItem value="ADMIN">
+                                {t("userManagement.admin")}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
@@ -523,14 +552,14 @@ export const UserManagementPage: React.FC = () => {
                               size="sm"
                               className="bg-green-600 hover:bg-green-700"
                             >
-                              Save
+                              {t("userManagement.save")}
                             </Button>
                             <Button
                               onClick={cancelEdit}
                               size="sm"
                               variant="outline"
                             >
-                              Cancel
+                              {t("userManagement.cancel")}
                             </Button>
                           </div>
                         ) : (
@@ -540,7 +569,7 @@ export const UserManagementPage: React.FC = () => {
                               size="sm"
                               variant="outline"
                             >
-                              Edit
+                              {t("userManagement.edit")}
                             </Button>
                             <Button
                               onClick={() => openDeleteDialog(user)}
@@ -549,7 +578,7 @@ export const UserManagementPage: React.FC = () => {
                               disabled={isDeleting}
                             >
                               <Trash2 className="h-3 w-3 mr-1" />
-                              Delete
+                              {t("userManagement.delete")}
                             </Button>
                           </div>
                         )}
@@ -562,7 +591,7 @@ export const UserManagementPage: React.FC = () => {
                       colSpan={6}
                       className="border border-border px-4 py-8 text-center text-muted-foreground"
                     >
-                      No users found
+                      {t("userManagement.noUsers")}
                     </td>
                   </tr>
                 )}
@@ -574,8 +603,10 @@ export const UserManagementPage: React.FC = () => {
           {isEditing && (
             <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
               <h3 className="text-md font-semibold mb-2">
-                Change Password{" "}
-                {editForm.role === "TEACHER" ? "(Not Available)" : "(Optional)"}
+                {t("userManagement.changePassword")}{" "}
+                {editForm.role === "TEACHER"
+                  ? t("userManagement.notAvailable")
+                  : t("userManagement.optional")}
               </h3>
               <div className="flex gap-2">
                 <Input
@@ -589,8 +620,8 @@ export const UserManagementPage: React.FC = () => {
                   }
                   placeholder={
                     editForm.role === "TEACHER"
-                      ? "Teachers use email verification instead of passwords"
-                      : "Enter new password (leave blank to keep current)"
+                      ? t("userManagement.teacherPasswordPlaceholder")
+                      : t("userManagement.adminPasswordPlaceholder")
                   }
                   disabled={editForm.role === "TEACHER"}
                   className="flex-1"
@@ -598,8 +629,7 @@ export const UserManagementPage: React.FC = () => {
               </div>
               {editForm.role === "TEACHER" && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  Teachers authenticate via email verification links, not
-                  passwords
+                  {t("userManagement.teacherAuthNote")}
                 </p>
               )}
             </div>
@@ -613,11 +643,10 @@ export const UserManagementPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive" />
-              Delete User
+              {t("userManagement.deleteUser")}
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this user? This action cannot be
-              undone.
+              {t("userManagement.deleteConfirm")}
             </DialogDescription>
           </DialogHeader>
 
@@ -625,31 +654,37 @@ export const UserManagementPage: React.FC = () => {
             <div className="py-4">
               <div className="p-3 bg-muted rounded-lg space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Email:</span>
+                  <span className="text-sm font-medium">
+                    {t("userManagement.email")}:
+                  </span>
                   <span className="text-sm">{userToDelete.email}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Name:</span>
+                  <span className="text-sm font-medium">
+                    {t("userManagement.firstName")}:
+                  </span>
                   <span className="text-sm">
                     {userToDelete.firstName} {userToDelete.lastName}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Role:</span>
+                  <span className="text-sm font-medium">
+                    {t("userManagement.role")}:
+                  </span>
                   <span className="text-sm">{userToDelete.role}</span>
                 </div>
               </div>
 
               <div className="mt-4 p-3 bg-destructive/10 border border-destructive/30 rounded-lg">
                 <p className="text-sm font-medium text-destructive mb-2">
-                  This will permanently delete:
+                  {t("userManagement.deleteDetails")}
                 </p>
                 <ul className="text-xs text-muted-foreground space-y-1 ml-4 list-disc">
-                  <li>User account and profile information</li>
-                  <li>All saved favorites and lesson plans</li>
-                  <li>Search history</li>
-                  <li>Verification codes</li>
-                  <li>All other personal data</li>
+                  <li>{t("userManagement.deleteItem1")}</li>
+                  <li>{t("userManagement.deleteItem2")}</li>
+                  <li>{t("userManagement.deleteItem3")}</li>
+                  <li>{t("userManagement.deleteItem4")}</li>
+                  <li>{t("userManagement.deleteItem5")}</li>
                 </ul>
               </div>
             </div>
@@ -668,7 +703,7 @@ export const UserManagementPage: React.FC = () => {
               onClick={closeDeleteDialog}
               disabled={isDeleting}
             >
-              Cancel
+              {t("userManagement.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -678,12 +713,12 @@ export const UserManagementPage: React.FC = () => {
               {isDeleting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
+                  {t("userManagement.deleting")}
                 </>
               ) : (
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete User
+                  {t("userManagement.deleteUser")}
                 </>
               )}
             </Button>

@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const EXTERNAL_LINKS = [
   {
@@ -18,6 +19,7 @@ const EXTERNAL_LINKS = [
 ] as const;
 
 export const Footer: React.FC = () => {
+  const { t } = useTranslation();
   return (
     <footer className="mt-auto border-t border-border bg-card/50 px-4 py-3 text-xs text-muted-foreground">
       <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-4">
@@ -26,7 +28,7 @@ export const Footer: React.FC = () => {
           to="/impressum"
           className="hover:text-foreground transition-colors"
         >
-          Impressum
+          {t("footer.impressum")}
         </Link>
 
         {/* External Links */}

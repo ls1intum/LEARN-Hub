@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import type { Activity } from "@/types/activity";
 import { BreakCard } from "@/components/BreakCard";
+import { useTranslation } from "react-i18next";
 
 interface LessonPlanFavourite {
   id: string;
@@ -39,7 +40,14 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
   isRemoving,
 }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [showAllActivities, setShowAllActivities] = useState(false);
+
+  const translateEnum = (category: string, value: string): string => {
+    const key = `enums.${category}.${value}`;
+    const translated = t(key);
+    return translated === key ? value : translated;
+  };
 
   // Calculate lesson plan summary (including breaks)
   const totalDuration = activities.reduce((sum, activity) => {
@@ -77,10 +85,11 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <h3 className="text-xl font-bold text-foreground mb-2">
-                {favourite.name || "Untitled Lesson Plan"}
+                {favourite.name || t("lessonPlan.untitled")}
               </h3>
               <p className="text-sm text-muted-foreground">
-                {activities.length} activities • {totalDuration} minutes total
+                {t("lessonPlan.activitiesCount", { count: activities.length })}{" "}
+                • {totalDuration} {t("lessonPlan.minutesTotal")}
               </p>
             </div>
             <Button
@@ -101,7 +110,7 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
         <div className="flex items-center gap-1.5">
           <Users className="h-4 w-4" />
           <span className="font-medium">
-            Ages {minAge}-{maxAge}
+            {t("lessonPlan.ages")} {minAge}-{maxAge}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -110,12 +119,15 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
         </div>
         <div className="flex items-center gap-1.5">
           <BookOpen className="h-4 w-4" />
-          <span>{activities.length} activities</span>
+          <span>
+            {t("lessonPlan.activitiesCount", { count: activities.length })}
+          </span>
         </div>
         <div className="flex items-center gap-1.5">
           <Calendar className="h-4 w-4" />
           <span>
-            Favourited {new Date(favourite.createdAt).toLocaleDateString()}
+            {t("lessonPlan.favourited")}{" "}
+            {new Date(favourite.createdAt).toLocaleDateString()}
           </span>
         </div>
       </div>
@@ -125,19 +137,19 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
         <div className="flex flex-wrap gap-1.5 mb-3">
           {allTopics.slice(0, 5).map((topic) => (
             <Badge key={topic} variant="outline" className="text-xs">
-              {topic}
+              {translateEnum("topics", topic)}
             </Badge>
           ))}
           {allTopics.length > 5 && (
             <Badge variant="outline" className="text-xs">
-              +{allTopics.length - 5} more
+              {t("lessonPlan.more", { count: allTopics.length - 5 })}
             </Badge>
           )}
         </div>
         <div className="flex flex-wrap gap-1.5">
           {allFormats.map((format) => (
             <Badge key={format} variant="secondary" className="text-xs">
-              {format}
+              {translateEnum("format", format)}
             </Badge>
           ))}
         </div>
@@ -148,7 +160,7 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
         <div className="flex items-center gap-2 mb-3">
           <Star className="h-4 w-4 text-primary" />
           <h4 className="text-sm font-semibold text-foreground">
-            Activities ({activities.length})
+            {t("lessonPlan.activities")} ({activities.length})
           </h4>
         </div>
 
@@ -173,7 +185,7 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
                   {/* Activity Content */}
                   <div className="flex-1 min-w-0">
                     <div className="text-xs text-muted-foreground mb-1 font-medium">
-                      Step {activityIndex + 1}
+                      {t("lessonPlan.step")} {activityIndex + 1}
                     </div>
                     <div className="relative">
                       <ActivityCard activity={activity} compact={true} />
@@ -186,7 +198,7 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
                           className="h-7 px-2 text-xs bg-background/95 backdrop-blur-sm border-border/50 hover:bg-accent"
                         >
                           <Eye className="h-3 w-3 mr-1" />
-                          View
+                          {t("lessonPlan.view")}
                         </Button>
                       </div>
                     </div>
@@ -204,7 +216,9 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
                     {/* Break Content */}
                     <div className="flex-1 min-w-0">
                       <div className="text-xs text-blue-600/70 dark:text-blue-400/70 mb-1 font-medium">
-                        Break after Step {activityIndex + 1}
+                        {t("lessonPlan.breakAfterStep", {
+                          step: activityIndex + 1,
+                        })}
                       </div>
                       <BreakCard
                         breakItem={activity.breakAfter}
@@ -230,8 +244,8 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
               className="h-8 px-4 text-xs"
             >
               {showAllActivities
-                ? "Show Less"
-                : `Show All ${activities.length} Activities`}
+                ? t("lessonPlan.showLess")
+                : t("lessonPlan.showAll", { count: activities.length })}
             </Button>
           </div>
         )}

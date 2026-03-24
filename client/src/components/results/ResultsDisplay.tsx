@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import type { ResultsData, Recommendation } from "@/types/activity";
 import type { LessonPlanData } from "@/types/activity";
+import { useTranslation } from "react-i18next";
 
 interface ResultsDisplayProps {
   results: ResultsData;
@@ -32,6 +33,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   results,
   className = "",
 }) => {
+  const { t } = useTranslation();
   const hasRecommendations = Boolean(results?.activities?.length);
   const [isLessonPlanOpen, setIsLessonPlanOpen] = useState(false);
   const [lessonPlanData, setLessonPlanData] = useState<LessonPlanData | null>(
@@ -160,10 +162,10 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
       <div className="text-center py-12">
         <AlertCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-foreground mb-2">
-          No recommendations found
+          {t("resultsDisplay.noRecommendations")}
         </h3>
         <p className="text-muted-foreground">
-          Try adjusting your search criteria to find more activities.
+          {t("resultsDisplay.noRecommendationsDesc")}
         </p>
       </div>
     );
@@ -183,7 +185,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                       id="recommendation-search"
                       value={searchQuery}
                       onChange={(event) => setSearchQuery(event.target.value)}
-                      placeholder="Search included activity titles and descriptions..."
+                      placeholder={t("resultsDisplay.searchPlaceholder")}
                       className="pl-10"
                     />
                   </div>
@@ -195,10 +197,12 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                     className="flex items-center gap-2"
                   >
                     <Filter className="h-4 w-4" />
-                    {showFilters ? "Hide Filters" : "Show Filters"}
+                    {showFilters
+                      ? t("resultsDisplay.hideFilters")
+                      : t("resultsDisplay.showFilters")}
                   </Button>
                   <Button variant="outline" onClick={resetFilters}>
-                    Clear Filters
+                    {t("resultsDisplay.clearFilters")}
                   </Button>
                 </div>
               </div>
@@ -211,7 +215,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-primary">
-                        Total Recommendations
+                        {t("resultsDisplay.totalRecommendations")}
                       </p>
                       <p className="text-3xl font-bold text-primary">
                         {results.activities.length}
@@ -226,7 +230,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-success">
-                        Showing
+                        {t("resultsDisplay.showing")}
                       </p>
                       <p className="text-3xl font-bold text-success">
                         {filteredRecommendations.length}
@@ -240,7 +244,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                 <div className="mb-8 rounded-xl border border-border/50 bg-gradient-to-br from-muted/20 to-muted/10 p-6 shadow-sm">
                   <div className="mb-8 flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-foreground">
-                      Advanced Filters
+                      {t("resultsDisplay.advancedFilters")}
                     </h3>
                   </div>
 
@@ -252,12 +256,12 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                           htmlFor="score-threshold"
                           className="font-semibold"
                         >
-                          Match Percentage
+                          {t("resultsDisplay.matchPercentage")}
                         </Label>
                       </div>
                       <div className="mb-4 flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">
-                          Minimum recommendation score
+                          {t("resultsDisplay.minimumScore")}
                         </span>
                         <span className="text-lg font-bold text-primary">
                           {scoreThreshold}%+
@@ -280,12 +284,12 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                       <div className="mb-1 flex items-center gap-2">
                         <Clock className="h-4 w-4 text-primary" />
                         <Label className="font-semibold">
-                          Length (minutes)
+                          {t("resultsDisplay.length")}
                         </Label>
                       </div>
                       <div className="mb-4 flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">
-                          Select lesson plan duration
+                          {t("resultsDisplay.lessonPlanDuration")}
                         </span>
                         <span className="text-lg font-bold text-primary">
                           {durationRange[0]} - {durationRange[1]}
@@ -306,11 +310,13 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                     <div className="rounded-lg border border-border/50 bg-card/50 p-5 shadow-xs">
                       <div className="mb-1 flex items-center gap-2">
                         <Users className="h-4 w-4 text-primary" />
-                        <Label className="font-semibold">Activity Number</Label>
+                        <Label className="font-semibold">
+                          {t("resultsDisplay.activityNumber")}
+                        </Label>
                       </div>
                       <div className="mb-4 flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">
-                          Select activity count range
+                          {t("resultsDisplay.activityCountRange")}
                         </span>
                         <span className="text-lg font-bold text-primary">
                           {activityCountRange[0]} - {activityCountRange[1]}
@@ -333,8 +339,10 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
 
               <div className="rounded-xl border border-primary/10 bg-primary/5 p-6">
                 <p className="font-medium text-primary">
-                  Showing {filteredRecommendations.length} of{" "}
-                  {results.activities.length} recommendations
+                  {t("resultsDisplay.showingOf", {
+                    filtered: filteredRecommendations.length,
+                    total: results.activities.length,
+                  })}
                 </p>
               </div>
             </div>
@@ -357,10 +365,10 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
             <div className="rounded-xl border border-dashed border-border/70 bg-card/40 px-6 py-12 text-center">
               <AlertCircle className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
               <h3 className="mb-2 text-lg font-semibold text-foreground">
-                No lesson plans match these filters
+                {t("resultsDisplay.noMatchFilters")}
               </h3>
               <p className="text-sm text-muted-foreground">
-                Broaden your search or reset the filters to see more results.
+                {t("resultsDisplay.noMatchFiltersDesc")}
               </p>
             </div>
           )}
@@ -371,7 +379,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
       <Dialog open={isLessonPlanOpen} onOpenChange={handleCloseLessonPlan}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Lesson Plan</DialogTitle>
+            <DialogTitle>{t("resultsDisplay.lessonPlan")}</DialogTitle>
           </DialogHeader>
           {lessonPlanData && (
             <LessonPlanModal

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Clock, Users, BookOpen, ExternalLink } from "lucide-react";
 import type { Activity } from "@/types/activity";
+import { useTranslation } from "react-i18next";
 
 interface TimelineContainerProps {
   children: React.ReactNode;
@@ -36,11 +37,19 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   stepNumber,
   className = "",
 }) => {
+  const { t } = useTranslation();
+
+  const translateEnum = (category: string, value: string): string => {
+    const key = `enums.${category}.${value}`;
+    const translated = t(key);
+    return translated === key ? value : translated;
+  };
+
   const getAgeRange = (activity: Activity) => {
     if (activity.ageMin && activity.ageMax) {
       return `${activity.ageMin}-${activity.ageMax}`;
     }
-    return "All ages";
+    return t("timeline.allAges");
   };
 
   return (
@@ -53,7 +62,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
       {/* Activity Content */}
       <div className="flex-1 min-w-0">
         <div className="text-sm text-muted-foreground mb-2 font-medium">
-          Step {stepNumber}
+          {t("timeline.step", { number: stepNumber })}
         </div>
         <Card className="hover:shadow-md transition-shadow">
           <CardHeader>
@@ -69,14 +78,16 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                   {activity.source}
                 </p>
               </div>
-              <Badge variant="outline">{activity.format}</Badge>
+              <Badge variant="outline">
+                {translateEnum("format", activity.format)}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
               <div className="flex items-center text-sm text-muted-foreground">
                 <Users className="h-4 w-4 mr-2" />
-                Ages {getAgeRange(activity)}
+                {t("timeline.ages")} {getAgeRange(activity)}
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 mr-2" />
@@ -85,11 +96,11 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                 activity.durationMaxMinutes !== activity.durationMinMinutes
                   ? `-${activity.durationMaxMinutes}`
                   : ""}{" "}
-                minutes
+                {t("timeline.minutes")}
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
                 <BookOpen className="h-4 w-4 mr-2" />
-                {activity.bloomLevel}
+                {translateEnum("bloomLevel", activity.bloomLevel)}
               </div>
             </div>
 
@@ -103,7 +114,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                       variant="secondary"
                       className="text-xs"
                     >
-                      {topic}
+                      {translateEnum("topics", topic)}
                     </Badge>
                   ))}
                 </div>
@@ -115,7 +126,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
               activity.resourcesNeeded.length > 0 && (
                 <div className="mb-4">
                   <p className="text-sm font-medium text-foreground mb-2">
-                    Resources Needed:
+                    {t("timeline.resourcesNeeded")}
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {activity.resourcesNeeded.map((resource, resourceIndex) => (
@@ -124,7 +135,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                         variant="outline"
                         className="text-xs"
                       >
-                        {resource}
+                        {translateEnum("resources", resource)}
                       </Badge>
                     ))}
                   </div>
@@ -143,7 +154,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                   }}
                 >
                   <ExternalLink className="h-3 w-3 mr-1" />
-                  View Full Details
+                  {t("timeline.viewFullDetails")}
                 </Button>
               </div>
             )}

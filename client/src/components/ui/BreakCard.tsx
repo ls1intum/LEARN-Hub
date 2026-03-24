@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Coffee } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface BreakData {
   description: string;
@@ -14,6 +15,7 @@ interface BreakCardProps {
 }
 
 export const BreakCard: React.FC<BreakCardProps> = ({ breakData }) => {
+  const { t } = useTranslation();
   const formatDuration = (minutes: number) => {
     if (minutes < 60) {
       return `${minutes}m`;
@@ -37,7 +39,7 @@ export const BreakCard: React.FC<BreakCardProps> = ({ breakData }) => {
             {/* Title and Description */}
             <div>
               <h4 className="text-lg font-semibold text-muted-foreground">
-                Break
+                {t("breakCard.break")}
               </h4>
               <p className="text-muted-foreground mt-1">
                 {breakData.description}
@@ -56,7 +58,7 @@ export const BreakCard: React.FC<BreakCardProps> = ({ breakData }) => {
             {breakData.reasons && breakData.reasons.length > 0 && (
               <div className="space-y-2">
                 <span className="text-sm font-medium text-muted-foreground">
-                  Why this break:
+                  {t("breakCard.whyThisBreak")}
                 </span>
                 <div className="flex flex-wrap gap-1">
                   {breakData.reasons.map((reason, index) => (

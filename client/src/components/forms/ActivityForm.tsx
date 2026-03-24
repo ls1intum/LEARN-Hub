@@ -8,6 +8,7 @@ import { SelectField } from "@/components/ui/SelectField";
 import { BadgeSelector } from "@/components/ui/BadgeSelector";
 import { useFieldValues } from "@/hooks/useFieldValues";
 import type { FormFieldData } from "@/types/api";
+import { useTranslation } from "react-i18next";
 
 export interface ActivityFormData extends FormFieldData {
   name: string;
@@ -75,6 +76,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
   formId,
 }) => {
   const { fieldValues } = useFieldValues();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<ActivityFormData>({
     ...defaultFormData,
     ...initialData,
@@ -91,26 +93,26 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
     }));
   }, [initialData]);
 
-  // Form field options
+  // Form field options - use translated labels
   const FORMAT_OPTIONS = [
-    { value: "digital", label: "Digital" },
-    { value: "hybrid", label: "Hybrid" },
-    { value: "unplugged", label: "Unplugged" },
+    { value: "digital", label: t("enums.format.digital") },
+    { value: "hybrid", label: t("enums.format.hybrid") },
+    { value: "unplugged", label: t("enums.format.unplugged") },
   ];
 
   const BLOOM_LEVEL_OPTIONS = [
-    { value: "remember", label: "Remember" },
-    { value: "understand", label: "Understand" },
-    { value: "apply", label: "Apply" },
-    { value: "analyze", label: "Analyze" },
-    { value: "evaluate", label: "Evaluate" },
-    { value: "create", label: "Create" },
+    { value: "remember", label: t("enums.bloomLevel.remember") },
+    { value: "understand", label: t("enums.bloomLevel.understand") },
+    { value: "apply", label: t("enums.bloomLevel.apply") },
+    { value: "analyze", label: t("enums.bloomLevel.analyze") },
+    { value: "evaluate", label: t("enums.bloomLevel.evaluate") },
+    { value: "create", label: t("enums.bloomLevel.create") },
   ];
 
   const ENERGY_OPTIONS = [
-    { value: "low", label: "Low" },
-    { value: "medium", label: "Medium" },
-    { value: "high", label: "High" },
+    { value: "low", label: t("enums.energy.low") },
+    { value: "medium", label: t("enums.energy.medium") },
+    { value: "high", label: t("enums.energy.high") },
   ];
 
   const updateField = (
@@ -193,26 +195,33 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Basic Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField label="Activity Name" required htmlFor="activity-name">
+        <FormField
+          label={t("activityForm.activityName")}
+          required
+          htmlFor="activity-name"
+        >
           <Input
             id="activity-name"
             value={formData.name}
             onChange={(e) => updateField("name", e.target.value)}
-            placeholder="Enter activity name"
+            placeholder={t("activityForm.enterName")}
           />
         </FormField>
-        <FormField label="Source" htmlFor="activity-source">
+        <FormField
+          label={t("activityForm.sourceLabel")}
+          htmlFor="activity-source"
+        >
           <Input
             id="activity-source"
             value={formData.source}
             onChange={(e) => updateField("source", e.target.value)}
-            placeholder="Enter source (e.g., curriculum, book)"
+            placeholder={t("activityForm.enterSource")}
           />
         </FormField>
       </div>
 
       <FormField
-        label="Activity Description"
+        label={t("activityForm.activityDescription")}
         required
         htmlFor="activity-description"
       >
@@ -220,18 +229,22 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
           id="activity-description"
           value={formData.description}
           onChange={(e) => updateField("description", e.target.value)}
-          placeholder="Enter a detailed description of the activity (minimum 25 characters)"
+          placeholder={t("activityForm.enterDescription")}
           className="w-full min-h-[100px] px-3 py-2 border border-input bg-background rounded-md text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           maxLength={1000}
         />
         <p className="text-xs text-muted-foreground mt-1">
-          {formData.description.length}/1000 characters (minimum 25)
+          {t("activityForm.characters", { count: formData.description.length })}
         </p>
       </FormField>
 
       {/* Age Range */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField label="Minimum Age" required htmlFor="minimum-age">
+        <FormField
+          label={t("activityForm.minAge")}
+          required
+          htmlFor="minimum-age"
+        >
           <NumberField
             id="minimum-age"
             value={formData.ageMin}
@@ -240,7 +253,11 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
             max={15}
           />
         </FormField>
-        <FormField label="Maximum Age" required htmlFor="maximum-age">
+        <FormField
+          label={t("activityForm.maxAge")}
+          required
+          htmlFor="maximum-age"
+        >
           <NumberField
             id="maximum-age"
             value={formData.ageMax}
@@ -253,20 +270,20 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Format and Bloom Level */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField label="Format" required>
+        <FormField label={t("activityForm.format")} required>
           <SelectField
             value={formData.format}
             onValueChange={(value) => updateField("format", value)}
             options={FORMAT_OPTIONS}
-            placeholder="Select format"
+            placeholder={t("activityForm.selectFormat")}
           />
         </FormField>
-        <FormField label="Bloom's Taxonomy Level" required>
+        <FormField label={t("activityForm.bloomLevel")} required>
           <SelectField
             value={formData.bloomLevel}
             onValueChange={(value) => updateField("bloomLevel", value)}
             options={BLOOM_LEVEL_OPTIONS}
-            placeholder="Select Bloom level"
+            placeholder={t("activityForm.selectBloom")}
           />
         </FormField>
       </div>
@@ -274,7 +291,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
       {/* Duration */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
-          label="Minimum Duration (minutes)"
+          label={t("activityForm.minDuration")}
           required
           htmlFor="minimum-duration"
         >
@@ -287,7 +304,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
           />
         </FormField>
         <FormField
-          label="Maximum Duration (minutes)"
+          label={t("activityForm.maxDuration")}
           htmlFor="maximum-duration"
         >
           <NumberField
@@ -302,14 +319,14 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Energy Levels */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField label="Mental Load">
+        <FormField label={t("activityForm.mentalLoad")}>
           <SelectField
             value={formData.mentalLoad}
             onValueChange={(value) => updateField("mentalLoad", value)}
             options={ENERGY_OPTIONS}
           />
         </FormField>
-        <FormField label="Physical Energy">
+        <FormField label={t("activityForm.physicalEnergy")}>
           <SelectField
             value={formData.physicalEnergy}
             onValueChange={(value) => updateField("physicalEnergy", value)}
@@ -321,7 +338,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
       {/* Prep and Cleanup Time */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
-          label="Preparation Time (minutes)"
+          label={t("activityForm.prepTime")}
           htmlFor="preparation-time"
         >
           <NumberField
@@ -333,7 +350,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
             step={5}
           />
         </FormField>
-        <FormField label="Cleanup Time (minutes)" htmlFor="cleanup-time">
+        <FormField label={t("activityForm.cleanupTime")} htmlFor="cleanup-time">
           <NumberField
             id="cleanup-time"
             value={formData.cleanupTimeMinutes}
@@ -346,14 +363,14 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
       </div>
 
       {/* PDF Document Status */}
-      <FormField label="PDF Document">
+      <FormField label={t("activityForm.pdfDocument")}>
         {formData.documentId ? (
           <div className="mt-2 p-3 bg-success/10 border border-success/20 rounded-lg">
             <div className="flex items-center gap-2">
               <CheckCircle className="h-4 w-4 text-success" />
               <div>
                 <p className="font-medium text-foreground">
-                  PDF Document Ready
+                  {t("upload.pdfDocReady")}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Document ID: {formData.documentId}
@@ -366,7 +383,7 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-destructive" />
               <p className="font-medium text-foreground">
-                No PDF document attached
+                {t("upload.noPdfAttached")}
               </p>
             </div>
           </div>
@@ -375,17 +392,27 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Resources and Topics */}
       <BadgeSelector
-        label="Resources Needed"
+        label={t("activityForm.resourcesNeeded")}
         options={fieldValues?.resourcesAvailable || []}
         selectedValues={formData.resourcesNeeded}
         onToggle={(value) => toggleArrayValue("resourcesNeeded", value)}
+        labelFn={(value) => {
+          const key = `enums.resources.${value}`;
+          const translated = t(key);
+          return translated === key ? value : translated;
+        }}
       />
 
       <BadgeSelector
-        label="Topics"
+        label={t("activityForm.topicsLabel")}
         options={fieldValues?.topics || []}
         selectedValues={formData.topics}
         onToggle={(value) => toggleArrayValue("topics", value)}
+        labelFn={(value) => {
+          const key = `enums.topics.${value}`;
+          const translated = t(key);
+          return translated === key ? value : translated;
+        }}
       />
 
       {!hideButtons && (

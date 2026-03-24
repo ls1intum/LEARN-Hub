@@ -82,8 +82,7 @@ public class ActivityController {
 		response.put("total",
 				activityService.countActivitiesWithFilters(request.name(), request.ageMin(), request.ageMax(),
 						request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
-						request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(),
-						request.topics()));
+						request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(), request.topics()));
 		response.put("activities", activities);
 		response.put("limit", request.limit());
 		response.put("offset", request.offset());
@@ -145,9 +144,9 @@ public class ActivityController {
 				"GET /api/activities/recommendations - Get recommendations called with targetAge={}, format={}, maxActivityCount={}, limit={}",
 				request.targetAge(), request.format(), request.maxActivityCount(), request.limit());
 		// Build criteria map using service
-		Map<String, Object> criteria = activityService.buildRecommendationCriteria(request.name(),
-				request.targetAge(), request.format(), request.bloomLevels(), request.targetDuration(),
-				request.availableResources(), request.preferredTopics(), request.priorityCategories());
+		Map<String, Object> criteria = activityService.buildRecommendationCriteria(request.name(), request.targetAge(),
+				request.format(), request.bloomLevels(), request.targetDuration(), request.availableResources(),
+				request.preferredTopics(), request.priorityCategories());
 
 		// Save search history if user is authenticated
 		UUID userId = (UUID) httpRequest.getAttribute("userId");
