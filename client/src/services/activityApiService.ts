@@ -122,11 +122,11 @@ export const ActivityApi = {
   },
 
   /**
-   * Get PDF by activity ID
+   * Download a stored document by document ID
    */
-  async getActivityPdf(activityId: string) {
+  async downloadDocument(documentId: string) {
     const response = await authService.makeAuthenticatedRequest(
-      `/api/activities/${activityId}/pdf`,
+      `/api/documents/${documentId}/download`,
     );
 
     if (!response.ok) {

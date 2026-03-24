@@ -305,23 +305,16 @@ class PDFServiceTest {
 	}
 
 	@Test
-	void getLessonPlanInfoAcceptsDocumentIdsFromDocumentsArray() throws IOException {
+	void getLessonPlanInfoDoesNotAcceptSourcePdfDocumentsArrayFallback() {
 		UUID documentId = UUID.randomUUID();
-		Path filePath = tempDir.resolve("lesson-plan.pdf");
-		Files.write(filePath, "pdf".getBytes(StandardCharsets.UTF_8));
-
-		PDFDocument document = new PDFDocument();
-		document.setId(documentId);
-		document.setFilePath(filePath.toString());
-		when(pdfDocumentRepository.findById(documentId)).thenReturn(Optional.of(document));
 
 		LessonPlanInfoResponse response = pdfService
 				.getLessonPlanInfo(List.of(Map.of("id", UUID.randomUUID().toString(), "documents",
 						List.of(Map.of("id", documentId.toString(), "type", DocumentType.SOURCE_PDF.getValue())))));
 
-		assertThat(response.isCanGenerateLessonPlan()).isTrue();
-		assertThat(response.getAvailablePdfs()).isEqualTo(1);
-		assertThat(response.getMissingPdfs()).isEmpty();
+		assertThat(response.isCanGenerateLessonPlan()).isFalse();
+		assertThat(response.getAvailablePdfs()).isEqualTo(0);
+		assertThat(response.getMissingPdfs()).containsExactly(0);
 	}
 
 	@Test
@@ -348,7 +341,7 @@ class PDFServiceTest {
 	}
 
 	@Test
-	void getLessonPlanInfoFallsBackToSourcePdfWhenNoMarkdowns() throws IOException {
+	void getLessonPlanInfoRequiresMarkdownsWhenActivityHasOnlySourcePdf() throws IOException {
 		UUID activityId = UUID.randomUUID();
 		UUID documentId = UUID.randomUUID();
 		Path filePath = tempDir.resolve("source.pdf");
@@ -369,9 +362,9 @@ class PDFServiceTest {
 
 		LessonPlanInfoResponse response = pdfService.getLessonPlanInfo(List.of(Map.of("id", activityId.toString())));
 
-		assertThat(response.isCanGenerateLessonPlan()).isTrue();
-		assertThat(response.getAvailablePdfs()).isEqualTo(1);
-		assertThat(response.getMissingPdfs()).isEmpty();
+		assertThat(response.isCanGenerateLessonPlan()).isFalse();
+		assertThat(response.getAvailablePdfs()).isEqualTo(0);
+		assertThat(response.getMissingPdfs()).containsExactly(0);
 	}
 
 	@Test

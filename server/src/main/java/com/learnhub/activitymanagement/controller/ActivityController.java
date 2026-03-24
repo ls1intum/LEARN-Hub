@@ -5,7 +5,6 @@ import com.learnhub.activitymanagement.dto.request.LessonPlanInfoRequest;
 import com.learnhub.activitymanagement.dto.request.LessonPlanRequest;
 import com.learnhub.activitymanagement.dto.request.RecommendationRequest;
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
-import com.learnhub.activitymanagement.dto.response.DocumentResponse;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
 import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.service.ActivityService;
@@ -33,6 +32,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -68,15 +68,16 @@ public class ActivityController {
 	@GetMapping("/")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get activities", description = "Get a list of activities with optional filtering and pagination")
-	public ResponseEntity<?> getActivities(@ModelAttribute ActivityFilterRequest request) {
+	public ResponseEntity<?> getActivities(@ModelAttribute ActivityFilterRequest request, Authentication authentication) {
 		logger.info(
 				"GET /api/activities/ - Get activities called with filters: name={}, ageMin={}, ageMax={}, format={}, limit={}, offset={}",
 				request.name(), request.ageMin(), request.ageMax(), request.format(), request.limit(),
 				request.offset());
-		List<ActivityResponse> activities = activityService.getActivitiesWithFilters(request.name(), request.ageMin(),
-				request.ageMax(), request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
-				request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(), request.topics(),
-				request.limit(), request.offset());
+		boolean includeSourcePdf = isAdmin(authentication);
+		List<ActivityResponse> activities = activityService.getActivitiesWithFilters(request.name(),
+				request.ageMin(), request.ageMax(), request.durationMin(), request.durationMax(), request.format(),
+				request.bloomLevel(), request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(),
+				request.topics(), request.limit(), request.offset(), includeSourcePdf);
 		Map<String, Object> response = new HashMap<>();
 		response.put("total",
 				activityService.countActivitiesWithFilters(request.name(), request.ageMin(), request.ageMax(),
@@ -91,9 +92,9 @@ public class ActivityController {
 	@GetMapping("/{id}")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get activity by ID", description = "Get a single activity by its ID")
-	public ResponseEntity<?> getActivity(@PathVariable UUID id) {
+	public ResponseEntity<?> getActivity(@PathVariable UUID id, Authentication authentication) {
 		logger.info("GET /api/activities/{} - Get activity by ID called", id);
-		ActivityResponse activity = activityService.getActivityById(id);
+		ActivityResponse activity = activityService.getActivityById(id, isAdmin(authentication));
 		return ResponseEntity.ok(activity);
 	}
 
@@ -132,22 +133,6 @@ public class ActivityController {
 		ActivityResponse updated = activityService.updateActivityFromMap(id, request);
 		logger.info("PUT /api/activities/{} - Activity updated successfully", id);
 		return ResponseEntity.ok(updated);
-	}
-
-	@GetMapping("/{activityId}/pdf")
-	@PreAuthorize("permitAll()")
-	@Operation(summary = "Get activity PDF", description = "Get PDF file for a specific activity")
-	public ResponseEntity<?> getActivityPdf(@PathVariable UUID activityId) throws IOException {
-		logger.info("GET /api/activities/{}/pdf - Get activity PDF called", activityId);
-		ActivityResponse activity = activityService.getActivityById(activityId);
-		DocumentResponse sourcePdf = activity.getDocuments().stream().filter(d -> "source_pdf".equals(d.getType()))
-				.findFirst().orElse(null);
-		if (sourcePdf == null) {
-			throw new ResourceNotFoundException("PDF not found for this activity");
-		}
-
-		byte[] pdfContent = pdfService.getPdfContent(sourcePdf.getId());
-		return buildFileDownloadResponse(pdfContent, activity.getName(), ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
 	@GetMapping("/recommendations")
@@ -428,5 +413,10 @@ public class ActivityController {
 		}
 		String sanitized = name.replaceAll("[^a-zA-Z0-9._\\- ]", "_").trim();
 		return sanitized.isEmpty() ? "activity" : sanitized;
+	}
+
+	private boolean isAdmin(Authentication authentication) {
+		return authentication != null && authentication.getAuthorities().stream()
+				.anyMatch(authority -> "ROLE_ADMIN".equals(authority.getAuthority()));
 	}
 }

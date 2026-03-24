@@ -34,7 +34,7 @@ export const ActivityDetails: React.FC = () => {
 
   const documentApi = useApi();
   const fetchActivity = useCallback(async () => {
-    if (stateActivity) {
+    if (stateActivity && !isAdmin) {
       return stateActivity;
     }
 
@@ -47,7 +47,7 @@ export const ActivityDetails: React.FC = () => {
     }
 
     throw new Error("No activity ID provided");
-  }, [stateActivity, id]);
+  }, [stateActivity, id, isAdmin]);
 
   const {
     data: activity,
@@ -81,11 +81,9 @@ export const ActivityDetails: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleOpenSourcePdf = async () => {
-    if (!activity?.id) return;
-
+  const handleOpenDocument = async (documentId: string) => {
     await documentApi.call(async () => {
-      await openBlobInNewTab(() => apiService.getActivityPdf(activity.id));
+      await openBlobInNewTab(() => apiService.downloadDocument(documentId));
     });
   };
 
@@ -197,6 +195,9 @@ export const ActivityDetails: React.FC = () => {
     (activity.durationMinMinutes || 0) +
     (activity.prepTimeMinutes || 0) +
     (activity.cleanupTimeMinutes || 0);
+  const hasDownloads =
+    (activity.documents && activity.documents.length > 0) ||
+    (activity.markdowns && activity.markdowns.length > 0);
 
   return (
     <div className="w-full py-6">
@@ -410,8 +411,7 @@ export const ActivityDetails: React.FC = () => {
           )}
 
           {/* Downloads */}
-          {((activity.documents && activity.documents.length > 0) ||
-            (activity.markdowns && activity.markdowns.length > 0)) && (
+          {hasDownloads && (
             <div className="rounded-lg border border-border bg-muted/20">
               <div className="border-b border-border px-4 py-3">
                 <h3 className="text-lg font-semibold text-card-foreground">
@@ -436,22 +436,20 @@ export const ActivityDetails: React.FC = () => {
                         : ""}
                     </p>
                   </div>
-                  {doc.type === "source_pdf" && (
-                    <div className="flex items-center gap-2 sm:shrink-0">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={documentApi.isLoading}
-                        onClick={handleOpenSourcePdf}
-                        title="Download as PDF"
-                        className="flex items-center gap-1.5"
-                      >
-                        <Download className="h-4 w-4 text-red-600" />
-                        <span>{t("activityDetails.downloadPdf")}</span>
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-2 sm:shrink-0">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={documentApi.isLoading}
+                      onClick={() => handleOpenDocument(doc.id)}
+                      title={t("activityDetails.downloadPdf")}
+                      className="flex items-center gap-1.5"
+                    >
+                      <Download className="h-4 w-4 text-red-600" />
+                      <span>{t("activityDetails.downloadPdf")}</span>
+                    </Button>
+                  </div>
                 </div>
               ))}
 

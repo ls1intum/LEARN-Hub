@@ -9,7 +9,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
-import com.learnhub.activitymanagement.dto.response.DocumentResponse;
 import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
@@ -141,7 +140,7 @@ class ActivityServiceTest {
 	}
 
 	@Test
-	void mapToResponseReturnsDocumentsList() {
+	void mapToResponseOmitsSourcePdfDocuments() {
 		Activity activity = createTestActivity();
 		UUID docId = UUID.randomUUID();
 
@@ -150,12 +149,7 @@ class ActivityServiceTest {
 
 		ActivityResponse response = activityService.convertToResponse(activity);
 
-		assertThat(response.getDocuments()).hasSize(1);
-		DocumentResponse docResp = response.getDocuments().get(0);
-		assertThat(docResp.getId()).isEqualTo(docId);
-		assertThat(docResp.getType()).isEqualTo("source_pdf");
-		assertThat(docResp.getFilename()).isEqualTo("test.pdf");
-		assertThat(docResp.getFileSize()).isEqualTo(1024L);
+		assertThat(response.getDocuments()).isEmpty();
 	}
 
 	@Test
@@ -384,9 +378,7 @@ class ActivityServiceTest {
 		ActivityResponse response = activityService.createActivityWithValidation(request);
 
 		assertThat(response).isNotNull();
-		assertThat(response.getDocuments()).hasSize(1);
-		assertThat(response.getDocuments().get(0).getId()).isEqualTo(finalizedDocId);
-		assertThat(response.getDocuments().get(0).getType()).isEqualTo("source_pdf");
+		assertThat(response.getDocuments()).isEmpty();
 
 		// Verify the saved activity has the document relationship
 		ArgumentCaptor<Activity> captor = ArgumentCaptor.forClass(Activity.class);

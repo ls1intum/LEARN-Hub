@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -37,15 +36,14 @@ public class LLMService {
 	private final ChatClient chatClient;
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
-	public LLMService(ObjectProvider<ChatClient.Builder> chatClientBuilderProvider) {
-		ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
-		this.chatClient = builder != null ? builder.build() : null;
-	}
-
-	public Map<String, Object> extractActivityData(String pdfText) {
+	public LLMService(ChatClient chatClient) {
 		if (chatClient == null) {
 			throw new IllegalStateException("ChatClient is not available. Please configure a ChatModel.");
 		}
+		this.chatClient = chatClient;
+	}
+
+	public Map<String, Object> extractActivityData(String pdfText) {
 
 		String promptText = new PromptTemplate(extractionPromptResource).render(Map.of("pdfText", pdfText));
 
@@ -77,10 +75,6 @@ public class LLMService {
 	 *            user-adjusted activity metadata to inform the schema
 	 */
 	public String generateArtikulationsschema(String pdfText, Map<String, Object> metadata) {
-		if (chatClient == null) {
-			throw new IllegalStateException("ChatClient is not available. Please configure a ChatModel.");
-		}
-
 		String metadataSection = buildMetadataSection(metadata);
 		String promptText = new PromptTemplate(artikulationsschemaPromptResource)
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
@@ -105,10 +99,6 @@ public class LLMService {
 	 *            user-adjusted activity metadata to inform the generation
 	 */
 	public String generateDeckblatt(String pdfText, Map<String, Object> metadata) {
-		if (chatClient == null) {
-			throw new IllegalStateException("ChatClient is not available. Please configure a ChatModel.");
-		}
-
 		String metadataSection = buildMetadataSection(metadata);
 		String promptText = new PromptTemplate(deckblattPromptResource)
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
@@ -134,10 +124,6 @@ public class LLMService {
 	 *            user-adjusted activity metadata to inform the generation
 	 */
 	public String generateHintergrundwissen(String pdfText, Map<String, Object> metadata) {
-		if (chatClient == null) {
-			throw new IllegalStateException("ChatClient is not available. Please configure a ChatModel.");
-		}
-
 		String metadataSection = buildMetadataSection(metadata);
 		String promptText = new PromptTemplate(hintergrundwissenPromptResource)
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));

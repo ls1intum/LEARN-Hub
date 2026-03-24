@@ -67,7 +67,7 @@ export class ApiService {
   static deleteActivity = ActivityApi.deleteActivity;
   static updateActivity = ActivityApi.updateActivity;
   static generateLessonPlan = ActivityApi.generateLessonPlan;
-  static getActivityPdf = ActivityApi.getActivityPdf;
+  static downloadDocument = ActivityApi.downloadDocument;
   static getMarkdownPdf = ActivityApi.getMarkdownPdf;
   static getMarkdownDocx = ActivityApi.getMarkdownDocx;
   static getFieldValues = ActivityApi.getFieldValues;
