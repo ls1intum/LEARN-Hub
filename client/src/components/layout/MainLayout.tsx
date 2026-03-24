@@ -4,7 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { useEnvironment } from "@/hooks/useEnvironment";
-import { Menu, Server, LogOut, LogIn, Settings, ChevronsUpDown } from "lucide-react";
+import {
+  Menu,
+  Server,
+  LogOut,
+  LogIn,
+  Settings,
+  ChevronsUpDown,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NAVIGATION_TABS, getCurrentTab } from "@/constants/navigation";
 import { NavigationMenu } from "./NavigationMenu";
@@ -32,12 +39,14 @@ interface MainLayoutProps {
   fullWidth?: boolean;
 }
 
-function getUserInitials(user: {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  role?: string;
-} | null): string {
+function getUserInitials(
+  user: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    role?: string;
+  } | null,
+): string {
   if (user?.firstName && user?.lastName) {
     return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
   }
@@ -47,12 +56,14 @@ function getUserInitials(user: {
   return "U";
 }
 
-function getUserDisplayName(user: {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  role?: string;
-} | null): string {
+function getUserDisplayName(
+  user: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    role?: string;
+  } | null,
+): string {
   if (user?.firstName && user?.lastName) {
     return `${user.firstName} ${user.lastName}`;
   }
@@ -61,10 +72,7 @@ function getUserDisplayName(user: {
   return "Guest";
 }
 
-function getUserRoleLabel(
-  role: string,
-  t: (key: string) => string,
-): string {
+function getUserRoleLabel(role: string, t: (key: string) => string): string {
   switch (role) {
     case "ADMIN":
       return t("userHeader.adminPanel");
@@ -278,7 +286,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
         <div className="border-t border-border p-2">
           {isGuest ? (
             <button
-              onClick={() => { navigate("/login"); setIsMobileNavOpen(false); }}
+              onClick={() => {
+                navigate("/login");
+                setIsMobileNavOpen(false);
+              }}
               className="flex w-full items-center gap-2 rounded-md p-2 text-left text-sm hover:bg-accent transition-colors"
             >
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">

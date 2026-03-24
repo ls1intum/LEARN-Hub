@@ -31,7 +31,9 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   };
 
   const formatAgeRange = (min: number, max: number) => {
-    return min === max ? `${min} ${t("common.years")}` : `${min}-${max} ${t("common.years")}`;
+    return min === max
+      ? `${min} ${t("common.years")}`
+      : `${min}-${max} ${t("common.years")}`;
   };
 
   return (
@@ -100,9 +102,13 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
             {activity.resourcesNeeded &&
               activity.resourcesNeeded.length > 0 && (
                 <div className="text-sm">
-                  <span className="text-muted-foreground">{t("timeline.resources")} </span>
+                  <span className="text-muted-foreground">
+                    {t("timeline.resources")}{" "}
+                  </span>
                   <span className="text-foreground">
-                    {activity.resourcesNeeded.map((r) => translateEnum("resources", r)).join(", ")}
+                    {activity.resourcesNeeded
+                      .map((r) => translateEnum("resources", r))
+                      .join(", ")}
                   </span>
                 </div>
               )}

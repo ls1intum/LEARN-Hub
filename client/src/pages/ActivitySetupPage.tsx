@@ -412,9 +412,7 @@ export const ActivitySetupPage: React.FC = () => {
                 <Upload className="h-5 w-5" />
                 {t("upload.uploadPdf")}
               </CardTitle>
-              <CardDescription>
-                {t("upload.uploadPdfDesc")}
-              </CardDescription>
+              <CardDescription>{t("upload.uploadPdfDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -567,9 +565,9 @@ export const ActivitySetupPage: React.FC = () => {
                           ? t("upload.aiSkipped")
                           : t("upload.quality", {
                               quality: extractionQuality,
-                              confidence: (
-                                extractionConfidence * 100
-                              ).toFixed(0),
+                              confidence: (extractionConfidence * 100).toFixed(
+                                0,
+                              ),
                             })}
                       </span>
                     )}

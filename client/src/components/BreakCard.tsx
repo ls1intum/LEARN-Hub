@@ -84,7 +84,9 @@ export const BreakCard: React.FC<BreakCardProps> = ({
                 variant="secondary"
                 className="text-xs px-2 py-0.5 bg-blue-100/70 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200"
               >
-                {reasons.length === 1 ? t("breakCard.reason", { count: 1 }) : t("breakCard.reasons_plural", { count: reasons.length })}
+                {reasons.length === 1
+                  ? t("breakCard.reason", { count: 1 })
+                  : t("breakCard.reasons_plural", { count: reasons.length })}
               </Badge>
             </div>
           )}

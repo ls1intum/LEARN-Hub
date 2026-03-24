@@ -182,7 +182,10 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Requirements */}
-      <FormSection title={t("recommendationForm.basicRequirements")} icon={Target}>
+      <FormSection
+        title={t("recommendationForm.basicRequirements")}
+        icon={Target}
+      >
         {/* Target Age */}
         <RangeSlider
           label={t("recommendationForm.ageAppropriateness")}
@@ -239,7 +242,10 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
       </FormSection>
 
       {/* Learning Objectives */}
-      <FormSection title={t("recommendationForm.learningObjectives")} icon={BookOpen}>
+      <FormSection
+        title={t("recommendationForm.learningObjectives")}
+        icon={BookOpen}
+      >
         {/* Bloom's Taxonomy Levels */}
         <BadgeSelector
           label={t("recommendationForm.bloomLevelMatch")}
@@ -274,10 +280,15 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
       </FormSection>
 
       {/* Advanced Options */}
-      <FormSection title={t("recommendationForm.advancedOptions")} icon={Settings}>
+      <FormSection
+        title={t("recommendationForm.advancedOptions")}
+        icon={Settings}
+      >
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label className="text-base font-medium">{t("recommendationForm.allowLessonPlans")}</Label>
+            <Label className="text-base font-medium">
+              {t("recommendationForm.allowLessonPlans")}
+            </Label>
             <p className="text-sm text-muted-foreground">
               {t("recommendationForm.allowLessonPlansDesc")}
             </p>
@@ -304,7 +315,9 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label className="text-base font-medium">{t("recommendationForm.includeBreaks")}</Label>
+                <Label className="text-base font-medium">
+                  {t("recommendationForm.includeBreaks")}
+                </Label>
                 <p className="text-sm text-muted-foreground">
                   {t("recommendationForm.includeBreaksDesc")}
                 </p>

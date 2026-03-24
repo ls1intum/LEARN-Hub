@@ -340,8 +340,7 @@ class PDFServiceTest {
 
 		when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
 
-		LessonPlanInfoResponse response = pdfService
-				.getLessonPlanInfo(List.of(Map.of("id", activityId.toString())));
+		LessonPlanInfoResponse response = pdfService.getLessonPlanInfo(List.of(Map.of("id", activityId.toString())));
 
 		assertThat(response.isCanGenerateLessonPlan()).isTrue();
 		assertThat(response.getAvailablePdfs()).isEqualTo(1);
@@ -368,8 +367,7 @@ class PDFServiceTest {
 
 		when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
 
-		LessonPlanInfoResponse response = pdfService
-				.getLessonPlanInfo(List.of(Map.of("id", activityId.toString())));
+		LessonPlanInfoResponse response = pdfService.getLessonPlanInfo(List.of(Map.of("id", activityId.toString())));
 
 		assertThat(response.isCanGenerateLessonPlan()).isTrue();
 		assertThat(response.getAvailablePdfs()).isEqualTo(1);
@@ -382,8 +380,8 @@ class PDFServiceTest {
 		Map<String, Object> activityMap = new HashMap<>();
 		activityMap.put("id", UUID.randomUUID().toString());
 		activityMap.put("name", "Test Activity");
-		activityMap.put("markdowns", List.of(
-				Map.of("type", "deckblatt", "content", "# Deckblatt\nContent", "landscape", false)));
+		activityMap.put("markdowns",
+				List.of(Map.of("type", "deckblatt", "content", "# Deckblatt\nContent", "landscape", false)));
 
 		// No DB activity needed – markdowns are in the request map itself
 		when(activityRepository.findById(any())).thenReturn(Optional.empty());

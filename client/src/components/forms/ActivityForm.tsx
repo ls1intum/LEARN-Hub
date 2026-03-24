@@ -195,7 +195,11 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Basic Information */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField label={t("activityForm.activityName")} required htmlFor="activity-name">
+        <FormField
+          label={t("activityForm.activityName")}
+          required
+          htmlFor="activity-name"
+        >
           <Input
             id="activity-name"
             value={formData.name}
@@ -203,7 +207,10 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
             placeholder={t("activityForm.enterName")}
           />
         </FormField>
-        <FormField label={t("activityForm.sourceLabel")} htmlFor="activity-source">
+        <FormField
+          label={t("activityForm.sourceLabel")}
+          htmlFor="activity-source"
+        >
           <Input
             id="activity-source"
             value={formData.source}
@@ -233,7 +240,11 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
 
       {/* Age Range */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField label={t("activityForm.minAge")} required htmlFor="minimum-age">
+        <FormField
+          label={t("activityForm.minAge")}
+          required
+          htmlFor="minimum-age"
+        >
           <NumberField
             id="minimum-age"
             value={formData.ageMin}
@@ -242,7 +253,11 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
             max={15}
           />
         </FormField>
-        <FormField label={t("activityForm.maxAge")} required htmlFor="maximum-age">
+        <FormField
+          label={t("activityForm.maxAge")}
+          required
+          htmlFor="maximum-age"
+        >
           <NumberField
             id="maximum-age"
             value={formData.ageMax}

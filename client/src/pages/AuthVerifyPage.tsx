@@ -101,7 +101,9 @@ export const AuthVerifyPage: React.FC = () => {
           </div>
 
           <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? t("authVerify.verifying") : t("authVerify.verifyLogin")}
+            {isLoading
+              ? t("authVerify.verifying")
+              : t("authVerify.verifyLogin")}
           </Button>
         </form>
 

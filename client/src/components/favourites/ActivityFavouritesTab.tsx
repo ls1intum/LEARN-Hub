@@ -190,7 +190,8 @@ export const ActivityFavouritesTab: React.FC = () => {
               <div className="flex flex-wrap gap-2 mb-4">
                 <Badge variant="secondary">
                   <Users className="h-3 w-3 mr-1" />
-                  {t("activityFavourites.ages")} {activity.ageMin}-{activity.ageMax}
+                  {t("activityFavourites.ages")} {activity.ageMin}-
+                  {activity.ageMax}
                 </Badge>
                 <Badge variant="secondary">
                   <Clock className="h-3 w-3 mr-1" />
@@ -199,8 +200,12 @@ export const ActivityFavouritesTab: React.FC = () => {
                     `-${activity.durationMaxMinutes}`}{" "}
                   min
                 </Badge>
-                <Badge variant="secondary">{translateEnum("format", activity.format)}</Badge>
-                <Badge variant="outline">{translateEnum("bloomLevel", activity.bloomLevel)}</Badge>
+                <Badge variant="secondary">
+                  {translateEnum("format", activity.format)}
+                </Badge>
+                <Badge variant="outline">
+                  {translateEnum("bloomLevel", activity.bloomLevel)}
+                </Badge>
               </div>
 
               <div className="flex flex-wrap gap-1 mb-4">
@@ -219,7 +224,9 @@ export const ActivityFavouritesTab: React.FC = () => {
                 </div>
                 {favourite.name && (
                   <div className="text-right">
-                    <span className="font-medium">{t("activityFavourites.customName")}</span>{" "}
+                    <span className="font-medium">
+                      {t("activityFavourites.customName")}
+                    </span>{" "}
                     {favourite.name}
                   </div>
                 )}

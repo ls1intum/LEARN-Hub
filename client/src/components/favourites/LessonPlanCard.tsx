@@ -88,7 +88,8 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
                 {favourite.name || t("lessonPlan.untitled")}
               </h3>
               <p className="text-sm text-muted-foreground">
-                {t("lessonPlan.activitiesCount", { count: activities.length })} • {totalDuration} {t("lessonPlan.minutesTotal")}
+                {t("lessonPlan.activitiesCount", { count: activities.length })}{" "}
+                • {totalDuration} {t("lessonPlan.minutesTotal")}
               </p>
             </div>
             <Button
@@ -118,12 +119,15 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
         </div>
         <div className="flex items-center gap-1.5">
           <BookOpen className="h-4 w-4" />
-          <span>{t("lessonPlan.activitiesCount", { count: activities.length })}</span>
+          <span>
+            {t("lessonPlan.activitiesCount", { count: activities.length })}
+          </span>
         </div>
         <div className="flex items-center gap-1.5">
           <Calendar className="h-4 w-4" />
           <span>
-            {t("lessonPlan.favourited")} {new Date(favourite.createdAt).toLocaleDateString()}
+            {t("lessonPlan.favourited")}{" "}
+            {new Date(favourite.createdAt).toLocaleDateString()}
           </span>
         </div>
       </div>
@@ -212,7 +216,9 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
                     {/* Break Content */}
                     <div className="flex-1 min-w-0">
                       <div className="text-xs text-blue-600/70 dark:text-blue-400/70 mb-1 font-medium">
-                        {t("lessonPlan.breakAfterStep", { step: activityIndex + 1 })}
+                        {t("lessonPlan.breakAfterStep", {
+                          step: activityIndex + 1,
+                        })}
                       </div>
                       <BreakCard
                         breakItem={activity.breakAfter}

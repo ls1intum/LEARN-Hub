@@ -78,7 +78,9 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                   {activity.source}
                 </p>
               </div>
-              <Badge variant="outline">{translateEnum("format", activity.format)}</Badge>
+              <Badge variant="outline">
+                {translateEnum("format", activity.format)}
+              </Badge>
             </div>
           </CardHeader>
           <CardContent>

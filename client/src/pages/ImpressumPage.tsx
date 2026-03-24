@@ -24,7 +24,9 @@ export const ImpressumPage: React.FC = () => {
 
         <div className="space-y-1">
           <p>
-            <span className="font-semibold">{t("impressum.regulatingAuthority")}:</span>{" "}
+            <span className="font-semibold">
+              {t("impressum.regulatingAuthority")}:
+            </span>{" "}
             Bayerisches Staatsministerium für Wissenschaft, Forschung und Kunst
           </p>
           <p>Ust-IdNr.: DE 811193231</p>

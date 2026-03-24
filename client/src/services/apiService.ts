@@ -103,4 +103,3 @@ export class ApiService {
 
 // Export singleton instance for backward compatibility
 export const apiService = ApiService;
-

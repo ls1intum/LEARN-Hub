@@ -20,8 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
  * normalization for the 2-step activity creation flow.
  *
  * <p>
- * Extracted from {@link ActivityService} to keep that class focused on core CRUD
- * and filtering logic.
+ * Extracted from {@link ActivityService} to keep that class focused on core
+ * CRUD and filtering logic.
  * </p>
  */
 @Service

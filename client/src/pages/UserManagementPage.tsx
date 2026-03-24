@@ -219,7 +219,9 @@ export const UserManagementPage: React.FC = () => {
 
     try {
       await apiService.deleteUser(userToDelete.id);
-      setMessage(t("userManagement.userDeleted", { email: userToDelete.email }));
+      setMessage(
+        t("userManagement.userDeleted", { email: userToDelete.email }),
+      );
       closeDeleteDialog();
       fetchUsers(); // Refresh the list
     } catch (err) {
@@ -294,11 +296,15 @@ export const UserManagementPage: React.FC = () => {
 
         {/* Create User Form */}
         <div className="mb-8 p-4 bg-muted/10 rounded-lg">
-          <h2 className="text-lg font-semibold mb-4">{t("userManagement.createUser")}</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            {t("userManagement.createUser")}
+          </h2>
           <form onSubmit={handleCreateUser} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
-                <Label htmlFor="create-email">{t("userManagement.email")} {t("userManagement.required")}</Label>
+                <Label htmlFor="create-email">
+                  {t("userManagement.email")} {t("userManagement.required")}
+                </Label>
                 <Input
                   id="create-email"
                   type="email"
@@ -315,7 +321,9 @@ export const UserManagementPage: React.FC = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="create-first-name">{t("userManagement.firstName")} {t("userManagement.required")}</Label>
+                <Label htmlFor="create-first-name">
+                  {t("userManagement.firstName")} {t("userManagement.required")}
+                </Label>
                 <Input
                   id="create-first-name"
                   type="text"
@@ -332,7 +340,9 @@ export const UserManagementPage: React.FC = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="create-last-name">{t("userManagement.lastName")} {t("userManagement.required")}</Label>
+                <Label htmlFor="create-last-name">
+                  {t("userManagement.lastName")} {t("userManagement.required")}
+                </Label>
                 <Input
                   id="create-last-name"
                   type="text"
@@ -349,7 +359,9 @@ export const UserManagementPage: React.FC = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="create-role">{t("userManagement.role")} {t("userManagement.required")}</Label>
+                <Label htmlFor="create-role">
+                  {t("userManagement.role")} {t("userManagement.required")}
+                </Label>
                 <Select
                   value={createForm.role}
                   onValueChange={(value: "TEACHER" | "ADMIN") =>
@@ -360,13 +372,19 @@ export const UserManagementPage: React.FC = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="TEACHER">{t("userManagement.teacher")}</SelectItem>
-                    <SelectItem value="ADMIN">{t("userManagement.admin")}</SelectItem>
+                    <SelectItem value="TEACHER">
+                      {t("userManagement.teacher")}
+                    </SelectItem>
+                    <SelectItem value="ADMIN">
+                      {t("userManagement.admin")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="lg:col-span-2">
-                <Label htmlFor="create-password">{t("userManagement.password")} {t("userManagement.required")}</Label>
+                <Label htmlFor="create-password">
+                  {t("userManagement.password")} {t("userManagement.required")}
+                </Label>
                 <Input
                   id="create-password"
                   type="password"
@@ -389,7 +407,9 @@ export const UserManagementPage: React.FC = () => {
                 <p
                   className={`text-xs mt-1 ${createForm.password.length < 8 ? "text-orange-600" : "text-green-600"}`}
                 >
-                  {t("userManagement.passwordLength", { count: createForm.password.length })}
+                  {t("userManagement.passwordLength", {
+                    count: createForm.password.length,
+                  })}
                 </p>
               </div>
             </div>
@@ -398,14 +418,18 @@ export const UserManagementPage: React.FC = () => {
               className="bg-green-600 hover:bg-green-700"
               disabled={isCreating}
             >
-              {isCreating ? t("userManagement.creating") : t("userManagement.createButton")}
+              {isCreating
+                ? t("userManagement.creating")
+                : t("userManagement.createButton")}
             </Button>
           </form>
         </div>
 
         {/* Users List */}
         <div>
-          <h2 className="text-lg font-semibold mb-4">{t("userManagement.existingUsers")}</h2>
+          <h2 className="text-lg font-semibold mb-4">
+            {t("userManagement.existingUsers")}
+          </h2>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse border border-border">
               <thead>
@@ -500,8 +524,12 @@ export const UserManagementPage: React.FC = () => {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="TEACHER">{t("userManagement.teacher")}</SelectItem>
-                              <SelectItem value="ADMIN">{t("userManagement.admin")}</SelectItem>
+                              <SelectItem value="TEACHER">
+                                {t("userManagement.teacher")}
+                              </SelectItem>
+                              <SelectItem value="ADMIN">
+                                {t("userManagement.admin")}
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         ) : (
@@ -576,7 +604,9 @@ export const UserManagementPage: React.FC = () => {
             <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
               <h3 className="text-md font-semibold mb-2">
                 {t("userManagement.changePassword")}{" "}
-                {editForm.role === "TEACHER" ? t("userManagement.notAvailable") : t("userManagement.optional")}
+                {editForm.role === "TEACHER"
+                  ? t("userManagement.notAvailable")
+                  : t("userManagement.optional")}
               </h3>
               <div className="flex gap-2">
                 <Input
@@ -624,17 +654,23 @@ export const UserManagementPage: React.FC = () => {
             <div className="py-4">
               <div className="p-3 bg-muted rounded-lg space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{t("userManagement.email")}:</span>
+                  <span className="text-sm font-medium">
+                    {t("userManagement.email")}:
+                  </span>
                   <span className="text-sm">{userToDelete.email}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{t("userManagement.firstName")}:</span>
+                  <span className="text-sm font-medium">
+                    {t("userManagement.firstName")}:
+                  </span>
                   <span className="text-sm">
                     {userToDelete.firstName} {userToDelete.lastName}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">{t("userManagement.role")}:</span>
+                  <span className="text-sm font-medium">
+                    {t("userManagement.role")}:
+                  </span>
                   <span className="text-sm">{userToDelete.role}</span>
                 </div>
               </div>

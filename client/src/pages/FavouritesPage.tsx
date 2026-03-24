@@ -21,8 +21,12 @@ export const FavouritesPage: React.FC = () => {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="activities">{t("favourites.activities")}</TabsTrigger>
-          <TabsTrigger value="lesson-plans">{t("favourites.lessonPlans")}</TabsTrigger>
+          <TabsTrigger value="activities">
+            {t("favourites.activities")}
+          </TabsTrigger>
+          <TabsTrigger value="lesson-plans">
+            {t("favourites.lessonPlans")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="activities" className="mt-6">

@@ -125,7 +125,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             {activity.mentalLoad && (
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-blue-500" />
-                <span className="text-muted-foreground">{t("activityDetails.mental")}:</span>
+                <span className="text-muted-foreground">
+                  {t("activityDetails.mental")}:
+                </span>
                 <span className="font-medium text-card-foreground capitalize">
                   {translateEnum("energy", activity.mentalLoad)}
                 </span>
@@ -134,7 +136,9 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
             {activity.physicalEnergy && (
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full bg-orange-500" />
-                <span className="text-muted-foreground">{t("activityDetails.physical")}:</span>
+                <span className="text-muted-foreground">
+                  {t("activityDetails.physical")}:
+                </span>
                 <span className="font-medium text-card-foreground capitalize">
                   {translateEnum("energy", activity.physicalEnergy)}
                 </span>

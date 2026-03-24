@@ -31,8 +31,7 @@ class MarkdownControllerTest {
 		ReflectionTestUtils.setField(markdownController, "markdownToPdfService",
 				new MarkdownToPdfService(markdownToHtmlService));
 		ReflectionTestUtils.setField(markdownController, "markdownToDocxService",
-				new MarkdownToDocxService(markdownToHtmlService, new DocxHeaderFooterHelper(),
-						new DocxTableHelper()));
+				new MarkdownToDocxService(markdownToHtmlService, new DocxHeaderFooterHelper(), new DocxTableHelper()));
 	}
 
 	@Test

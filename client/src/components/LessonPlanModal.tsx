@@ -118,8 +118,11 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
               {lessonPlanData.title || t("lessonPlan.title")}
             </h2>
             <p className="text-muted-foreground">
-              {t("lessonPlan.activitiesCount", { count: lessonPlanData.activities.length })} •{" "}
-              {formatDuration(lessonPlanData.totalDurationMinutes)} {t("lessonPlan.totalDuration")}
+              {t("lessonPlan.activitiesCount", {
+                count: lessonPlanData.activities.length,
+              })}{" "}
+              • {formatDuration(lessonPlanData.totalDurationMinutes)}{" "}
+              {t("lessonPlan.totalDuration")}
             </p>
           </div>
           <div className="flex gap-2">
@@ -135,7 +138,9 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
             )}
             <Button onClick={handleDownload} disabled={isDownloading}>
               <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? t("lessonPlan.generating") : t("lessonPlan.viewPdf")}
+              {isDownloading
+                ? t("lessonPlan.generating")
+                : t("lessonPlan.viewPdf")}
             </Button>
           </div>
         </div>

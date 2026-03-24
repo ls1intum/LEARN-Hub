@@ -24,8 +24,8 @@ public class DocxTableHelper {
 	private static final ObjectFactory WML_FACTORY = Context.getWmlObjectFactory();
 
 	/**
-	 * Apply Artikulationsschema-specific table layout (fixed column widths) to
-	 * all tables in the given element list.
+	 * Apply Artikulationsschema-specific table layout (fixed column widths) to all
+	 * tables in the given element list.
 	 *
 	 * @param elements
 	 *            DOCX elements (paragraphs, tables, etc.)

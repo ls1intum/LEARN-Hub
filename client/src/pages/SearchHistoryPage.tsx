@@ -108,38 +108,68 @@ export const SearchHistoryPage: React.FC = () => {
       formatted.push(t("history.age", { value: criteria.target_age }));
     }
     if (criteria.target_duration) {
-      formatted.push(t("history.duration", { value: criteria.target_duration }));
+      formatted.push(
+        t("history.duration", { value: criteria.target_duration }),
+      );
     }
     if (criteria.bloomLevel && criteria.bloomLevel !== "any") {
-      formatted.push(t("history.bloomLevel", { value: translateEnum("bloomLevel", criteria.bloomLevel as string) }));
+      formatted.push(
+        t("history.bloomLevel", {
+          value: translateEnum("bloomLevel", criteria.bloomLevel as string),
+        }),
+      );
     }
     if (
       criteria.bloom_levels &&
       Array.isArray(criteria.bloom_levels) &&
       criteria.bloom_levels.length > 0
     ) {
-      formatted.push(t("history.bloomLevel", { value: (criteria.bloom_levels as string[]).map((v) => translateEnum("bloomLevel", v)).join(", ") }));
+      formatted.push(
+        t("history.bloomLevel", {
+          value: (criteria.bloom_levels as string[])
+            .map((v) => translateEnum("bloomLevel", v))
+            .join(", "),
+        }),
+      );
     }
     if (
       criteria.format &&
       Array.isArray(criteria.format) &&
       criteria.format.length > 0
     ) {
-      formatted.push(t("history.format", { value: (criteria.format as string[]).map((v) => translateEnum("format", v)).join(", ") }));
+      formatted.push(
+        t("history.format", {
+          value: (criteria.format as string[])
+            .map((v) => translateEnum("format", v))
+            .join(", "),
+        }),
+      );
     }
     if (
       criteria.topics &&
       Array.isArray(criteria.topics) &&
       criteria.topics.length > 0
     ) {
-      formatted.push(t("history.topics", { value: (criteria.topics as string[]).map((v) => translateEnum("topics", v)).join(", ") }));
+      formatted.push(
+        t("history.topics", {
+          value: (criteria.topics as string[])
+            .map((v) => translateEnum("topics", v))
+            .join(", "),
+        }),
+      );
     }
     if (
       criteria.resourcesNeeded &&
       Array.isArray(criteria.resourcesNeeded) &&
       criteria.resourcesNeeded.length > 0
     ) {
-      formatted.push(t("history.resources", { value: (criteria.resourcesNeeded as string[]).map((v) => translateEnum("resources", v)).join(", ") }));
+      formatted.push(
+        t("history.resources", {
+          value: (criteria.resourcesNeeded as string[])
+            .map((v) => translateEnum("resources", v))
+            .join(", "),
+        }),
+      );
     }
 
     return formatted.length > 0 ? formatted : [t("history.noSpecificCriteria")];
@@ -170,10 +200,10 @@ export const SearchHistoryPage: React.FC = () => {
           </p>
         </div>
         <div className="text-center py-8">
-          <p className="text-destructive mb-4">
-            {error || t("common.error")}
-          </p>
-          <Button onClick={() => window.location.reload()}>{t("history.tryAgain")}</Button>
+          <p className="text-destructive mb-4">{error || t("common.error")}</p>
+          <Button onClick={() => window.location.reload()}>
+            {t("history.tryAgain")}
+          </Button>
         </div>
       </div>
     );
@@ -188,7 +218,9 @@ export const SearchHistoryPage: React.FC = () => {
         <p className="text-muted-foreground text-sm sm:text-base">
           {t("history.subtitle")}
           {totalCount > 0 && (
-            <span className="ml-2 text-sm">({totalCount} {t("history.entries")})</span>
+            <span className="ml-2 text-sm">
+              ({totalCount} {t("history.entries")})
+            </span>
           )}
         </p>
       </div>
@@ -243,7 +275,11 @@ export const SearchHistoryPage: React.FC = () => {
                           variant="outline"
                           className="text-xs px-2 py-0.5"
                         >
-                          {t("history.more", { count: formatSearchCriteria(entry.searchCriteria).length - 4 })}
+                          {t("history.more", {
+                            count:
+                              formatSearchCriteria(entry.searchCriteria)
+                                .length - 4,
+                          })}
                         </Badge>
                       )}
                     </div>

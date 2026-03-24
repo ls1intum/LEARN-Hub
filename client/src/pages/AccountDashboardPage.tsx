@@ -191,10 +191,10 @@ export const AccountDashboardPage: React.FC = () => {
                   <User className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
-                  <CardTitle className="text-lg">{t("account.guestTitle")}</CardTitle>
-                  <CardDescription>
-                    {t("account.guestDesc")}
-                  </CardDescription>
+                  <CardTitle className="text-lg">
+                    {t("account.guestTitle")}
+                  </CardTitle>
+                  <CardDescription>{t("account.guestDesc")}</CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -238,7 +238,9 @@ export const AccountDashboardPage: React.FC = () => {
                   <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
                     <Heart className="h-4 w-4 text-primary" />
                     <div>
-                      <p className="text-sm font-medium">{t("account.favourites")}</p>
+                      <p className="text-sm font-medium">
+                        {t("account.favourites")}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         Bookmark activities and lesson plans
                       </p>
@@ -247,7 +249,9 @@ export const AccountDashboardPage: React.FC = () => {
                   <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
                     <History className="h-4 w-4 text-primary" />
                     <div>
-                      <p className="text-sm font-medium">{t("account.searchHistory")}</p>
+                      <p className="text-sm font-medium">
+                        {t("account.searchHistory")}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         Track your past searches
                       </p>
@@ -285,7 +289,9 @@ export const AccountDashboardPage: React.FC = () => {
                 <User className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <CardTitle className="text-lg">{t("account.profileInfo")}</CardTitle>
+                <CardTitle className="text-lg">
+                  {t("account.profileInfo")}
+                </CardTitle>
                 <CardDescription>{t("account.profileDesc")}</CardDescription>
               </div>
             </div>
@@ -320,7 +326,9 @@ export const AccountDashboardPage: React.FC = () => {
         {/* Edit Profile Form */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">{t("account.editProfile")}</CardTitle>
+            <CardTitle className="text-lg">
+              {t("account.editProfile")}
+            </CardTitle>
             <CardDescription>{t("account.editProfileDesc")}</CardDescription>
           </CardHeader>
           <CardContent>
@@ -392,9 +400,7 @@ export const AccountDashboardPage: React.FC = () => {
                 <CardTitle className="text-lg text-destructive">
                   {t("account.dangerZone")}
                 </CardTitle>
-                <CardDescription>
-                  {t("account.dangerZoneDesc")}
-                </CardDescription>
+                <CardDescription>{t("account.dangerZoneDesc")}</CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -447,7 +453,9 @@ export const AccountDashboardPage: React.FC = () => {
                         disabled={isLoading || deleteConfirmText !== "DELETE"}
                         className="flex-1"
                       >
-                        {isLoading ? t("account.deleting") : t("account.confirmDelete")}
+                        {isLoading
+                          ? t("account.deleting")
+                          : t("account.confirmDelete")}
                       </Button>
                       <Button
                         variant="outline"
