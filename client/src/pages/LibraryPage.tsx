@@ -67,6 +67,12 @@ export const LibraryPage: React.FC = () => {
   const { user } = useAuth();
   const { fieldValues } = useFieldValues();
   const { t } = useTranslation();
+
+  const translateEnum = (category: string, value: string): string => {
+    const key = `enums.${category}.${value}`;
+    const translated = t(key);
+    return translated === key ? value : translated;
+  };
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [favouritedActivityIds, setFavouritedActivityIds] = useState<
@@ -305,7 +311,7 @@ export const LibraryPage: React.FC = () => {
               {/* Range Filters Section */}
               <div className="mb-8">
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                  Range Filters
+                  {t("library.rangeFilters")}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Age Range */}
@@ -316,7 +322,7 @@ export const LibraryPage: React.FC = () => {
                     </div>
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-sm text-muted-foreground">
-                        Select age range for learners
+                        {t("library.selectAgeRange")}
                       </span>
                       <span className="text-lg font-bold text-primary">
                         {filterForm.values.ageMin} - {filterForm.values.ageMax}
@@ -348,7 +354,7 @@ export const LibraryPage: React.FC = () => {
                     </div>
                     <div className="flex justify-between items-center mb-4">
                       <span className="text-sm text-muted-foreground">
-                        Select activity duration
+                        {t("library.selectDuration")}
                       </span>
                       <span className="text-lg font-bold text-primary">
                         {filterForm.values.durationMin} -{" "}
@@ -376,7 +382,7 @@ export const LibraryPage: React.FC = () => {
               {/* Activity Characteristics Section */}
               <div className="mb-8">
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                  Activity Characteristics
+                  {t("library.activityCharacteristics")}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Format */}
@@ -396,6 +402,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.format.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("format", value)}
                     />
                   </div>
 
@@ -416,6 +423,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.bloomLevel.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("bloomLevel", value)}
                     />
                   </div>
 
@@ -436,6 +444,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.resourcesNeeded.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("resources", value)}
                     />
                   </div>
 
@@ -456,6 +465,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.topics.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("topics", value)}
                     />
                   </div>
                 </div>
@@ -464,7 +474,7 @@ export const LibraryPage: React.FC = () => {
               {/* Teacher Context Section */}
               <div>
                 <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                  Teacher Context
+                  {t("library.teacherContext")}
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Mental Load */}
@@ -484,6 +494,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.mentalLoad.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("energy", value)}
                     />
                   </div>
 
@@ -504,6 +515,7 @@ export const LibraryPage: React.FC = () => {
                           !filterForm.values.physicalEnergy.includes(value),
                         )
                       }
+                      labelFn={(value) => translateEnum("energy", value)}
                     />
                   </div>
                 </div>
@@ -596,14 +608,14 @@ export const LibraryPage: React.FC = () => {
 
                       <div className="flex flex-wrap gap-2 mb-4">
                         <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                          {activity.format}
+                          {translateEnum("format", activity.format)}
                         </span>
                         {activity.topics?.slice(0, 2).map((topic, index) => (
                           <span
                             key={index}
                             className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-muted/30 text-foreground border border-border"
                           >
-                            {topic}
+                            {translateEnum("topics", topic)}
                           </span>
                         ))}
                       </div>
@@ -630,7 +642,7 @@ export const LibraryPage: React.FC = () => {
                 <div className="hidden lg:block bg-card rounded-xl shadow-sm border border-border overflow-hidden">
                   <div className="px-4 py-3 border-b border-border bg-muted/20">
                     <h3 className="text-lg font-semibold text-card-foreground">
-                      Activities
+                      {t("library.activitiesTable")}
                     </h3>
                   </div>
 
@@ -642,22 +654,22 @@ export const LibraryPage: React.FC = () => {
                       <thead className="bg-muted/30">
                         <tr>
                           <th className="px-2 py-3 text-left text-sm font-semibold text-foreground min-w-[200px]">
-                            Activity
+                            {t("library.colActivity")}
                           </th>
                           <th className="px-2 py-3 text-left text-sm font-semibold text-foreground w-16">
-                            Age
+                            {t("library.colAge")}
                           </th>
                           <th className="px-2 py-3 text-left text-sm font-semibold text-foreground w-16">
-                            Format
+                            {t("library.colFormat")}
                           </th>
                           <th className="px-2 py-3 text-left text-sm font-semibold text-foreground w-20">
-                            Duration
+                            {t("library.colDuration")}
                           </th>
                           <th className="px-2 py-3 text-left text-sm font-semibold text-foreground min-w-[120px]">
-                            Topics
+                            {t("library.colTopics")}
                           </th>
                           <th className="px-2 py-3 text-right text-sm font-semibold text-foreground w-24">
-                            Actions
+                            {t("library.colActions")}
                           </th>
                         </tr>
                       </thead>
@@ -678,11 +690,11 @@ export const LibraryPage: React.FC = () => {
                                 <div className="flex items-center gap-1 mt-1">
                                   <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
                                     <Brain className="h-2 w-2" />
-                                    {activity.mentalLoad}
+                                    {activity.mentalLoad && translateEnum("energy", activity.mentalLoad)}
                                   </span>
                                   <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
                                     <ActivityIcon className="h-2 w-2" />
-                                    {activity.physicalEnergy}
+                                    {activity.physicalEnergy && translateEnum("energy", activity.physicalEnergy)}
                                   </span>
                                 </div>
                               </div>
@@ -694,7 +706,7 @@ export const LibraryPage: React.FC = () => {
                             </td>
                             <td className="px-2 py-3 whitespace-nowrap">
                               <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                {activity.format}
+                                {translateEnum("format", activity.format)}
                               </span>
                             </td>
                             <td className="px-2 py-3 whitespace-nowrap">
@@ -744,7 +756,7 @@ export const LibraryPage: React.FC = () => {
                                   }
                                 >
                                   <Eye className="h-3 w-3 mr-2" />
-                                  View Details
+                                  {t("library.viewDetails")}
                                 </Button>
                               </div>
                             </td>

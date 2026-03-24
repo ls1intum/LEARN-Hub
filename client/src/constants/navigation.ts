@@ -5,7 +5,6 @@ import {
   Users,
   History,
   Heart,
-  User,
   type LucideIcon,
 } from "lucide-react";
 
@@ -59,13 +58,6 @@ export const NAVIGATION_TABS: NavigationTab[] = [
     path: "/users",
     icon: Users,
     roles: ["ADMIN"],
-  },
-  {
-    id: "account",
-    label: "Account",
-    path: "/account",
-    icon: User,
-    roles: ["ADMIN", "TEACHER", "GUEST"],
   },
 ];
 

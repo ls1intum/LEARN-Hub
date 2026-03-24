@@ -10,6 +10,7 @@ interface BadgeSelectorProps {
   disabled?: boolean;
   className?: string;
   priorityToggle?: React.ReactNode;
+  labelFn?: (value: string) => string;
 }
 
 export const BadgeSelector: React.FC<BadgeSelectorProps> = ({
@@ -20,6 +21,7 @@ export const BadgeSelector: React.FC<BadgeSelectorProps> = ({
   disabled = false,
   className = "",
   priorityToggle,
+  labelFn,
 }) => {
   const isBadgeDisabled = (value: string) => {
     if (disabled) return true;
@@ -47,7 +49,7 @@ export const BadgeSelector: React.FC<BadgeSelectorProps> = ({
               }`}
               onClick={() => !isDisabled && onToggle(option)}
             >
-              {option}
+              {labelFn ? labelFn(option) : option}
             </Badge>
           );
         })}

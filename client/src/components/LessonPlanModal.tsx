@@ -4,6 +4,7 @@ import { apiService } from "@/services/apiService";
 import type { Activity } from "@/types/activity";
 import { logger } from "@/services/logger";
 import { Download, Heart } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TimelineItem } from "@/components/ui/TimelineItem";
 import { BreakCard } from "@/components/ui/BreakCard";
 import { TimelineContainer } from "@/components/ui/TimelineContainer";
@@ -35,6 +36,7 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
   onSave,
   isFromFavorites = false,
 }) => {
+  const { t } = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
@@ -78,7 +80,7 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
       setTimeout(() => window.URL.revokeObjectURL(url), 10000);
     } catch (error) {
       logger.error("Error downloading lesson plan", error, "LessonPlanModal");
-      alert("Failed to download lesson plan. Please try again.");
+      alert(t("lessonPlan.downloadFailed"));
     } finally {
       setIsDownloading(false);
     }
@@ -92,7 +94,7 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
       await onSave();
     } catch (error) {
       logger.error("Error saving lesson plan", error, "LessonPlanModal");
-      alert("Failed to save lesson plan to favorites. Please try again.");
+      alert(t("lessonPlan.saveFailed"));
     } finally {
       setIsSaving(false);
     }
@@ -113,12 +115,11 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-2xl font-bold text-foreground">
-              {lessonPlanData.title || "Lesson Plan"}
+              {lessonPlanData.title || t("lessonPlan.title")}
             </h2>
             <p className="text-muted-foreground">
-              {lessonPlanData.activities.length} activities •{" "}
-              {formatDuration(lessonPlanData.totalDurationMinutes)} total
-              duration
+              {t("lessonPlan.activitiesCount", { count: lessonPlanData.activities.length })} •{" "}
+              {formatDuration(lessonPlanData.totalDurationMinutes)} {t("lessonPlan.totalDuration")}
             </p>
           </div>
           <div className="flex gap-2">
@@ -129,12 +130,12 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
                 variant="outline"
               >
                 <Heart className="h-4 w-4 mr-2" />
-                {isSaving ? "Saving..." : "Save Plan"}
+                {isSaving ? t("lessonPlan.saving") : t("lessonPlan.savePlan")}
               </Button>
             )}
             <Button onClick={handleDownload} disabled={isDownloading}>
               <Download className="h-4 w-4 mr-2" />
-              {isDownloading ? "Generating..." : "View PDF"}
+              {isDownloading ? t("lessonPlan.generating") : t("lessonPlan.viewPdf")}
             </Button>
           </div>
         </div>
@@ -143,7 +144,7 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
       {/* Timeline View - Activities and Breaks in Sequence */}
       <div className="space-y-4">
         <h3 className="text-xl font-semibold text-foreground">
-          Lesson Timeline
+          {t("lessonPlan.lessonTimeline")}
         </h3>
 
         {/* Timeline Container */}
@@ -165,7 +166,7 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
       {/* Footer Actions */}
       <div className="mt-8 flex justify-end gap-3">
         <Button variant="outline" onClick={onClose}>
-          Close
+          {t("lessonPlan.close")}
         </Button>
       </div>
     </div>

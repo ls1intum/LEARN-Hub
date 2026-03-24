@@ -40,6 +40,12 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
   const { fieldValues } = useFieldValues();
   const { t } = useTranslation();
 
+  const translateEnum = (category: string, value: string): string => {
+    const key = `enums.${category}.${value}`;
+    const translated = t(key);
+    return translated === key ? value : translated;
+  };
+
   // Note: This form is still using the old state management approach
   // The useForm hook is imported but not yet fully integrated
   // This is a complex form that would benefit from gradual refactoring
@@ -185,7 +191,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           max={15}
           step={1}
           onChange={(value) => updateFormData({ targetAge: value })}
-          unit=" years"
+          unit={t("recommendationForm.unitYears")}
           priorityToggle={
             <PriorityToggle
               category="age_appropriateness"
@@ -203,7 +209,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           max={180}
           step={15}
           onChange={(value) => updateFormData({ targetDuration: value })}
-          unit=" minutes"
+          unit={t("recommendationForm.unitMinutes")}
           priorityToggle={
             <PriorityToggle
               category="duration_fit"
@@ -219,6 +225,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           options={actualFormat}
           selectedValues={formData.format}
           onToggle={(value) => toggleArrayValue("format", value)}
+          labelFn={(value) => translateEnum("format", value)}
         />
 
         {/* Resources Needed */}
@@ -227,6 +234,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           options={actualResources}
           selectedValues={formData.resourcesNeeded}
           onToggle={(value) => toggleArrayValue("resourcesNeeded", value)}
+          labelFn={(value) => translateEnum("resources", value)}
         />
       </FormSection>
 
@@ -238,6 +246,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           options={actualBloomLevels}
           selectedValues={formData.bloomLevels}
           onToggle={(value) => toggleArrayValue("bloomLevels", value)}
+          labelFn={(value) => translateEnum("bloomLevel", value)}
           priorityToggle={
             <PriorityToggle
               category="bloom_level_match"
@@ -253,6 +262,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           options={actualTopics}
           selectedValues={formData.topics}
           onToggle={(value) => toggleArrayValue("topics", value)}
+          labelFn={(value) => translateEnum("topics", value)}
           priorityToggle={
             <PriorityToggle
               category="topic_relevance"

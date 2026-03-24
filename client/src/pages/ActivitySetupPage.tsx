@@ -40,6 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 type Step = "upload" | "metadata" | "documents";
 type MarkdownTab = "deckblatt" | "artikulationsschema" | "hintergrundwissen";
@@ -54,6 +55,7 @@ const MARKDOWN_TAB_LABELS: Record<MarkdownTab, string> = {
 
 export const ActivitySetupPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Flow state
   const [currentStep, setCurrentStep] = useState<Step>("upload");
@@ -104,15 +106,15 @@ export const ActivitySetupPage: React.FC = () => {
 
   const handleFileSelect = (file: File) => {
     if (file.type !== "application/pdf") {
-      setUploadError("Please select a PDF file");
+      setUploadError(t("upload.pdfOnly"));
       return;
     }
     if (file.size === 0) {
-      setUploadError("The selected file is empty");
+      setUploadError(t("upload.fileEmpty"));
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
-      setUploadError("File size must be less than 10MB");
+      setUploadError(t("upload.fileTooLarge"));
       return;
     }
     setSelectedFile(file);
@@ -144,7 +146,7 @@ export const ActivitySetupPage: React.FC = () => {
 
   const handleUploadAndExtract = async () => {
     if (!selectedFile) {
-      setUploadError("Please select a file first");
+      setUploadError(t("upload.pdfRequired"));
       return;
     }
 
@@ -345,11 +347,11 @@ export const ActivitySetupPage: React.FC = () => {
   // ─── Step Indicator ─────────────────────────────────────────────
 
   const steps = [
-    { key: "upload" as Step, label: "Upload PDF", number: 0 },
-    { key: "metadata" as Step, label: "Review Metadata", number: 1 },
+    { key: "upload" as Step, label: t("upload.stepUpload"), number: 0 },
+    { key: "metadata" as Step, label: t("upload.stepMetadata"), number: 1 },
     {
       key: "documents" as Step,
-      label: "Documents",
+      label: t("upload.stepDocuments"),
       number: 2,
     },
   ];
@@ -363,8 +365,8 @@ export const ActivitySetupPage: React.FC = () => {
       {/* Page Header & Step Indicator */}
       <div className="space-y-6 mb-8">
         <PageHeader
-          title="Create Activity"
-          description="Upload a PDF, review the extracted metadata, and finalize the Artikulationsschema."
+          title={t("upload.title")}
+          description={t("upload.description")}
         />
         <StepIndicator
           steps={steps}
@@ -379,7 +381,7 @@ export const ActivitySetupPage: React.FC = () => {
           onForward={
             currentStep === "metadata"
               ? {
-                  label: "Next: Documents",
+                  label: t("upload.nextDocuments"),
                   variant: "outline",
                   size: "icon",
                   ariaLabel: "Next step",
@@ -388,12 +390,12 @@ export const ActivitySetupPage: React.FC = () => {
                 }
               : currentStep === "documents"
                 ? {
-                    label: "Save Activity",
+                    label: t("upload.saveActivity"),
                     variant: "default",
                     onClick: handleSave,
                     icon: <Save className="h-4 w-4" />,
                     loading: isSaving,
-                    loadingLabel: "Saving...",
+                    loadingLabel: t("upload.saving"),
                     disabled: isSaving || isGeneratingSchema,
                   }
                 : undefined
@@ -408,17 +410,15 @@ export const ActivitySetupPage: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Upload className="h-5 w-5" />
-                Upload Activity PDF
+                {t("upload.uploadPdf")}
               </CardTitle>
               <CardDescription>
-                Upload a PDF file containing learning activity information. The
-                system can extract metadata and generate an Artikulationsschema
-                for you.
+                {t("upload.uploadPdfDesc")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="pdf-file">Select PDF File</Label>
+                <Label htmlFor="pdf-file">{t("upload.selectFile")}</Label>
                 <Input
                   id="pdf-file"
                   type="file"
@@ -441,13 +441,13 @@ export const ActivitySetupPage: React.FC = () => {
               >
                 <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-lg font-medium mb-2">
-                  Drag and drop your PDF here
+                  {t("upload.dragDrop")}
                 </p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  or click the file input above
+                  {t("upload.orClickAbove")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Maximum file size: 10MB
+                  {t("upload.maxSize")}
                 </p>
               </div>
 
@@ -465,9 +465,9 @@ export const ActivitySetupPage: React.FC = () => {
 
               <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
                 <div>
-                  <p className="text-sm font-medium">AI options</p>
+                  <p className="text-sm font-medium">{t("upload.aiOptions")}</p>
                   <p className="text-xs text-muted-foreground">
-                    Choose which AI-assisted steps should run automatically.
+                    {t("upload.aiOptionsDesc")}
                   </p>
                 </div>
                 <label className="flex items-start gap-3 cursor-pointer">
@@ -479,10 +479,10 @@ export const ActivitySetupPage: React.FC = () => {
                   />
                   <div className="space-y-1">
                     <span className="text-sm font-medium">
-                      Extract metadata from PDF
+                      {t("upload.extractMetadata")}
                     </span>
                     <p className="text-xs text-muted-foreground">
-                      Prefill the activity form with AI-extracted fields.
+                      {t("upload.extractMetadataDesc")}
                     </p>
                   </div>
                 </label>
@@ -495,12 +495,10 @@ export const ActivitySetupPage: React.FC = () => {
                   />
                   <div className="space-y-1">
                     <span className="text-sm font-medium">
-                      Generate documents after review
+                      {t("upload.generateDocs")}
                     </span>
                     <p className="text-xs text-muted-foreground">
-                      Run AI generation of Deckblatt, Artikulationsschema, and
-                      Hintergrundwissen automatically when you finish the
-                      metadata step.
+                      {t("upload.generateDocsDesc")}
                     </p>
                   </div>
                 </label>
@@ -522,15 +520,15 @@ export const ActivitySetupPage: React.FC = () => {
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
                     {shouldExtractMetadata
-                      ? "Uploading & Extracting..."
-                      : "Uploading..."}
+                      ? t("upload.uploadingExtracting")
+                      : t("upload.uploading")}
                   </>
                 ) : (
                   <>
                     <Upload className="h-4 w-4" />
                     {shouldExtractMetadata
-                      ? "Upload & Extract Metadata"
-                      : "Upload PDF"}
+                      ? t("upload.uploadAndExtract")
+                      : t("upload.uploadOnly")}
                     <ArrowRight className="h-4 w-4 ml-1" />
                   </>
                 )}
@@ -549,10 +547,10 @@ export const ActivitySetupPage: React.FC = () => {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Edit3 className="h-5 w-5" />
-                    Review Extracted Metadata
+                    {t("upload.reviewMetadata")}
                   </CardTitle>
                   <CardDescription>
-                    Review and edit the metadata extracted from your PDF.
+                    {t("upload.reviewMetadataDesc")}
                     {extractionQuality && (
                       <span
                         className={`ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
@@ -566,10 +564,13 @@ export const ActivitySetupPage: React.FC = () => {
                         }`}
                       >
                         {extractionQuality === "not_run"
-                          ? "AI skipped"
-                          : `${extractionQuality} quality (${(
-                              extractionConfidence * 100
-                            ).toFixed(0)}%)`}
+                          ? t("upload.aiSkipped")
+                          : t("upload.quality", {
+                              quality: extractionQuality,
+                              confidence: (
+                                extractionConfidence * 100
+                              ).toFixed(0),
+                            })}
                       </span>
                     )}
                   </CardDescription>
@@ -584,12 +585,12 @@ export const ActivitySetupPage: React.FC = () => {
                   {isRegeneratingMetadata ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Regenerating...
+                      {t("upload.regenerating")}
                     </>
                   ) : (
                     <>
                       <RefreshCw className="h-4 w-4" />
-                      Re-run AI metadata
+                      {t("upload.rerunAi")}
                     </>
                   )}
                 </Button>
@@ -644,7 +645,7 @@ export const ActivitySetupPage: React.FC = () => {
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-muted-foreground hidden sm:block">
-                  Edit the AI draft or generate a fresh version.
+                  {t("upload.editDraft")}
                 </p>
               </div>
               <Button
@@ -657,7 +658,7 @@ export const ActivitySetupPage: React.FC = () => {
                 {isGeneratingSchema ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Generating...
+                    {t("upload.generating")}
                   </>
                 ) : (
                   <>
@@ -667,8 +668,12 @@ export const ActivitySetupPage: React.FC = () => {
                       <Sparkles className="h-4 w-4" />
                     )}
                     {activeTabHasContent
-                      ? `Re-generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`
-                      : `Generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`}
+                      ? t("upload.regenerate", {
+                          doc: MARKDOWN_TAB_LABELS[activeMarkdownTab],
+                        })
+                      : t("upload.generate", {
+                          doc: MARKDOWN_TAB_LABELS[activeMarkdownTab],
+                        })}
                   </>
                 )}
               </Button>
@@ -679,10 +684,12 @@ export const ActivitySetupPage: React.FC = () => {
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
                 <p className="text-lg font-medium">
-                  Generating {MARKDOWN_TAB_LABELS[activeMarkdownTab]}...
+                  {t("upload.generatingDoc", {
+                    doc: MARKDOWN_TAB_LABELS[activeMarkdownTab],
+                  })}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  The AI is analyzing the PDF and creating the document.
+                  {t("upload.generatingDocDesc")}
                 </p>
               </CardContent>
             </Card>
@@ -698,7 +705,7 @@ export const ActivitySetupPage: React.FC = () => {
                       void generateActiveMarkdown();
                     }}
                   >
-                    Retry Generation
+                    {t("upload.retryGeneration")}
                   </Button>
                 </div>
               </CardContent>

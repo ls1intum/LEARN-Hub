@@ -19,6 +19,13 @@ import { useTranslation } from "react-i18next";
 export const SearchHistoryPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const translateEnum = (category: string, value: string): string => {
+    const key = `enums.${category}.${value}`;
+    const translated = t(key);
+    return translated === key ? value : translated;
+  };
+
   const [error, setError] = useState<string | null>(null);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -104,35 +111,35 @@ export const SearchHistoryPage: React.FC = () => {
       formatted.push(t("history.duration", { value: criteria.target_duration }));
     }
     if (criteria.bloomLevel && criteria.bloomLevel !== "any") {
-      formatted.push(t("history.bloomLevel", { value: criteria.bloomLevel }));
+      formatted.push(t("history.bloomLevel", { value: translateEnum("bloomLevel", criteria.bloomLevel as string) }));
     }
     if (
       criteria.bloom_levels &&
       Array.isArray(criteria.bloom_levels) &&
       criteria.bloom_levels.length > 0
     ) {
-      formatted.push(t("history.bloomLevel", { value: (criteria.bloom_levels as string[]).join(", ") }));
+      formatted.push(t("history.bloomLevel", { value: (criteria.bloom_levels as string[]).map((v) => translateEnum("bloomLevel", v)).join(", ") }));
     }
     if (
       criteria.format &&
       Array.isArray(criteria.format) &&
       criteria.format.length > 0
     ) {
-      formatted.push(t("history.format", { value: (criteria.format as string[]).join(", ") }));
+      formatted.push(t("history.format", { value: (criteria.format as string[]).map((v) => translateEnum("format", v)).join(", ") }));
     }
     if (
       criteria.topics &&
       Array.isArray(criteria.topics) &&
       criteria.topics.length > 0
     ) {
-      formatted.push(t("history.topics", { value: (criteria.topics as string[]).join(", ") }));
+      formatted.push(t("history.topics", { value: (criteria.topics as string[]).map((v) => translateEnum("topics", v)).join(", ") }));
     }
     if (
       criteria.resourcesNeeded &&
       Array.isArray(criteria.resourcesNeeded) &&
       criteria.resourcesNeeded.length > 0
     ) {
-      formatted.push(t("history.resources", { value: (criteria.resourcesNeeded as string[]).join(", ") }));
+      formatted.push(t("history.resources", { value: (criteria.resourcesNeeded as string[]).map((v) => translateEnum("resources", v)).join(", ") }));
     }
 
     return formatted.length > 0 ? formatted : [t("history.noSpecificCriteria")];
