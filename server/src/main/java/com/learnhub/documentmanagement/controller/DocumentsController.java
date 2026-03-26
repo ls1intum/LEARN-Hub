@@ -34,11 +34,13 @@ public class DocumentsController {
 
 	@GetMapping("/{documentId}/info")
 	@PreAuthorize("permitAll()")
-	@Operation(summary = "Get document info", description = "Get PDF document metadata")
-	public ResponseEntity<?> getDocumentInfo(@PathVariable UUID documentId) {
+	@Operation(summary = "Get document info", description = "Get PDF document metadata. SOURCE_PDF documents require admin rights.")
+	@SecurityRequirement(name = "BearerAuth")
+	public ResponseEntity<?> getDocumentInfo(@PathVariable UUID documentId, Authentication authentication) {
 		logger.info("GET /api/documents/{}/info - Get document info called", documentId);
 		try {
 			PDFDocument document = pdfService.getPdfDocument(documentId);
+			enforceDownloadAccess(document, authentication);
 
 			Map<String, Object> response = new HashMap<>();
 			response.put("id", document.getId());
@@ -49,6 +51,8 @@ public class DocumentsController {
 			response.put("createdAt", document.getCreatedAt().toString());
 
 			return ResponseEntity.ok(response);
+		} catch (AccessDeniedException e) {
+			throw e;
 		} catch (Exception e) {
 			logger.error("GET /api/documents/{}/info - Document not found: {}", documentId, e.getMessage());
 			return ResponseEntity.status(404).body(ErrorResponse.of("Document not found: " + e.getMessage()));
