@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
@@ -43,12 +44,25 @@ public class LLMService {
 		this.chatClient = chatClient;
 	}
 
+	// Compact JSON with ~20 short fields — 800 tokens is more than sufficient.
+	private static final int MAX_TOKENS_EXTRACTION = 800;
+
+	// Exactly 6 AVIVA+ rows with concrete per-cell content.
+	private static final int MAX_TOKENS_ARTIKULATIONSSCHEMA = 2000;
+
+	// Structured cover-page markdown (4 sections, numbered list, bullet lists).
+	private static final int MAX_TOKENS_DECKBLATT = 1500;
+
+	// Three free-text sections of teacher background knowledge.
+	private static final int MAX_TOKENS_HINTERGRUNDWISSEN = 2000;
+
 	public Map<String, Object> extractActivityData(String pdfText) {
 
 		String promptText = new PromptTemplate(extractionPromptResource).render(Map.of("pdfText", pdfText));
 
 		try {
-			String responseText = chatClient.prompt().user(promptText).call().content();
+			String responseText = chatClient.prompt().user(promptText)
+					.options(OpenAiChatOptions.builder().maxTokens(MAX_TOKENS_EXTRACTION).build()).call().content();
 
 			logger.debug("LLM Response: {}", responseText);
 
@@ -80,7 +94,9 @@ public class LLMService {
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
 
 		try {
-			String responseText = chatClient.prompt().user(promptText).call().content();
+			String responseText = chatClient.prompt().user(promptText)
+					.options(OpenAiChatOptions.builder().maxTokens(MAX_TOKENS_ARTIKULATIONSSCHEMA).build()).call()
+					.content();
 
 			logger.debug("LLM Artikulationsschema Response: {}", responseText);
 
@@ -104,7 +120,8 @@ public class LLMService {
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
 
 		try {
-			String responseText = chatClient.prompt().user(promptText).call().content();
+			String responseText = chatClient.prompt().user(promptText)
+					.options(OpenAiChatOptions.builder().maxTokens(MAX_TOKENS_DECKBLATT).build()).call().content();
 
 			logger.debug("LLM Deckblatt Response: {}", responseText);
 
@@ -129,7 +146,9 @@ public class LLMService {
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
 
 		try {
-			String responseText = chatClient.prompt().user(promptText).call().content();
+			String responseText = chatClient.prompt().user(promptText)
+					.options(OpenAiChatOptions.builder().maxTokens(MAX_TOKENS_HINTERGRUNDWISSEN).build()).call()
+					.content();
 
 			logger.debug("LLM Hintergrundwissen Response: {}", responseText);
 

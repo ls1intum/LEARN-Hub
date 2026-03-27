@@ -1,17 +1,17 @@
-Du bist ein Experte für Pädagogik und Unterrichtsplanung. Erstelle ein Deckblatt (Titelseite) fuer eine Unterrichtsstunde basierend auf dem folgenden Material.
+You are an expert in pedagogy and lesson planning. Create a Deckblatt (Titelseite) for a Unterrichtsstunde based on the following material. Write all output in German.
 {metadataSection}
-WICHTIGE REGELN:
-1. Behandle das Material immer als Rohmaterial fuer ein vollstaendiges, professionell nutzbares Deckblatt. Dein Ziel ist nicht nur Zusammenfassung, sondern didaktische Verdichtung in die vorgegebene Struktur.
-2. Unterscheide zwischen zwei Faellen:
-   - Detaillierte Vorlage: Wenn das Material bereits einen klaren Ablauf, Lernziele, Kompetenzen, Hintergrundinformationen, Differenzierung oder Lehrplanbezuege enthaelt, uebernimm diese Inhalte sichtbar und verdichte sie sinnvoll fuer das Deckblatt.
-   - Skizzenhafte Vorlage: Wenn das Material nur eine grobe Idee oder wenige Hinweise enthaelt, ergaenze die fehlenden Informationen kreativ und plausibel, damit ein vollstaendiges Deckblatt entsteht.
-3. Erfinde keine fachlichen Kernthemen, die nicht zum Material passen. Du darfst aber Ablaufphasen, Kompetenzformulierungen, kurze Ueberblickstexte und passende Lehrplanintegrationen konkretisieren, wenn sie im Material nicht ausformuliert sind.
-4. Verwende die Metadaten der Aktivitaet vorrangig fuer Dauer, Altersbereich, Thema, Materialien und Schwierigkeitsgrad. Wenn Material und Metadaten voneinander abweichen, priorisiere die von der Lehrkraft bestaetigten Metadaten fuer Rahmendaten und das Unterrichtsmaterial fuer die inhaltliche Ausgestaltung.
-5. Wenn das Material bereits viele inhaltliche Details enthaelt, verdichte sie so, dass sie auf dem Deckblatt knapp, aber nicht generisch wirken. Vermeide flache Standardformulierungen.
-6. Wenn Informationen fehlen, formuliere konkrete, realistische und schulpraktische Angaben statt vager Platzhalter.
+IMPORTANT RULES:
+1. Always treat the material as raw input for a complete, professionally usable Deckblatt. Your goal is didactic condensation into the required structure, not mere summarization.
+2. Distinguish between two cases:
+   - Detaillierte Vorlage: If the material already contains a clear Ablauf, Lernziele, Kompetenzen, Hintergrundinformationen, Differenzierung or Lehrplanbezüge, incorporate these contents visibly and condense them sensibly for the Deckblatt.
+   - Skizzenhafte Vorlage: If the material only provides a rough idea or few hints, creatively fill in the missing information so a complete Deckblatt results.
+3. Do not invent subject-matter core topics that do not fit the material. You may concretize Ablaufphasen, Kompetenzformulierungen, short overview texts, and fitting Lehrplanintegrationen when they are not spelled out in the material.
+4. Use the Aktivität metadata primarily for Dauer, Altersbereich, Thema, Materialien, and Schwierigkeitsgrad. If material and Metadaten diverge, prioritize the teacher-confirmed Metadaten for framework data and the Unterrichtsmaterial for content details.
+5. If the material contains many details, condense them so the Deckblatt reads concisely but not generically. Avoid flat, standard formulations.
+6. If information is missing, write concrete, realistic, classroom-practical details rather than vague placeholders.
 
-AUSGABEFORMAT:
-Gib NUR ein Markdown-Dokument mit exakt folgender Struktur zurück:
+OUTPUT FORMAT:
+Return ONLY a Markdown document with exactly this structure:
 
 # Unterrichtsstunde - [Thema der Aktivität]
 
@@ -44,19 +44,20 @@ Gib NUR ein Markdown-Dokument mit exakt folgender Struktur zurück:
 - [Lehrplanbezug 1]
 - [Lehrplanbezug 2]
 
-RICHTLINIEN:
-- Überblick: Fasse Dauer, Alter, Schwierigkeitsgrad und benoetigte Materialien zusammen. Schreibe eine kurze Einleitung, die Thema, Lernidee und Charakter der Stunde greifbar macht. Bei detailreicher Vorlage sollen erkennbare Besonderheiten der Stunde erhalten bleiben.
-- Ablauf: Gliedere den Unterrichtsverlauf in nummerierte Phasen mit geschaetzten oder uebernommenen Zeitangaben. Nutze bei Bedarf Unterphasen, wenn die Quelle reichhaltig ist. Der Ablauf soll konkret und anschlussfaehig an das Material sein, nicht generisch.
-- Schlüsselkompetenzen: Liste die wichtigsten Kompetenzen auf, die die Schueler erwerben. Formuliere sie moeglichst konkret und am Thema orientiert.
-- Integrationspunkte: Nenne passende Lehrplanbezuege oder fachliche Anschlussstellen (z.B. Faecher, Lernbereiche, Medienbildung, Problemlösen, Kommunikation). Leite sie aus dem Material ab und erfinde keine unpassenden Bezüge.
+SECTION GUIDELINES:
+- Überblick: Summarize Dauer, Alter, Schwierigkeitsgrad, and required Materialien. Write a short introduction that captures Thema, learning idea, and character of the lesson. Preserve recognizable special features of the lesson for rich materials.
+- Ablauf: Structure the Unterrichtsverlauf into numbered phases with estimated or taken-over Zeitangaben. Use Unterphasen when the source is rich. The Ablauf must be concrete and connected to the material, not generic.
+- Schlüsselkompetenzen: List the key Kompetenzen that Schülerinnen und Schüler will acquire. Formulate them as concretely as possible, oriented to the Thema.
+- Integrationspunkte: Name fitting Lehrplanbezüge or subject connection points (e.g. Fächer, Lernbereiche, Medienbildung, Problemlösen, Kommunikation). Derive them from the material; do not invent unrelated references.
 
-QUALITAETSPRUEFUNG VOR DER AUSGABE:
-- Wurden bei detailreicher Vorlage erkennbare Inhalte, Kompetenzen und Ablaufschritte sichtbar uebernommen?
-- Wurden bei skizzenhafter Vorlage die fehlenden Elemente sinnvoll und konkret ergaenzt?
-- Wirkt das Deckblatt kompakt, aber nicht oberflaechlich?
-- Ist der Ablauf plausibel und anschlussfaehig an das Thema?
+PRE-OUTPUT QUALITY CHECK:
+- Were recognizable contents, Kompetenzen, and Ablaufschritte visibly incorporated for rich materials?
+- Were missing elements sensibly and concretely added for thin materials?
+- Does the Deckblatt feel compact but not superficial?
+- Is the Ablauf plausible and connected to the Thema?
+- Is all output written in German?
 
-Gib NUR das Markdown zurück. Keine Erklärungen, keine Code-Block-Umschließungen.
+Return ONLY the Markdown. No explanations, no code block wrappers.
 
 Unterrichtsmaterial:
 {pdfText}

@@ -53,7 +53,7 @@ const defaultFormData: ActivityFormData = {
   format: "",
   bloomLevel: "",
   durationMinMinutes: 15,
-  durationMaxMinutes: 30,
+  durationMaxMinutes: 15,
   mentalLoad: "medium",
   physicalEnergy: "medium",
   prepTimeMinutes: 5,
@@ -61,6 +61,22 @@ const defaultFormData: ActivityFormData = {
   resourcesNeeded: [],
   topics: [],
   documentId: null,
+};
+
+const normalizeFormData = (
+  initialData?: Partial<ActivityFormData>,
+): ActivityFormData => {
+  const mergedData = {
+    ...defaultFormData,
+    ...initialData,
+  };
+
+  if (initialData?.durationMaxMinutes == null) {
+    mergedData.durationMaxMinutes =
+      initialData?.durationMinMinutes ?? defaultFormData.durationMinMinutes;
+  }
+
+  return mergedData;
 };
 
 export const ActivityForm: React.FC<ActivityFormProps> = ({
@@ -77,20 +93,15 @@ export const ActivityForm: React.FC<ActivityFormProps> = ({
 }) => {
   const { fieldValues } = useFieldValues();
   const { t } = useTranslation();
-  const [formData, setFormData] = useState<ActivityFormData>({
-    ...defaultFormData,
-    ...initialData,
-  });
+  const [formData, setFormData] = useState<ActivityFormData>(() =>
+    normalizeFormData(initialData),
+  );
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!initialData) return;
 
-    setFormData((prev) => ({
-      ...prev,
-      ...defaultFormData,
-      ...initialData,
-    }));
+    setFormData(normalizeFormData(initialData));
   }, [initialData]);
 
   // Form field options - use translated labels

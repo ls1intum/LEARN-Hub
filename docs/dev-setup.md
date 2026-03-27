@@ -10,6 +10,7 @@ Ensure you have the following tools installed:
 - **Maven 3.9+** - Required for building (or use included wrapper `./mvnw`)
 - **npm** - Required for running the client locally
 - **Docker** - Required for running PostgreSQL locally
+- **LibreOffice** - Required when running the Spring Boot server locally because DOCX generation uses `soffice`
 
 ### Verifying Prerequisites
 
@@ -22,7 +23,18 @@ npm -version
 
 # Check Docker version
 docker --version
+
+# Check LibreOffice / soffice availability
+soffice --version
 ```
+
+On macOS, install LibreOffice with:
+
+```bash
+brew install --cask libreoffice
+```
+
+The local development profile expects LibreOffice at `/Applications/LibreOffice.app/Contents/MacOS/soffice`.
 
 ## Environment Variables
 
@@ -53,6 +65,8 @@ make setup
 This will:
 - Resolve Java dependencies for the Spring Boot server
 - Install npm dependencies for the React client
+
+`make setup` does not install LibreOffice. Install that separately before starting the server locally.
 
 ### 2. Database Setup
 
@@ -185,6 +199,8 @@ To run the entire stack (PostgreSQL + Spring Boot + React) in Docker:
 ```bash
 docker compose -f docker/compose.yml up --build
 ```
+
+The server Docker image already installs LibreOffice (`libreoffice-writer`), so no extra host setup is required for containerized runs.
 
 Access:
 - Client: http://localhost:3001

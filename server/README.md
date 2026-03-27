@@ -19,6 +19,15 @@ Spring Boot REST API server for educational activity recommendations.
 - Java 21 or higher
 - **Maven Wrapper included** - no need to install Maven separately
 - Docker (for PostgreSQL and containerised deployment)
+- LibreOffice (required for local DOCX generation via `soffice`)
+
+On macOS, install it with:
+
+```bash
+brew install --cask libreoffice
+```
+
+The local development profile uses `/Applications/LibreOffice.app/Contents/MacOS/soffice`.
 
 ### Local Development
 
@@ -129,6 +138,8 @@ make test
 ```
 
 ## Docker Deployment
+
+The server container already installs LibreOffice (`libreoffice-writer`), so no extra host dependency is needed when running the server in Docker.
 
 ```bash
 # Build and run entire stack

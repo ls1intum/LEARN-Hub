@@ -671,16 +671,18 @@ export const LoginPage: React.FC = () => {
 
           {message && (
             <Alert
-              className={`${message.includes("successful")
-                ? "border-success/20 bg-success/5"
-                : "border-destructive/20 bg-destructive/5"
-                }`}
+              className={`${
+                message.includes("successful")
+                  ? "border-success/20 bg-success/5"
+                  : "border-destructive/20 bg-destructive/5"
+              }`}
             >
               <AlertCircle
-                className={`h-4 w-4 ${message.includes("successful")
-                  ? "text-success"
-                  : "text-destructive"
-                  }`}
+                className={`h-4 w-4 ${
+                  message.includes("successful")
+                    ? "text-success"
+                    : "text-destructive"
+                }`}
               />
               <AlertDescription
                 className={

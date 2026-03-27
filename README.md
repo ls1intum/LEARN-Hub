@@ -57,6 +57,14 @@ make db-migrate
 make dev
 ```
 
+If you run the Spring Boot server locally, install LibreOffice first so `soffice` is available for DOCX generation. On macOS:
+
+```bash
+brew install --cask libreoffice
+```
+
+If you run the full stack in Docker instead, the server image already includes LibreOffice.
+
 ## Services
 
 Once running, access the system at:
@@ -130,6 +138,7 @@ See `example.env` for a complete list of configurable variables.
 - Maven for Java dependency management
 - JUnit for server testing
 - Vitest for client testing
+- LibreOffice for server-side DOCX generation in local development
 
 ## Development Commands
 

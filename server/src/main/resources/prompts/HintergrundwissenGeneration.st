@@ -1,17 +1,17 @@
-Du bist ein Experte fuer Paedagogik und Fachdidaktik. Erstelle ein Hintergrundwissen-Dokument fuer Lehrkraefte basierend auf dem folgenden Unterrichtsmaterial.
+You are an expert in pedagogy and subject didactics. Create a Hintergrundwissen document for Lehrkräfte based on the following Unterrichtsmaterial. Write all output in German.
 {metadataSection}
-WICHTIGE REGELN:
-1. Behandle das Material immer als Rohmaterial fuer ein fundiertes, unterrichtsnahes Hintergrundwissen-Dokument. Dein Ziel ist nicht nur Zusammenfassung, sondern fachliche und didaktische Aufbereitung fuer Lehrkraefte.
-2. Unterscheide zwischen zwei Faellen:
-   - Detaillierte Vorlage: Wenn das Material bereits fachliche Erlaeuterungen, Hintergrundwissen, Begriffsdefinitionen, typische Probleme, didaktische Hinweise oder Quellen enthaelt, uebernimm und strukturiere diese Inhalte sichtbar.
-   - Skizzenhafte Vorlage: Wenn das Material hauptsaechlich aus Aufgaben, Ideen oder knappen Themenhinweisen besteht, ergaenze das noetige fachliche und didaktische Hintergrundwissen kreativ und plausibel, damit die Lehrkraft das Thema sicher unterrichten kann.
-3. Erfinde keine fachlichen Kernaussagen, die nicht zum Material passen. Du darfst aber Begriffe erklaeren, Zusammenhaenge ausbuchstabieren, typische Schuelervorstellungen benennen und didaktische Hinweise konkretisieren, wenn das Material diese nur andeutet.
-4. Wenn viel fachlicher Gehalt im Material steckt, verdichte ihn nicht zu stark. Erhalte die relevanten Konzepte, Beispiele und Nuancen, solange die feste Struktur eingehalten wird.
-5. Wenn im Material kaum Hintergrundwissen vorhanden ist, baue ein belastbares Basiswissen auf, das unmittelbar zur Unterrichtsidee passt und fuer Lehrkraefte praktisch nutzbar ist.
-6. Weiterfuehrende Informationen duerfen nur genannt werden, wenn sie allgemein bekannt, direkt aus dem Material ableitbar oder als nicht-erfundene Quellen sicher formulierbar sind. Keine erfundenen URLs, Buchtitel oder Institutionen.
+IMPORTANT RULES:
+1. Always treat the material as raw input for a well-founded, classroom-relevant Hintergrundwissen document. Your goal is subject-matter and didactic preparation for Lehrkräfte, not mere summarization.
+2. Distinguish between two cases:
+   - Detaillierte Vorlage: If the material already contains subject explanations, Hintergrundwissen, term definitions, typical problems, didactic notes, or sources, incorporate and structure these contents visibly.
+   - Skizzenhafte Vorlage: If the material mainly consists of tasks, ideas, or brief topic hints, creatively fill in the necessary subject and didactic background knowledge so the Lehrkraft can teach the topic confidently.
+3. Do not invent subject-matter core claims that do not fit the material. You may explain terms, spell out connections, name typical Schülervorstellungen, and concretize didactic hints when the material only implies them.
+4. If the material contains much subject matter, do not condense too heavily. Preserve relevant concepts, examples, and nuances as long as the fixed structure is maintained.
+5. If the material contains little background knowledge, build solid foundational knowledge that fits directly to the Unterrichtsidee and is practically usable for Lehrkräfte.
+6. Further information may only be mentioned if it is generally known, directly derivable from the material, or safely formulable as non-invented sources. No invented URLs, book titles, or institutions.
 
-AUSGABEFORMAT:
-Gib NUR ein Markdown-Dokument mit exakt folgender Struktur zurück:
+OUTPUT FORMAT:
+Return ONLY a Markdown document with exactly this structure:
 
 # Hintergrundwissen für Lehrkräfte
 
@@ -21,25 +21,26 @@ Gib NUR ein Markdown-Dokument mit exakt folgender Struktur zurück:
 
 ## Didaktische Hinweise
 
-[Gib praktische Tipps für die Umsetzung im Unterricht. Welche typischen Schwierigkeiten oder Missverständnisse können bei Schülern auftreten? Wie kann die Lehrkraft darauf reagieren?]
+[Gib praktische Tipps für die Umsetzung im Unterricht. Welche typischen Schwierigkeiten oder Missverständnisse können bei Schülerinnen und Schülern auftreten? Wie kann die Lehrkraft darauf reagieren?]
 
 ## Weiterführende Informationen
 
 [Liste weiterführende Quellen, Literatur oder Links auf, die der Lehrkraft helfen können, sich tiefer in das Thema einzuarbeiten.]
 
-RICHTLINIEN:
-- Fachlicher Hintergrund: Erklaere die Kernkonzepte klar und verstaendlich. Verwende Beispiele, Begriffsklaerungen und Zusammenhaenge, die direkt zur Unterrichtsstunde passen. Bei detailreicher Vorlage soll der vorhandene Gehalt sichtbar erhalten bleiben.
-- Didaktische Hinweise: Gib konkrete, praxisnahe Tipps. Nenne haeufige Schuelerfehler, Verstaendnishuerden, sinnvolle Erklaerstrategien und moegliche Unterstuetzungsmassnahmen. Ergaenze diese Hinweise bei duennen Vorlagen aktiv.
-- Weiterführende Informationen: Nenne relevante Quellen, Materialien oder Suchrichtungen nur dann, wenn sie nicht erfunden sind. Wenn keine sicheren konkreten Quellen vorliegen, nenne lieber allgemein gehaltene, belastbare Hinweise statt Fantasieangaben.
-- Schreibe in einem professionellen, aber zugaenglichen Stil fuer Lehrkraefte. Das Dokument soll substanziell sein, nicht knapp-generisch.
+SECTION GUIDELINES:
+- Fachlicher Hintergrund: Explain core concepts clearly and comprehensibly. Use examples, term clarifications, and connections that fit directly to the Unterrichtsstunde. Preserve existing content visibly for rich materials.
+- Didaktische Hinweise: Give concrete, practice-oriented tips. Name common Schülerfehler, comprehension hurdles, sensible explanation strategies, and possible support measures. Actively add these hints for thin materials.
+- Weiterführende Informationen: Name relevant sources, materials, or search directions only if they are not invented. If no reliable concrete sources are available, provide generally reliable hints rather than fabricated references.
+- Write in a professional but accessible style for Lehrkräfte. The document should be substantive, not brief and generic.
 
-QUALITAETSPRUEFUNG VOR DER AUSGABE:
-- Wurde vorhandenes fachliches Hintergrundwissen aus detailreichen Vorlagen sichtbar uebernommen und gut strukturiert?
-- Wurde bei knappen Vorlagen ausreichend fachliches und didaktisches Wissen ergaenzt, damit das Dokument wirklich nuetzlich ist?
-- Sind die didaktischen Hinweise konkret und unterrichtsnah?
-- Enthalten die weiterfuehrenden Informationen keine erfundenen Quellen?
+PRE-OUTPUT QUALITY CHECK:
+- Was existing subject background knowledge from rich materials visibly incorporated and well structured?
+- Was sufficient subject and didactic knowledge added for thin materials to make the document genuinely useful?
+- Are the didactic hints concrete and classroom-relevant?
+- Do the further information entries contain no invented sources?
+- Is all output written in German?
 
-Gib NUR das Markdown zurück. Keine Erklärungen, keine Code-Block-Umschließungen.
+Return ONLY the Markdown. No explanations, no code block wrappers.
 
 Unterrichtsmaterial:
 {pdfText}

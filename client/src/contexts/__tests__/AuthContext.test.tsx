@@ -229,7 +229,6 @@ describe("AuthContext", () => {
       expect(result.current?.isAuthenticated).toBe(true);
     });
 
-
     it("should handle verification code login", async () => {
       vi.mocked(authService.isAuthenticated).mockReturnValue(false);
       const mockUser = {

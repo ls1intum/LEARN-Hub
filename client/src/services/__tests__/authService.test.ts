@@ -104,7 +104,6 @@ describe("AuthService", () => {
 
       expect(header).toEqual({});
     });
-
   });
 
   describe("Token Validation", () => {

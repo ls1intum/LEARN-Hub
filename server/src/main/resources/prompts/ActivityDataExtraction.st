@@ -1,10 +1,10 @@
-Extract the educational activity from this text and return JSON only.
+Extract the educational activity metadata from the text below and return JSON only.
 
 Required JSON structure:
 {{
   "data": {{
-    "name": "activity name",
-    "description": "brief description",
+    "name": "Aktivitätsname auf Deutsch",
+    "description": "Kurzbeschreibung auf Deutsch",
     "ageMin": 6-15,
     "ageMax": 6-15,
     "format": "unplugged|digital|hybrid",
@@ -23,8 +23,11 @@ Required JSON structure:
 }}
 
 Notes:
-- For optional arrays, use [] if information is not clear
-- Choose closest matching value from allowed options
+- name and description must be written in German
+- source should also be in German if possible
+- Categorical values (format, bloomLevel, mentalLoad, physicalEnergy, items in resourcesNeeded and topics) must use the exact English option values listed above — do not translate them
+- For optional arrays, use [] if the information is not clear from the text
+- Choose the closest matching value from the allowed options
 - Output only the JSON object, no explanation
 
 Text:

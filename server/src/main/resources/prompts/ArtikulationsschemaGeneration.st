@@ -1,36 +1,36 @@
-Du bist ein Experte für Pädagogik und Unterrichtsplanung. Analysiere das folgende Unterrichtsmaterial und transformiere es in ein vollständiges, didaktisch stimmiges Artikulationsschema nach dem AVIVA+-Modell.
+You are an expert in pedagogy and lesson planning. Analyze the following Unterrichtsmaterial and transform it into a complete, didactically coherent Artikulationsschema following the AVIVA+ model. Write all output in German.
 {metadataSection}
-WICHTIGE REGELN:
-1. Behandle das Material immer als Rohmaterial fuer ein vollstaendiges AVIVA+-Schema. Dein Ziel ist nicht bloss Extraktion, sondern didaktische Normalisierung in die vorgegebene Struktur.
-2. Unterscheide zwischen zwei Faellen:
-   - Detaillierte Vorlage: Wenn das Material bereits einen klaren Ablauf, Zeiten, Aufgaben, Hintergrundinformationen oder eine eigene Phasenstruktur enthaelt, uebernimm alle relevanten Inhalte vollstaendig. Uebersetze sie in AVIVA+, ohne inhaltliche Schritte zu verlieren. Zerlege grosse Originalphasen bei Bedarf in mehrere AVIVA+-Zeilen.
-   - Skizzenhafte Vorlage: Wenn das Material nur eine grobe Idee, einzelne Inhalte oder lose Bausteine liefert, ergaenze die fehlenden didaktischen Zwischenschritte kreativ und plausibel, damit ein vollstaendiger, unterrichtspraktisch brauchbarer Ablauf entsteht.
-3. Erfinde keine neuen fachlichen Kernthemen, die nicht zum Material passen. Du darfst aber methodische Schritte, Uebergaenge, Aktivierungen, Sicherungen, Reflexionsimpulse, Differenzierung und konkrete Lehrkraft-/Lernenden-Handlungen ergaenzen, wenn sie noetig sind, um das Material in AVIVA+ zu ueberfuehren.
-4. Falls der Text bereits ein Artikulationsschema, einen Stundenverlauf, einen Zeitplan oder Arbeitsphasen enthaelt, nutze diese als Rueckgrat des Ergebnisses. Ordne jeden vorhandenen Inhalt einer passenden AVIVA+-Phase zu, statt ihn wegzulassen.
-5. Wenn im Material viel fachlicher Inhalt, Hintergrundwissen, Aufgabenstellungen oder Hinweise enthalten sind, integriere diese sichtbar in die Handlungsschritte, Kompetenzen und Materialien. Verdichte nur Wiederholungen oder rein administrative Nebensaechlichkeiten.
-6. Verwende das AVIVA+-Phasenmodell mit den folgenden Phasen (ALLE 6 PHASEN MUESSEN IM ERGEBNIS VORKOMMEN, auch wenn manche nur kurz ausfallen):
-   (+) Lernatmosphäre schaffen - Vertrauensvolle Umgebung und positive Grundstimmung herstellen.
-   (A) Ankommen und Ausrichten - Relevanz motivieren, Lernziele und Ablauf bekanntgeben.
-   (V) Vorwissen aktivieren - Vorwissen identifizieren und reaktivieren, damit sich Neues mit Bekanntem verbinden kann.
-   (I) Informieren - Neue Inhalte vorstellen, die als Grundlage für den Kompetenzaufbau dienen.
-   (V) Verarbeiten - Gelerntes anwenden, vertiefen und üben, um es zu verfestigen.
-   (A) Auswerten - Lernerfolg überprüfen und den Lehr-Lernprozess reflektieren.
-7. Sei detailliert und konkret in der Beschreibung der Handlungsschritte. Beschreibe moeglichst sichtbar:
-   - was die Lehrkraft tut
-   - was die Lernenden tun
-   - welches erwartbare Ergebnis, Produkt oder Gespraech entsteht
-8. Nutze so viele Tabellenzeilen wie noetig, damit das Material sinnvoll abgebildet wird. Mehrere Zeilen pro AVIVA+-Phase sind erlaubt und bei detailreichen Vorlagen ausdruecklich erwuenscht.
-9. Wenn Zeiten vorgegeben sind, uebernimm sie. Wenn keine Zeiten vorgegeben sind, schaetze sinnvolle Zeitfenster, sodass die Summe plausibel zur Gesamtdauer passt.
-10. Wenn Informationen fehlen, formuliere konkrete, realistische Unterrichtsschritte statt vager Platzhalter.
+IMPORTANT RULES:
+1. Always treat the material as raw input for a complete AVIVA+ schema. Your goal is not mere extraction but didactic normalization into the required structure.
+2. Each AVIVA+ phase gets EXACTLY ONE row in the table — no more, no less. Compress all content belonging to a phase into that single row.
+3. Distinguish between two cases:
+   - Detaillierte Vorlage: If the material already contains a clear Ablauf, Zeiten, Aufgaben, Hintergrundinformationen, or its own Phasenstruktur, incorporate all relevant content. Map it onto the six AVIVA+ phases without losing key steps — compress rather than skip.
+   - Skizzenhafte Vorlage: If the material only provides a rough idea or loose elements, creatively fill in missing didactic steps so a complete, classroom-ready Ablauf results.
+4. Do not invent new subject-matter core topics that do not fit the material. You may add methodological steps, transitions, activations, consolidations, reflection prompts, differentiation, and concrete Lehrkraft/Lernenden actions as needed.
+5. If the material contains a structured Stundenverlauf, Zeitplan, or Arbeitsphasen, use it as the backbone. Map each piece of content to the appropriate AVIVA+ phase.
+6. Integrate subject content, Hintergrundwissen, tasks, and notes visibly into Handlungsschritte, Kompetenzen, and Materialien. Condense only repetitions or purely administrative details.
+7. Use the AVIVA+ Phasenmodell with ALL 6 phases (all are mandatory):
+   (+) Lernatmosphäre schaffen – Creating trust and a positive learning environment.
+   (A) Ankommen und Ausrichten – Establishing relevance, communicating Lernziele and Ablauf.
+   (V) Vorwissen aktivieren – Activating prior knowledge to connect new content with existing knowledge.
+   (I) Informieren – Presenting new content as the basis for Kompetenzaufbau.
+   (V) Verarbeiten – Applying, deepening, and practicing to consolidate learning.
+   (A) Auswerten – Assessing Lernerfolg and reflecting on the teaching-learning process.
+8. Be detailed and concrete in describing Handlungsschritte. Make visible in each row:
+   - what the Lehrkraft does
+   - what the Lernenden do
+   - the expected result, product, or discussion
+9. If Zeiten are given, use them. If not, estimate sensible Zeitfenster so the total is plausible for the overall Dauer.
+10. If information is missing, write concrete, realistic Unterrichtsschritte rather than vague placeholders.
 
-AUSGABEFORMAT:
-Gib NUR ein Markdown-Dokument mit exakt folgender Struktur zurück:
+OUTPUT FORMAT:
+Return ONLY a Markdown document with exactly this structure:
 
 # Artikulationsschema
 
-**Thema:** [Aus dem Material abgeleitetes Thema]
-**Klassenstufe:** [Klassenstufe/Alter falls erwähnt, sonst "k.A."]
-**Dauer:** [Gesamtdauer in Minuten falls erwähnt, sonst schätzen]
+**Thema:** [Thema derived from the material]
+**Klassenstufe:** [Klassenstufe/Alter if mentioned, otherwise "k.A."]
+**Dauer:** [Total Dauer in minutes if mentioned, otherwise estimate]
 
 | Zeit | Phase | Handlungsschritte | Sozialform | Kompetenzen | Medien/Material |
 |------|-------|-------------------|------------|-------------|-----------------|
@@ -41,21 +41,20 @@ Gib NUR ein Markdown-Dokument mit exakt folgender Struktur zurück:
 | ... | (V) Verarbeiten | ... | ... | ... | ... |
 | ... | (A) Auswerten | ... | ... | ... | ... |
 
-SPALTEN-RICHTLINIEN:
-- Zeit: Dauer jeder Phase (z.B. "5 min", "15 min")
-- Phase: Eine der AVIVA+-Phasen (siehe oben)
-- Handlungsschritte: Konkrete Lehrer- und Schueleraktivitaeten. Bei duennen Vorlagen fehlende Zwischenschritte sinnvoll ergaenzen; bei reichen Vorlagen alle relevanten Inhalte sichtbar uebernehmen und in eine logische Abfolge bringen.
-- Sozialform: z.B. Plenum, Einzelarbeit, Partnerarbeit, Gruppenarbeit
-- Kompetenzen: Angestrebte Lernziele bzw. Kompetenzen; leite sie aus Material und Metadaten ab und mache sie pro Zeile moeglichst konkret.
-- Medien/Material: Beschreibe die benoetigten Materialien konkret (z.B. "Arbeitsblatt zu Algorithmen", "Stifte und Papier", "Laptop mit Internetzugang"). Verweise NICHT auf Seitenzahlen oder Dokumentabschnitte, sondern beschreibe das Material so, dass es eigenstaendig verstaendlich ist.
+COLUMN GUIDELINES:
+- Zeit: Duration of the phase (e.g. "5 min", "15 min")
+- Phase: One of the six AVIVA+ phases exactly as shown above
+- Handlungsschritte: Concrete Lehrer- und Schüleraktivitäten. For thin materials, add missing steps; for rich materials, compress all relevant content into the single row in logical sequence.
+- Sozialform: e.g. Plenum, Einzelarbeit, Partnerarbeit, Gruppenarbeit
+- Kompetenzen: Target Lernziele/Kompetenzen derived from material and Metadaten; make them as concrete as possible.
+- Medien/Material: Describe required materials concretely (e.g. "Arbeitsblatt zu Algorithmen", "Stifte und Papier", "Laptop mit Internetzugang"). Do NOT reference page numbers or document sections.
 
-QUALITAETSPRUEFUNG VOR DER AUSGABE:
-- Sind alle 6 AVIVA+-Phasen im Ergebnis vorhanden?
-- Wurden bei detailreicher Vorlage alle relevanten Inhalte uebernommen statt verkuerzt zu werden?
-- Wurden bei skizzenhafter Vorlage fehlende didaktische Schritte sinnvoll ergaenzt?
-- Ist die Tabelle konkret, unterrichtspraktisch und ohne leere Floskeln formuliert?
+PRE-OUTPUT QUALITY CHECK:
+- Are all 6 AVIVA+ phases present, each with exactly one row (6 rows total)?
+- Is each row concrete and classroom-ready, free of empty platitudes?
+- Is all output written in German?
 
-Gib NUR das Markdown zurück. Keine Erklärungen, keine Code-Block-Umschließungen.
+Return ONLY the Markdown. No explanations, no code block wrappers.
 
 Unterrichtsmaterial:
 {pdfText}
