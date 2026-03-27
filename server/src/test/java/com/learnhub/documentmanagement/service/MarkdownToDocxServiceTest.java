@@ -71,14 +71,13 @@ class MarkdownToDocxServiceTest {
 	}
 
 	@Test
-	void renderMergedDocxCombinesSections() {
+	void renderMergedDocxConvertsEachSectionIndividually() {
 		byte[] result = service.renderMergedDocx(List.of("# A", "# B"), List.of(false, true), "Test");
 
 		assertThat(result).isNotNull();
-		String html = new String(stubConversionService.lastInput);
-		assertThat(html).contains("A</h1>");
-		assertThat(html).contains("B</h1>");
-		assertThat(html).contains("page-break-before");
+		// Each section is converted individually, so the stub should have been called
+		// twice
+		assertThat(stubConversionService.callCount).isEqualTo(2);
 	}
 
 	@Test
@@ -91,14 +90,12 @@ class MarkdownToDocxServiceTest {
 	void renderMarkdownToDocxWrapsConversionException() {
 		stubConversionService.failWith = new IOException("conversion failed");
 
-		assertThatThrownBy(() -> service.renderMarkdownToDocx("text"))
-				.isInstanceOf(RuntimeException.class)
+		assertThatThrownBy(() -> service.renderMarkdownToDocx("text")).isInstanceOf(RuntimeException.class)
 				.hasMessageContaining("conversion failed");
 	}
 
 	private static byte[] createMinimalDocx() {
-		try (XWPFDocument doc = new XWPFDocument();
-				ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+		try (XWPFDocument doc = new XWPFDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 			doc.createParagraph().createRun().setText("stub");
 			doc.write(out);
 			return out.toByteArray();
@@ -111,6 +108,7 @@ class MarkdownToDocxServiceTest {
 
 		private final byte[] output;
 		byte[] lastInput;
+		int callCount;
 		IOException failWith;
 
 		StubConversionService(byte[] output) {
@@ -123,6 +121,7 @@ class MarkdownToDocxServiceTest {
 				throw failWith;
 			}
 			this.lastInput = htmlBytes;
+			this.callCount++;
 			return output;
 		}
 	}

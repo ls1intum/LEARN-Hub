@@ -66,10 +66,8 @@ public class LibreOfficeConversionService {
 
 	private void runLibreOffice(Path outDir, String userProfileUri, String targetFormat, Path inputFile)
 			throws IOException {
-		ProcessBuilder pb = new ProcessBuilder(libreofficePath, "--headless", "--convert-to", targetFormat,
-				"--outdir", outDir.toString(),
-				"-env:UserInstallation=" + userProfileUri,
-				inputFile.toString());
+		ProcessBuilder pb = new ProcessBuilder(libreofficePath, "--headless", "--convert-to", targetFormat, "--outdir",
+				outDir.toString(), "-env:UserInstallation=" + userProfileUri, inputFile.toString());
 		pb.redirectErrorStream(true);
 
 		try {
@@ -79,8 +77,7 @@ public class LibreOfficeConversionService {
 			boolean finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS);
 			if (!finished) {
 				process.destroyForcibly();
-				throw new IOException(
-						"LibreOffice conversion timed out after " + timeoutSeconds + " seconds");
+				throw new IOException("LibreOffice conversion timed out after " + timeoutSeconds + " seconds");
 			}
 
 			int exitCode = process.exitValue();

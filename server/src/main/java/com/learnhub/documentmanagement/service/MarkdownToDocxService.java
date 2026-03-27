@@ -26,25 +26,24 @@ public class MarkdownToDocxService {
 	 * Matches the iText-specific running header/footer divs that should not appear
 	 * as body content in the DOCX.
 	 */
-	private static final Pattern RUNNING_ELEMENT_PATTERN = Pattern.compile(
-			"<div\\s+id=\"(?:page-header|footer-date|footer-center)\"[^>]*>.*?</div>\\s*",
-			Pattern.DOTALL);
+	private static final Pattern RUNNING_ELEMENT_PATTERN = Pattern
+			.compile("<div\\s+id=\"(?:page-header|footer-date|footer-center)\"[^>]*>.*?</div>\\s*", Pattern.DOTALL);
 
-	/** Matches {@code <table}, {@code <th}, {@code <td}, {@code <thead} opening tags. */
-	private static final Pattern TABLE_TAG_PATTERN = Pattern.compile(
-			"<(table|th|td)(\\s|>)", Pattern.CASE_INSENSITIVE);
+	/**
+	 * Matches {@code <table}, {@code <th}, {@code <td}, {@code <thead} opening
+	 * tags.
+	 */
+	private static final Pattern TABLE_TAG_PATTERN = Pattern.compile("<(table|th|td)(\\s|>)", Pattern.CASE_INSENSITIVE);
 
 	/** Matches {@code <thead>} sections to find header rows. */
-	private static final Pattern THEAD_PATTERN = Pattern.compile(
-			"<thead>(.*?)</thead>", Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
+	private static final Pattern THEAD_PATTERN = Pattern.compile("<thead>(.*?)</thead>",
+			Pattern.DOTALL | Pattern.CASE_INSENSITIVE);
 
 	/** Matches {@code <th} tags inside thead for inline styling. */
-	private static final Pattern TH_TAG_PATTERN = Pattern.compile(
-			"<th(\\s|>)", Pattern.CASE_INSENSITIVE);
+	private static final Pattern TH_TAG_PATTERN = Pattern.compile("<th(\\s|>)", Pattern.CASE_INSENSITIVE);
 
 	/** Matches any opening HTML tag for font injection. */
-	private static final Pattern HEADING_TAG_PATTERN = Pattern.compile(
-			"<(h[1-6])(\\s|>)", Pattern.CASE_INSENSITIVE);
+	private static final Pattern HEADING_TAG_PATTERN = Pattern.compile("<(h[1-6])(\\s|>)", Pattern.CASE_INSENSITIVE);
 
 	private final MarkdownToHtmlService markdownToHtmlService;
 	private final LibreOfficeConversionService libreOfficeConversionService;
@@ -94,20 +93,17 @@ public class MarkdownToDocxService {
 			throw new IllegalArgumentException("markdowns and landscapes lists must have the same size");
 		}
 		try {
-			StringBuilder combinedBody = new StringBuilder();
+			// Convert each section individually to DOCX via LibreOffice
+			List<byte[]> sectionDocxBytes = new java.util.ArrayList<>();
 			for (int i = 0; i < markdowns.size(); i++) {
-				if (i > 0) {
-					combinedBody.append("<div style=\"page-break-before: always;\"></div>\n");
-				}
-				String sectionHtml = markdownToHtmlService.renderMarkdownToHtml(markdowns.get(i), landscapes.get(i),
-						activityName);
-				combinedBody.append(extractBody(sectionHtml));
+				String sectionHtml = prepareHtmlForDocx(
+						markdownToHtmlService.renderMarkdownToHtml(markdowns.get(i), landscapes.get(i), activityName));
+				byte[] rawDocx = libreOfficeConversionService
+						.convertHtmlToDocx(sectionHtml.getBytes(StandardCharsets.UTF_8));
+				sectionDocxBytes.add(rawDocx);
 			}
-			String mergedHtml = prepareHtmlForDocx(
-					markdownToHtmlService.renderHtmlBodyToHtmlDocument(combinedBody.toString(),
-							landscapes.get(0), activityName));
-			byte[] rawDocx = libreOfficeConversionService.convertHtmlToDocx(mergedHtml.getBytes(StandardCharsets.UTF_8));
-			return docxPostProcessor.processMerged(rawDocx, landscapes, activityName);
+			// Merge all sections into one DOCX with per-section orientation
+			return docxPostProcessor.mergeSections(sectionDocxBytes, landscapes, activityName);
 		} catch (Exception e) {
 			logger.error("Failed to render merged markdown to DOCX: {}", e.getMessage(), e);
 			throw new RuntimeException("Failed to render merged markdown to DOCX: " + e.getMessage(), e);
@@ -135,25 +131,16 @@ public class MarkdownToDocxService {
 		// 3. Style thead th with background color, white text, white borders
 		result = THEAD_PATTERN.matcher(result).replaceAll(theadMatch -> {
 			String theadContent = theadMatch.group(1);
-			String styled = TH_TAG_PATTERN.matcher(theadContent).replaceAll(
-					"<th style=\"background-color: #2f70b3; color: #ffffff; border: 1px solid #ffffff; "
+			String styled = TH_TAG_PATTERN.matcher(theadContent)
+					.replaceAll("<th style=\"background-color: #2f70b3; color: #ffffff; border: 1px solid #ffffff; "
 							+ "padding: 6pt; font-weight: bold; font-family: " + FONT_FAMILY + ";\"$1");
 			return Matcher.quoteReplacement("<thead>" + styled + "</thead>");
 		});
 
 		// 4. Enforce sans-serif font on headings
-		result = HEADING_TAG_PATTERN.matcher(result).replaceAll(
-				"<$1 style=\"font-family: " + FONT_FAMILY + ";\"$2");
+		result = HEADING_TAG_PATTERN.matcher(result).replaceAll("<$1 style=\"font-family: " + FONT_FAMILY + ";\"$2");
 
 		return result;
 	}
 
-	private String extractBody(String html) {
-		int bodyStart = html.indexOf("<body>");
-		int bodyEnd = html.indexOf("</body>");
-		if (bodyStart >= 0 && bodyEnd > bodyStart) {
-			return html.substring(bodyStart + "<body>".length(), bodyEnd);
-		}
-		return html;
-	}
 }

@@ -9,32 +9,32 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * Configuration for Spring AI chat clients.
- * Manually configures the ChatClient bean from available ChatModel instances.
+ * Configuration for Spring AI chat clients. Manually configures the ChatClient
+ * bean from available ChatModel instances.
  */
 @Configuration
 public class SpringAIConfiguration {
 
-    private static final Logger log = LoggerFactory.getLogger(SpringAIConfiguration.class);
+	private static final Logger log = LoggerFactory.getLogger(SpringAIConfiguration.class);
 
-    /**
-     * Creates a ChatClient from the available ChatModel beans.
-     *
-     * @param chatModels list of available chat models (may be empty if none configured)
-     * @return a configured ChatClient, or null if no model is available
-     */
-    @Bean
-    public ChatClient chatClient(List<ChatModel> chatModels) {
-        if (chatModels == null || chatModels.isEmpty()) {
-            log.warn("No ChatModel found. LLM features will be disabled.");
-            return null;
-        }
-        for (ChatModel model : chatModels) {
-            log.info("Found Chat Model: {} with temperature: {}",
-                    model.getDefaultOptions().getModel(),
-                    model.getDefaultOptions().getTemperature());
-        }
-        ChatModel chatModel = chatModels.getFirst();
-        return ChatClient.builder(chatModel).build();
-    }
+	/**
+	 * Creates a ChatClient from the available ChatModel beans.
+	 *
+	 * @param chatModels
+	 *            list of available chat models (may be empty if none configured)
+	 * @return a configured ChatClient, or null if no model is available
+	 */
+	@Bean
+	public ChatClient chatClient(List<ChatModel> chatModels) {
+		if (chatModels == null || chatModels.isEmpty()) {
+			log.warn("No ChatModel found. LLM features will be disabled.");
+			return null;
+		}
+		for (ChatModel model : chatModels) {
+			log.info("Found Chat Model: {} with temperature: {}", model.getDefaultOptions().getModel(),
+					model.getDefaultOptions().getTemperature());
+		}
+		ChatModel chatModel = chatModels.getFirst();
+		return ChatClient.builder(chatModel).build();
+	}
 }

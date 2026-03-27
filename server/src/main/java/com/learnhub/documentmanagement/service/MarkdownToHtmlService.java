@@ -33,7 +33,8 @@ public class MarkdownToHtmlService {
 			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 	private static final Pattern ARTIKULATIONSSCHEMA_HTML_TITLE_PATTERN = Pattern
 			.compile("<h1[^>]*>\\s*Artikulationsschema\\s*</h1>", Pattern.CASE_INSENSITIVE);
-	private static final Pattern TABLE_OPENING_PATTERN = Pattern.compile("<table(\\s+[^>]*)?>", Pattern.CASE_INSENSITIVE);
+	private static final Pattern TABLE_OPENING_PATTERN = Pattern.compile("<table(\\s+[^>]*)?>",
+			Pattern.CASE_INSENSITIVE);
 	private static final Pattern CLASS_ATTRIBUTE_PATTERN = Pattern.compile("\\bclass\\s*=\\s*([\"'])(.*?)\\1",
 			Pattern.CASE_INSENSITIVE);
 
@@ -182,10 +183,10 @@ public class MarkdownToHtmlService {
 			return "";
 		}
 
-		return content.replace("&ndash;", "-").replace("&#8211;", "-").replace("&#x2013;", "-")
-				.replace("&mdash;", "-").replace("&#8212;", "-").replace("&#x2014;", "-").replace('\u2010', '-')
-				.replace('\u2011', '-').replace('\u2012', '-').replace('\u2013', '-').replace('\u2014', '-')
-				.replace('\u2015', '-').replace('\u2212', '-');
+		return content.replace("&ndash;", "-").replace("&#8211;", "-").replace("&#x2013;", "-").replace("&mdash;", "-")
+				.replace("&#8212;", "-").replace("&#x2014;", "-").replace('\u2010', '-').replace('\u2011', '-')
+				.replace('\u2012', '-').replace('\u2013', '-').replace('\u2014', '-').replace('\u2015', '-')
+				.replace('\u2212', '-');
 	}
 
 	private String loadTemplate(String path) {

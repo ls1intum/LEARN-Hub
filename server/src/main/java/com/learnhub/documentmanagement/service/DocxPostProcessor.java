@@ -7,10 +7,14 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import org.apache.poi.util.Units;
 import org.apache.poi.wp.usermodel.HeaderFooterType;
 import org.apache.poi.xwpf.usermodel.*;
+import org.apache.xmlbeans.XmlCursor;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -21,6 +25,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class DocxPostProcessor {
+
+	private static final Logger logger = LoggerFactory.getLogger(DocxPostProcessor.class);
 
 	private static final String LOGO_PATH = "templates/markdown/header-logo.png";
 	private static final DateTimeFormatter FOOTER_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
@@ -50,11 +56,104 @@ public class DocxPostProcessor {
 	}
 
 	/**
-	 * Post-process a merged DOCX. Uses the first section's orientation.
+	 * Merge multiple individually-processed DOCX byte arrays into a single
+	 * document. Each section retains its own page orientation. Headers and footers
+	 * are created once and referenced by all sections.
+	 *
+	 * @param sectionDocxBytes
+	 *            list of DOCX byte arrays, one per section (already converted by
+	 *            LibreOffice, but NOT yet post-processed)
+	 * @param landscapes
+	 *            orientation per section
+	 * @param activityName
+	 *            the activity name shown in the header
 	 */
-	public byte[] processMerged(byte[] docxBytes, java.util.List<Boolean> landscapes, String activityName)
+	public byte[] mergeSections(List<byte[]> sectionDocxBytes, List<Boolean> landscapes, String activityName)
 			throws IOException {
-		return process(docxBytes, landscapes.get(0), activityName);
+		// Use the first section as the base document so its styles (heading styles
+		// etc.)
+		// are naturally inherited by the merged result.
+		try (XWPFDocument merged = new XWPFDocument(new ByteArrayInputStream(sectionDocxBytes.get(0)))) {
+			// Clear all body content from the base document
+			clearBodyElements(merged);
+
+			// Set up header/footer once on the merged document
+			addHeaderAndFooter(merged, activityName);
+
+			for (int i = 0; i < sectionDocxBytes.size(); i++) {
+				try (XWPFDocument section = new XWPFDocument(new ByteArrayInputStream(sectionDocxBytes.get(i)))) {
+					// Before appending content (except for the first section), insert a
+					// section-break paragraph that carries the PREVIOUS section's orientation.
+					if (i > 0) {
+						addSectionBreak(merged, landscapes.get(i - 1));
+					}
+
+					// Copy all body elements (paragraphs and tables) from the section
+					for (IBodyElement element : section.getBodyElements()) {
+						if (element instanceof XWPFParagraph srcPara) {
+							XWPFParagraph newPara = merged.createParagraph();
+							copyParagraph(srcPara, newPara);
+						} else if (element instanceof XWPFTable srcTable) {
+							XWPFTable newTable = merged.createTable();
+							copyTable(srcTable, newTable);
+						}
+					}
+				}
+			}
+
+			// Set the body-level sectPr for the LAST section's orientation
+			setPageOrientation(merged, landscapes.get(landscapes.size() - 1));
+
+			try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+				merged.write(out);
+				return out.toByteArray();
+			}
+		}
+	}
+
+	/**
+	 * Insert a paragraph with an inline section break (next page) that sets the
+	 * given orientation. In DOCX, mid-document section breaks are stored as a
+	 * SectPr inside the last paragraph's PPr of the preceding section.
+	 */
+	private void addSectionBreak(XWPFDocument doc, boolean landscape) {
+		XWPFParagraph breakPara = doc.createParagraph();
+		CTP ctp = breakPara.getCTP();
+		CTPPr pPr = ctp.isSetPPr() ? ctp.getPPr() : ctp.addNewPPr();
+		CTSectPr sectPr = pPr.addNewSectPr();
+		sectPr.addNewType().setVal(STSectionMark.NEXT_PAGE);
+		applyPageGeometry(sectPr, landscape);
+
+		// Reference the document's header/footer so they appear in this section too
+		CTSectPr bodySectPr = doc.getDocument().getBody().getSectPr();
+		if (bodySectPr != null) {
+			for (CTHdrFtrRef ref : bodySectPr.getHeaderReferenceList()) {
+				CTHdrFtrRef newRef = sectPr.addNewHeaderReference();
+				newRef.setType(ref.getType());
+				newRef.setId(ref.getId());
+			}
+			for (CTHdrFtrRef ref : bodySectPr.getFooterReferenceList()) {
+				CTHdrFtrRef newRef = sectPr.addNewFooterReference();
+				newRef.setType(ref.getType());
+				newRef.setId(ref.getId());
+			}
+		}
+	}
+
+	private void clearBodyElements(XWPFDocument doc) {
+		int size = doc.getBodyElements().size();
+		for (int i = size - 1; i >= 0; i--) {
+			doc.removeBodyElement(i);
+		}
+	}
+
+	private void copyParagraph(XWPFParagraph src, XWPFParagraph dest) {
+		// Deep copy via XML
+		dest.getCTP().set(src.getCTP().copy());
+	}
+
+	private void copyTable(XWPFTable src, XWPFTable dest) {
+		dest.getCTTbl().set(src.getCTTbl().copy());
 	}
 
 	private void setPageOrientation(XWPFDocument doc, boolean landscape) {
@@ -62,7 +161,10 @@ public class DocxPostProcessor {
 		if (sectPr == null) {
 			sectPr = doc.getDocument().getBody().addNewSectPr();
 		}
+		applyPageGeometry(sectPr, landscape);
+	}
 
+	private void applyPageGeometry(CTSectPr sectPr, boolean landscape) {
 		CTPageSz pgSz = sectPr.isSetPgSz() ? sectPr.getPgSz() : sectPr.addNewPgSz();
 		if (landscape) {
 			pgSz.setW(BigInteger.valueOf(A4_LONG));
@@ -113,11 +215,10 @@ public class DocxPostProcessor {
 	private void addLogoToHeader(XWPFParagraph para) {
 		try (InputStream logoStream = new ClassPathResource(LOGO_PATH).getInputStream()) {
 			XWPFRun imageRun = para.createRun();
-			imageRun.addPicture(logoStream, XWPFDocument.PICTURE_TYPE_PNG, "header-logo.png",
-					Units.toEMU(21), Units.toEMU(22));
+			imageRun.addPicture(logoStream, XWPFDocument.PICTURE_TYPE_PNG, "header-logo.png", Units.toEMU(21),
+					Units.toEMU(22));
 		} catch (Exception e) {
-			org.slf4j.LoggerFactory.getLogger(DocxPostProcessor.class)
-					.warn("Failed to add logo to DOCX header", e);
+			org.slf4j.LoggerFactory.getLogger(DocxPostProcessor.class).warn("Failed to add logo to DOCX header", e);
 		}
 	}
 

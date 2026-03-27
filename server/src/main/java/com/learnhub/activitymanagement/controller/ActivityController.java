@@ -68,16 +68,17 @@ public class ActivityController {
 	@GetMapping("/")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get activities", description = "Get a list of activities with optional filtering and pagination")
-	public ResponseEntity<?> getActivities(@ModelAttribute ActivityFilterRequest request, Authentication authentication) {
+	public ResponseEntity<?> getActivities(@ModelAttribute ActivityFilterRequest request,
+			Authentication authentication) {
 		logger.info(
 				"GET /api/activities/ - Get activities called with filters: name={}, ageMin={}, ageMax={}, format={}, limit={}, offset={}",
 				request.name(), request.ageMin(), request.ageMax(), request.format(), request.limit(),
 				request.offset());
 		boolean includeSourcePdf = isAdmin(authentication);
-		List<ActivityResponse> activities = activityService.getActivitiesWithFilters(request.name(),
-				request.ageMin(), request.ageMax(), request.durationMin(), request.durationMax(), request.format(),
-				request.bloomLevel(), request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(),
-				request.topics(), request.limit(), request.offset(), includeSourcePdf);
+		List<ActivityResponse> activities = activityService.getActivitiesWithFilters(request.name(), request.ageMin(),
+				request.ageMax(), request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
+				request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(), request.topics(),
+				request.limit(), request.offset(), includeSourcePdf);
 		Map<String, Object> response = new HashMap<>();
 		response.put("total",
 				activityService.countActivitiesWithFilters(request.name(), request.ageMin(), request.ageMax(),
