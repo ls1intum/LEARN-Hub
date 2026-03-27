@@ -21,10 +21,10 @@ setup: ## Resolve and download all Maven dependencies
 
 # Development
 dev: ## Run Spring Boot application in development mode
-	$(MVN) spring-boot:run
+	$(MVN) spring-boot:run -Dspring-boot.run.profiles=dev
 
 run: ## Run the application
-	$(MVN) spring-boot:run
+	$(MVN) spring-boot:run -Dspring-boot.run.profiles=dev
 
 # Build
 build: ## Build the application JAR

@@ -2,6 +2,8 @@ package com.learnhub.documentmanagement.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import org.commonmark.node.Paragraph;
+import org.commonmark.node.Text;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -51,19 +53,19 @@ class MarkdownToHtmlServiceTest {
 	}
 
 	@Test
-	void renderMarkdownToDocxHtmlSanitizesVoidElements() {
-		String markdown = "Line one<br>Line two<br>Line three\n\n<hr>\n\nDone.";
-		String html = service.renderMarkdownToDocxHtml(markdown);
-		assertThat(html).doesNotContain("<br>").doesNotContain("<hr>");
-		assertThat(html).contains("<br />");
-		assertThat(html).contains("<hr />");
+	void parseToNodeNormalizesUnicodeDashesBeforeParsing() {
+		var node = service.parseToNode("AI \u2014 Schule");
+		assertThat(node).isNotNull();
+		assertThat(node.getFirstChild()).isInstanceOf(Paragraph.class);
+		assertThat(node.getFirstChild().getFirstChild()).isInstanceOf(Text.class);
+		assertThat(((Text) node.getFirstChild().getFirstChild()).getLiteral()).isEqualTo("AI - Schule");
 	}
 
 	@Test
-	void renderMarkdownToDocxHtmlPreservesAlreadySelfClosedElements() {
-		String markdown = "Line one  \nLine two";
-		String html = service.renderMarkdownToDocxHtml(markdown);
-		assertThat(html).contains("<br />");
-		assertThat(html).doesNotContain("<br>");
+	void renderMarkdownToHtmlNormalizesUnicodeDashes() {
+		String html = service.renderMarkdownToHtml("AI - Mensch \u2014 Schule \u2013 Unterricht");
+		assertThat(html).contains("AI - Mensch - Schule - Unterricht");
+		assertThat(html).doesNotContain("\u2014");
+		assertThat(html).doesNotContain("\u2013");
 	}
 }

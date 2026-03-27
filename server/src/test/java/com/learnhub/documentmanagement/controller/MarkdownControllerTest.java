@@ -6,8 +6,6 @@ import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
-import com.learnhub.documentmanagement.service.DocxHeaderFooterHelper;
-import com.learnhub.documentmanagement.service.DocxTableHelper;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToHtmlService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
@@ -28,10 +26,11 @@ class MarkdownControllerTest {
 	void setUp() {
 		markdownController = new MarkdownController();
 		MarkdownToHtmlService markdownToHtmlService = new MarkdownToHtmlService();
-		ReflectionTestUtils.setField(markdownController, "markdownToPdfService",
-				new MarkdownToPdfService(markdownToHtmlService));
+		MarkdownToPdfService pdfService = new MarkdownToPdfService(markdownToHtmlService);
+		ReflectionTestUtils.setField(markdownController, "markdownToPdfService", pdfService);
+		// DOCX service is not used by the PDF endpoint tests — provide a no-op instance
 		ReflectionTestUtils.setField(markdownController, "markdownToDocxService",
-				new MarkdownToDocxService(markdownToHtmlService, new DocxHeaderFooterHelper(), new DocxTableHelper()));
+				new MarkdownToDocxService(markdownToHtmlService, null, null));
 	}
 
 	@Test

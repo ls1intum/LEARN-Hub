@@ -116,7 +116,7 @@ const UserAvatarDropdown: React.FC<UserAvatarDropdownProps> = ({
               {displayName}
             </p>
             <p className="truncate text-xs text-muted-foreground leading-tight">
-              {role}
+              {user?.email ?? role}
             </p>
           </div>
           <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />

@@ -4,266 +4,80 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
-import org.apache.poi.xwpf.usermodel.XWPFTable;
-import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
 
 class MarkdownToDocxServiceTest {
 
 	private MarkdownToDocxService service;
+	private StubConversionService stubConversionService;
 
 	@BeforeEach
 	void setUp() {
-		service = new MarkdownToDocxService(new MarkdownToHtmlService(), new DocxHeaderFooterHelper(),
-				new DocxTableHelper());
+		stubConversionService = new StubConversionService(createMinimalDocx());
+		service = new MarkdownToDocxService(new MarkdownToHtmlService(), stubConversionService,
+				new DocxPostProcessor());
 	}
 
 	@Test
-	void renderMarkdownToDocxWithPlainText() {
-		String markdown = "This is plain text that should be rendered.";
-		byte[] result = service.renderMarkdownToDocx(markdown);
+	void renderMarkdownToDocxDelegatesToHtmlThenLibreOffice() {
+		byte[] result = service.renderMarkdownToDocx("# Hello", true, "Activity");
+
 		assertThat(result).isNotNull();
-		assertThat(result.length).isGreaterThan(0);
-		// DOCX is a ZIP file (starts with PK)
 		assertThat(result[0]).isEqualTo((byte) 'P');
-		assertThat(result[1]).isEqualTo((byte) 'K');
+		assertThat(stubConversionService.lastInput).isNotNull();
+		assertThat(new String(stubConversionService.lastInput)).contains("Hello</h1>");
 	}
 
 	@Test
-	void renderMarkdownToDocxWithHeadingsAndParagraphs() {
-		String markdown = """
-				# Main Title
-				## Section One
-				This is a paragraph with **bold** and *italic* text.
-				### Subsection
-				Another paragraph here.
-				""";
-		byte[] result = service.renderMarkdownToDocx(markdown);
-		assertThat(result).isNotNull();
-		assertThat(result.length).isGreaterThan(0);
+	void renderMarkdownToDocxDefaultsToLandscape() {
+		service.renderMarkdownToDocx("text");
+
+		String html = new String(stubConversionService.lastInput);
+		assertThat(html).contains("landscape");
 	}
 
 	@Test
-	void renderMarkdownToDocxWithTable() {
-		String markdown = """
-				# Lesson Plan
-
-				**Subject:** Mathematics
-				**Grade:** 5
-
-				| Time | Phase | Steps | Format | Skills | Materials |
-				|------|-------|-------|--------|--------|-----------|
-				| 5 min | Intro | Greeting | Plenary | Communication | - |
-				| 20 min | Work | Solve tasks | Individual | Calculation | Worksheet |
-				""";
-		byte[] result = service.renderMarkdownToDocx(markdown);
-		assertThat(result).isNotNull();
-		assertThat(result.length).isGreaterThan(0);
-	}
-
-	@Test
-	void renderMarkdownToDocxWithLists() {
-		String markdown = """
-				# Activity Plan
-
-				Materials needed:
-				- Whiteboard
-				- Markers
-				- Worksheets
-
-				Steps:
-				1. Introduction
-				2. Main activity
-				3. Wrap up
-				""";
-		byte[] result = service.renderMarkdownToDocx(markdown);
-		assertThat(result).isNotNull();
-		assertThat(result.length).isGreaterThan(0);
-	}
-
-	@Test
-	void renderMarkdownToDocxWithCodeBlock() {
-		String markdown = """
-				# Example
-
-				Here is some code:
-
-				```
-				function hello() {
-				  return "world";
-				}
-				```
-				""";
-		byte[] result = service.renderMarkdownToDocx(markdown);
-		assertThat(result).isNotNull();
-		assertThat(result.length).isGreaterThan(0);
-	}
-
-	@Test
-	void renderMarkdownToDocxWithBlockQuote() {
-		String markdown = """
-				# Quote
-
-				> This is a block quote
-				> with multiple lines.
-
-				Regular text after.
-				""";
-		byte[] result = service.renderMarkdownToDocx(markdown);
-		assertThat(result).isNotNull();
-		assertThat(result.length).isGreaterThan(0);
-	}
-
-	@Test
-	void renderMarkdownToDocxWithMixedContent() {
-		String markdown = """
-				# Full Document
-
-				**Author:** John Doe
-				**Date:** 2024-01-01
-
-				## Introduction
-
-				This is a paragraph with **bold**, *italic*, and `code` text.
-
-				## Table Section
-
-				| Column A | Column B |
-				|----------|----------|
-				| Value 1  | Value 2  |
-
-				## Lists
-
-				- Item one
-				- Item two
-
-				---
-
-				> Final note
-				""";
-		byte[] result = service.renderMarkdownToDocx(markdown);
-		assertThat(result).isNotNull();
-		assertThat(result.length).isGreaterThan(0);
-	}
-
-	@Test
-	void renderMarkdownToDocxIncludesHeaderAndFooterMetadata() throws Exception {
-		byte[] result = service.renderMarkdownToDocx("# Header", true, "Binary Search Game");
-
-		try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(result))) {
-			assertThat(document.getHeaderList()).hasSize(1);
-			assertThat(document.getFooterList()).hasSize(1);
-
-			String headerText = document.getHeaderList().get(0).getText();
-			String footerText = document.getFooterList().get(0).getText();
-
-			assertThat(headerText).contains("Binary Search Game");
-			assertThat(footerText).contains("LEARN-Hub");
-			assertThat(footerText).contains("aet.cit.tum.de");
-			assertThat(footerText).contains("Page");
-		}
-	}
-
-	@Test
-	void renderMarkdownToDocxWithRawHtmlBreaksAndHorizontalRules() {
-		String markdown = """
-				# Title
-
-				First line<br>Second line<br>Third line
-
-				<hr>
-
-				Paragraph after rule.
-				""";
-		byte[] result = service.renderMarkdownToDocx(markdown);
-		assertThat(result).isNotNull();
-		assertThat(result.length).isGreaterThan(0);
-		assertThat(result[0]).isEqualTo((byte) 'P');
-		assertThat(result[1]).isEqualTo((byte) 'K');
-	}
-
-	@Test
-	void renderMarkdownToDocxHeaderIncludesLogo() throws Exception {
+	void renderMarkdownToDocxAddsHeaderAndFooter() throws Exception {
 		byte[] result = service.renderMarkdownToDocx("# Test", true, "My Activity");
-
-		try (XWPFDocument document = new XWPFDocument(new ByteArrayInputStream(result))) {
-			assertThat(document.getHeaderList()).hasSize(1);
-			assertThat(document.getHeaderList().get(0).getAllPictures()).isNotEmpty();
-		}
-	}
-
-	@Test
-	void renderMergedDocxProducesValidDocx() throws Exception {
-		List<String> markdowns = List.of("# Deckblatt\n\nCover page content.",
-				"# Artikulationsschema\n\n| A | B |\n|---|---|\n| 1 | 2 |", "# Hintergrundwissen\n\nBackground info.");
-		List<Boolean> landscapes = List.of(false, true, false);
-
-		byte[] result = service.renderMergedDocx(markdowns, landscapes, "My Activity");
-
-		assertThat(result).isNotNull();
-		assertThat(result[0]).isEqualTo((byte) 'P');
-		assertThat(result[1]).isEqualTo((byte) 'K');
 
 		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(result))) {
 			assertThat(doc.getHeaderList()).isNotEmpty();
 			assertThat(doc.getFooterList()).isNotEmpty();
-			String headerText = doc.getHeaderList().get(0).getText();
-			assertThat(headerText).contains("My Activity");
+			assertThat(doc.getHeaderList().get(0).getText()).contains("My Activity");
 		}
 	}
 
 	@Test
-	void renderMergedDocxHasCorrectSectionOrientations() throws Exception {
-		List<String> markdowns = List.of("# Portrait Section", "# Landscape Section", "# Portrait Section 2");
-		List<Boolean> landscapes = List.of(false, true, false);
-
-		byte[] result = service.renderMergedDocx(markdowns, landscapes, "Test");
+	void renderMarkdownToDocxSetsOrientation() throws Exception {
+		byte[] result = service.renderMarkdownToDocx("# Test", false, "");
 
 		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(result))) {
-			// The body-level section (last section) should be portrait
-			CTSectPr bodySectPr = doc.getDocument().getBody().getSectPr();
-			assertThat(bodySectPr).isNotNull();
-			assertThat(bodySectPr.getPgSz().getOrient().toString()).isEqualTo("portrait");
+			var sectPr = doc.getDocument().getBody().getSectPr();
+			assertThat(sectPr.getPgSz().getOrient().toString()).isEqualTo("portrait");
 		}
 	}
 
 	@Test
-	void renderMergedDocxHasHeaderFooterOnAllSections() throws Exception {
-		List<String> markdowns = List.of("# Deckblatt\n\nCover.",
-				"# Artikulationsschema\n\n| A | B |\n|---|---|\n| 1 | 2 |", "# Hintergrundwissen\n\nBackground.");
-		List<Boolean> landscapes = List.of(false, true, false);
+	void renderHtmlToDocxDelegatesToLibreOffice() {
+		byte[] result = service.renderHtmlToDocx("<h1>Test</h1>", true, "Act");
 
-		byte[] result = service.renderMergedDocx(markdowns, landscapes, "Test Activity");
+		assertThat(result).isNotNull();
+		assertThat(new String(stubConversionService.lastInput)).contains("Test</h1>");
+	}
 
-		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(result))) {
-			// With 3 sections, there should be 2 inline section breaks + 1 body-level
-			// SectPr. Each inline section break SectPr and the body SectPr should
-			// reference the same header and footer.
-			CTSectPr bodySectPr = doc.getDocument().getBody().getSectPr();
-			assertThat(bodySectPr).isNotNull();
-			assertThat(bodySectPr.getHeaderReferenceList()).isNotEmpty();
-			assertThat(bodySectPr.getFooterReferenceList()).isNotEmpty();
+	@Test
+	void renderMergedDocxConvertsEachSectionIndividually() {
+		byte[] result = service.renderMergedDocx(List.of("# A", "# B"), List.of(false, true), "Test");
 
-			// Count inline SectPr elements (inside paragraph PPr)
-			var paragraphs = doc.getDocument().getBody().getPList();
-			int inlineSectPrCount = 0;
-			for (var para : paragraphs) {
-				if (para.getPPr() != null && para.getPPr().getSectPr() != null) {
-					CTSectPr inlineSectPr = para.getPPr().getSectPr();
-					assertThat(inlineSectPr.getHeaderReferenceList()).as("Inline section break should reference header")
-							.isNotEmpty();
-					assertThat(inlineSectPr.getFooterReferenceList()).as("Inline section break should reference footer")
-							.isNotEmpty();
-					inlineSectPrCount++;
-				}
-			}
-			// 3 sections = 2 section breaks between them
-			assertThat(inlineSectPrCount).isEqualTo(2);
-		}
+		assertThat(result).isNotNull();
+		// Each section is converted individually, so the stub should have been called
+		// twice
+		assertThat(stubConversionService.callCount).isEqualTo(2);
 	}
 
 	@Test
@@ -273,25 +87,42 @@ class MarkdownToDocxServiceTest {
 	}
 
 	@Test
-	void renderMarkdownToDocxTableHasHeaderStyling() throws Exception {
-		String markdown = """
-				| Header A | Header B |
-				|----------|----------|
-				| Cell 1   | Cell 2   |
-				""";
-		byte[] result = service.renderMarkdownToDocx(markdown, false, "");
+	void renderMarkdownToDocxWrapsConversionException() {
+		stubConversionService.failWith = new IOException("conversion failed");
 
-		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(result))) {
-			List<XWPFTable> tables = doc.getTables();
-			assertThat(tables).isNotEmpty();
-			XWPFTable table = tables.get(0);
-			XWPFTableRow headerRow = table.getRow(0);
-			assertThat(headerRow).isNotNull();
-			// Header row should have cells
-			assertThat(headerRow.getTableCells()).hasSizeGreaterThanOrEqualTo(2);
-			// Check that header cell text is present
-			assertThat(headerRow.getCell(0).getText()).contains("Header A");
-			assertThat(headerRow.getCell(1).getText()).contains("Header B");
+		assertThatThrownBy(() -> service.renderMarkdownToDocx("text")).isInstanceOf(RuntimeException.class)
+				.hasMessageContaining("conversion failed");
+	}
+
+	private static byte[] createMinimalDocx() {
+		try (XWPFDocument doc = new XWPFDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+			doc.createParagraph().createRun().setText("stub");
+			doc.write(out);
+			return out.toByteArray();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	static class StubConversionService extends LibreOfficeConversionService {
+
+		private final byte[] output;
+		byte[] lastInput;
+		int callCount;
+		IOException failWith;
+
+		StubConversionService(byte[] output) {
+			this.output = output;
+		}
+
+		@Override
+		public byte[] convertHtmlToDocx(byte[] htmlBytes) throws IOException {
+			if (failWith != null) {
+				throw failWith;
+			}
+			this.lastInput = htmlBytes;
+			this.callCount++;
+			return output;
 		}
 	}
 }
