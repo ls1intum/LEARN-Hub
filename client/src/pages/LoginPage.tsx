@@ -45,6 +45,7 @@ export const LoginPage: React.FC = () => {
     lastName: "",
   });
   const [message, setMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [redirectPath, setRedirectPath] = useState("");
@@ -71,9 +72,19 @@ export const LoginPage: React.FC = () => {
     }
   }, [user, shouldRedirect, redirectPath, navigate]);
 
+  const setErrorMessage = (msg: string) => {
+    setIsSuccess(false);
+    setMessage(msg);
+  };
+
+  const setSuccessMessage = (msg: string) => {
+    setIsSuccess(true);
+    setMessage(msg);
+  };
+
   const handleGuestLogin = async () => {
     setIsLoading(true);
-    setMessage("Welcome! You're now browsing as a guest.");
+    setSuccessMessage(t("login.welcomeGuest"));
     navigate("/recommendations");
     setIsLoading(false);
   };
@@ -87,60 +98,58 @@ export const LoginPage: React.FC = () => {
       switch (mode) {
         case "admin":
           if (!formData.email || !formData.password) {
-            setMessage("Please enter both email and password");
+            setErrorMessage(t("login.enterBothEmailPassword"));
             setIsLoading(false);
             return;
           }
           result = await login(formData.email, formData.password);
           if (result.success) {
-            setMessage("Login successful! Redirecting...");
+            setSuccessMessage(t("login.loginSuccessRedirecting"));
             setRedirectPath("/recommendations");
             setShouldRedirect(true);
           }
           break;
         case "teacher":
           if (!formData.email) {
-            setMessage("Please enter your email address");
+            setErrorMessage(t("login.enterEmailAddress"));
             setIsLoading(false);
             return;
           }
           result = await requestVerificationCode(formData.email);
           if (result.success) {
-            setMessage(
-              "If a user is associated with this email, a 6-digit verification code was sent. Check your email and enter the code below.",
-            );
+            setSuccessMessage(t("login.verificationCodeSent"));
             setMode("verification-code");
           }
           break;
         case "teacher-password":
           if (!formData.email || !formData.password) {
-            setMessage("Please enter both email and password");
+            setErrorMessage(t("login.enterBothEmailPassword"));
             setIsLoading(false);
             return;
           }
           result = await teacherLogin(formData.email, formData.password);
           if (result.success) {
-            setMessage("Login successful! Redirecting...");
+            setSuccessMessage(t("login.loginSuccessRedirecting"));
             setRedirectPath("/recommendations");
             setShouldRedirect(true);
           }
           break;
         case "verification-code":
           if (!formData.code || !formData.email) {
-            setMessage("Please enter the verification code and email");
+            setErrorMessage(t("login.enterCodeAndEmail"));
             setIsLoading(false);
             return;
           }
           result = await verificationCodeLogin(formData.code, formData.email);
           if (result.success) {
-            setMessage("Login successful! Redirecting...");
+            setSuccessMessage(t("login.loginSuccessRedirecting"));
             setRedirectPath("/recommendations");
             setShouldRedirect(true);
           }
           break;
         case "register":
           if (!formData.email || !formData.firstName || !formData.lastName) {
-            setMessage("Please enter email, first name, and last name");
+            setErrorMessage(t("login.enterEmailFirstLastName"));
             setIsLoading(false);
             return;
           }
@@ -150,30 +159,26 @@ export const LoginPage: React.FC = () => {
             formData.lastName,
           );
           if (result.success) {
-            setMessage(
-              "Registration successful! Check your email for login credentials.",
-            );
+            setSuccessMessage(t("login.registrationSuccess"));
             setMode("teacher-password");
           }
           break;
         case "reset-password":
           if (!formData.email) {
-            setMessage("Please enter your email address");
+            setErrorMessage(t("login.enterEmailAddress"));
             setIsLoading(false);
             return;
           }
           result = await resetPassword(formData.email);
           if (result.success) {
-            setMessage(
-              "Password reset successful! Check your email for the new password.",
-            );
+            setSuccessMessage(t("login.resetSuccess"));
             setMode("teacher-password");
           }
           break;
       }
 
       if (!result?.success) {
-        setMessage(result?.message || "Operation failed");
+        setErrorMessage(result?.message || t("login.operationFailed"));
       }
     } finally {
       setIsLoading(false);
@@ -191,7 +196,7 @@ export const LoginPage: React.FC = () => {
                 className="text-sm font-medium flex items-center gap-2"
               >
                 <Mail className="h-4 w-4" />
-                Admin Email
+                {t("login.adminEmail")}
               </Label>
               <Input
                 type="email"
@@ -200,7 +205,7 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, email: e.target.value }))
                 }
-                placeholder="admin@example.com"
+                placeholder={t("login.enterEmail")}
                 className="h-12"
               />
             </div>
@@ -210,7 +215,7 @@ export const LoginPage: React.FC = () => {
                 className="text-sm font-medium flex items-center gap-2"
               >
                 <Lock className="h-4 w-4" />
-                Admin Password
+                {t("login.adminPassword")}
               </Label>
               <Input
                 type="password"
@@ -219,7 +224,7 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, password: e.target.value }))
                 }
-                placeholder="Enter your password"
+                placeholder={t("login.enterPassword")}
                 className="h-12"
               />
             </div>
@@ -233,7 +238,7 @@ export const LoginPage: React.FC = () => {
               className="text-sm font-medium flex items-center gap-2"
             >
               <GraduationCap className="h-4 w-4" />
-              Teacher Email
+              {t("login.teacherEmail")}
             </Label>
             <Input
               type="email"
@@ -243,7 +248,7 @@ export const LoginPage: React.FC = () => {
                 setFormData((prev) => ({ ...prev, email: e.target.value }))
               }
               required
-              placeholder="teacher@example.com"
+              placeholder={t("login.enterEmail")}
               className="h-12"
             />
           </div>
@@ -257,7 +262,7 @@ export const LoginPage: React.FC = () => {
                 className="text-sm font-medium flex items-center gap-2"
               >
                 <GraduationCap className="h-4 w-4" />
-                Teacher Email
+                {t("login.teacherEmail")}
               </Label>
               <Input
                 type="email"
@@ -266,7 +271,7 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, email: e.target.value }))
                 }
-                placeholder="teacher@example.com"
+                placeholder={t("login.enterEmail")}
                 className="h-12"
               />
             </div>
@@ -276,7 +281,7 @@ export const LoginPage: React.FC = () => {
                 className="text-sm font-medium flex items-center gap-2"
               >
                 <Lock className="h-4 w-4" />
-                Teacher Password
+                {t("login.teacherPassword")}
               </Label>
               <Input
                 type="password"
@@ -285,7 +290,7 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, password: e.target.value }))
                 }
-                placeholder="Enter your password"
+                placeholder={t("login.enterPassword")}
                 className="h-12"
               />
             </div>
@@ -300,7 +305,7 @@ export const LoginPage: React.FC = () => {
                 className="text-sm font-medium flex items-center gap-2"
               >
                 <Mail className="h-4 w-4" />
-                Email Address
+                {t("login.emailAddress")}
               </Label>
               <Input
                 type="email"
@@ -309,7 +314,7 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, email: e.target.value }))
                 }
-                placeholder="teacher@example.com"
+                placeholder={t("login.enterEmail")}
                 className="h-12"
               />
             </div>
@@ -320,7 +325,7 @@ export const LoginPage: React.FC = () => {
                   className="text-sm font-medium flex items-center gap-2"
                 >
                   <GraduationCap className="h-4 w-4" />
-                  First Name
+                  {t("login.firstName")}
                 </Label>
                 <Input
                   type="text"
@@ -332,7 +337,7 @@ export const LoginPage: React.FC = () => {
                       firstName: e.target.value,
                     }))
                   }
-                  placeholder="John"
+                  placeholder={t("login.enterFirstName")}
                   className="h-12"
                 />
               </div>
@@ -342,7 +347,7 @@ export const LoginPage: React.FC = () => {
                   className="text-sm font-medium flex items-center gap-2"
                 >
                   <GraduationCap className="h-4 w-4" />
-                  Last Name
+                  {t("login.lastName")}
                 </Label>
                 <Input
                   type="text"
@@ -354,7 +359,7 @@ export const LoginPage: React.FC = () => {
                       lastName: e.target.value,
                     }))
                   }
-                  placeholder="Doe"
+                  placeholder={t("login.enterLastName")}
                   className="h-12"
                 />
               </div>
@@ -369,7 +374,7 @@ export const LoginPage: React.FC = () => {
               className="text-sm font-medium flex items-center gap-2"
             >
               <Mail className="h-4 w-4" />
-              Teacher Email
+              {t("login.teacherEmail")}
             </Label>
             <Input
               type="email"
@@ -379,7 +384,7 @@ export const LoginPage: React.FC = () => {
                 setFormData((prev) => ({ ...prev, email: e.target.value }))
               }
               required
-              placeholder="teacher@example.com"
+              placeholder={t("login.enterEmail")}
               className="h-12"
             />
           </div>
@@ -393,7 +398,7 @@ export const LoginPage: React.FC = () => {
                 className="text-sm font-medium flex items-center gap-2"
               >
                 <Mail className="h-4 w-4" />
-                Email
+                {t("login.email")}
               </Label>
               <Input
                 type="email"
@@ -402,7 +407,7 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, email: e.target.value }))
                 }
-                placeholder="teacher@example.com"
+                placeholder={t("login.enterEmail")}
                 className="h-12"
               />
             </div>
@@ -412,7 +417,7 @@ export const LoginPage: React.FC = () => {
                 className="text-sm font-medium flex items-center gap-2"
               >
                 <Shield className="h-4 w-4" />
-                6-Digit Verification Code
+                {t("login.verificationCodeLabel")}
               </Label>
               <Input
                 type="text"
@@ -421,13 +426,13 @@ export const LoginPage: React.FC = () => {
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, code: e.target.value }))
                 }
-                placeholder="Enter 6-digit code"
+                placeholder={t("login.enterCode")}
                 maxLength={6}
                 pattern="[0-9]{6}"
                 className="h-12 text-center text-lg tracking-widest"
               />
               <p className="text-xs text-muted-foreground text-center">
-                Check your email for the 6-digit verification code
+                {t("login.checkEmailForCode")}
               </p>
             </div>
           </div>
@@ -439,37 +444,37 @@ export const LoginPage: React.FC = () => {
     if (isLoading) {
       switch (mode) {
         case "admin":
-          return "Logging in...";
+          return t("login.loggingIn");
         case "teacher":
-          return "Sending...";
+          return t("login.sending");
         case "teacher-password":
-          return "Logging in...";
+          return t("login.loggingIn");
         case "verification-code":
-          return "Verifying...";
+          return t("login.verifying");
         case "register":
-          return "Registering...";
+          return t("login.registering");
         case "reset-password":
-          return "Resetting...";
+          return t("login.resetting");
         default:
-          return "Processing...";
+          return t("login.processing");
       }
     }
 
     switch (mode) {
       case "admin":
-        return "Login as Admin";
+        return t("login.loginAsAdmin");
       case "teacher":
-        return "Send Verification Code";
+        return t("login.sendVerificationCode");
       case "teacher-password":
-        return "Login as Teacher";
+        return t("login.loginAsTeacher");
       case "verification-code":
-        return "Verify Code";
+        return t("login.verifyCode");
       case "register":
-        return "Register Teacher";
+        return t("login.registerTeacher");
       case "reset-password":
-        return "Reset Password";
+        return t("login.resetPassword");
       default:
-        return "Submit";
+        return t("common.submit");
     }
   };
 
@@ -492,11 +497,11 @@ export const LoginPage: React.FC = () => {
                   <LogIn className="h-5 w-5 text-primary-foreground" />
                 </div>
                 <CardTitle className="text-2xl font-bold text-foreground">
-                  Welcome Back
+                  {t("login.welcomeBack")}
                 </CardTitle>
               </div>
               <p className="text-muted-foreground text-sm">
-                Choose your login method to continue
+                {t("login.chooseLoginMethod")}
               </p>
             </div>
             <ThemeToggle />
@@ -527,7 +532,7 @@ export const LoginPage: React.FC = () => {
                     {t("login.teacherLogin")}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Access your teaching resources and activity library
+                    {t("login.teacherSubtitle")}
                   </p>
                 </div>
 
@@ -561,7 +566,7 @@ export const LoginPage: React.FC = () => {
                     onClick={() => setMode("register")}
                     className="text-primary hover:text-primary/80"
                   >
-                    New Teacher?
+                    {t("login.newTeacher")}
                   </Button>
                   <Button
                     type="button"
@@ -570,7 +575,7 @@ export const LoginPage: React.FC = () => {
                     onClick={() => setMode("reset-password")}
                     className="text-primary hover:text-primary/80"
                   >
-                    Forgot Password?
+                    {t("login.forgotPassword")}
                   </Button>
                 </div>
 
@@ -583,7 +588,7 @@ export const LoginPage: React.FC = () => {
                       onClick={() => setMode("teacher-password")}
                       className="text-muted-foreground hover:text-foreground"
                     >
-                      Or login with password
+                      {t("login.orLoginWithPassword")}
                     </Button>
                   </div>
                 )}
@@ -597,7 +602,7 @@ export const LoginPage: React.FC = () => {
                       onClick={() => setMode("teacher")}
                       className="text-muted-foreground hover:text-foreground"
                     >
-                      Or login with email code
+                      {t("login.orLoginWithEmailCode")}
                     </Button>
                   </div>
                 )}
@@ -611,7 +616,7 @@ export const LoginPage: React.FC = () => {
                     {t("login.adminLogin")}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Access administrative functions and user management
+                    {t("login.adminSubtitle")}
                   </p>
                 </div>
 
@@ -653,7 +658,7 @@ export const LoginPage: React.FC = () => {
               {isLoading ? (
                 <div className="flex items-center gap-2">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-muted-foreground"></div>
-                  Continuing as Guest...
+                  {t("login.continuingAsGuest")}
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
@@ -665,28 +670,28 @@ export const LoginPage: React.FC = () => {
               )}
             </Button>
             <p className="text-xs text-muted-foreground mt-2">
-              Browse activities without creating an account
+              {t("login.browseWithoutAccount")}
             </p>
           </div>
 
           {message && (
             <Alert
               className={`${
-                message.includes("successful")
+                isSuccess
                   ? "border-success/20 bg-success/5"
                   : "border-destructive/20 bg-destructive/5"
               }`}
             >
               <AlertCircle
                 className={`h-4 w-4 ${
-                  message.includes("successful")
+                  isSuccess
                     ? "text-success"
                     : "text-destructive"
                 }`}
               />
               <AlertDescription
                 className={
-                  message.includes("successful")
+                  isSuccess
                     ? "text-success"
                     : "text-destructive"
                 }
@@ -703,7 +708,7 @@ export const LoginPage: React.FC = () => {
             <div className="flex items-center justify-center gap-2 py-2">
               <Server className="h-3.5 w-3.5 text-muted-foreground" />
               <span className="text-xs text-muted-foreground">
-                Connecting to:
+                {t("login.connectingTo")}
               </span>
               <Badge
                 variant={getEnvironmentBadgeVariant(environment)}

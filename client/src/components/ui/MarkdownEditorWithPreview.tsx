@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { FileText, Loader2, Eye, Edit3 } from "lucide-react";
 import { logger } from "@/services/logger";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -26,6 +27,8 @@ interface MarkdownEditorWithPreviewProps {
 export const MarkdownEditorWithPreview: React.FC<
   MarkdownEditorWithPreviewProps
 > = ({ value, onChange, renderPreviewFn }) => {
+  const { t } = useTranslation();
+
   // PDF preview state
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
   const [isRenderingPreview, setIsRenderingPreview] = useState(false);
@@ -137,7 +140,7 @@ export const MarkdownEditorWithPreview: React.FC<
     <iframe
       src={previewPdfUrl}
       className="w-full h-full min-h-[400px] rounded-md border"
-      title="Artikulationsschema Preview"
+      title={t("markdownEditor.previewTitle")}
     />
   ) : (
     <div className="w-full h-full min-h-[400px] flex items-center justify-center rounded-md border bg-muted/30">
@@ -145,8 +148,8 @@ export const MarkdownEditorWithPreview: React.FC<
         <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
         <p className="text-sm">
           {isRenderingPreview
-            ? "Rendering preview..."
-            : "Edit the markdown to see a PDF preview"}
+            ? t("markdownEditor.renderingPreview")
+            : t("markdownEditor.editToPreview")}
         </p>
       </div>
     </div>
@@ -166,7 +169,7 @@ export const MarkdownEditorWithPreview: React.FC<
           <CardHeader className="pb-2 flex-shrink-0">
             <CardTitle className="flex items-center gap-2 text-base">
               <Edit3 className="h-4 w-4" />
-              Markdown Editor
+              {t("markdownEditor.editorTitle")}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 min-h-0 pb-4">
@@ -184,7 +187,7 @@ export const MarkdownEditorWithPreview: React.FC<
           <CardHeader className="pb-2 flex-shrink-0">
             <CardTitle className="flex items-center gap-2 text-base">
               <Eye className="h-4 w-4" />
-              PDF Preview
+              {t("markdownEditor.pdfPreview")}
               {previewSpinner}
             </CardTitle>
           </CardHeader>
@@ -208,7 +211,7 @@ export const MarkdownEditorWithPreview: React.FC<
           disabled={!value}
         >
           <Eye className="h-4 w-4 mr-2" />
-          Render Preview
+          {t("markdownEditor.renderPreview")}
         </Button>
       </div>
 
@@ -218,7 +221,7 @@ export const MarkdownEditorWithPreview: React.FC<
           <DialogHeader className="px-6 pt-6 pb-2 flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Eye className="h-4 w-4" />
-              PDF Preview
+              {t("markdownEditor.pdfPreview")}
               {previewSpinner}
             </DialogTitle>
           </DialogHeader>

@@ -35,21 +35,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 type Step = "metadata" | "documents";
 type MarkdownTab = "deckblatt" | "artikulationsschema" | "hintergrundwissen";
 
-const MARKDOWN_TAB_LABELS: Record<MarkdownTab, string> = {
-  deckblatt: "Deckblatt",
-  artikulationsschema: "Artikulationsschema",
-  hintergrundwissen: "Hintergrundwissen",
-};
+const MARKDOWN_TAB_KEYS: MarkdownTab[] = [
+  "deckblatt",
+  "artikulationsschema",
+  "hintergrundwissen",
+];
 
 // ─── Component ───────────────────────────────────────────────────
 
 export const ActivityEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Loading / error state for initial fetch
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -257,10 +259,10 @@ export const ActivityEditPage: React.FC = () => {
   // ─── Step Indicator ─────────────────────────────────────────────
 
   const steps = [
-    { key: "metadata" as Step, label: "Edit Metadata" },
+    { key: "metadata" as Step, label: t("editActivity.editMetadata") },
     {
       key: "documents" as Step,
-      label: "Documents",
+      label: t("upload.stepDocuments"),
     },
   ];
 
@@ -273,7 +275,9 @@ export const ActivityEditPage: React.FC = () => {
       <div className="w-full">
         <LoadingState isLoading={true} fallback={<SkeletonGrid />}>
           <div className="text-center py-12">
-            <p className="text-muted-foreground">Loading activity...</p>
+            <p className="text-muted-foreground">
+              {t("editActivity.loadingActivity")}
+            </p>
           </div>
         </LoadingState>
       </div>
@@ -285,7 +289,7 @@ export const ActivityEditPage: React.FC = () => {
       <div className="w-full">
         <div className="text-center py-12">
           <ErrorDisplay
-            error={loadError || "Activity not found"}
+            error={loadError || t("editActivity.activityNotFound")}
             onRetry={() => {
               if (id) {
                 setIsLoadingActivity(true);
@@ -321,7 +325,9 @@ export const ActivityEditPage: React.FC = () => {
             }}
           />
           <div className="mt-4">
-            <Button onClick={() => navigate(-1)}>Go Back</Button>
+            <Button onClick={() => navigate(-1)}>
+              {t("editActivity.goBack")}
+            </Button>
           </div>
         </div>
       </div>
@@ -333,8 +339,8 @@ export const ActivityEditPage: React.FC = () => {
       {/* Page Header & Step Indicator */}
       <div className="space-y-6 mb-8">
         <PageHeader
-          title="Edit Activity"
-          description={`Editing "${activity.name}"`}
+          title={t("editActivity.title")}
+          description={t("editActivity.editingName", { name: activity.name })}
         />
         <StepIndicator
           steps={steps}
@@ -349,22 +355,22 @@ export const ActivityEditPage: React.FC = () => {
           onForward={
             currentStep === "metadata"
               ? {
-                  label: "Next: Documents",
+                  label: t("editActivity.nextDocuments"),
                   variant: "outline",
                   size: "icon",
-                  ariaLabel: "Next step",
+                  ariaLabel: t("editActivity.nextDocuments"),
                   className: "h-9 w-9",
                   formId: "activity-edit-form",
                 }
               : currentStep === "documents"
                 ? {
-                    label: "Save Changes",
+                    label: t("editActivity.saveChanges"),
                     variant: "default",
                     onClick: handleSave,
                     icon: <Save className="h-4 w-4" />,
                     disabled: isSaving || isGenerating,
                     loading: isSaving,
-                    loadingLabel: "Saving...",
+                    loadingLabel: t("upload.saving"),
                   }
                 : undefined
           }
@@ -380,10 +386,10 @@ export const ActivityEditPage: React.FC = () => {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Edit3 className="h-5 w-5" />
-                    Edit Activity Metadata
+                    {t("editActivity.editActivityMetadata")}
                   </CardTitle>
                   <CardDescription>
-                    Update the metadata for &ldquo;{activity.name}&rdquo;.
+                    {t("editActivity.updateMetadata", { name: activity.name })}
                   </CardDescription>
                 </div>
                 {documentId && (
@@ -397,12 +403,12 @@ export const ActivityEditPage: React.FC = () => {
                     {isRegeneratingMetadata ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        Regenerating...
+                        {t("upload.regenerating")}
                       </>
                     ) : (
                       <>
                         <RefreshCw className="h-4 w-4" />
-                        Re-run AI metadata
+                        {t("upload.rerunAi")}
                       </>
                     )}
                   </Button>
@@ -476,14 +482,9 @@ export const ActivityEditPage: React.FC = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(
-                      Object.entries(MARKDOWN_TAB_LABELS) as [
-                        MarkdownTab,
-                        string,
-                      ][]
-                    ).map(([key, label]) => (
+                    {MARKDOWN_TAB_KEYS.map((key) => (
                       <SelectItem key={key} value={key}>
-                        {label}
+                        {t(`upload.${key}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -500,7 +501,7 @@ export const ActivityEditPage: React.FC = () => {
                   {isGenerating ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Generating...
+                      {t("upload.generating")}
                     </>
                   ) : (
                     <>
@@ -510,8 +511,12 @@ export const ActivityEditPage: React.FC = () => {
                         <Sparkles className="h-4 w-4" />
                       )}
                       {activeTabHasContent
-                        ? `Re-generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`
-                        : `Generate ${MARKDOWN_TAB_LABELS[activeMarkdownTab]}`}
+                        ? t("upload.regenerate", {
+                            doc: t(`upload.${activeMarkdownTab}`),
+                          })
+                        : t("upload.generate", {
+                            doc: t(`upload.${activeMarkdownTab}`),
+                          })}
                     </>
                   )}
                 </Button>
@@ -524,10 +529,12 @@ export const ActivityEditPage: React.FC = () => {
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
                 <p className="text-lg font-medium">
-                  Generating {MARKDOWN_TAB_LABELS[activeMarkdownTab]}...
+                  {t("upload.generatingDoc", {
+                    doc: t(`upload.${activeMarkdownTab}`),
+                  })}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  The AI is analyzing the PDF and creating the document.
+                  {t("upload.generatingDocDesc")}
                 </p>
               </CardContent>
             </Card>
@@ -545,7 +552,7 @@ export const ActivityEditPage: React.FC = () => {
                       void generateActiveMarkdown();
                     }}
                   >
-                    Retry Generation
+                    {t("upload.retryGeneration")}
                   </Button>
                 </div>
               </CardContent>

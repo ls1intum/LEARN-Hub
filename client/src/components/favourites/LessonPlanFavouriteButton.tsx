@@ -14,6 +14,7 @@ import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity } from "@/types/activity";
 import { logger } from "@/services/logger";
+import { useTranslation } from "react-i18next";
 
 interface LessonPlanFavouriteButtonProps {
   activities: Activity[];
@@ -38,6 +39,7 @@ export const LessonPlanFavouriteButton: React.FC<
   className = "",
   onSave,
 }) => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -63,7 +65,7 @@ export const LessonPlanFavouriteButton: React.FC<
           activities,
           totalDurationMinutes: totalDuration,
           ordering_strategy: "balanced",
-          title: name.trim() || "My Lesson Plan",
+          title: name.trim() || t("lessonPlanFavourite.defaultTitle"),
         },
       });
 
@@ -99,22 +101,26 @@ export const LessonPlanFavouriteButton: React.FC<
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Save Lesson Plan to Favourites</DialogTitle>
+          <DialogTitle>{t("lessonPlanFavourite.saveTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="name">Name (optional)</Label>
+            <Label htmlFor="name">{t("lessonPlanFavourite.nameLabel")}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter a custom name for this lesson plan"
+              placeholder={t("lessonPlanFavourite.namePlaceholder")}
               className="mt-1"
             />
           </div>
 
           <div className="text-sm text-muted-foreground">
-            <p>This lesson plan contains {activities.length} activities:</p>
+            <p>
+              {t("lessonPlanFavourite.containsActivities", {
+                count: activities.length,
+              })}
+            </p>
             <ul className="mt-2 space-y-1">
               {activities.slice(0, 3).map((activity) => (
                 <li key={activity.id} className="truncate">
@@ -123,7 +129,10 @@ export const LessonPlanFavouriteButton: React.FC<
               ))}
               {activities.length > 3 && (
                 <li className="text-muted-foreground">
-                  • and {activities.length - 3} more activities
+                  •{" "}
+                  {t("lessonPlanFavourite.andMore", {
+                    count: activities.length - 3,
+                  })}
                 </li>
               )}
             </ul>
@@ -135,14 +144,16 @@ export const LessonPlanFavouriteButton: React.FC<
               onClick={() => setOpen(false)}
               disabled={loading}
             >
-              Cancel
+              {t("lessonPlanFavourite.cancel")}
             </Button>
             <Button
               onClick={handleSave}
               disabled={loading}
               className="bg-red-500 hover:bg-red-600"
             >
-              {loading ? "Saving..." : "Save to Favourites"}
+              {loading
+                ? t("lessonPlanFavourite.saving")
+                : t("lessonPlanFavourite.saveToFavourites")}
             </Button>
           </div>
         </div>

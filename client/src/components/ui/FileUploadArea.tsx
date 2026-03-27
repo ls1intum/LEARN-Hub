@@ -1,5 +1,6 @@
 import React from "react";
 import { FileText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface FileUploadAreaProps {
   onFileSelect: (file: File) => void;
@@ -16,6 +17,8 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
   onDrop,
   className = "",
 }) => {
+  const { t } = useTranslation();
+
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -28,7 +31,7 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
       {/* File Input */}
       <div className="space-y-2">
         <label htmlFor="pdf-file" className="text-sm font-medium">
-          Select PDF File
+          {t("upload.selectFile")}
         </label>
         <input
           id="pdf-file"
@@ -52,11 +55,11 @@ export const FileUploadArea: React.FC<FileUploadAreaProps> = ({
         onDrop={onDrop}
       >
         <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-        <p className="text-lg font-medium mb-2">Drag and drop your PDF here</p>
+        <p className="text-lg font-medium mb-2">{t("upload.dragDrop")}</p>
         <p className="text-sm text-muted-foreground mb-4">
-          or click the file input above
+          {t("upload.orClickAbove")}
         </p>
-        <p className="text-xs text-muted-foreground">Maximum file size: 10MB</p>
+        <p className="text-xs text-muted-foreground">{t("upload.maxSize")}</p>
       </div>
     </div>
   );

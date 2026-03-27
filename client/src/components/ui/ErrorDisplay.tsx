@@ -2,6 +2,7 @@ import React from "react";
 import { Alert, AlertDescription } from "./alert";
 import { Button } from "./button";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface ErrorDisplayProps {
   error: string | null;
@@ -14,8 +15,10 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
   error,
   onRetry,
   className = "",
-  title = "Something went wrong",
+  title,
 }) => {
+  const { t } = useTranslation();
+
   if (!error) return null;
 
   return (
@@ -23,7 +26,9 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
       <AlertCircle className="h-4 w-4" />
       <AlertDescription className="flex items-center justify-between">
         <div>
-          <p className="font-medium">{title}</p>
+          <p className="font-medium">
+            {title ?? t("errorDisplay.defaultTitle")}
+          </p>
           <p className="text-sm">{error}</p>
         </div>
         {onRetry && (
@@ -34,7 +39,7 @@ export const ErrorDisplay: React.FC<ErrorDisplayProps> = ({
             className="ml-4"
           >
             <RefreshCw className="h-3 w-3 mr-1" />
-            Retry
+            {t("errorDisplay.retry")}
           </Button>
         )}
       </AlertDescription>

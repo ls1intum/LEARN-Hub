@@ -214,7 +214,41 @@
     "switchToTeacher": "Teacher Login",
     "backToLogin": "← Back to Login",
     "haveAccount": "Already have an account?",
-    "noAccount": "Don't have an account?"
+    "noAccount": "Don't have an account?",
+    "welcomeBack": "Welcome Back",
+    "chooseLoginMethod": "Choose your login method to continue",
+    "teacherSubtitle": "Access your teaching resources and activity library",
+    "adminSubtitle": "Access administrative functions and user management",
+    "adminEmail": "Admin Email",
+    "adminPassword": "Admin Password",
+    "teacherEmail": "Teacher Email",
+    "teacherPassword": "Teacher Password",
+    "email": "Email",
+    "verificationCodeLabel": "6-Digit Verification Code",
+    "checkEmailForCode": "Check your email for the 6-digit verification code",
+    "loginAsAdmin": "Login as Admin",
+    "sendVerificationCode": "Send Verification Code",
+    "loginAsTeacher": "Login as Teacher",
+    "registerTeacher": "Register Teacher",
+    "sending": "Sending...",
+    "processing": "Processing...",
+    "newTeacher": "New Teacher?",
+    "forgotPassword": "Forgot Password?",
+    "orLoginWithPassword": "Or login with password",
+    "orLoginWithEmailCode": "Or login with email code",
+    "continuingAsGuest": "Continuing as Guest...",
+    "browseWithoutAccount": "Browse activities without creating an account",
+    "connectingTo": "Connecting to:",
+    "enterBothEmailPassword": "Please enter both email and password",
+    "loginSuccessRedirecting": "Login successful! Redirecting...",
+    "enterEmailAddress": "Please enter your email address",
+    "verificationCodeSent": "If a user is associated with this email, a 6-digit verification code was sent. Check your email and enter the code below.",
+    "enterCodeAndEmail": "Please enter the verification code and email",
+    "enterEmailFirstLastName": "Please enter email, first name, and last name",
+    "registrationSuccess": "Registration successful! Check your email for login credentials.",
+    "resetSuccess": "Password reset successful! Check your email for the new password.",
+    "operationFailed": "Operation failed",
+    "welcomeGuest": "Welcome! You're now browsing as a guest."
   },
   "authVerify": {
     "title": "Verify Your Login",
@@ -303,7 +337,11 @@
     "fileEmpty": "The selected file is empty",
     "fileTooLarge": "File size must be less than 10MB",
     "pdfDocReady": "PDF Document Ready",
-    "noPdfAttached": "No PDF document attached"
+    "noPdfAttached": "No PDF document attached",
+    "orClickHere": "or click here to select a file",
+    "deckblatt": "Deckblatt",
+    "artikulationsschema": "Artikulationsschema",
+    "hintergrundwissen": "Hintergrundwissen"
   },
   "activityDetails": {
     "title": "Activity Details",
@@ -364,6 +402,45 @@
       "abstraction": "Abstraction",
       "algorithms": "Algorithms"
     }
+  },
+  "editActivity": {
+    "title": "Edit Activity",
+    "editingName": "Editing \"{{name}}\"",
+    "editMetadata": "Edit Metadata",
+    "editActivityMetadata": "Edit Activity Metadata",
+    "updateMetadata": "Update the metadata for \"{{name}}\".",
+    "nextDocuments": "Next: Documents",
+    "saveChanges": "Save Changes",
+    "loadingActivity": "Loading activity...",
+    "activityNotFound": "Activity not found",
+    "goBack": "Go Back"
+  },
+  "markdownEditor": {
+    "editorTitle": "Markdown Editor",
+    "pdfPreview": "PDF Preview",
+    "renderPreview": "Render Preview",
+    "renderingPreview": "Rendering preview...",
+    "editToPreview": "Edit the markdown to see a PDF preview",
+    "previewTitle": "Document Preview"
+  },
+  "errorDisplay": {
+    "defaultTitle": "Something went wrong",
+    "retry": "Retry"
+  },
+  "lessonPlanFavourite": {
+    "saveTitle": "Save Lesson Plan to Favourites",
+    "nameLabel": "Name (optional)",
+    "namePlaceholder": "Enter a custom name for this lesson plan",
+    "containsActivities": "This lesson plan contains {{count}} activities:",
+    "andMore": "and {{count}} more activities",
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "saveToFavourites": "Save to Favourites",
+    "defaultTitle": "My Lesson Plan"
+  },
+  "fileInfo": {
+    "size": "Size: {{size}}",
+    "zeroBytes": "0 Bytes"
   },
   "activityForm": {
     "activityName": "Activity Name",

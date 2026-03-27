@@ -214,7 +214,41 @@
     "switchToTeacher": "Lehrer-Anmeldung",
     "backToLogin": "← Zurück zur Anmeldung",
     "haveAccount": "Haben Sie bereits ein Konto?",
-    "noAccount": "Noch kein Konto?"
+    "noAccount": "Noch kein Konto?",
+    "welcomeBack": "Willkommen zurück",
+    "chooseLoginMethod": "Wählen Sie Ihre Anmeldemethode",
+    "teacherSubtitle": "Zugang zu Ihren Unterrichtsressourcen und der Aktivitätsbibliothek",
+    "adminSubtitle": "Zugang zu administrativen Funktionen und Benutzerverwaltung",
+    "adminEmail": "Admin E-Mail",
+    "adminPassword": "Admin-Passwort",
+    "teacherEmail": "Lehrer E-Mail",
+    "teacherPassword": "Lehrer-Passwort",
+    "email": "E-Mail",
+    "verificationCodeLabel": "6-stelliger Bestätigungscode",
+    "checkEmailForCode": "Prüfen Sie Ihre E-Mail für den 6-stelligen Bestätigungscode",
+    "loginAsAdmin": "Als Admin anmelden",
+    "sendVerificationCode": "Bestätigungscode senden",
+    "loginAsTeacher": "Als Lehrer anmelden",
+    "registerTeacher": "Lehrer registrieren",
+    "sending": "Wird gesendet...",
+    "processing": "Wird verarbeitet...",
+    "newTeacher": "Neuer Lehrer?",
+    "forgotPassword": "Passwort vergessen?",
+    "orLoginWithPassword": "Oder mit Passwort anmelden",
+    "orLoginWithEmailCode": "Oder mit E-Mail-Code anmelden",
+    "continuingAsGuest": "Gastzugang wird geladen...",
+    "browseWithoutAccount": "Aktivitäten durchsuchen, ohne ein Konto zu erstellen",
+    "connectingTo": "Verbunden mit:",
+    "enterBothEmailPassword": "Bitte geben Sie E-Mail und Passwort ein",
+    "loginSuccessRedirecting": "Anmeldung erfolgreich! Weiterleitung...",
+    "enterEmailAddress": "Bitte geben Sie Ihre E-Mail-Adresse ein",
+    "verificationCodeSent": "Falls ein Benutzer mit dieser E-Mail verknüpft ist, wurde ein 6-stelliger Bestätigungscode gesendet. Prüfen Sie Ihre E-Mail und geben Sie den Code unten ein.",
+    "enterCodeAndEmail": "Bitte geben Sie den Bestätigungscode und die E-Mail ein",
+    "enterEmailFirstLastName": "Bitte geben Sie E-Mail, Vorname und Nachname ein",
+    "registrationSuccess": "Registrierung erfolgreich! Prüfen Sie Ihre E-Mail für die Anmeldedaten.",
+    "resetSuccess": "Passwort erfolgreich zurückgesetzt! Prüfen Sie Ihre E-Mail für das neue Passwort.",
+    "operationFailed": "Vorgang fehlgeschlagen",
+    "welcomeGuest": "Willkommen! Sie durchsuchen als Gast."
   },
   "authVerify": {
     "title": "Anmeldung bestätigen",
@@ -303,7 +337,11 @@
     "fileEmpty": "Die ausgewählte Datei ist leer",
     "fileTooLarge": "Dateigröße muss kleiner als 10MB sein",
     "pdfDocReady": "PDF-Dokument bereit",
-    "noPdfAttached": "Kein PDF-Dokument angehängt"
+    "noPdfAttached": "Kein PDF-Dokument angehängt",
+    "orClickHere": "oder hier klicken, um eine Datei auszuwählen",
+    "deckblatt": "Deckblatt",
+    "artikulationsschema": "Artikulationsschema",
+    "hintergrundwissen": "Hintergrundwissen"
   },
   "activityDetails": {
     "title": "Aktivitätsdetails",
@@ -364,6 +402,45 @@
       "abstraction": "Abstraktion",
       "algorithms": "Algorithmen"
     }
+  },
+  "editActivity": {
+    "title": "Aktivität bearbeiten",
+    "editingName": "Bearbeitung von \"{{name}}\"",
+    "editMetadata": "Metadaten bearbeiten",
+    "editActivityMetadata": "Aktivitäts-Metadaten bearbeiten",
+    "updateMetadata": "Metadaten für \"{{name}}\" aktualisieren.",
+    "nextDocuments": "Weiter: Dokumente",
+    "saveChanges": "Änderungen speichern",
+    "loadingActivity": "Aktivität wird geladen...",
+    "activityNotFound": "Aktivität nicht gefunden",
+    "goBack": "Zurück"
+  },
+  "markdownEditor": {
+    "editorTitle": "Markdown-Editor",
+    "pdfPreview": "PDF-Vorschau",
+    "renderPreview": "Vorschau rendern",
+    "renderingPreview": "Vorschau wird gerendert...",
+    "editToPreview": "Bearbeiten Sie das Markdown, um eine PDF-Vorschau zu sehen",
+    "previewTitle": "Dokumentvorschau"
+  },
+  "errorDisplay": {
+    "defaultTitle": "Etwas ist schiefgelaufen",
+    "retry": "Erneut versuchen"
+  },
+  "lessonPlanFavourite": {
+    "saveTitle": "Unterrichtsplan zu Favoriten speichern",
+    "nameLabel": "Name (optional)",
+    "namePlaceholder": "Einen eigenen Namen für diesen Unterrichtsplan eingeben",
+    "containsActivities": "Dieser Unterrichtsplan enthält {{count}} Aktivitäten:",
+    "andMore": "und {{count}} weitere Aktivitäten",
+    "cancel": "Abbrechen",
+    "saving": "Wird gespeichert...",
+    "saveToFavourites": "Zu Favoriten speichern",
+    "defaultTitle": "Mein Unterrichtsplan"
+  },
+  "fileInfo": {
+    "size": "Größe: {{size}}",
+    "zeroBytes": "0 Bytes"
   },
   "activityForm": {
     "activityName": "Aktivitätsname",

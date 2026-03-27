@@ -63,7 +63,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
       totalDurationMinutes: totalDuration,
       breaks: [], // Breaks are now included inline with activities
       ordering_strategy: "balanced",
-      title: "My Lesson Plan",
+      title: t("lessonPlanFavourite.defaultTitle"),
     };
 
     setLessonPlanData(data);

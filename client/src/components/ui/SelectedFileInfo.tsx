@@ -1,5 +1,6 @@
 import React from "react";
 import { FileText } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SelectedFileInfoProps {
   file: File;
@@ -10,8 +11,10 @@ export const SelectedFileInfo: React.FC<SelectedFileInfoProps> = ({
   file,
   className = "",
 }) => {
+  const { t } = useTranslation();
+
   const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 Bytes";
+    if (bytes === 0) return t("fileInfo.zeroBytes");
     const k = 1024;
     const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -25,7 +28,7 @@ export const SelectedFileInfo: React.FC<SelectedFileInfoProps> = ({
         <span className="font-medium">{file.name}</span>
       </div>
       <p className="text-sm text-muted-foreground">
-        Size: {formatFileSize(file.size)}
+        {t("fileInfo.size", { size: formatFileSize(file.size) })}
       </p>
     </div>
   );

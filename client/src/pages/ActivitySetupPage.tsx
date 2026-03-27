@@ -1,8 +1,6 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -45,11 +43,11 @@ import { useTranslation } from "react-i18next";
 type Step = "upload" | "metadata" | "documents";
 type MarkdownTab = "deckblatt" | "artikulationsschema" | "hintergrundwissen";
 
-const MARKDOWN_TAB_LABELS: Record<MarkdownTab, string> = {
-  deckblatt: "Deckblatt",
-  artikulationsschema: "Artikulationsschema",
-  hintergrundwissen: "Hintergrundwissen",
-};
+const MARKDOWN_TAB_KEYS: MarkdownTab[] = [
+  "deckblatt",
+  "artikulationsschema",
+  "hintergrundwissen",
+];
 
 // ─── Component ───────────────────────────────────────────────────
 
@@ -415,19 +413,16 @@ export const ActivitySetupPage: React.FC = () => {
               <CardDescription>{t("upload.uploadPdfDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="pdf-file">{t("upload.selectFile")}</Label>
-                <Input
-                  id="pdf-file"
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleFileInputChange}
-                  className="cursor-pointer"
-                />
-              </div>
+              <input
+                id="pdf-file"
+                type="file"
+                accept=".pdf"
+                onChange={handleFileInputChange}
+                className="sr-only"
+              />
 
               <div
-                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
                   dragActive
                     ? "border-primary bg-primary/5"
                     : "border-border hover:border-primary/50"
@@ -436,13 +431,14 @@ export const ActivitySetupPage: React.FC = () => {
                 onDragLeave={handleDrag}
                 onDragOver={handleDrag}
                 onDrop={handleDrop}
+                onClick={() => document.getElementById("pdf-file")?.click()}
               >
                 <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-lg font-medium mb-2">
                   {t("upload.dragDrop")}
                 </p>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {t("upload.orClickAbove")}
+                <p className="text-sm text-primary underline cursor-pointer mb-4">
+                  {t("upload.orClickHere")}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {t("upload.maxSize")}
@@ -630,14 +626,9 @@ export const ActivitySetupPage: React.FC = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {(
-                      Object.entries(MARKDOWN_TAB_LABELS) as [
-                        MarkdownTab,
-                        string,
-                      ][]
-                    ).map(([key, label]) => (
+                    {MARKDOWN_TAB_KEYS.map((key) => (
                       <SelectItem key={key} value={key}>
-                        {label}
+                        {t(`upload.${key}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -667,10 +658,10 @@ export const ActivitySetupPage: React.FC = () => {
                     )}
                     {activeTabHasContent
                       ? t("upload.regenerate", {
-                          doc: MARKDOWN_TAB_LABELS[activeMarkdownTab],
+                          doc: t(`upload.${activeMarkdownTab}`),
                         })
                       : t("upload.generate", {
-                          doc: MARKDOWN_TAB_LABELS[activeMarkdownTab],
+                          doc: t(`upload.${activeMarkdownTab}`),
                         })}
                   </>
                 )}
@@ -683,7 +674,7 @@ export const ActivitySetupPage: React.FC = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
                 <p className="text-lg font-medium">
                   {t("upload.generatingDoc", {
-                    doc: MARKDOWN_TAB_LABELS[activeMarkdownTab],
+                    doc: t(`upload.${activeMarkdownTab}`),
                   })}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
