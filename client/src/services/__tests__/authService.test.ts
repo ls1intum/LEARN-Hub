@@ -104,6 +104,7 @@ describe("AuthService", () => {
 
       expect(header).toEqual({});
     });
+
   });
 
   describe("Token Validation", () => {
@@ -170,17 +171,6 @@ describe("AuthService", () => {
       expect(result.success).toBe(false);
       expect(result.message).toBe("Invalid credentials");
       expect(secureStorage.setTokens).not.toHaveBeenCalled();
-    });
-  });
-
-  describe("Guest Login", () => {
-    it("should create guest user without API call", async () => {
-      const result = await authService.guestLogin();
-
-      expect(result.success).toBe(true);
-      expect(result.user).toBeDefined();
-      expect(result.user?.role).toBe("GUEST");
-      expect(result.user?.email).toBe("guest@example.com");
     });
   });
 

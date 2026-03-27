@@ -299,32 +299,16 @@ export class AuthService {
 
   // Logout
   async logout(): Promise<void> {
+    const headers = this.getAuthHeader();
+    this.clearTokens();
+
     try {
-      await fetch("/api/auth/logout", {
+      await fetch(this.baseURL + "/api/auth/logout", {
         method: "POST",
-        headers: this.getAuthHeader(),
+        headers,
       });
     } catch (error) {
       logger.error("Error logging out", error, "AuthService");
-    } finally {
-      this.clearTokens();
-    }
-  }
-
-  // Login as guest
-  async guestLogin(): Promise<AuthResponse> {
-    try {
-      // Create a guest user object without making any API calls
-      const guestUser: User = {
-        id: 0,
-        email: "guest@example.com",
-        role: "GUEST",
-      };
-
-      return { success: true, user: guestUser };
-    } catch (error) {
-      logger.error("Error logging in as guest", error, "AuthService");
-      return { success: false, message: "An unexpected error occurred" };
     }
   }
 

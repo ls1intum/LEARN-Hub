@@ -17,7 +17,6 @@ import {
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
-import type { Activity } from "@/types/activity";
 import { useTranslation } from "react-i18next";
 
 export const ActivityDetails: React.FC = () => {
@@ -28,16 +27,10 @@ export const ActivityDetails: React.FC = () => {
   const isAdmin = user?.role === "ADMIN";
   const { t } = useTranslation();
 
-  // Get activity data from navigation state or fetch from API
-  const stateActivity = location.state?.activity as Activity | undefined;
   const fromBrowser = location.state?.fromBrowser as boolean | undefined;
 
   const documentApi = useApi();
   const fetchActivity = useCallback(async () => {
-    if (stateActivity && !isAdmin) {
-      return stateActivity;
-    }
-
     if (id) {
       const fetchedActivity = await apiService.getActivity(id);
       if (!fetchedActivity) {
@@ -47,7 +40,7 @@ export const ActivityDetails: React.FC = () => {
     }
 
     throw new Error("No activity ID provided");
-  }, [stateActivity, id, isAdmin]);
+  }, [id]);
 
   const {
     data: activity,
@@ -56,7 +49,7 @@ export const ActivityDetails: React.FC = () => {
     refetch,
   } = useDataFetch({
     fetchFn: fetchActivity,
-    enabled: !!(stateActivity || id),
+    enabled: !!id,
     dependencies: [fetchActivity],
   });
 

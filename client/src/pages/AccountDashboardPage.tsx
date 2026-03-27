@@ -46,7 +46,7 @@ export const AccountDashboardPage: React.FC = () => {
     password: "",
   });
 
-  const isGuest = user?.role === "GUEST";
+  const isGuest = !user || user.role === "GUEST";
 
   const handleInputChange = (
     field: keyof UpdateProfileRequest,

@@ -56,7 +56,6 @@ export const LoginPage: React.FC = () => {
     requestVerificationCode,
     registerTeacher,
     resetPassword,
-    guestLogin,
     user,
   } = useAuth();
   const navigate = useNavigate();
@@ -74,20 +73,9 @@ export const LoginPage: React.FC = () => {
 
   const handleGuestLogin = async () => {
     setIsLoading(true);
-    try {
-      const result = await guestLogin();
-      if (result.success) {
-        setMessage("Welcome! You're now browsing as a guest.");
-        setRedirectPath("/recommendations");
-        setShouldRedirect(true);
-      } else {
-        setMessage(result.message || "Failed to login as guest");
-      }
-    } catch {
-      setMessage("An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
+    setMessage("Welcome! You're now browsing as a guest.");
+    navigate("/recommendations");
+    setIsLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -683,18 +671,16 @@ export const LoginPage: React.FC = () => {
 
           {message && (
             <Alert
-              className={`${
-                message.includes("successful")
-                  ? "border-success/20 bg-success/5"
-                  : "border-destructive/20 bg-destructive/5"
-              }`}
+              className={`${message.includes("successful")
+                ? "border-success/20 bg-success/5"
+                : "border-destructive/20 bg-destructive/5"
+                }`}
             >
               <AlertCircle
-                className={`h-4 w-4 ${
-                  message.includes("successful")
-                    ? "text-success"
-                    : "text-destructive"
-                }`}
+                className={`h-4 w-4 ${message.includes("successful")
+                  ? "text-success"
+                  : "text-destructive"
+                  }`}
               />
               <AlertDescription
                 className={

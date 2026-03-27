@@ -229,33 +229,6 @@ describe("AuthContext", () => {
       expect(result.current?.isAuthenticated).toBe(true);
     });
 
-    it("should handle guest login", async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(false);
-      const mockUser = {
-        id: 0,
-        email: "guest@example.com",
-        role: "GUEST" as const,
-      };
-      vi.mocked(authService.guestLogin).mockResolvedValue({
-        success: true,
-        user: mockUser,
-      });
-
-      const { result } = renderHook(() => React.useContext(AuthContext), {
-        wrapper,
-      });
-
-      await waitFor(() => {
-        expect(result.current?.isLoading).toBe(false);
-      });
-
-      await act(async () => {
-        await result.current?.guestLogin();
-      });
-
-      expect(result.current?.user).toEqual(mockUser);
-      expect(result.current?.isAuthenticated).toBe(true);
-    });
 
     it("should handle verification code login", async () => {
       vi.mocked(authService.isAuthenticated).mockReturnValue(false);

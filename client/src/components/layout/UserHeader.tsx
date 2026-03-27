@@ -21,7 +21,7 @@ export const UserHeader: React.FC<UserHeaderProps> = ({
 }) => {
   const { t } = useTranslation();
   const isAdmin = user?.role === "ADMIN";
-  const isGuest = user?.role === "GUEST";
+  const isGuest = !user || user.role === "GUEST";
 
   const roleDescription = isAdmin
     ? t("sidebar.adminView")

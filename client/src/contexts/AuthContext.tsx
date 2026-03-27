@@ -31,11 +31,6 @@ export interface AuthContextType {
   resetPassword: (
     email: string,
   ) => Promise<{ success: boolean; message?: string }>;
-  guestLogin: () => Promise<{
-    success: boolean;
-    message?: string;
-    user?: User;
-  }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   updateProfile: (
@@ -125,17 +120,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return await authService.resetPassword(email);
   };
 
-  const guestLogin = async () => {
-    const result = await authService.guestLogin();
-    if (result.success && result.user) {
-      setUser(result.user);
-    }
-    return result;
-  };
-
   const logout = async () => {
-    await authService.logout();
     setUser(null);
+    await authService.logout();
   };
 
   const refreshUser = async () => {
@@ -212,7 +199,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     requestVerificationCode,
     registerTeacher,
     resetPassword,
-    guestLogin,
     logout,
     refreshUser,
     updateProfile,
