@@ -59,6 +59,19 @@ public class MarkdownToPdfService {
 	 */
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName) {
 		String html = markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName);
+		return renderHtmlDocumentToPdf(html);
+	}
+
+	/**
+	 * Render an existing HTML body to PDF bytes with the standard LEARN-Hub PDF
+	 * layout.
+	 */
+	public byte[] renderHtmlToPdf(String htmlBody, boolean landscape, String activityName) {
+		String html = markdownToHtmlService.renderHtmlBodyToHtmlDocument(htmlBody, landscape, activityName);
+		return renderHtmlDocumentToPdf(html);
+	}
+
+	private byte[] renderHtmlDocumentToPdf(String html) {
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 			HtmlConverter.convertToPdf(html, baos);
 			return baos.toByteArray();

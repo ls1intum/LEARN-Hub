@@ -48,7 +48,9 @@ table {
 }
 
 table.artikulationsschema-table {
-    table-layout: fixed;
+    width: auto;
+    max-width: 100%;
+    table-layout: auto;
     font-size: 8pt;
 }
 
@@ -71,6 +73,10 @@ table.artikulationsschema-table thead th {
     font-size: 8pt;
 }
 
+tbody tr:nth-child(even) {
+    background-color: #eaf1f8;
+}
+
 tbody td {
     padding: 5pt;
     border: 0.5pt solid #C8C8C8;
@@ -80,36 +86,6 @@ table.artikulationsschema-table tbody td {
     padding: 3pt 4pt;
     line-height: 1.15;
     vertical-align: top;
-}
-
-table.artikulationsschema-table th:nth-child(1),
-table.artikulationsschema-table td:nth-child(1) {
-    width: 8%;
-}
-
-table.artikulationsschema-table th:nth-child(2),
-table.artikulationsschema-table td:nth-child(2) {
-    width: 12%;
-}
-
-table.artikulationsschema-table th:nth-child(3),
-table.artikulationsschema-table td:nth-child(3) {
-    width: 38%;
-}
-
-table.artikulationsschema-table th:nth-child(4),
-table.artikulationsschema-table td:nth-child(4) {
-    width: 10%;
-}
-
-table.artikulationsschema-table th:nth-child(5),
-table.artikulationsschema-table td:nth-child(5) {
-    width: 16%;
-}
-
-table.artikulationsschema-table th:nth-child(6),
-table.artikulationsschema-table td:nth-child(6) {
-    width: 16%;
 }
 
 code {

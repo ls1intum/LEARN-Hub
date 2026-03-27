@@ -140,4 +140,15 @@ class MarkdownToPdfServiceTest {
 		assertThat(result).isNotNull();
 		assertThat(result.length).isGreaterThan(0);
 	}
+
+	@Test
+	void renderHtmlToPdfWithExistingHtmlBody() {
+		byte[] result = service.renderHtmlToPdf("""
+				<h1>Artikulationsschema</h1>
+				<table><tr><th>A</th><th>B</th></tr><tr><td>AI &mdash; Schule</td><td>Test</td></tr></table>
+				""", true, "My Activity");
+		assertThat(result).isNotNull();
+		assertThat(result.length).isGreaterThan(0);
+		assertThat(new String(result, 0, 5)).startsWith("%PDF");
+	}
 }

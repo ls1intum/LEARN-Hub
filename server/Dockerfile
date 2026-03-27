@@ -21,8 +21,8 @@ LABEL org.opencontainers.image.title="LEARN-Hub Server"
 LABEL org.opencontainers.image.description="Spring Boot API server for LEARN-Hub application"
 LABEL org.opencontainers.image.vendor="LEARN-Hub Project"
 
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Install curl for health checks and LibreOffice Writer for PDF-to-DOCX conversion
+RUN apk add --no-cache curl libreoffice-writer font-noto
 
 # Create app directory
 WORKDIR /app
