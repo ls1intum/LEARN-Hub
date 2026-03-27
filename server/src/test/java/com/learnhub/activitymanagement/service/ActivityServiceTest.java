@@ -153,6 +153,21 @@ class ActivityServiceTest {
 	}
 
 	@Test
+	void mapToResponseIncludesSourcePdfDocumentsForAdmin() {
+		Activity activity = createTestActivity();
+		UUID docId = UUID.randomUUID();
+
+		PDFDocument doc = createTestDocument(docId);
+		activity.getDocuments().add(doc);
+
+		ActivityResponse response = activityService.convertToResponse(activity, true);
+
+		assertThat(response.getDocuments()).hasSize(1);
+		assertThat(response.getDocuments().get(0).getId()).isEqualTo(docId);
+		assertThat(response.getDocuments().get(0).getType()).isEqualTo("source_pdf");
+	}
+
+	@Test
 	void mapToResponseReturnsMarkdownsList() {
 		Activity activity = createTestActivity();
 
