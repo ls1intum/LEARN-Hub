@@ -5,9 +5,9 @@ import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.dto.response.DocumentInfoResponse;
 import com.learnhub.dto.response.ErrorResponse;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -40,9 +40,8 @@ public class DocumentsController {
 	@Operation(summary = "Get document info", description = "Get PDF document metadata. SOURCE_PDF documents require admin rights.")
 	@SecurityRequirement(name = "BearerAuth")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Document metadata", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DocumentInfoResponse.class))) })
-	public ResponseEntity<?> getDocumentInfo(@PathVariable UUID documentId,
-			Authentication authentication) {
+			@ApiResponse(responseCode = "200", description = "Document metadata", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DocumentInfoResponse.class)))})
+	public ResponseEntity<?> getDocumentInfo(@PathVariable UUID documentId, Authentication authentication) {
 		logger.info("GET /api/documents/{}/info - Get document info called", documentId);
 		try {
 			PDFDocument document = pdfService.getPdfDocument(documentId);
@@ -64,7 +63,7 @@ public class DocumentsController {
 	@Operation(summary = "Download document", description = "Download a stored document. SOURCE_PDF documents require admin rights.")
 	@SecurityRequirement(name = "BearerAuth")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "PDF document download", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"))) })
+			@ApiResponse(responseCode = "200", description = "PDF document download", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary")))})
 	public ResponseEntity<?> downloadDocument(@PathVariable UUID documentId, Authentication authentication)
 			throws IOException {
 		logger.info("GET /api/documents/{}/download - Download document called", documentId);

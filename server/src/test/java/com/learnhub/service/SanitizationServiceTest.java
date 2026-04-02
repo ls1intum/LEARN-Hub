@@ -18,8 +18,8 @@ class SanitizationServiceTest {
 
 	@Test
 	void sanitizeReplacesAdditionalDashSpaceAndEntityVariants() {
-		String sanitized = sanitizationService
-				.sanitize("a\u2010b\u2011c\u2012d\u2015e\u2212f\u00ADg\u202Fh\u2060i &ndash; &#8211; &#x2013; &mdash; &#8212; &#x2014;");
+		String sanitized = sanitizationService.sanitize(
+				"a\u2010b\u2011c\u2012d\u2015e\u2212f\u00ADg\u202Fh\u2060i &ndash; &#8211; &#x2013; &mdash; &#8212; &#x2014;");
 
 		assertThat(sanitized).isEqualTo("a-b-c-d-e-fg hi - - - - - -");
 	}

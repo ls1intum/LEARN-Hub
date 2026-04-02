@@ -192,10 +192,10 @@ public class LLMService {
 		}
 	}
 
-	private static final Pattern UEBUNG_PATTERN = Pattern.compile(
-			"===UEBUNG_START===\\s*(.*?)\\s*===UEBUNG_END===", Pattern.DOTALL);
-	private static final Pattern LOESUNG_PATTERN = Pattern.compile(
-			"===LOESUNG_START===\\s*(.*?)\\s*===LOESUNG_END===", Pattern.DOTALL);
+	private static final Pattern UEBUNG_PATTERN = Pattern.compile("===UEBUNG_START===\\s*(.*?)\\s*===UEBUNG_END===",
+			Pattern.DOTALL);
+	private static final Pattern LOESUNG_PATTERN = Pattern.compile("===LOESUNG_START===\\s*(.*?)\\s*===LOESUNG_END===",
+			Pattern.DOTALL);
 
 	private Map<String, String> extractUebungPayload(String rawResponse) {
 		if (rawResponse == null || rawResponse.trim().isEmpty()) {

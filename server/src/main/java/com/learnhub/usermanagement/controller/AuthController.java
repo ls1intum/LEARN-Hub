@@ -50,7 +50,7 @@ public class AuthController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Register a new teacher", description = "Register a new teacher account and send verification code")
 	@ApiResponses({
-			@ApiResponse(responseCode = "201", description = "Teacher registered", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserMessageResponse.class))) })
+			@ApiResponse(responseCode = "201", description = "Teacher registered", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserMessageResponse.class)))})
 	public ResponseEntity<?> registerTeacher(@Valid @RequestBody TeacherRegistrationRequest request) {
 		logger.info("POST /api/auth/register-teacher - Register teacher called with email={}", request.getEmail());
 		try {
@@ -68,7 +68,7 @@ public class AuthController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Request verification code", description = "Send a verification code to the user's email address")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Verification code sent", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Verification code sent", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
 	public ResponseEntity<?> requestVerificationCode(@RequestBody EmailRequest request) {
 		String email = request.getEmail();
 		logger.info("POST /api/auth/verification-code - Verification code requested for email={}", email);
@@ -85,7 +85,7 @@ public class AuthController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Verify code and login", description = "Verify the code and complete login process")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Login result", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Login result", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class)))})
 	public ResponseEntity<?> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
 		logger.info("POST /api/auth/verify - Verify code called for email={}", request.getEmail());
 		try {
@@ -103,7 +103,7 @@ public class AuthController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Login with password", description = "Login with email and password (admin or teacher)")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Login result", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Login result", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class)))})
 	public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
 		logger.info("POST /api/auth/login - Login called for email={}", request.getEmail());
 		try {
@@ -120,7 +120,7 @@ public class AuthController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Admin login", description = "Login with admin credentials")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Admin login result", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Admin login result", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class)))})
 	public ResponseEntity<?> adminLogin(@Valid @RequestBody LoginRequest request) {
 		logger.info("POST /api/auth/admin/login - Admin login called for email={}", request.getEmail());
 		try {
@@ -143,7 +143,7 @@ public class AuthController {
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Get current user", description = "Get information about the currently authenticated user")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Current user", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Current user", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))})
 	public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
 		logger.info("GET /api/auth/me - Get current user called");
 		try {
@@ -168,7 +168,7 @@ public class AuthController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Refresh token", description = "Refresh the JWT access token using refresh token")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Refreshed tokens", content = @Content(mediaType = "application/json", schema = @Schema(implementation = RefreshTokenResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Refreshed tokens", content = @Content(mediaType = "application/json", schema = @Schema(implementation = RefreshTokenResponse.class)))})
 	public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
 		logger.info("POST /api/auth/refresh - Token refresh called");
 		try {
@@ -185,7 +185,7 @@ public class AuthController {
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Logout", description = "Logout current user")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Logout confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Logout confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
 	public ResponseEntity<?> logout() {
 		logger.info("POST /api/auth/logout - Logout called");
 		try {
@@ -200,7 +200,7 @@ public class AuthController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Reset password", description = "Reset password for a teacher")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Password reset confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Password reset confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
 	public ResponseEntity<?> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
 		logger.info("POST /api/auth/reset-password - Password reset called for email={}", request.getEmail());
 		try {
@@ -227,7 +227,7 @@ public class AuthController {
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Get all users", description = "Get list of all users (admin only)")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Users list", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsersListResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Users list", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsersListResponse.class)))})
 	public ResponseEntity<?> getUsers() {
 		logger.info("GET /api/auth/users - Get all users called");
 		try {
@@ -244,7 +244,7 @@ public class AuthController {
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Create user", description = "Create a new user (admin only)")
 	@ApiResponses({
-			@ApiResponse(responseCode = "201", description = "Created user", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelopeResponse.class))) })
+			@ApiResponse(responseCode = "201", description = "Created user", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelopeResponse.class)))})
 	public ResponseEntity<?> createUser(@Valid @RequestBody CreateUserRequest request) {
 		logger.info("POST /api/auth/users - Create user called with email={}, role={}", request.getEmail(),
 				request.getRole());
@@ -271,7 +271,7 @@ public class AuthController {
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Update user", description = "Update user details (admin only)")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Updated user", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelopeResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Updated user", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelopeResponse.class)))})
 	public ResponseEntity<?> updateUser(@PathVariable UUID userId, @Valid @RequestBody UpdateUserRequest request) {
 		logger.info("PUT /api/auth/users/{} - Update user called", userId);
 		try {
@@ -301,7 +301,7 @@ public class AuthController {
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Delete user", description = "Delete a user (admin only)")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
 	public ResponseEntity<?> deleteUser(@PathVariable UUID userId, HttpServletRequest httpRequest) {
 		logger.info("DELETE /api/auth/users/{} - Delete user called", userId);
 		try {
@@ -327,7 +327,7 @@ public class AuthController {
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Update profile", description = "Update current user's profile")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Updated profile", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Updated profile", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))})
 	public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest request,
 			HttpServletRequest httpRequest) {
 		logger.info("PUT /api/auth/me - Update profile called");
@@ -363,7 +363,7 @@ public class AuthController {
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Delete account", description = "Delete current user's account")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
 	public ResponseEntity<?> deleteAccount(HttpServletRequest httpRequest) {
 		logger.info("DELETE /api/auth/me - Delete account called");
 		try {

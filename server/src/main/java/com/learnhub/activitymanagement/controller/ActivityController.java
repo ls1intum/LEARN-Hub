@@ -2,8 +2,8 @@ package com.learnhub.activitymanagement.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.learnhub.activitymanagement.dto.request.ActivityUpsertRequest;
 import com.learnhub.activitymanagement.dto.request.ActivityFilterRequest;
+import com.learnhub.activitymanagement.dto.request.ActivityUpsertRequest;
 import com.learnhub.activitymanagement.dto.request.DocumentIdRequest;
 import com.learnhub.activitymanagement.dto.request.GenerateMarkdownsRequest;
 import com.learnhub.activitymanagement.dto.request.LessonPlanRequest;
@@ -13,8 +13,8 @@ import com.learnhub.activitymanagement.dto.response.ActivityMutationResponse;
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
 import com.learnhub.activitymanagement.dto.response.GenerateMarkdownsResponse;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
-import com.learnhub.activitymanagement.dto.response.MessageResponse;
 import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
+import com.learnhub.activitymanagement.dto.response.MessageResponse;
 import com.learnhub.activitymanagement.dto.response.MetadataExtractionResponse;
 import com.learnhub.activitymanagement.dto.response.RecommendationsResponse;
 import com.learnhub.activitymanagement.service.ActivityService;
@@ -25,9 +25,9 @@ import com.learnhub.documentmanagement.service.MarkdownToPdfService;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.exception.ResourceNotFoundException;
 import com.learnhub.usermanagement.service.UserSearchHistoryService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -35,13 +35,22 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -56,7 +65,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class ActivityController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivityController.class);
-	private static final String[] MARKDOWN_TYPE_ORDER = {"deckblatt", "artikulationsschema", "hintergrundwissen", "uebung", "uebung_loesung"};
+	private static final String[] MARKDOWN_TYPE_ORDER = {"deckblatt", "artikulationsschema", "hintergrundwissen",
+			"uebung", "uebung_loesung"};
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	@Autowired
@@ -79,6 +89,10 @@ public class ActivityController {
 
 	@Autowired
 	private MarkdownToDocxService markdownToDocxService;
+
+	@Autowired
+	@Qualifier("markdownGenerationExecutor")
+	private ExecutorService markdownGenerationExecutor;
 
 	@GetMapping("/")
 	@PreAuthorize("permitAll()")
@@ -175,7 +189,7 @@ public class ActivityController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Generate lesson plan", description = "Generate a lesson plan from selected activities")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Lesson plan PDF", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"))) })
+			@ApiResponse(responseCode = "200", description = "Lesson plan PDF", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary")))})
 	public ResponseEntity<byte[]> generateLessonPlan(@RequestBody LessonPlanRequest request) throws IOException {
 		logger.info("POST /api/activities/lesson-plan - Generate lesson plan called with {} activities",
 				request.getActivities() != null ? request.getActivities().size() : 0);
@@ -239,29 +253,49 @@ public class ActivityController {
 
 		Map<String, Object> metadata = request.getMetadata();
 		List<String> types = request.getTypes();
+		Set<String> requestedTypes = types == null ? Set.of() : new HashSet<>(types);
 		GenerateMarkdownsResponse response = new GenerateMarkdownsResponse();
 		response.setDocumentId(documentId.toString());
 
 		boolean generateAll = types == null || types.isEmpty();
+		CompletableFuture<String> deckblattFuture = (generateAll || requestedTypes.contains("deckblatt"))
+				? submitMarkdownGeneration(() -> llmService.generateDeckblatt(pdfText, metadata))
+				: null;
+		CompletableFuture<String> artikulationsschemaFuture = (generateAll
+				|| requestedTypes.contains("artikulationsschema"))
+						? submitMarkdownGeneration(() -> llmService.generateArtikulationsschema(pdfText, metadata))
+						: null;
+		CompletableFuture<String> hintergrundwissenFuture = (generateAll
+				|| requestedTypes.contains("hintergrundwissen"))
+						? submitMarkdownGeneration(() -> llmService.generateHintergrundwissen(pdfText, metadata))
+						: null;
+		boolean generateUebung = generateAll || requestedTypes.contains("uebung")
+				|| requestedTypes.contains("uebung_loesung");
+		CompletableFuture<Map<String, String>> uebungFuture = generateUebung
+				? submitMarkdownGeneration(() -> llmService.generateUebungAndLoesung(pdfText, metadata))
+				: null;
 
-		if (generateAll || types.contains("deckblatt")) {
-			String deckblatt = llmService.generateDeckblatt(pdfText, metadata);
-			response.setDeckblattMarkdown(deckblatt);
+		List<CompletableFuture<?>> futures = filterNonNull(deckblattFuture, artikulationsschemaFuture,
+				hintergrundwissenFuture, uebungFuture);
+
+		try {
+			CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+		} catch (CompletionException e) {
+			futures.forEach(f -> f.cancel(true));
+			throw unwrapCompletionException(e);
 		}
 
-		if (generateAll || types.contains("artikulationsschema")) {
-			String artikulationsschema = llmService.generateArtikulationsschema(pdfText, metadata);
-			response.setArtikulationsschemaMarkdown(artikulationsschema);
+		if (deckblattFuture != null) {
+			response.setDeckblattMarkdown(deckblattFuture.join());
 		}
-
-		if (generateAll || types.contains("hintergrundwissen")) {
-			String hintergrundwissen = llmService.generateHintergrundwissen(pdfText, metadata);
-			response.setHintergrundwissenMarkdown(hintergrundwissen);
+		if (artikulationsschemaFuture != null) {
+			response.setArtikulationsschemaMarkdown(artikulationsschemaFuture.join());
 		}
-
-		boolean generateUebung = generateAll || types.contains("uebung") || types.contains("uebung_loesung");
-		if (generateUebung) {
-			Map<String, String> uebungResult = llmService.generateUebungAndLoesung(pdfText, metadata);
+		if (hintergrundwissenFuture != null) {
+			response.setHintergrundwissenMarkdown(hintergrundwissenFuture.join());
+		}
+		if (uebungFuture != null) {
+			Map<String, String> uebungResult = uebungFuture.join();
 			response.setUebungMarkdown(uebungResult.get("uebung"));
 			response.setUebungLoesungMarkdown(uebungResult.get("uebung_loesung"));
 		}
@@ -269,11 +303,27 @@ public class ActivityController {
 		return ResponseEntity.ok(response);
 	}
 
+	private <T> CompletableFuture<T> submitMarkdownGeneration(Supplier<T> supplier) {
+		return CompletableFuture.supplyAsync(supplier, markdownGenerationExecutor);
+	}
+
+	private List<CompletableFuture<?>> filterNonNull(CompletableFuture<?>... futures) {
+		return Arrays.stream(futures).filter(Objects::nonNull).toList();
+	}
+
+	private RuntimeException unwrapCompletionException(CompletionException e) {
+		Throwable cause = e.getCause();
+		if (cause instanceof RuntimeException runtimeException) {
+			return runtimeException;
+		}
+		return new RuntimeException("Failed to generate markdowns", cause);
+	}
+
 	@GetMapping("/{activityId}/pdf")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Download activity as combined PDF", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single PDF")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Combined activity PDF", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"))) })
+			@ApiResponse(responseCode = "200", description = "Combined activity PDF", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary")))})
 	public ResponseEntity<byte[]> downloadActivityPdf(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/pdf - Download combined activity PDF", activityId);
 		ActivityResponse activity = activityService.getActivityById(activityId);
@@ -292,7 +342,7 @@ public class ActivityController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Download activity as combined DOCX", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single DOCX")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Combined activity DOCX", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @Schema(type = "string", format = "binary"))) })
+			@ApiResponse(responseCode = "200", description = "Combined activity DOCX", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @Schema(type = "string", format = "binary")))})
 	public ResponseEntity<byte[]> downloadActivityDocx(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/docx - Download combined activity DOCX", activityId);
 		ActivityResponse activity = activityService.getActivityById(activityId);
@@ -404,7 +454,8 @@ public class ActivityController {
 				? ((Number) result.get("extractionConfidence")).doubleValue()
 				: 0.0;
 		String documentId = result.get("documentId") != null ? result.get("documentId").toString() : null;
-		String extractionQuality = result.get("extractionQuality") != null ? result.get("extractionQuality").toString()
+		String extractionQuality = result.get("extractionQuality") != null
+				? result.get("extractionQuality").toString()
 				: null;
 		return new MetadataExtractionResponse(documentId, extractedData, extractionConfidence, extractionQuality);
 	}

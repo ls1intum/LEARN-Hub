@@ -329,6 +329,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               >
                 <Menu className="h-5 w-5" />
               </Button>
+              <img
+                src="/logo.png"
+                alt="LEARN-Hub"
+                className="h-7 w-7 shrink-0 rounded-md"
+              />
               <div>
                 <h1 className="text-sm font-bold text-foreground leading-tight">
                   LEARN-Hub

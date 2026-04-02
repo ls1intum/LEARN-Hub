@@ -684,17 +684,11 @@ export const LoginPage: React.FC = () => {
             >
               <AlertCircle
                 className={`h-4 w-4 ${
-                  isSuccess
-                    ? "text-success"
-                    : "text-destructive"
+                  isSuccess ? "text-success" : "text-destructive"
                 }`}
               />
               <AlertDescription
-                className={
-                  isSuccess
-                    ? "text-success"
-                    : "text-destructive"
-                }
+                className={isSuccess ? "text-success" : "text-destructive"}
               >
                 {message}
               </AlertDescription>

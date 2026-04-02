@@ -1,7 +1,7 @@
 package com.learnhub.activitymanagement.service;
 
-import com.learnhub.activitymanagement.dto.response.ActivityResponse;
 import com.learnhub.activitymanagement.dto.response.ActivityRecommendationResponse;
+import com.learnhub.activitymanagement.dto.response.ActivityResponse;
 import com.learnhub.activitymanagement.dto.response.BreakResponse;
 import com.learnhub.activitymanagement.dto.response.RecommendationItemResponse;
 import com.learnhub.activitymanagement.dto.response.RecommendationsResponse;
@@ -140,11 +140,11 @@ public class RecommendationService {
 				List<Activity> activityList = (List<Activity>) result[0];
 				ScoreResponse score = (ScoreResponse) result[1];
 
-				List<ActivityRecommendationResponse> activityResponses = activityList.stream().map(this::convertToResponse)
-						.collect(Collectors.toList());
+				List<ActivityRecommendationResponse> activityResponses = activityList.stream()
+						.map(this::convertToResponse).collect(Collectors.toList());
 
-				recommendations
-						.add(new RecommendationItemResponse(activityResponses, score.getTotalScore(), score.getCategoryScores()));
+				recommendations.add(new RecommendationItemResponse(activityResponses, score.getTotalScore(),
+						score.getCategoryScores()));
 			}
 
 			return new RecommendationsResponse(recommendations, recommendations.size(), criteriaMap,
@@ -408,8 +408,9 @@ public class RecommendationService {
 		}
 
 		if (activity.getBreakAfter() != null) {
-			detail.setBreakAfter(new BreakResponse(activity.getBreakAfter().getId(), activity.getBreakAfter().getDuration(),
-					activity.getBreakAfter().getDescription(), activity.getBreakAfter().getReasons()));
+			detail.setBreakAfter(
+					new BreakResponse(activity.getBreakAfter().getId(), activity.getBreakAfter().getDuration(),
+							activity.getBreakAfter().getDescription(), activity.getBreakAfter().getReasons()));
 		}
 
 		return detail;

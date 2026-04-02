@@ -103,7 +103,8 @@ export const ActivityEditPage: React.FC = () => {
     (activeMarkdownTab === "deckblatt" && !!deckblattMarkdown) ||
     (activeMarkdownTab === "artikulationsschema" &&
       !!artikulationsschemaMarkdown) ||
-    (activeMarkdownTab === "hintergrundwissen" && !!hintergrundwissenMarkdown) ||
+    (activeMarkdownTab === "hintergrundwissen" &&
+      !!hintergrundwissenMarkdown) ||
     (activeMarkdownTab === "uebung" && !!uebungMarkdown) ||
     (activeMarkdownTab === "uebung_loesung" && !!uebungLoesungMarkdown);
 

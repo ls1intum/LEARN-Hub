@@ -75,9 +75,9 @@ public class MarkdownToHtmlService {
 	 * orientation.
 	 *
 	 * @param markdown
-	 *                  the markdown content
+	 *            the markdown content
 	 * @param landscape
-	 *                  true for landscape, false for portrait
+	 *            true for landscape, false for portrait
 	 */
 	public String renderMarkdownToHtml(String markdown, boolean landscape) {
 		return renderMarkdownToHtml(markdown, landscape, "");
@@ -88,11 +88,11 @@ public class MarkdownToHtmlService {
 	 * orientation, activity name in header, and download date in footer.
 	 *
 	 * @param markdown
-	 *                     the markdown content
+	 *            the markdown content
 	 * @param landscape
-	 *                     true for landscape, false for portrait
+	 *            true for landscape, false for portrait
 	 * @param activityName
-	 *                     the activity name shown in the page header
+	 *            the activity name shown in the page header
 	 */
 	public String renderMarkdownToHtml(String markdown, boolean landscape, String activityName) {
 		String body = renderDecoratedMarkdownBody(markdown);

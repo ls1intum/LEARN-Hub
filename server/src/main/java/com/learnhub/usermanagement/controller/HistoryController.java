@@ -59,7 +59,7 @@ public class HistoryController {
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Get search history", description = "Get user's search history")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Search history", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SearchHistoryListResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Search history", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SearchHistoryListResponse.class)))})
 	public ResponseEntity<?> getSearchHistory(@RequestParam(required = false, defaultValue = "50") Integer limit,
 			@RequestParam(required = false, defaultValue = "0") Integer offset, HttpServletRequest request) {
 		logger.info("GET /api/history/search - Get search history called with limit={}, offset={}", limit, offset);
@@ -75,15 +75,16 @@ public class HistoryController {
 			List<SearchHistoryEntryResponse> historyData = history.stream().map(entry -> {
 				try {
 					return new SearchHistoryEntryResponse(entry.getId(),
-							objectMapper.readValue(entry.getSearchCriteria(), Map.class), entry.getCreatedAt().toString());
+							objectMapper.readValue(entry.getSearchCriteria(), Map.class),
+							entry.getCreatedAt().toString());
 				} catch (Exception e) {
 					return new SearchHistoryEntryResponse(entry.getId(), Collections.emptyMap(),
 							entry.getCreatedAt().toString());
 				}
 			}).collect(Collectors.toList());
 
-			return ResponseEntity.ok(
-					new SearchHistoryListResponse(historyData, new PaginationResponse(limit, offset, historyData.size())));
+			return ResponseEntity.ok(new SearchHistoryListResponse(historyData,
+					new PaginationResponse(limit, offset, historyData.size())));
 		} catch (Exception e) {
 			logger.error("GET /api/history/search - Failed to retrieve search history: {}", e.getMessage());
 			return ResponseEntity.status(500)
@@ -95,7 +96,7 @@ public class HistoryController {
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Delete search history entry", description = "Delete a specific search history entry")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
 	public ResponseEntity<?> deleteSearchHistory(@PathVariable UUID historyId, HttpServletRequest request) {
 		logger.info("DELETE /api/history/search/{} - Delete search history entry called", historyId);
 		try {
@@ -125,7 +126,7 @@ public class HistoryController {
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Get activity favourites", description = "Get user's favourite activities")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Activity favourites", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ActivityFavouritesListResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Activity favourites", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ActivityFavouritesListResponse.class)))})
 	public ResponseEntity<?> getActivityFavourites(@RequestParam(required = false, defaultValue = "50") Integer limit,
 			@RequestParam(required = false, defaultValue = "0") Integer offset, HttpServletRequest request) {
 		logger.info("GET /api/history/favourites/activities - Get activity favourites called with limit={}, offset={}",
@@ -140,8 +141,8 @@ public class HistoryController {
 			List<UserFavourites> favourites = favouritesService.getUserFavourites(userId, "activity");
 
 			List<ActivityFavouriteItemResponse> favouritesData = favourites.stream()
-					.map(fav -> new ActivityFavouriteItemResponse(fav.getId(), fav.getFavouriteType(), fav.getActivityId(),
-							fav.getName(), fav.getCreatedAt().toString()))
+					.map(fav -> new ActivityFavouriteItemResponse(fav.getId(), fav.getFavouriteType(),
+							fav.getActivityId(), fav.getName(), fav.getCreatedAt().toString()))
 					.collect(Collectors.toList());
 
 			return ResponseEntity.ok(new ActivityFavouritesListResponse(favouritesData,
@@ -158,7 +159,7 @@ public class HistoryController {
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Get lesson plan favourites", description = "Get user's favourite lesson plans")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Lesson plan favourites", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LessonPlanFavouritesListResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Lesson plan favourites", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LessonPlanFavouritesListResponse.class)))})
 	public ResponseEntity<?> getLessonPlanFavourites(@RequestParam(required = false, defaultValue = "50") Integer limit,
 			@RequestParam(required = false, defaultValue = "0") Integer offset, HttpServletRequest request) {
 		logger.info(
@@ -205,7 +206,7 @@ public class HistoryController {
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Save activity favourite", description = "Save an activity as favourite")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Favourite saved", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FavouriteSaveResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Favourite saved", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FavouriteSaveResponse.class)))})
 	public ResponseEntity<?> saveActivityFavourite(@RequestBody ActivityFavouriteRequest requestBody,
 			HttpServletRequest request) {
 		logger.info("POST /api/history/favourites/activities - Save activity favourite called");
@@ -226,7 +227,8 @@ public class HistoryController {
 
 			logger.info("POST /api/history/favourites/activities - Activity favourite saved with id={}",
 					favourite.getId());
-			return ResponseEntity.ok(new FavouriteSaveResponse("Activity favourite saved successfully", favourite.getId()));
+			return ResponseEntity
+					.ok(new FavouriteSaveResponse("Activity favourite saved successfully", favourite.getId()));
 		} catch (Exception e) {
 			logger.error("POST /api/history/favourites/activities - Failed to save activity favourite: {}",
 					e.getMessage());
@@ -239,7 +241,7 @@ public class HistoryController {
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Save lesson plan favourite", description = "Save a lesson plan as favourite")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Favourite saved", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FavouriteSaveResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Favourite saved", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FavouriteSaveResponse.class)))})
 	public ResponseEntity<?> saveLessonPlanFavourite(@RequestBody LessonPlanFavouriteRequest requestBody,
 			HttpServletRequest request) {
 		logger.info("POST /api/history/favourites/lesson-plans - Save lesson plan favourite called");
@@ -277,7 +279,7 @@ public class HistoryController {
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Delete favourite", description = "Delete a favourite (activity or lesson plan)")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
 	public ResponseEntity<?> deleteFavourite(@PathVariable UUID favouriteId, HttpServletRequest request) {
 		logger.info("DELETE /api/history/favourites/{} - Delete favourite called", favouriteId);
 		try {
@@ -307,7 +309,7 @@ public class HistoryController {
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Remove activity favourite", description = "Remove an activity from favourites")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
 	public ResponseEntity<?> removeActivityFavourite(@PathVariable UUID activityId, HttpServletRequest request) {
 		logger.info("DELETE /api/history/favourites/activities/{} - Remove activity favourite called", activityId);
 		try {
@@ -339,7 +341,7 @@ public class HistoryController {
 	@PreAuthorize("isAuthenticated()")
 	@Operation(summary = "Check activity favourite status", description = "Check if an activity is favourited by the user")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Favourite status", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FavouriteStatusResponse.class))) })
+			@ApiResponse(responseCode = "200", description = "Favourite status", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FavouriteStatusResponse.class)))})
 	public ResponseEntity<?> checkActivityFavouriteStatus(@PathVariable UUID activityId, HttpServletRequest request) {
 		logger.info("GET /api/history/favourites/activities/{}/status - Check activity favourite status called",
 				activityId);

@@ -32,13 +32,20 @@ export const UserHeader: React.FC<UserHeaderProps> = ({
   return (
     <div className={`p-4 border-b border-border ${className}`}>
       <div className="flex items-center justify-between">
-        <div className="min-w-0">
-          <h1 className="text-base font-bold text-foreground leading-tight tracking-tight">
-            LEARN-Hub
-          </h1>
-          <p className="text-xs text-muted-foreground leading-tight mt-0.5">
-            {roleDescription}
-          </p>
+        <div className="flex items-center gap-2.5 min-w-0">
+          <img
+            src="/logo.png"
+            alt="LEARN-Hub"
+            className="h-8 w-8 shrink-0 rounded-md"
+          />
+          <div className="min-w-0">
+            <h1 className="text-base font-bold text-foreground leading-tight tracking-tight">
+              LEARN-Hub
+            </h1>
+            <p className="text-xs text-muted-foreground leading-tight mt-0.5">
+              {roleDescription}
+            </p>
+          </div>
         </div>
         {isMobile && onClose && (
           <Button
