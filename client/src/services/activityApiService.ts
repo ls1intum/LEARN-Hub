@@ -8,7 +8,6 @@ import type {
 import type {
   UploadPdfDraftResponse,
   UploadPdfDraftOptions,
-  ArtikulationsschemaResponse,
   ActivityMarkdownsResponse,
   CreateActivityRequest,
   UpdateActivityRequest,
@@ -211,23 +210,6 @@ export const ActivityApi = {
   },
 
   /**
-   * Generate Artikulationsschema markdown from an uploaded PDF.
-   */
-  async generateArtikulationsschema(
-    documentId: string,
-    metadata?: Record<string, unknown>,
-  ) {
-    return ApiRequestMixin.request<ArtikulationsschemaResponse>(
-      "/api/activities/generate-artikulationsschema",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId: documentId, metadata: metadata }),
-      },
-    );
-  },
-
-  /**
    * Generate all activity markdowns (Deckblatt, Artikulationsschema, Hintergrundwissen).
    */
   async generateActivityMarkdowns(
@@ -236,7 +218,7 @@ export const ActivityApi = {
     types?: string[],
   ) {
     return ApiRequestMixin.request<ActivityMarkdownsResponse>(
-      "/api/activities/generate-activity-markdowns",
+      "/api/activities/generate-markdowns",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -254,7 +236,7 @@ export const ActivityApi = {
    */
   async downloadActivityPdf(activityId: string) {
     const response = await authService.makeAuthenticatedRequest(
-      `/api/activities/${activityId}/download-pdf`,
+      `/api/activities/${activityId}/pdf`,
     );
 
     if (!response.ok) {
@@ -269,7 +251,7 @@ export const ActivityApi = {
    */
   async downloadActivityDocx(activityId: string) {
     const response = await authService.makeAuthenticatedRequest(
-      `/api/activities/${activityId}/download-docx`,
+      `/api/activities/${activityId}/docx`,
     );
 
     if (!response.ok) {

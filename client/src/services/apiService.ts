@@ -74,7 +74,6 @@ export class ApiService {
   static getEnvironment = ActivityApi.getEnvironment;
   static uploadPdfDraft = ActivityApi.uploadPdfDraft;
   static regenerateMetadata = ActivityApi.regenerateMetadata;
-  static generateArtikulationsschema = ActivityApi.generateArtikulationsschema;
   static generateActivityMarkdowns = ActivityApi.generateActivityMarkdowns;
   static downloadActivityPdf = ActivityApi.downloadActivityPdf;
   static downloadActivityDocx = ActivityApi.downloadActivityDocx;

@@ -17,12 +17,6 @@ export interface UploadPdfDraftOptions {
   extractMetadata?: boolean;
 }
 
-// Artikulationsschema generation response
-export interface ArtikulationsschemaResponse {
-  markdown: string;
-  documentId: string;
-}
-
 // Activity markdowns generation response (all three types)
 export interface ActivityMarkdownsResponse {
   documentId: string;

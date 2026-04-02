@@ -1,7 +1,6 @@
 package com.learnhub.activitymanagement.controller;
 
 import com.learnhub.activitymanagement.dto.request.ActivityFilterRequest;
-import com.learnhub.activitymanagement.dto.request.LessonPlanInfoRequest;
 import com.learnhub.activitymanagement.dto.request.LessonPlanRequest;
 import com.learnhub.activitymanagement.dto.request.RecommendationRequest;
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
@@ -189,45 +188,6 @@ public class ActivityController {
 		return buildFileDownloadResponse(lessonPlanPdf, "lesson_plan", ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
-	@PostMapping("/lesson-plan/info")
-	@PreAuthorize("permitAll()")
-	@Operation(summary = "Get lesson plan info", description = "Get lesson plan generation information")
-	public ResponseEntity<?> getLessonPlanInfo(@RequestBody LessonPlanInfoRequest request) {
-		logger.info("POST /api/activities/lesson-plan/info - Get lesson plan info called with {} activities",
-				request.getActivities() != null ? request.getActivities().size() : 0);
-		LessonPlanInfoResponse info = pdfService.getLessonPlanInfo(request.getActivities());
-		return ResponseEntity.ok(info);
-	}
-
-	@PostMapping("/generate-artikulationsschema")
-	@PreAuthorize("hasRole('ADMIN')")
-	@SecurityRequirement(name = "BearerAuth")
-	@Operation(summary = "Generate Artikulationsschema", description = "Generate or extract an Artikulationsschema markdown from an uploaded PDF (admin only)")
-	public ResponseEntity<?> generateArtikulationsschema(@RequestBody Map<String, Object> request) {
-		logger.info("POST /api/activities/generate-artikulationsschema called");
-		UUID documentId = parseRequiredDocumentId(request);
-
-		// Get PDF text from cached or persisted PDF
-		String pdfText = pdfService.extractTextFromPdf(documentId);
-		if (pdfText == null || pdfText.trim().length() < 10) {
-			throw new IllegalArgumentException("PDF does not contain sufficient text for schema generation");
-		}
-
-		// Extract user-adjusted metadata if provided
-		@SuppressWarnings("unchecked")
-		Map<String, Object> metadata = request.get("metadata") instanceof Map
-				? (Map<String, Object>) request.get("metadata")
-				: null;
-
-		String markdown = llmService.generateArtikulationsschema(pdfText, metadata);
-
-		Map<String, Object> response = new HashMap<>();
-		response.put("markdown", markdown);
-		response.put("documentId", documentId.toString());
-
-		return ResponseEntity.ok(response);
-	}
-
 	@PostMapping("/upload-pdf-draft")
 	@PreAuthorize("hasRole('ADMIN')")
 	@SecurityRequirement(name = "BearerAuth")
@@ -251,12 +211,12 @@ public class ActivityController {
 		return ResponseEntity.ok(result);
 	}
 
-	@PostMapping("/generate-activity-markdowns")
+	@PostMapping("/generate-markdowns")
 	@PreAuthorize("hasRole('ADMIN')")
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Generate all activity markdowns", description = "Generate Deckblatt, Artikulationsschema, and Hintergrundwissen markdowns from an uploaded PDF (admin only)")
 	public ResponseEntity<?> generateActivityMarkdowns(@RequestBody Map<String, Object> request) {
-		logger.info("POST /api/activities/generate-activity-markdowns called");
+		logger.info("POST /api/activities/generate-markdowns called");
 		UUID documentId = parseRequiredDocumentId(request);
 
 		String pdfText = pdfService.extractTextFromPdf(documentId);
@@ -296,11 +256,11 @@ public class ActivityController {
 		return ResponseEntity.ok(response);
 	}
 
-	@GetMapping("/{activityId}/download-pdf")
+	@GetMapping("/{activityId}/pdf")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Download activity as combined PDF", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single PDF")
 	public ResponseEntity<?> downloadActivityPdf(@PathVariable UUID activityId) {
-		logger.info("GET /api/activities/{}/download-pdf - Download combined activity PDF", activityId);
+		logger.info("GET /api/activities/{}/pdf - Download combined activity PDF", activityId);
 		ActivityResponse activity = activityService.getActivityById(activityId);
 		List<byte[]> pdfParts = buildOrderedPdfParts(activity);
 
@@ -313,11 +273,11 @@ public class ActivityController {
 		return buildFileDownloadResponse(pdfBytes, activity.getName(), ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
-	@GetMapping("/{activityId}/download-docx")
+	@GetMapping("/{activityId}/docx")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Download activity as combined DOCX", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single DOCX")
 	public ResponseEntity<?> downloadActivityDocx(@PathVariable UUID activityId) {
-		logger.info("GET /api/activities/{}/download-docx - Download combined activity DOCX", activityId);
+		logger.info("GET /api/activities/{}/docx - Download combined activity DOCX", activityId);
 		ActivityResponse activity = activityService.getActivityById(activityId);
 		List<String> markdowns = new ArrayList<>();
 		List<Boolean> landscapes = new ArrayList<>();
