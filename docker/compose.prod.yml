@@ -43,7 +43,6 @@ services:
       - PDF_PATH=/app/data/pdfs
     volumes:
       - ${PDF_PATH}:/app/data/pdfs
-      - ${DATASET_PATH:-./dataset}:/dataset:ro
     depends_on:
       postgres:
         condition: service_healthy
