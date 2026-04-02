@@ -3,6 +3,7 @@ package com.learnhub.documentmanagement.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.learnhub.service.SanitizationService;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.util.List;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class MarkdownToDocxServiceTest {
 
@@ -19,8 +21,9 @@ class MarkdownToDocxServiceTest {
 	@BeforeEach
 	void setUp() {
 		stubConversionService = new StubConversionService(createMinimalDocx());
-		service = new MarkdownToDocxService(new MarkdownToHtmlService(), stubConversionService,
-				new DocxPostProcessor());
+		MarkdownToHtmlService htmlService = new MarkdownToHtmlService();
+		ReflectionTestUtils.setField(htmlService, "sanitizationService", new SanitizationService());
+		service = new MarkdownToDocxService(htmlService, stubConversionService, new DocxPostProcessor());
 	}
 
 	@Test

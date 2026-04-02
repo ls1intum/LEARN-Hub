@@ -11,6 +11,7 @@ import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.exception.ResourceNotFoundException;
+import com.learnhub.service.SanitizationService;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -44,6 +45,9 @@ public class ActivityService {
 
 	@Autowired
 	private ActivityExtractionService extractionService;
+
+	@Autowired
+	private SanitizationService sanitizationService;
 
 	public long countActivitiesWithFilters(String name, Integer ageMin, Integer ageMax, Integer durationMin,
 			Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
@@ -168,6 +172,7 @@ public class ActivityService {
 
 	public ActivityResponse createActivity(Activity activity) {
 		logger.debug("Saving new activity: name={}", activity.getName());
+		sanitizeActivity(activity);
 		Activity saved = activityRepository.save(activity);
 		logger.debug("Activity saved with id={}", saved.getId());
 		return mapToResponse(saved, false);
@@ -198,7 +203,10 @@ public class ActivityService {
 		updateMarkdownByType(activity, activityUpdate, MarkdownType.ARTIKULATIONSSCHEMA);
 		updateMarkdownByType(activity, activityUpdate, MarkdownType.DECKBLATT);
 		updateMarkdownByType(activity, activityUpdate, MarkdownType.HINTERGRUNDWISSEN);
+		updateMarkdownByType(activity, activityUpdate, MarkdownType.UEBUNG);
+		updateMarkdownByType(activity, activityUpdate, MarkdownType.UEBUNG_LOESUNG);
 
+		sanitizeActivity(activity);
 		Activity saved = activityRepository.save(activity);
 		return mapToResponse(saved, false);
 	}
@@ -223,6 +231,22 @@ public class ActivityService {
 				md.setCreatedAt(LocalDateTime.now());
 				activity.getMarkdowns().add(md);
 			}
+		}
+	}
+
+	private void sanitizeActivity(Activity activity) {
+		if (activity == null) {
+			return;
+		}
+
+		activity.setName(sanitizationService.sanitize(activity.getName()));
+		activity.setDescription(sanitizationService.sanitize(activity.getDescription()));
+		activity.setSource(sanitizationService.sanitize(activity.getSource()));
+		activity.setResourcesNeeded(sanitizationService.sanitizeList(activity.getResourcesNeeded()));
+		activity.setTopics(sanitizationService.sanitizeList(activity.getTopics()));
+
+		for (ActivityMarkdown markdown : activity.getMarkdowns()) {
+			markdown.setContent(sanitizationService.sanitize(markdown.getContent()));
 		}
 	}
 
@@ -335,6 +359,26 @@ public class ActivityService {
 			hintergrundwissenMd.setLandscape(false);
 			hintergrundwissenMd.setCreatedAt(LocalDateTime.now());
 			activity.getMarkdowns().add(hintergrundwissenMd);
+		}
+
+		if (data.get("uebungMarkdown") != null) {
+			ActivityMarkdown uebungMd = new ActivityMarkdown();
+			uebungMd.setActivity(activity);
+			uebungMd.setType(MarkdownType.UEBUNG);
+			uebungMd.setContent(data.get("uebungMarkdown").toString());
+			uebungMd.setLandscape(false);
+			uebungMd.setCreatedAt(LocalDateTime.now());
+			activity.getMarkdowns().add(uebungMd);
+		}
+
+		if (data.get("uebungLoesungMarkdown") != null) {
+			ActivityMarkdown uebungLoesungMd = new ActivityMarkdown();
+			uebungLoesungMd.setActivity(activity);
+			uebungLoesungMd.setType(MarkdownType.UEBUNG_LOESUNG);
+			uebungLoesungMd.setContent(data.get("uebungLoesungMarkdown").toString());
+			uebungLoesungMd.setLandscape(false);
+			uebungLoesungMd.setCreatedAt(LocalDateTime.now());
+			activity.getMarkdowns().add(uebungLoesungMd);
 		}
 
 		return activity;

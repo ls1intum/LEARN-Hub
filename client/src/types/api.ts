@@ -23,6 +23,8 @@ export interface ActivityMarkdownsResponse {
   deckblattMarkdown?: string;
   artikulationsschemaMarkdown?: string;
   hintergrundwissenMarkdown?: string;
+  uebungMarkdown?: string;
+  uebungLoesungMarkdown?: string;
 }
 
 // Activity creation request
@@ -46,6 +48,8 @@ export interface CreateActivityRequest {
   artikulationsschemaMarkdown?: string;
   deckblattMarkdown?: string;
   hintergrundwissenMarkdown?: string;
+  uebungMarkdown?: string;
+  uebungLoesungMarkdown?: string;
 }
 
 // Activity update request
@@ -68,6 +72,8 @@ export interface UpdateActivityRequest {
   artikulationsschemaMarkdown?: string;
   deckblattMarkdown?: string;
   hintergrundwissenMarkdown?: string;
+  uebungMarkdown?: string;
+  uebungLoesungMarkdown?: string;
 }
 
 // User creation/update request

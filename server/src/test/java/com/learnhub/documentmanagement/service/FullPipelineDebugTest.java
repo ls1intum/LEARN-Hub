@@ -1,8 +1,10 @@
 package com.learnhub.documentmanagement.service;
 
+import com.learnhub.service.SanitizationService;
 import java.io.FileOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class FullPipelineDebugTest {
 
@@ -23,6 +25,7 @@ class FullPipelineDebugTest {
 		setField(conv, "timeoutSeconds", 60);
 
 		MarkdownToHtmlService htmlService = new MarkdownToHtmlService();
+		ReflectionTestUtils.setField(htmlService, "sanitizationService", new SanitizationService());
 		DocxPostProcessor postProcessor = new DocxPostProcessor();
 		MarkdownToDocxService docxService = new MarkdownToDocxService(htmlService, conv, postProcessor);
 

@@ -56,7 +56,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class ActivityController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivityController.class);
-	private static final String[] MARKDOWN_TYPE_ORDER = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
+	private static final String[] MARKDOWN_TYPE_ORDER = {"deckblatt", "artikulationsschema", "hintergrundwissen", "uebung", "uebung_loesung"};
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	@Autowired
@@ -257,6 +257,13 @@ public class ActivityController {
 		if (generateAll || types.contains("hintergrundwissen")) {
 			String hintergrundwissen = llmService.generateHintergrundwissen(pdfText, metadata);
 			response.setHintergrundwissenMarkdown(hintergrundwissen);
+		}
+
+		boolean generateUebung = generateAll || types.contains("uebung") || types.contains("uebung_loesung");
+		if (generateUebung) {
+			Map<String, String> uebungResult = llmService.generateUebungAndLoesung(pdfText, metadata);
+			response.setUebungMarkdown(uebungResult.get("uebung"));
+			response.setUebungLoesungMarkdown(uebungResult.get("uebung_loesung"));
 		}
 
 		return ResponseEntity.ok(response);

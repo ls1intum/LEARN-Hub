@@ -1,5 +1,6 @@
 package com.learnhub.documentmanagement.service;
 
+import com.learnhub.service.SanitizationService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +14,7 @@ import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -46,6 +48,9 @@ public class MarkdownToHtmlService {
 	private final String pdfCssPortraitTemplate;
 	private final String logoDataUri;
 
+	@Autowired
+	private SanitizationService sanitizationService;
+
 	public MarkdownToHtmlService() {
 		var extensions = List.of(TablesExtension.create());
 		this.parser = Parser.builder().extensions(extensions).build();
@@ -70,9 +75,9 @@ public class MarkdownToHtmlService {
 	 * orientation.
 	 *
 	 * @param markdown
-	 *            the markdown content
+	 *                  the markdown content
 	 * @param landscape
-	 *            true for landscape, false for portrait
+	 *                  true for landscape, false for portrait
 	 */
 	public String renderMarkdownToHtml(String markdown, boolean landscape) {
 		return renderMarkdownToHtml(markdown, landscape, "");
@@ -83,11 +88,11 @@ public class MarkdownToHtmlService {
 	 * orientation, activity name in header, and download date in footer.
 	 *
 	 * @param markdown
-	 *            the markdown content
+	 *                     the markdown content
 	 * @param landscape
-	 *            true for landscape, false for portrait
+	 *                     true for landscape, false for portrait
 	 * @param activityName
-	 *            the activity name shown in the page header
+	 *                     the activity name shown in the page header
 	 */
 	public String renderMarkdownToHtml(String markdown, boolean landscape, String activityName) {
 		String body = renderDecoratedMarkdownBody(markdown);
@@ -136,11 +141,11 @@ public class MarkdownToHtmlService {
 	}
 
 	private String normalizeMarkdown(String markdown) {
-		return normalizeTypography(markdown);
+		return sanitizationService.sanitize(markdown);
 	}
 
 	private String decorateHtmlBody(String htmlBody) {
-		String normalizedHtml = normalizeTypography(htmlBody);
+		String normalizedHtml = sanitizationService.sanitize(htmlBody);
 		if (!ARTIKULATIONSSCHEMA_HTML_TITLE_PATTERN.matcher(normalizedHtml).find()) {
 			return normalizedHtml;
 		}
@@ -176,17 +181,6 @@ public class MarkdownToHtmlService {
 		String quote = classMatcher.group(1);
 		String replacement = "class=" + quote + classes.strip() + " " + cssClass + quote;
 		return classMatcher.replaceFirst(Matcher.quoteReplacement(replacement));
-	}
-
-	private String normalizeTypography(String content) {
-		if (content == null || content.isEmpty()) {
-			return "";
-		}
-
-		return content.replace("&ndash;", "-").replace("&#8211;", "-").replace("&#x2013;", "-").replace("&mdash;", "-")
-				.replace("&#8212;", "-").replace("&#x2014;", "-").replace('\u2010', '-').replace('\u2011', '-')
-				.replace('\u2012', '-').replace('\u2013', '-').replace('\u2014', '-').replace('\u2015', '-')
-				.replace('\u2212', '-');
 	}
 
 	private String loadTemplate(String path) {

@@ -19,3 +19,8 @@ server-spring/mvnw.cmd
 *.jar
 *.war
 *.class
+
+# Claude
+.claude/
+.claude-flow/
+.swarm/

@@ -2,10 +2,12 @@ package com.learnhub.documentmanagement.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.learnhub.service.SanitizationService;
 import org.commonmark.node.Paragraph;
 import org.commonmark.node.Text;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class MarkdownToHtmlServiceTest {
 
@@ -14,6 +16,7 @@ class MarkdownToHtmlServiceTest {
 	@BeforeEach
 	void setUp() {
 		service = new MarkdownToHtmlService();
+		ReflectionTestUtils.setField(service, "sanitizationService", new SanitizationService());
 	}
 
 	@Test
@@ -53,19 +56,21 @@ class MarkdownToHtmlServiceTest {
 	}
 
 	@Test
-	void parseToNodeNormalizesUnicodeDashesBeforeParsing() {
-		var node = service.parseToNode("AI \u2014 Schule");
+	void parseToNodeSanitizesAiTypographyBeforeParsing() {
+		var node = service.parseToNode("AI\u2014Schule\u2026 \u201CHallo\u201D");
 		assertThat(node).isNotNull();
 		assertThat(node.getFirstChild()).isInstanceOf(Paragraph.class);
 		assertThat(node.getFirstChild().getFirstChild()).isInstanceOf(Text.class);
-		assertThat(((Text) node.getFirstChild().getFirstChild()).getLiteral()).isEqualTo("AI - Schule");
+		assertThat(((Text) node.getFirstChild().getFirstChild()).getLiteral()).isEqualTo("AI-Schule... \"Hallo\"");
 	}
 
 	@Test
-	void renderMarkdownToHtmlNormalizesUnicodeDashes() {
-		String html = service.renderMarkdownToHtml("AI - Mensch \u2014 Schule \u2013 Unterricht");
-		assertThat(html).contains("AI - Mensch - Schule - Unterricht");
+	void renderMarkdownToHtmlSanitizesAiTypography() {
+		String html = service.renderMarkdownToHtml("AI\u2014Mensch\u2026\u00A0\u201CSchule\u201D\u200B");
+		assertThat(html).contains("AI-Mensch... &quot;Schule&quot;");
 		assertThat(html).doesNotContain("\u2014");
-		assertThat(html).doesNotContain("\u2013");
+		assertThat(html).doesNotContain("\u2026");
+		assertThat(html).doesNotContain("\u00A0");
+		assertThat(html).doesNotContain("\u200B");
 	}
 }

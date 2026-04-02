@@ -3,6 +3,7 @@ package com.learnhub.documentmanagement.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,6 +35,9 @@ public class LLMService {
 	@Value("classpath:prompts/HintergrundwissenGeneration.st")
 	private Resource hintergrundwissenPromptResource;
 
+	@Value("classpath:prompts/UebungGeneration.st")
+	private Resource uebungPromptResource;
+
 	private final ChatClient chatClient;
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -55,6 +59,9 @@ public class LLMService {
 
 	// Three free-text sections of teacher background knowledge.
 	private static final int MAX_TOKENS_HINTERGRUNDWISSEN = 2000;
+
+	// Exercise sheet + matching solution sheet in one response.
+	private static final int MAX_TOKENS_UEBUNG = 3500;
 
 	public Map<String, Object> extractActivityData(String pdfText) {
 
@@ -156,6 +163,57 @@ public class LLMService {
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to generate Hintergrundwissen: " + e.getMessage(), e);
 		}
+	}
+
+	/**
+	 * Generate an age-appropriate exercise sheet and its matching solution in a
+	 * single LLM call, guaranteeing the two documents correspond exactly.
+	 *
+	 * @param pdfText
+	 *            extracted text from the PDF
+	 * @param metadata
+	 *            user-adjusted activity metadata (ageMin/ageMax drive difficulty)
+	 * @return map with keys "uebung" and "uebung_loesung", each containing markdown
+	 */
+	public Map<String, String> generateUebungAndLoesung(String pdfText, Map<String, Object> metadata) {
+		String metadataSection = buildMetadataSection(metadata);
+		String promptText = new PromptTemplate(uebungPromptResource)
+				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
+
+		try {
+			String responseText = chatClient.prompt().user(promptText)
+					.options(OpenAiChatOptions.builder().maxTokens(MAX_TOKENS_UEBUNG).build()).call().content();
+
+			logger.debug("LLM Uebung Response: {}", responseText);
+
+			return extractUebungPayload(responseText);
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to generate Übung and Lösung: " + e.getMessage(), e);
+		}
+	}
+
+	private static final Pattern UEBUNG_PATTERN = Pattern.compile(
+			"===UEBUNG_START===\\s*(.*?)\\s*===UEBUNG_END===", Pattern.DOTALL);
+	private static final Pattern LOESUNG_PATTERN = Pattern.compile(
+			"===LOESUNG_START===\\s*(.*?)\\s*===LOESUNG_END===", Pattern.DOTALL);
+
+	private Map<String, String> extractUebungPayload(String rawResponse) {
+		if (rawResponse == null || rawResponse.trim().isEmpty()) {
+			throw new IllegalStateException("LLM returned an empty response");
+		}
+
+		Matcher uebungMatcher = UEBUNG_PATTERN.matcher(rawResponse);
+		Matcher loesungMatcher = LOESUNG_PATTERN.matcher(rawResponse);
+
+		if (!uebungMatcher.find() || !loesungMatcher.find()) {
+			throw new IllegalStateException(
+					"LLM response missing required delimiters ===UEBUNG_START=== / ===LOESUNG_START===");
+		}
+
+		Map<String, String> result = new HashMap<>();
+		result.put("uebung", uebungMatcher.group(1).trim());
+		result.put("uebung_loesung", loesungMatcher.group(1).trim());
+		return result;
 	}
 
 	private String extractJsonPayload(String rawResponse) {

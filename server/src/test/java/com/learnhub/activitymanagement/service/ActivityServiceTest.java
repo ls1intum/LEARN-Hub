@@ -21,6 +21,7 @@ import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
+import com.learnhub.service.SanitizationService;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -56,6 +57,7 @@ class ActivityServiceTest {
 		ReflectionTestUtils.setField(activityService, "pdfDocumentRepository", pdfDocumentRepository);
 		ReflectionTestUtils.setField(activityService, "pdfService", pdfService);
 		ReflectionTestUtils.setField(activityService, "extractionService", extractionService);
+		ReflectionTestUtils.setField(activityService, "sanitizationService", new SanitizationService());
 		ReflectionTestUtils.setField(extractionService, "pdfService", pdfService);
 		ReflectionTestUtils.setField(extractionService, "llmService", llmService);
 	}
@@ -402,6 +404,37 @@ class ActivityServiceTest {
 		assertThat(saved.getDocuments()).hasSize(1);
 		assertThat(saved.getDocuments().get(0).getId()).isEqualTo(finalizedDocId);
 		assertThat(saved.getDocuments().get(0).getType()).isEqualTo(DocumentType.SOURCE_PDF);
+	}
+
+	@Test
+	void createActivitySanitizesMetadataAndMarkdownBeforeSaving() {
+		Activity activity = createTestActivity();
+		activity.setName("AI\u2014Titel");
+		activity.setDescription("Zitat \u201Calt\u201D");
+		activity.setSource("Quelle\u00A0A");
+		activity.setResourcesNeeded(List.of("Papier\u200B", "Stift\u2013Set"));
+		activity.setTopics(List.of("Logik\u2026"));
+
+		ActivityMarkdown markdown = new ActivityMarkdown();
+		markdown.setActivity(activity);
+		markdown.setType(MarkdownType.DECKBLATT);
+		markdown.setContent("Text\u2014mit\u201CZeichen\u201D");
+		markdown.setCreatedAt(LocalDateTime.now());
+		activity.getMarkdowns().add(markdown);
+
+		when(activityRepository.save(any(Activity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+		activityService.createActivity(activity);
+
+		ArgumentCaptor<Activity> captor = ArgumentCaptor.forClass(Activity.class);
+		verify(activityRepository).save(captor.capture());
+		Activity saved = captor.getValue();
+		assertThat(saved.getName()).isEqualTo("AI-Titel");
+		assertThat(saved.getDescription()).isEqualTo("Zitat \"alt\"");
+		assertThat(saved.getSource()).isEqualTo("Quelle A");
+		assertThat(saved.getResourcesNeeded()).containsExactly("Papier", "Stift-Set");
+		assertThat(saved.getTopics()).containsExactly("Logik...");
+		assertThat(saved.getMarkdowns().get(0).getContent()).isEqualTo("Text-mit\"Zeichen\"");
 	}
 
 	private Activity createTestActivity() {

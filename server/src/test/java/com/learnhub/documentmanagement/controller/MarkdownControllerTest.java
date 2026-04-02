@@ -9,6 +9,7 @@ import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToHtmlService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
+import com.learnhub.service.SanitizationService;
 import java.lang.reflect.Proxy;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,6 +27,7 @@ class MarkdownControllerTest {
 	void setUp() {
 		markdownController = new MarkdownController();
 		MarkdownToHtmlService markdownToHtmlService = new MarkdownToHtmlService();
+		ReflectionTestUtils.setField(markdownToHtmlService, "sanitizationService", new SanitizationService());
 		MarkdownToPdfService pdfService = new MarkdownToPdfService(markdownToHtmlService);
 		ReflectionTestUtils.setField(markdownController, "markdownToPdfService", pdfService);
 		// DOCX service is not used by the PDF endpoint tests — provide a no-op instance

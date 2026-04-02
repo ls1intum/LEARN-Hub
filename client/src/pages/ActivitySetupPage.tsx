@@ -41,12 +41,19 @@ import {
 import { useTranslation } from "react-i18next";
 
 type Step = "upload" | "metadata" | "documents";
-type MarkdownTab = "deckblatt" | "artikulationsschema" | "hintergrundwissen";
+type MarkdownTab =
+  | "deckblatt"
+  | "artikulationsschema"
+  | "hintergrundwissen"
+  | "uebung"
+  | "uebung_loesung";
 
 const MARKDOWN_TAB_KEYS: MarkdownTab[] = [
   "deckblatt",
   "artikulationsschema",
   "hintergrundwissen",
+  "uebung",
+  "uebung_loesung",
 ];
 
 // ─── Component ───────────────────────────────────────────────────
@@ -77,6 +84,9 @@ export const ActivitySetupPage: React.FC = () => {
   const [deckblattMarkdown, setDeckblattMarkdown] = useState<string>("");
   const [hintergrundwissenMarkdown, setHintergrundwissenMarkdown] =
     useState<string>("");
+  const [uebungMarkdown, setUebungMarkdown] = useState<string>("");
+  const [uebungLoesungMarkdown, setUebungLoesungMarkdown] =
+    useState<string>("");
   const [activeMarkdownTab, setActiveMarkdownTab] =
     useState<MarkdownTab>("deckblatt");
   const [isGeneratingSchema, setIsGeneratingSchema] = useState(false);
@@ -98,7 +108,9 @@ export const ActivitySetupPage: React.FC = () => {
     (activeMarkdownTab === "deckblatt" && !!deckblattMarkdown) ||
     (activeMarkdownTab === "artikulationsschema" &&
       !!artikulationsschemaMarkdown) ||
-    (activeMarkdownTab === "hintergrundwissen" && !!hintergrundwissenMarkdown);
+    (activeMarkdownTab === "hintergrundwissen" && !!hintergrundwissenMarkdown) ||
+    (activeMarkdownTab === "uebung" && !!uebungMarkdown) ||
+    (activeMarkdownTab === "uebung_loesung" && !!uebungLoesungMarkdown);
 
   // ─── Upload Handlers ────────────────────────────────────────────
 
@@ -163,6 +175,8 @@ export const ActivitySetupPage: React.FC = () => {
       setArtikulationsschemaMarkdown("");
       setDeckblattMarkdown("");
       setHintergrundwissenMarkdown("");
+      setUebungMarkdown("");
+      setUebungLoesungMarkdown("");
       setSchemaError(null);
       setHasVisitedSchemaStep(false);
       setCurrentStep("metadata");
@@ -199,6 +213,12 @@ export const ActivitySetupPage: React.FC = () => {
       if (result.hintergrundwissenMarkdown) {
         setHintergrundwissenMarkdown(result.hintergrundwissenMarkdown);
       }
+      if (result.uebungMarkdown) {
+        setUebungMarkdown(result.uebungMarkdown);
+      }
+      if (result.uebungLoesungMarkdown) {
+        setUebungLoesungMarkdown(result.uebungLoesungMarkdown);
+      }
     } catch (error) {
       logger.error("Schema generation error", error, "ActivitySetupPage");
       setSchemaError(
@@ -214,11 +234,16 @@ export const ActivitySetupPage: React.FC = () => {
 
     setIsGeneratingSchema(true);
     setSchemaError(null);
+    // uebung and uebung_loesung are always generated together in one call
+    const typesToRequest =
+      activeMarkdownTab === "uebung" || activeMarkdownTab === "uebung_loesung"
+        ? ["uebung", "uebung_loesung"]
+        : [activeMarkdownTab];
     try {
       const result = await apiService.generateActivityMarkdowns(
         documentId,
         savedMetadata as unknown as Record<string, unknown> | undefined,
-        [activeMarkdownTab],
+        typesToRequest,
       );
       if (result.deckblattMarkdown) {
         setDeckblattMarkdown(result.deckblattMarkdown);
@@ -228,6 +253,12 @@ export const ActivitySetupPage: React.FC = () => {
       }
       if (result.hintergrundwissenMarkdown) {
         setHintergrundwissenMarkdown(result.hintergrundwissenMarkdown);
+      }
+      if (result.uebungMarkdown) {
+        setUebungMarkdown(result.uebungMarkdown);
+      }
+      if (result.uebungLoesungMarkdown) {
+        setUebungLoesungMarkdown(result.uebungLoesungMarkdown);
       }
     } catch (error) {
       logger.error("Schema generation error", error, "ActivitySetupPage");
@@ -253,6 +284,8 @@ export const ActivitySetupPage: React.FC = () => {
       setArtikulationsschemaMarkdown("");
       setDeckblattMarkdown("");
       setHintergrundwissenMarkdown("");
+      setUebungMarkdown("");
+      setUebungLoesungMarkdown("");
       setSchemaError(null);
     } catch (error) {
       logger.error("Metadata regeneration error", error, "ActivitySetupPage");
@@ -276,7 +309,9 @@ export const ActivitySetupPage: React.FC = () => {
     const hasAnyMarkdown =
       artikulationsschemaMarkdown ||
       deckblattMarkdown ||
-      hintergrundwissenMarkdown;
+      hintergrundwissenMarkdown ||
+      uebungMarkdown ||
+      uebungLoesungMarkdown;
 
     if (
       shouldAutoGenerateOnThisVisit &&
@@ -329,6 +364,8 @@ export const ActivitySetupPage: React.FC = () => {
         artikulationsschemaMarkdown: artikulationsschemaMarkdown || undefined,
         deckblattMarkdown: deckblattMarkdown || undefined,
         hintergrundwissenMarkdown: hintergrundwissenMarkdown || undefined,
+        uebungMarkdown: uebungMarkdown || undefined,
+        uebungLoesungMarkdown: uebungLoesungMarkdown || undefined,
       })) as { activity: Activity };
 
       navigate(`/activity-details/${response.activity.id}`);
@@ -719,6 +756,20 @@ export const ActivitySetupPage: React.FC = () => {
                 <MarkdownEditorWithPreview
                   value={hintergrundwissenMarkdown}
                   onChange={setHintergrundwissenMarkdown}
+                  renderPreviewFn={renderPreviewPortrait}
+                />
+              )}
+              {activeMarkdownTab === "uebung" && (
+                <MarkdownEditorWithPreview
+                  value={uebungMarkdown}
+                  onChange={setUebungMarkdown}
+                  renderPreviewFn={renderPreviewPortrait}
+                />
+              )}
+              {activeMarkdownTab === "uebung_loesung" && (
+                <MarkdownEditorWithPreview
+                  value={uebungLoesungMarkdown}
+                  onChange={setUebungLoesungMarkdown}
                   renderPreviewFn={renderPreviewPortrait}
                 />
               )}

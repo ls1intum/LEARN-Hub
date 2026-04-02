@@ -33,24 +33,6 @@
     "subtitle": "Erhalten Sie personalisierte Aktivitätsempfehlungen für Ihren Unterricht",
     "backToForm": "Zurück zum Formular"
   },
-  "recommendationForm": {
-    "basicRequirements": "Grundlegende Anforderungen",
-    "learningObjectives": "Lernziele",
-    "advancedOptions": "Erweiterte Optionen",
-    "ageAppropriateness": "Altersgerechte Inhalte",
-    "durationFit": "Zeitpassung",
-    "activityFormat": "Aktivitätsformat",
-    "resourcesAvailable": "Verfügbare Ressourcen",
-    "bloomLevelMatch": "Bloom-Niveau",
-    "topicRelevance": "Themenrelevanz",
-    "allowLessonPlans": "Unterrichtspläne erlauben",
-    "allowLessonPlansDesc": "Strukturierte Unterrichtspläne mit mehreren Aktivitäten generieren",
-    "maxActivities": "Maximale Aktivitäten",
-    "includeBreaks": "Pausen einschließen",
-    "includeBreaksDesc": "Pausenempfehlungen zwischen Aktivitäten hinzufügen",
-    "getRecommendations": "Empfehlungen erhalten",
-    "generating": "Wird generiert..."
-  },
   "resultsDisplay": {
     "noRecommendations": "Keine Empfehlungen gefunden",
     "noRecommendationsDesc": "Versuchen Sie, Ihre Suchkriterien anzupassen, um mehr Aktivitäten zu finden.",
@@ -341,7 +323,9 @@
     "orClickHere": "oder hier klicken, um eine Datei auszuwählen",
     "deckblatt": "Deckblatt",
     "artikulationsschema": "Artikulationsschema",
-    "hintergrundwissen": "Hintergrundwissen"
+    "hintergrundwissen": "Hintergrundwissen",
+    "uebung": "Übungsblatt",
+    "uebung_loesung": "Lösungsblatt"
   },
   "activityDetails": {
     "title": "Aktivitätsdetails",

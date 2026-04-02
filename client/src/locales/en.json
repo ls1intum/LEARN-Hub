@@ -33,24 +33,6 @@
     "subtitle": "Get personalized activity recommendations for your teaching needs",
     "backToForm": "Back to form"
   },
-  "recommendationForm": {
-    "basicRequirements": "Basic Requirements",
-    "learningObjectives": "Learning Objectives",
-    "advancedOptions": "Advanced Options",
-    "ageAppropriateness": "Age Appropriateness",
-    "durationFit": "Duration Fit",
-    "activityFormat": "Activity Format",
-    "resourcesAvailable": "Resources Available",
-    "bloomLevelMatch": "Bloom Level Match",
-    "topicRelevance": "Topic Relevance",
-    "allowLessonPlans": "Allow Lesson Plans",
-    "allowLessonPlansDesc": "Generate structured lesson plans with multiple activities",
-    "maxActivities": "Max Activities",
-    "includeBreaks": "Include Breaks",
-    "includeBreaksDesc": "Add break recommendations between activities",
-    "getRecommendations": "Get Recommendations",
-    "generating": "Generating..."
-  },
   "resultsDisplay": {
     "noRecommendations": "No recommendations found",
     "noRecommendationsDesc": "Try adjusting your search criteria to find more activities.",
@@ -341,7 +323,9 @@
     "orClickHere": "or click here to select a file",
     "deckblatt": "Deckblatt",
     "artikulationsschema": "Artikulationsschema",
-    "hintergrundwissen": "Hintergrundwissen"
+    "hintergrundwissen": "Hintergrundwissen",
+    "uebung": "Exercise",
+    "uebung_loesung": "Exercise Solution"
   },
   "activityDetails": {
     "title": "Activity Details",

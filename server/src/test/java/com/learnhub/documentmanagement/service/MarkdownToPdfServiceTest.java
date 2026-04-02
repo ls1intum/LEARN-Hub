@@ -2,8 +2,10 @@ package com.learnhub.documentmanagement.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.learnhub.service.SanitizationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 class MarkdownToPdfServiceTest {
 
@@ -11,7 +13,9 @@ class MarkdownToPdfServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		service = new MarkdownToPdfService(new MarkdownToHtmlService());
+		MarkdownToHtmlService htmlService = new MarkdownToHtmlService();
+		ReflectionTestUtils.setField(htmlService, "sanitizationService", new SanitizationService());
+		service = new MarkdownToPdfService(htmlService);
 	}
 
 	@Test

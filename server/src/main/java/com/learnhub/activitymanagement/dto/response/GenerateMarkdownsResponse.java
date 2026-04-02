@@ -12,4 +12,6 @@ public class GenerateMarkdownsResponse {
 	private String deckblattMarkdown;
 	private String artikulationsschemaMarkdown;
 	private String hintergrundwissenMarkdown;
+	private String uebungMarkdown;
+	private String uebungLoesungMarkdown;
 }
