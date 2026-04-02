@@ -7,8 +7,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.learnhub.activitymanagement.repository.ActivityRepository;
-import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.usermanagement.entity.User;
 import com.learnhub.usermanagement.entity.enums.UserRole;
 import com.learnhub.usermanagement.repository.UserRepository;
@@ -26,8 +24,6 @@ class DatabaseSeederTest {
 		PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 
 		ReflectionTestUtils.setField(seeder, "userRepository", userRepository);
-		ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
-		ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
 		ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
 		ReflectionTestUtils.setField(seeder, "initialAdminEmail", "admin@learnhub.com");
 		ReflectionTestUtils.setField(seeder, "initialAdminPassword", "seeded-admin-pwd");
@@ -52,8 +48,6 @@ class DatabaseSeederTest {
 		PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 
 		ReflectionTestUtils.setField(seeder, "userRepository", userRepository);
-		ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
-		ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
 		ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
 		ReflectionTestUtils.setField(seeder, "initialAdminEmail", "admin@learnhub.com");
 		ReflectionTestUtils.setField(seeder, "initialAdminPassword", " ");
@@ -75,8 +69,6 @@ class DatabaseSeederTest {
 		PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 
 		ReflectionTestUtils.setField(seeder, "userRepository", userRepository);
-		ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
-		ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
 		ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
 		ReflectionTestUtils.setField(seeder, "initialAdminEmail", "ops-admin@learnhub.com");
 		ReflectionTestUtils.setField(seeder, "initialAdminPassword", "seeded-admin-pwd");
@@ -98,8 +90,6 @@ class DatabaseSeederTest {
 		PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 
 		ReflectionTestUtils.setField(seeder, "userRepository", userRepository);
-		ReflectionTestUtils.setField(seeder, "activityRepository", mock(ActivityRepository.class));
-		ReflectionTestUtils.setField(seeder, "pdfDocumentRepository", mock(PDFDocumentRepository.class));
 		ReflectionTestUtils.setField(seeder, "passwordEncoder", passwordEncoder);
 		ReflectionTestUtils.setField(seeder, "initialAdminEmail", "admin@learnhub.com");
 		ReflectionTestUtils.setField(seeder, "initialAdminPassword", "seeded-admin-pwd");
