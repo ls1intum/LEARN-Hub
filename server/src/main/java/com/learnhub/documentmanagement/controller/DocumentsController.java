@@ -3,13 +3,16 @@ package com.learnhub.documentmanagement.controller;
 import com.learnhub.activitymanagement.entity.enums.DocumentType;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.service.PDFService;
+import com.learnhub.dto.response.DocumentInfoResponse;
 import com.learnhub.dto.response.ErrorResponse;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,21 +39,18 @@ public class DocumentsController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get document info", description = "Get PDF document metadata. SOURCE_PDF documents require admin rights.")
 	@SecurityRequirement(name = "BearerAuth")
-	public ResponseEntity<?> getDocumentInfo(@PathVariable UUID documentId, Authentication authentication) {
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Document metadata", content = @Content(mediaType = "application/json", schema = @Schema(implementation = DocumentInfoResponse.class))) })
+	public ResponseEntity<?> getDocumentInfo(@PathVariable UUID documentId,
+			Authentication authentication) {
 		logger.info("GET /api/documents/{}/info - Get document info called", documentId);
 		try {
 			PDFDocument document = pdfService.getPdfDocument(documentId);
 			enforceDownloadAccess(document, authentication);
 
-			Map<String, Object> response = new HashMap<>();
-			response.put("id", document.getId());
-			response.put("filename", document.getFilename());
-			response.put("fileSize", document.getFileSize());
-			response.put("confidenceScore", document.getConfidenceScore());
-			response.put("extractionQuality", document.getExtractionQuality());
-			response.put("createdAt", document.getCreatedAt().toString());
-
-			return ResponseEntity.ok(response);
+			return ResponseEntity.ok(new DocumentInfoResponse(document.getId(), document.getFilename(),
+					document.getFileSize(), document.getConfidenceScore(), document.getExtractionQuality(),
+					document.getCreatedAt().toString()));
 		} catch (AccessDeniedException e) {
 			throw e;
 		} catch (Exception e) {
@@ -63,6 +63,8 @@ public class DocumentsController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Download document", description = "Download a stored document. SOURCE_PDF documents require admin rights.")
 	@SecurityRequirement(name = "BearerAuth")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "PDF document download", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"))) })
 	public ResponseEntity<?> downloadDocument(@PathVariable UUID documentId, Authentication authentication)
 			throws IOException {
 		logger.info("GET /api/documents/{}/download - Download document called", documentId);

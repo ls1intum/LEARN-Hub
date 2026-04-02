@@ -1,6 +1,10 @@
 package com.learnhub.activitymanagement.service;
 
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
+import com.learnhub.activitymanagement.dto.response.ActivityRecommendationResponse;
+import com.learnhub.activitymanagement.dto.response.BreakResponse;
+import com.learnhub.activitymanagement.dto.response.RecommendationItemResponse;
+import com.learnhub.activitymanagement.dto.response.RecommendationsResponse;
 import com.learnhub.activitymanagement.dto.response.ScoreResponse;
 import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.Break;
@@ -40,7 +44,7 @@ public class RecommendationService {
 	@Autowired
 	private ActivityService activityService;
 
-	public Map<String, Object> getRecommendations(Map<String, Object> criteriaMap, boolean includeBreaks,
+	public RecommendationsResponse getRecommendations(Map<String, Object> criteriaMap, boolean includeBreaks,
 			int maxActivityCount, int limit) {
 
 		try {
@@ -130,39 +134,25 @@ public class RecommendationService {
 			}
 
 			// Build response
-			List<Map<String, Object>> recommendations = new ArrayList<>();
+			List<RecommendationItemResponse> recommendations = new ArrayList<>();
 			for (Object[] result : rescored) {
 				@SuppressWarnings("unchecked")
 				List<Activity> activityList = (List<Activity>) result[0];
 				ScoreResponse score = (ScoreResponse) result[1];
 
-				List<Map<String, Object>> activityResponses = activityList.stream().map(this::convertToResponse)
+				List<ActivityRecommendationResponse> activityResponses = activityList.stream().map(this::convertToResponse)
 						.collect(Collectors.toList());
 
-				Map<String, Object> recommendation = new HashMap<>();
-				recommendation.put("activities", activityResponses);
-				recommendation.put("score", score.getTotalScore());
-				recommendation.put("scoreBreakdown", score.getCategoryScores());
-
-				recommendations.add(recommendation);
+				recommendations
+						.add(new RecommendationItemResponse(activityResponses, score.getTotalScore(), score.getCategoryScores()));
 			}
 
-			Map<String, Object> response = new HashMap<>();
-			response.put("activities", recommendations);
-			response.put("total", recommendations.size());
-			response.put("searchCriteria", criteriaMap);
-			response.put("generatedAt", Instant.now().toString());
-
-			return response;
+			return new RecommendationsResponse(recommendations, recommendations.size(), criteriaMap,
+					Instant.now().toString());
 
 		} catch (Exception e) {
 			logger.error("Failed to generate recommendations: {}", e.getMessage(), e);
-			Map<String, Object> response = new HashMap<>();
-			response.put("activities", new ArrayList<>());
-			response.put("total", 0);
-			response.put("searchCriteria", criteriaMap);
-			response.put("generatedAt", Instant.now().toString());
-			return response;
+			return new RecommendationsResponse(new ArrayList<>(), 0, criteriaMap, Instant.now().toString());
 		}
 	}
 
@@ -391,39 +381,38 @@ public class RecommendationService {
 		return ((duration - 1) / 5 + 1) * 5;
 	}
 
-	private Map<String, Object> convertToResponse(Activity activity) {
+	private ActivityRecommendationResponse convertToResponse(Activity activity) {
 		ActivityResponse response = activityService.convertToResponse(activity);
-		Map<String, Object> map = new HashMap<>();
-		map.put("id", response.getId());
-		map.put("name", response.getName());
-		map.put("description", response.getDescription());
-		map.put("source", response.getSource());
-		map.put("ageMin", response.getAgeMin());
-		map.put("ageMax", response.getAgeMax());
-		map.put("format", response.getFormat());
-		map.put("bloomLevel", response.getBloomLevel());
-		map.put("durationMinMinutes", response.getDurationMinMinutes());
-		map.put("durationMaxMinutes", response.getDurationMaxMinutes());
-		map.put("mentalLoad", response.getMentalLoad());
-		map.put("physicalEnergy", response.getPhysicalEnergy());
-		map.put("prepTimeMinutes", response.getPrepTimeMinutes());
-		map.put("cleanupTimeMinutes", response.getCleanupTimeMinutes());
-		map.put("resourcesNeeded", response.getResourcesNeeded());
-		map.put("topics", response.getTopics());
-		map.put("documents", response.getDocuments());
-		map.put("markdowns", response.getMarkdowns());
-		map.put("type", "activity");
-
-		if (activity.getBreakAfter() != null) {
-			Map<String, Object> breakMap = new HashMap<>();
-			breakMap.put("id", activity.getBreakAfter().getId());
-			breakMap.put("duration", activity.getBreakAfter().getDuration());
-			breakMap.put("description", activity.getBreakAfter().getDescription());
-			breakMap.put("reasons", activity.getBreakAfter().getReasons());
-			map.put("breakAfter", breakMap);
+		ActivityRecommendationResponse detail = new ActivityRecommendationResponse();
+		detail.setId(response.getId());
+		detail.setName(response.getName());
+		detail.setDescription(response.getDescription());
+		detail.setSource(response.getSource());
+		detail.setAgeMin(response.getAgeMin());
+		detail.setAgeMax(response.getAgeMax());
+		detail.setFormat(response.getFormat());
+		detail.setBloomLevel(response.getBloomLevel());
+		detail.setDurationMinMinutes(response.getDurationMinMinutes());
+		detail.setDurationMaxMinutes(response.getDurationMaxMinutes());
+		detail.setMentalLoad(response.getMentalLoad());
+		detail.setPhysicalEnergy(response.getPhysicalEnergy());
+		detail.setPrepTimeMinutes(response.getPrepTimeMinutes());
+		detail.setCleanupTimeMinutes(response.getCleanupTimeMinutes());
+		detail.setResourcesNeeded(response.getResourcesNeeded());
+		detail.setTopics(response.getTopics());
+		detail.setDocuments(response.getDocuments());
+		detail.setMarkdowns(response.getMarkdowns());
+		detail.setType("activity");
+		if (activity.getCreatedAt() != null) {
+			detail.setCreatedAt(activity.getCreatedAt().toString());
 		}
 
-		return map;
+		if (activity.getBreakAfter() != null) {
+			detail.setBreakAfter(new BreakResponse(activity.getBreakAfter().getId(), activity.getBreakAfter().getDuration(),
+					activity.getBreakAfter().getDescription(), activity.getBreakAfter().getReasons()));
+		}
+
+		return detail;
 	}
 
 	private Integer toInt(Object obj) {

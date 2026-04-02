@@ -2,13 +2,17 @@ package com.learnhub.documentmanagement.controller;
 
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
+import com.learnhub.documentmanagement.dto.request.MarkdownPreviewRequest;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
 import com.learnhub.dto.response.ErrorResponse;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +42,8 @@ public class MarkdownController {
 	@GetMapping("/{markdownId}/pdf")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get markdown as PDF", description = "Render a stored markdown entry as a PDF document")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Markdown PDF", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"))) })
 	public ResponseEntity<?> getMarkdownPdf(@PathVariable UUID markdownId) {
 		logger.info("GET /api/markdowns/{}/pdf - Render markdown as PDF", markdownId);
 		try {
@@ -70,6 +76,8 @@ public class MarkdownController {
 	@GetMapping("/{markdownId}/docx")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get markdown as DOCX", description = "Render a stored markdown entry as a Word document")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Markdown DOCX", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @Schema(type = "string", format = "binary"))) })
 	public ResponseEntity<?> getMarkdownDocx(@PathVariable UUID markdownId) {
 		logger.info("GET /api/markdowns/{}/docx - Render markdown as DOCX", markdownId);
 		try {
@@ -104,18 +112,20 @@ public class MarkdownController {
 	@PreAuthorize("hasRole('ADMIN')")
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Preview markdown as PDF", description = "Render raw markdown text to a preview PDF (admin only)")
-	public ResponseEntity<?> previewMarkdownPdf(@RequestBody Map<String, String> request) {
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Preview PDF", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"))) })
+	public ResponseEntity<?> previewMarkdownPdf(@RequestBody MarkdownPreviewRequest request) {
 		logger.info("POST /api/markdowns/preview-pdf called");
 		try {
-			String markdown = request.get("markdown");
+			String markdown = request.getMarkdown();
 			if (markdown == null || markdown.trim().isEmpty()) {
 				return ResponseEntity.badRequest().body(ErrorResponse.of("markdown is required"));
 			}
 
 			// Preview uses landscape by default; orientation param is optional
-			String orientation = request.get("orientation");
+			String orientation = request.getOrientation();
 			boolean landscape = orientation == null || !"portrait".equalsIgnoreCase(orientation);
-			String activityName = request.get("activityName");
+			String activityName = request.getActivityName();
 			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown, landscape,
 					activityName != null ? activityName : "");
 
