@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +24,27 @@ public class LibreOfficeConversionService {
 
 	@Value("${learnhub.libreoffice.timeout-seconds:60}")
 	private int timeoutSeconds;
+
+	@PostConstruct
+	void verifyLibreOfficeAvailable() {
+		try {
+			Process process = new ProcessBuilder(libreofficePath, "--version").redirectErrorStream(true).start();
+			String output = new String(process.getInputStream().readAllBytes());
+			boolean finished = process.waitFor(10, TimeUnit.SECONDS);
+			if (!finished || process.exitValue() != 0) {
+				throw new IllegalStateException(
+						"LibreOffice CLI not functional at path: " + libreofficePath);
+			}
+			logger.info("LibreOffice available: {}", output.trim());
+		} catch (IllegalStateException e) {
+			throw e;
+		} catch (Exception e) {
+			throw new IllegalStateException(
+					"LibreOffice CLI not found at path: " + libreofficePath
+							+ ". Install LibreOffice or set learnhub.libreoffice.path to the correct binary.",
+					e);
+		}
+	}
 
 	/**
 	 * Convert HTML bytes to DOCX bytes using LibreOffice headless. LibreOffice

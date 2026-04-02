@@ -19,8 +19,7 @@ public class OpenAPIConfig {
 				.info(new Info().title("LEARN-Hub API").version("1.0.0")
 						.description("API for LEARN-Hub activity recommendations and lesson planning"))
 				.servers(List.of(new Server().url("http://localhost:5001").description("Development local server"),
-						new Server().url("https://master-api.dev.amihalcea.com").description("Development homeserver"),
-						new Server().url("https://learnhub-test.aet.cit.tum.de").description("Production server")))
+						new Server().url("https://learnhub-test.aet.cit.tum.de").description("Test server")))
 				.components(new Components().addSecuritySchemes("BearerAuth", new SecurityScheme()
 						.type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT").description(
 								"JWT token for authentication. Include 'Bearer ' prefix in Authorization header.")))
