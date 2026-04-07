@@ -6,7 +6,8 @@
     "history": "Verlauf",
     "upload": "Hochladen",
     "users": "Benutzer",
-    "account": "Konto"
+    "account": "Konto",
+    "ai-testing": "KI-Testen"
   },
   "userHeader": {
     "adminPanel": "Admin-Bereich",
@@ -569,5 +570,25 @@
     "generating": "Wird generiert...",
     "unitYears": " Jahre",
     "unitMinutes": " Minuten"
+  },
+  "aiTesting": {
+    "title": "KI-Testen",
+    "description": "LLM-Markdown-Generierung ohne Persistenz testen. PDF-Text wird on-the-fly extrahiert und nach der Anfrage verworfen.",
+    "configTitle": "Konfiguration",
+    "configDescription": "PDF hochladen und Typ auswählen.",
+    "fileLabel": "PDF-Datei",
+    "filePlaceholder": "PDF auswählen…",
+    "typeLabel": "Markdown-Typ",
+    "metadataLabel": "Metadaten",
+    "metadataOptional": "optionales JSON",
+    "generateButton": "Generieren",
+    "generating": "Wird generiert…",
+    "resultTitle": "Ergebnis",
+    "tabUebung": "Übungsblatt",
+    "tabLoesung": "Lösungsblatt",
+    "typeUebung": "Übungsblatt + Lösungsblatt",
+    "typeDeckblatt": "Deckblatt",
+    "typeHintergrundwissen": "Hintergrundwissen",
+    "typeArtikulationsschema": "Artikulationsschema"
   }
 }

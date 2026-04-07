@@ -181,12 +181,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
   const visibleTabs = useMemo(
     () =>
-      NAVIGATION_TABS.filter((tab) =>
-        tab.roles.includes(
-          (user?.role as "ADMIN" | "TEACHER" | "GUEST") || "GUEST",
-        ),
-      ),
-    [user?.role],
+      NAVIGATION_TABS.filter((tab) => {
+        if (
+          !tab.roles.includes(
+            (user?.role as "ADMIN" | "TEACHER" | "GUEST") || "GUEST",
+          )
+        )
+          return false;
+        if (tab.devOnly && environment === "production") return false;
+        return true;
+      }),
+    [user?.role, environment],
   );
 
   const handleNavigation = (path: string) => {

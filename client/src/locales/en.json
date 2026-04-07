@@ -6,7 +6,8 @@
     "history": "History",
     "upload": "Upload",
     "users": "Users",
-    "account": "Account"
+    "account": "Account",
+    "ai-testing": "AI Testing"
   },
   "userHeader": {
     "adminPanel": "Admin Panel",
@@ -569,5 +570,25 @@
     "generating": "Generating...",
     "unitYears": " years",
     "unitMinutes": " minutes"
+  },
+  "aiTesting": {
+    "title": "AI Testing",
+    "description": "Test LLM markdown generation without persistence. PDF text is extracted on-the-fly and discarded after the request.",
+    "configTitle": "Configuration",
+    "configDescription": "Upload a PDF and choose what to generate.",
+    "fileLabel": "PDF File",
+    "filePlaceholder": "Click to select a PDF…",
+    "typeLabel": "Markdown Type",
+    "metadataLabel": "Metadata",
+    "metadataOptional": "optional JSON",
+    "generateButton": "Generate",
+    "generating": "Generating…",
+    "resultTitle": "Result",
+    "tabUebung": "Übungsblatt",
+    "tabLoesung": "Lösungsblatt",
+    "typeUebung": "Übungsblatt + Lösungsblatt",
+    "typeDeckblatt": "Deckblatt",
+    "typeHintergrundwissen": "Hintergrundwissen",
+    "typeArtikulationsschema": "Artikulationsschema"
   }
 }

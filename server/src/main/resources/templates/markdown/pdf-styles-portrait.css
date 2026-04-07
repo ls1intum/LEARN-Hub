@@ -1,6 +1,6 @@
 @page {
     size: A4 portrait;
-    margin: 55pt 30pt 50pt 30pt;
+    margin: 55pt 35pt 55pt 35pt;
 
     @top-left {
         content: element(page-header);

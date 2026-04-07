@@ -251,6 +251,11 @@ public class ActivityController {
 			throw new IllegalArgumentException("PDF does not contain sufficient text for generation");
 		}
 
+		// Render PDF pages as images once and share across all parallel LLM calls
+		List<byte[]> pdfPageImages = llmService.isVisionEnabled()
+				? pdfService.renderPdfPagesAsImages(documentId)
+				: null;
+
 		Map<String, Object> metadata = request.getMetadata();
 		List<String> types = request.getTypes();
 		Set<String> requestedTypes = types == null ? Set.of() : new HashSet<>(types);
@@ -258,46 +263,71 @@ public class ActivityController {
 		response.setDocumentId(documentId.toString());
 
 		boolean generateAll = types == null || types.isEmpty();
-		CompletableFuture<String> deckblattFuture = (generateAll || requestedTypes.contains("deckblatt"))
-				? submitMarkdownGeneration(() -> llmService.generateDeckblatt(pdfText, metadata))
-				: null;
-		CompletableFuture<String> artikulationsschemaFuture = (generateAll
-				|| requestedTypes.contains("artikulationsschema"))
-						? submitMarkdownGeneration(() -> llmService.generateArtikulationsschema(pdfText, metadata))
-						: null;
-		CompletableFuture<String> hintergrundwissenFuture = (generateAll
-				|| requestedTypes.contains("hintergrundwissen"))
-						? submitMarkdownGeneration(() -> llmService.generateHintergrundwissen(pdfText, metadata))
-						: null;
-		boolean generateUebung = generateAll || requestedTypes.contains("uebung")
-				|| requestedTypes.contains("uebung_loesung");
-		CompletableFuture<Map<String, String>> uebungFuture = generateUebung
-				? submitMarkdownGeneration(() -> llmService.generateUebungAndLoesung(pdfText, metadata))
-				: null;
+		boolean useVision = pdfPageImages != null;
 
-		List<CompletableFuture<?>> futures = filterNonNull(deckblattFuture, artikulationsschemaFuture,
-				hintergrundwissenFuture, uebungFuture);
+		if (useVision) {
+			// Vision mode: non-visual generators run as text-only; Uebung/Loesung
+			// uses the visual model with images. Run sequentially — local models
+			// handle one image request at a time.
+			logger.info("Vision mode: generating markdowns sequentially");
+			if (generateAll || requestedTypes.contains("deckblatt")) {
+				response.setDeckblattMarkdown(llmService.generateDeckblatt(pdfText, metadata));
+			}
+			if (generateAll || requestedTypes.contains("artikulationsschema")) {
+				response.setArtikulationsschemaMarkdown(llmService.generateArtikulationsschema(pdfText, metadata));
+			}
+			if (generateAll || requestedTypes.contains("hintergrundwissen")) {
+				response.setHintergrundwissenMarkdown(llmService.generateHintergrundwissen(pdfText, metadata));
+			}
+			if (generateAll || requestedTypes.contains("uebung") || requestedTypes.contains("uebung_loesung")) {
+				Map<String, String> uebungResult = llmService.generateUebungAndLoesung(pdfText, metadata,
+						pdfPageImages);
+				response.setUebungMarkdown(uebungResult.get("uebung"));
+				response.setUebungLoesungMarkdown(uebungResult.get("uebung_loesung"));
+			}
+		} else {
+			// Text-only mode: run in parallel as before
+			CompletableFuture<String> deckblattFuture = (generateAll || requestedTypes.contains("deckblatt"))
+					? submitMarkdownGeneration(() -> llmService.generateDeckblatt(pdfText, metadata))
+					: null;
+			CompletableFuture<String> artikulationsschemaFuture = (generateAll
+					|| requestedTypes.contains("artikulationsschema"))
+							? submitMarkdownGeneration(() -> llmService.generateArtikulationsschema(pdfText, metadata))
+							: null;
+			CompletableFuture<String> hintergrundwissenFuture = (generateAll
+					|| requestedTypes.contains("hintergrundwissen"))
+							? submitMarkdownGeneration(() -> llmService.generateHintergrundwissen(pdfText, metadata))
+							: null;
+			boolean generateUebung = generateAll || requestedTypes.contains("uebung")
+					|| requestedTypes.contains("uebung_loesung");
+			CompletableFuture<Map<String, String>> uebungFuture = generateUebung
+					? submitMarkdownGeneration(() -> llmService.generateUebungAndLoesung(pdfText, metadata))
+					: null;
 
-		try {
-			CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
-		} catch (CompletionException e) {
-			futures.forEach(f -> f.cancel(true));
-			throw unwrapCompletionException(e);
-		}
+			List<CompletableFuture<?>> futures = filterNonNull(deckblattFuture, artikulationsschemaFuture,
+					hintergrundwissenFuture, uebungFuture);
 
-		if (deckblattFuture != null) {
-			response.setDeckblattMarkdown(deckblattFuture.join());
-		}
-		if (artikulationsschemaFuture != null) {
-			response.setArtikulationsschemaMarkdown(artikulationsschemaFuture.join());
-		}
-		if (hintergrundwissenFuture != null) {
-			response.setHintergrundwissenMarkdown(hintergrundwissenFuture.join());
-		}
-		if (uebungFuture != null) {
-			Map<String, String> uebungResult = uebungFuture.join();
-			response.setUebungMarkdown(uebungResult.get("uebung"));
-			response.setUebungLoesungMarkdown(uebungResult.get("uebung_loesung"));
+			try {
+				CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
+			} catch (CompletionException e) {
+				futures.forEach(f -> f.cancel(true));
+				throw unwrapCompletionException(e);
+			}
+
+			if (deckblattFuture != null) {
+				response.setDeckblattMarkdown(deckblattFuture.join());
+			}
+			if (artikulationsschemaFuture != null) {
+				response.setArtikulationsschemaMarkdown(artikulationsschemaFuture.join());
+			}
+			if (hintergrundwissenFuture != null) {
+				response.setHintergrundwissenMarkdown(hintergrundwissenFuture.join());
+			}
+			if (uebungFuture != null) {
+				Map<String, String> uebungResult = uebungFuture.join();
+				response.setUebungMarkdown(uebungResult.get("uebung"));
+				response.setUebungLoesungMarkdown(uebungResult.get("uebung_loesung"));
+			}
 		}
 
 		return ResponseEntity.ok(response);

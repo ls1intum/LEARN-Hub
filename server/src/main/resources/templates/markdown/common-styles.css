@@ -16,7 +16,9 @@ h1 {
 h2 {
     font-size: 15pt;
     margin-top: 12pt;
-    margin-bottom: 6pt;
+    margin-bottom: 8pt;
+    padding-bottom: 3pt;
+    border-bottom: 1pt solid #d0e4f7;
     color: #2f70b3;
 }
 
@@ -145,4 +147,10 @@ ol ul {
 
 li {
     margin-bottom: 2pt;
+}
+
+/* Content wrapper */
+.content-wrapper {
+    margin-top: 0;
+    padding-top: 2pt;
 }

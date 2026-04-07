@@ -3,16 +3,17 @@
 
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
         {{styles}}
     </style>
 </head>
 
 <body>
-    <div id="page-header"><span class="activity-name">{{activityName}}</span><img src="{{logoDataUri}}" /></div>
+    <div id="page-header" style="border-bottom: 0.5pt solid #d0e4f7; padding-bottom: 6pt;"><span class="activity-name">{{activityName}}</span><img src="{{logoDataUri}}" /></div>
     <div id="footer-date">{{downloadDate}}</div>
     <div id="footer-center">LEARN-Hub &#8211; a TUM Applied Education Technologies application &#183; aet.cit.tum.de</div>
-    {{body}}
+    <div class="content-wrapper">{{body}}</div>
 </body>
 
 </html>

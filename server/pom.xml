@@ -108,6 +108,13 @@
             <version>5.0.5</version>
         </dependency>
 
+        <!-- Apache PDFBox for rendering PDF pages as images (vision mode) -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>3.0.4</version>
+        </dependency>
+
         <!-- Markdown parsing (commonmark) -->
         <dependency>
             <groupId>org.commonmark</groupId>

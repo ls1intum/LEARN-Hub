@@ -14,6 +14,7 @@ import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,6 +31,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.imageio.ImageIO;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -600,6 +604,50 @@ public class PDFService {
 		}
 		return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'",
 				"&#39;");
+	}
+
+	@Value("${llm.visual.max-pages:5}")
+	private int visionMaxPages;
+
+	@Value("${llm.visual.dpi:72}")
+	private int visionDpi;
+
+	/**
+	 * Render PDF pages as JPEG images for vision-based LLM processing. Page count
+	 * is bounded by {@code llm.visual.max-pages} (default 5). Resolution is
+	 * controlled by {@code llm.visual.dpi} (default 72).
+	 */
+	public List<byte[]> renderPdfPagesAsImages(UUID documentIdOrCacheKey) {
+		try {
+			byte[] pdfContent;
+			CachedPdf cached = pdfCache.get(documentIdOrCacheKey);
+			if (cached != null) {
+				pdfContent = cached.content;
+			} else {
+				pdfContent = getPdfContent(documentIdOrCacheKey);
+			}
+
+			List<byte[]> pages = new ArrayList<>();
+			long totalBytes = 0;
+			try (org.apache.pdfbox.pdmodel.PDDocument doc = Loader.loadPDF(pdfContent)) {
+				int pageCount = Math.min(doc.getNumberOfPages(), visionMaxPages);
+				PDFRenderer renderer = new PDFRenderer(doc);
+				for (int i = 0; i < pageCount; i++) {
+					BufferedImage image = renderer.renderImageWithDPI(i, visionDpi);
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					ImageIO.write(image, "jpg", baos);
+					byte[] imageBytes = baos.toByteArray();
+					totalBytes += imageBytes.length;
+					pages.add(imageBytes);
+				}
+			}
+			logger.info("Rendered {} PDF pages as JPEG images (total {} KB) for key={}", pages.size(),
+					totalBytes / 1024, documentIdOrCacheKey);
+			return pages;
+		} catch (Exception e) {
+			logger.error("Failed to render PDF pages as images {}: {}", documentIdOrCacheKey, e.getMessage());
+			throw new RuntimeException("Failed to render PDF pages as images: " + e.getMessage(), e);
+		}
 	}
 
 	/**

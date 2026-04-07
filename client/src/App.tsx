@@ -20,6 +20,7 @@ import { ActivitySetupPage } from "@/pages/ActivitySetupPage";
 import { ActivityEditPage } from "@/pages/ActivityEditPage";
 import { AccountDashboardPage } from "@/pages/AccountDashboardPage";
 import { ImpressumPage } from "@/pages/ImpressumPage";
+import { AITestingPage } from "@/pages/AITestingPage";
 
 // Simple wrapper for protected routes with layout
 const ProtectedLayout: React.FC<{
@@ -126,6 +127,15 @@ function App() {
                         allowedRoles={["ADMIN", "TEACHER", "GUEST"]}
                       >
                         <AccountDashboardPage />
+                      </ProtectedLayout>
+                    }
+                  />
+
+                  <Route
+                    path="/ai-testing"
+                    element={
+                      <ProtectedLayout requiredRole="ADMIN">
+                        <AITestingPage />
                       </ProtectedLayout>
                     }
                   />

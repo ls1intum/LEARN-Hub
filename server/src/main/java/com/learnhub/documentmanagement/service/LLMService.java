@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,10 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.model.Media;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.MimeTypeUtils;
 
 @Service
 public class LLMService {
@@ -22,6 +26,12 @@ public class LLMService {
 	private static final Logger logger = LoggerFactory.getLogger(LLMService.class);
 	private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*?})\\s*```",
 			Pattern.DOTALL);
+
+	@Value("${llm.visual.model:}")
+	private String visualModelName;
+
+	@Value("${llm.visual.max-tokens:8000}")
+	private int visualMaxTokens;
 
 	@Value("classpath:prompts/ActivityDataExtraction.st")
 	private Resource extractionPromptResource;
@@ -68,8 +78,7 @@ public class LLMService {
 		String promptText = new PromptTemplate(extractionPromptResource).render(Map.of("pdfText", pdfText));
 
 		try {
-			String responseText = chatClient.prompt().user(promptText)
-					.options(OpenAiChatOptions.builder().maxTokens(MAX_TOKENS_EXTRACTION).build()).call().content();
+			String responseText = callLlm(promptText, MAX_TOKENS_EXTRACTION);
 
 			logger.debug("LLM Response: {}", responseText);
 
@@ -101,9 +110,7 @@ public class LLMService {
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
 
 		try {
-			String responseText = chatClient.prompt().user(promptText)
-					.options(OpenAiChatOptions.builder().maxTokens(MAX_TOKENS_ARTIKULATIONSSCHEMA).build()).call()
-					.content();
+			String responseText = callLlm(promptText, MAX_TOKENS_ARTIKULATIONSSCHEMA);
 
 			logger.debug("LLM Artikulationsschema Response: {}", responseText);
 
@@ -127,8 +134,7 @@ public class LLMService {
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
 
 		try {
-			String responseText = chatClient.prompt().user(promptText)
-					.options(OpenAiChatOptions.builder().maxTokens(MAX_TOKENS_DECKBLATT).build()).call().content();
+			String responseText = callLlm(promptText, MAX_TOKENS_DECKBLATT);
 
 			logger.debug("LLM Deckblatt Response: {}", responseText);
 
@@ -153,9 +159,7 @@ public class LLMService {
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
 
 		try {
-			String responseText = chatClient.prompt().user(promptText)
-					.options(OpenAiChatOptions.builder().maxTokens(MAX_TOKENS_HINTERGRUNDWISSEN).build()).call()
-					.content();
+			String responseText = callLlm(promptText, MAX_TOKENS_HINTERGRUNDWISSEN);
 
 			logger.debug("LLM Hintergrundwissen Response: {}", responseText);
 
@@ -176,13 +180,29 @@ public class LLMService {
 	 * @return map with keys "uebung" and "uebung_loesung", each containing markdown
 	 */
 	public Map<String, String> generateUebungAndLoesung(String pdfText, Map<String, Object> metadata) {
+		return generateUebungAndLoesung(pdfText, metadata, null);
+	}
+
+	public Map<String, String> generateUebungAndLoesung(String pdfText, Map<String, Object> metadata,
+			List<byte[]> pdfPageImages) {
 		String metadataSection = buildMetadataSection(metadata);
+
+		// When images are provided, omit the extracted PDF text from the prompt — the
+		// images already contain the teaching material. Sending both wastes context
+		// tokens and can overflow the model's context window, truncating the output.
+		boolean hasImages = pdfPageImages != null && !pdfPageImages.isEmpty();
+		String textForPrompt = hasImages ? "" : pdfText;
+
 		String promptText = new PromptTemplate(uebungPromptResource)
-				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
+				.render(Map.of("metadataSection", metadataSection, "pdfText", textForPrompt));
+
+		boolean useVisual = isVisionEnabled();
+		int maxTokens = useVisual ? visualMaxTokens : MAX_TOKENS_UEBUNG;
 
 		try {
-			String responseText = chatClient.prompt().user(promptText)
-					.options(OpenAiChatOptions.builder().maxTokens(MAX_TOKENS_UEBUNG).build()).call().content();
+			String responseText = useVisual
+					? callVisualLlm(promptText, pdfPageImages, maxTokens)
+					: callLlm(promptText, maxTokens);
 
 			logger.debug("LLM Uebung Response: {}", responseText);
 
@@ -192,10 +212,40 @@ public class LLMService {
 		}
 	}
 
-	private static final Pattern UEBUNG_PATTERN = Pattern.compile("===UEBUNG_START===\\s*(.*?)\\s*===UEBUNG_END===",
-			Pattern.DOTALL);
-	private static final Pattern LOESUNG_PATTERN = Pattern.compile("===LOESUNG_START===\\s*(.*?)\\s*===LOESUNG_END===",
-			Pattern.DOTALL);
+	public boolean isVisionEnabled() {
+		return visualModelName != null && !visualModelName.isBlank();
+	}
+
+	/** Standard LLM call — text only, uses the default model. */
+	private String callLlm(String promptText, int maxTokens) {
+		OpenAiChatOptions options = OpenAiChatOptions.builder().maxTokens(maxTokens).build();
+		return chatClient.prompt().user(promptText).options(options).call().content();
+	}
+
+	/**
+	 * Visual LLM call — overrides the model and optionally attaches PDF page
+	 * images.
+	 */
+	private String callVisualLlm(String promptText, List<byte[]> pdfPageImages, int maxTokens) {
+		OpenAiChatOptions options = OpenAiChatOptions.builder().model(visualModelName).maxTokens(maxTokens).build();
+		if (pdfPageImages != null && !pdfPageImages.isEmpty()) {
+			logger.info("Sending {} PDF page images to visual model '{}'", pdfPageImages.size(), visualModelName);
+			Media[] mediaArray = new Media[pdfPageImages.size()];
+			for (int i = 0; i < pdfPageImages.size(); i++) {
+				mediaArray[i] = new Media(MimeTypeUtils.IMAGE_JPEG, new ByteArrayResource(pdfPageImages.get(i)));
+			}
+			return chatClient.prompt().user(u -> u.text(promptText).media(mediaArray)).options(options).call()
+					.content();
+		}
+		return chatClient.prompt().user(promptText).options(options).call().content();
+	}
+
+	// Accept both styles: with ===_END=== delimiters or without (content
+	// delimited by the next ===_START=== marker or end of string).
+	private static final Pattern UEBUNG_PATTERN = Pattern
+			.compile("===UEBUNG_START===\\s*(.*?)\\s*(?:===UEBUNG_END===|===LOESUNG_START===)", Pattern.DOTALL);
+	private static final Pattern LOESUNG_PATTERN = Pattern
+			.compile("===LOESUNG_START===\\s*(.*?)\\s*(?:===LOESUNG_END===\\s*)?$", Pattern.DOTALL);
 
 	private Map<String, String> extractUebungPayload(String rawResponse) {
 		if (rawResponse == null || rawResponse.trim().isEmpty()) {
