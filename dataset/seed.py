@@ -104,7 +104,7 @@ def get_existing_activity_names(base_url: str, timeout: int) -> set[str]:
 def login(base_url: str, email: str, password: str, timeout: int) -> str:
     """Authenticate as admin and return the access token."""
     resp = requests.post(
-        f"{base_url}/api/auth/admin/login",
+        f"{base_url}/api/auth/login",
         json={"email": email, "password": password},
         timeout=timeout,
     )

@@ -26,8 +26,7 @@ vi.mock("@/services/authService", () => ({
     isAuthenticated: vi.fn(),
     getCurrentUser: vi.fn(),
     clearTokens: vi.fn(),
-    adminLogin: vi.fn(),
-    teacherLogin: vi.fn(),
+    login: vi.fn(),
     verificationCodeLogin: vi.fn(),
     requestVerificationCode: vi.fn(),
     registerTeacher: vi.fn(),
@@ -140,14 +139,14 @@ describe("AuthContext", () => {
   });
 
   describe("Login Operations", () => {
-    it("should update user state on successful teacher login", async () => {
+    it("should update user state on successful password login", async () => {
       vi.mocked(authService.isAuthenticated).mockReturnValue(false);
       const mockUser = {
         id: 1,
         email: "teacher@example.com",
         role: "TEACHER" as const,
       };
-      vi.mocked(authService.teacherLogin).mockResolvedValue({
+      vi.mocked(authService.login).mockResolvedValue({
         success: true,
         user: mockUser,
       });
@@ -162,7 +161,7 @@ describe("AuthContext", () => {
 
       let loginResult: { success: boolean; user?: unknown } | undefined;
       await act(async () => {
-        loginResult = await result.current?.teacherLogin(
+        loginResult = await result.current?.login(
           "teacher@example.com",
           "password123",
         );
@@ -175,7 +174,7 @@ describe("AuthContext", () => {
 
     it("should not update user state on failed login", async () => {
       vi.mocked(authService.isAuthenticated).mockReturnValue(false);
-      vi.mocked(authService.teacherLogin).mockResolvedValue({
+      vi.mocked(authService.login).mockResolvedValue({
         success: false,
         message: "Invalid credentials",
       });
@@ -190,10 +189,7 @@ describe("AuthContext", () => {
 
       let loginResult: { success: boolean; message?: string } | undefined;
       await act(async () => {
-        loginResult = await result.current?.teacherLogin(
-          "wrong@example.com",
-          "wrong",
-        );
+        loginResult = await result.current?.login("wrong@example.com", "wrong");
       });
 
       expect(loginResult?.success).toBe(false);
@@ -201,14 +197,14 @@ describe("AuthContext", () => {
       expect(result.current?.isAuthenticated).toBe(false);
     });
 
-    it("should handle admin login", async () => {
+    it("should handle admin password login", async () => {
       vi.mocked(authService.isAuthenticated).mockReturnValue(false);
       const mockUser = {
         id: 1,
         email: "admin@example.com",
         role: "ADMIN" as const,
       };
-      vi.mocked(authService.adminLogin).mockResolvedValue({
+      vi.mocked(authService.login).mockResolvedValue({
         success: true,
         user: mockUser,
       });

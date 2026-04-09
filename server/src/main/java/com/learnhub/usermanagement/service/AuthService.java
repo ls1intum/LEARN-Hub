@@ -87,6 +87,7 @@ public class AuthService {
 	public LoginResponse verifyCode(VerifyCodeRequest request) {
 		User user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(() -> new RuntimeException("User not found"));
+		ensureEmailCodeLoginAllowed(user);
 
 		VerificationCode verificationCode = verificationCodeRepository
 				.findByUserIdAndCodeAndUsedAndExpiresAtAfter(user.getId(), request.getCode(), "N", LocalDateTime.now())
@@ -104,10 +105,17 @@ public class AuthService {
 
 	public void requestVerificationCode(String email) {
 		User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found"));
+		ensureEmailCodeLoginAllowed(user);
 
 		String code = generateVerificationCode();
 		saveVerificationCode(user.getId(), code);
 		emailService.sendVerificationCode(user.getEmail(), code, user.getFirstName());
+	}
+
+	private void ensureEmailCodeLoginAllowed(User user) {
+		if (user.getRole() == UserRole.ADMIN) {
+			throw new RuntimeException("Admins must log in with password");
+		}
 	}
 
 	private String generateVerificationCode() {

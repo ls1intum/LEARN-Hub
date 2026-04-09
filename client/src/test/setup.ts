@@ -104,7 +104,6 @@ vi.mock("@/hooks/useAuth", () => ({
     isAuthenticated: true,
     isLoading: false,
     login: vi.fn(),
-    teacherLogin: vi.fn(),
     verificationCodeLogin: vi.fn(),
     requestVerificationCode: vi.fn(),
     registerTeacher: vi.fn(),

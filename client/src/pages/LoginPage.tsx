@@ -6,11 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useAuth } from "@/hooks/useAuth";
-import { useEnvironment } from "@/hooks/useEnvironment";
 import {
   LogIn,
   Mail,
@@ -19,24 +18,18 @@ import {
   GraduationCap,
   AlertCircle,
   Users,
-  Server,
 } from "lucide-react";
-import {
-  getEnvironmentDisplayText,
-  getEnvironmentBadgeVariant,
-} from "@/utils/environment";
 import { useTranslation } from "react-i18next";
 
 type LoginMode =
-  | "admin"
-  | "teacher"
-  | "teacher-password"
+  | "password"
+  | "email-code"
   | "verification-code"
   | "register"
   | "reset-password";
 
 export const LoginPage: React.FC = () => {
-  const [mode, setMode] = useState<LoginMode>("teacher");
+  const [mode, setMode] = useState<LoginMode>("email-code");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -52,7 +45,6 @@ export const LoginPage: React.FC = () => {
 
   const {
     login,
-    teacherLogin,
     verificationCodeLogin,
     requestVerificationCode,
     registerTeacher,
@@ -60,7 +52,6 @@ export const LoginPage: React.FC = () => {
     user,
   } = useAuth();
   const navigate = useNavigate();
-  const { environment } = useEnvironment();
   const { t } = useTranslation();
 
   // Handle redirect after user state is updated
@@ -96,7 +87,7 @@ export const LoginPage: React.FC = () => {
     try {
       let result;
       switch (mode) {
-        case "admin":
+        case "password":
           if (!formData.email || !formData.password) {
             setErrorMessage(t("login.enterBothEmailPassword"));
             setIsLoading(false);
@@ -109,7 +100,7 @@ export const LoginPage: React.FC = () => {
             setShouldRedirect(true);
           }
           break;
-        case "teacher":
+        case "email-code":
           if (!formData.email) {
             setErrorMessage(t("login.enterEmailAddress"));
             setIsLoading(false);
@@ -119,19 +110,6 @@ export const LoginPage: React.FC = () => {
           if (result.success) {
             setSuccessMessage(t("login.verificationCodeSent"));
             setMode("verification-code");
-          }
-          break;
-        case "teacher-password":
-          if (!formData.email || !formData.password) {
-            setErrorMessage(t("login.enterBothEmailPassword"));
-            setIsLoading(false);
-            return;
-          }
-          result = await teacherLogin(formData.email, formData.password);
-          if (result.success) {
-            setSuccessMessage(t("login.loginSuccessRedirecting"));
-            setRedirectPath("/recommendations");
-            setShouldRedirect(true);
           }
           break;
         case "verification-code":
@@ -160,7 +138,7 @@ export const LoginPage: React.FC = () => {
           );
           if (result.success) {
             setSuccessMessage(t("login.registrationSuccess"));
-            setMode("teacher-password");
+            setMode("verification-code");
           }
           break;
         case "reset-password":
@@ -172,7 +150,7 @@ export const LoginPage: React.FC = () => {
           result = await resetPassword(formData.email);
           if (result.success) {
             setSuccessMessage(t("login.resetSuccess"));
-            setMode("teacher-password");
+            setMode("email-code");
           }
           break;
       }
@@ -187,7 +165,7 @@ export const LoginPage: React.FC = () => {
 
   const getFormFields = () => {
     switch (mode) {
-      case "admin":
+      case "password":
         return (
           <div className="space-y-6">
             <div className="space-y-2">
@@ -196,7 +174,7 @@ export const LoginPage: React.FC = () => {
                 className="text-sm font-medium flex items-center gap-2"
               >
                 <Mail className="h-4 w-4" />
-                {t("login.adminEmail")}
+                {t("login.emailAddress")}
               </Label>
               <Input
                 type="email"
@@ -215,7 +193,7 @@ export const LoginPage: React.FC = () => {
                 className="text-sm font-medium flex items-center gap-2"
               >
                 <Lock className="h-4 w-4" />
-                {t("login.adminPassword")}
+                {t("login.password")}
               </Label>
               <Input
                 type="password"
@@ -230,15 +208,15 @@ export const LoginPage: React.FC = () => {
             </div>
           </div>
         );
-      case "teacher":
+      case "email-code":
         return (
           <div className="space-y-2">
             <Label
               htmlFor="email"
               className="text-sm font-medium flex items-center gap-2"
             >
-              <GraduationCap className="h-4 w-4" />
-              {t("login.teacherEmail")}
+              <Mail className="h-4 w-4" />
+              {t("login.emailAddress")}
             </Label>
             <Input
               type="email"
@@ -251,49 +229,6 @@ export const LoginPage: React.FC = () => {
               placeholder={t("login.enterEmail")}
               className="h-12"
             />
-          </div>
-        );
-      case "teacher-password":
-        return (
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <Label
-                htmlFor="email"
-                className="text-sm font-medium flex items-center gap-2"
-              >
-                <GraduationCap className="h-4 w-4" />
-                {t("login.teacherEmail")}
-              </Label>
-              <Input
-                type="email"
-                id="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, email: e.target.value }))
-                }
-                placeholder={t("login.enterEmail")}
-                className="h-12"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label
-                htmlFor="password"
-                className="text-sm font-medium flex items-center gap-2"
-              >
-                <Lock className="h-4 w-4" />
-                {t("login.teacherPassword")}
-              </Label>
-              <Input
-                type="password"
-                id="password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, password: e.target.value }))
-                }
-                placeholder={t("login.enterPassword")}
-                className="h-12"
-              />
-            </div>
           </div>
         );
       case "register":
@@ -374,7 +309,7 @@ export const LoginPage: React.FC = () => {
               className="text-sm font-medium flex items-center gap-2"
             >
               <Mail className="h-4 w-4" />
-              {t("login.teacherEmail")}
+              {t("login.emailAddress")}
             </Label>
             <Input
               type="email"
@@ -443,12 +378,10 @@ export const LoginPage: React.FC = () => {
   const getButtonText = () => {
     if (isLoading) {
       switch (mode) {
-        case "admin":
+        case "password":
           return t("login.loggingIn");
-        case "teacher":
+        case "email-code":
           return t("login.sending");
-        case "teacher-password":
-          return t("login.loggingIn");
         case "verification-code":
           return t("login.verifying");
         case "register":
@@ -461,12 +394,10 @@ export const LoginPage: React.FC = () => {
     }
 
     switch (mode) {
-      case "admin":
-        return t("login.loginAsAdmin");
-      case "teacher":
+      case "password":
+        return t("login.loginWithPassword");
+      case "email-code":
         return t("login.sendVerificationCode");
-      case "teacher-password":
-        return t("login.loginAsTeacher");
       case "verification-code":
         return t("login.verifyCode");
       case "register":
@@ -478,12 +409,36 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleTabChange = (value: string) => {
-    if (value === "admin") {
-      setMode("admin");
-    } else if (value === "teacher") {
-      setMode("teacher");
+  const activeTab =
+    mode === "password" || mode === "reset-password" ? "password" : "email-code";
+
+  const getPanelTitle = () => {
+    switch (mode) {
+      case "register":
+        return t("login.register");
+      default:
+        return t("login.title");
     }
+  };
+
+  const getPanelSubtitle = () => {
+    switch (mode) {
+      case "register":
+        return t("login.registerSubtitle");
+      case "reset-password":
+        return t("login.resetSubtitle");
+      case "verification-code":
+        return t("login.codeSentSubtitle");
+      case "email-code":
+        return t("login.emailCodeSubtitle");
+      case "password":
+      default:
+        return t("login.passwordSubtitle");
+    }
+  };
+
+  const handleTabChange = (value: string) => {
+    setMode(value === "password" ? "password" : "email-code");
   };
 
   return (
@@ -504,35 +459,41 @@ export const LoginPage: React.FC = () => {
                 {t("login.chooseLoginMethod")}
               </p>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-1">
+              <LanguageSwitcher />
+              <ThemeToggle />
+            </div>
           </div>
         </CardHeader>
 
         <CardContent className="space-y-6">
           <Tabs
-            defaultValue="teacher"
+            value={activeTab}
             className="w-full"
             onValueChange={handleTabChange}
           >
             <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="teacher" className="flex items-center gap-2">
-                <GraduationCap className="h-4 w-4" />
-                {t("login.teacherLogin")}
+              <TabsTrigger
+                value="email-code"
+                className="flex items-center gap-2"
+              >
+                <Mail className="h-4 w-4" />
+                {t("login.emailCodeLogin")}
               </TabsTrigger>
-              <TabsTrigger value="admin" className="flex items-center gap-2">
-                <Shield className="h-4 w-4" />
-                {t("login.adminLogin")}
+              <TabsTrigger value="password" className="flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                {t("login.passwordLogin")}
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="teacher" className="space-y-6">
+            <TabsContent value={activeTab} className="space-y-6">
               <div className="space-y-4">
                 <div className="text-center">
                   <h3 className="text-lg font-semibold text-foreground mb-2">
-                    {t("login.teacherLogin")}
+                    {getPanelTitle()}
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    {t("login.teacherSubtitle")}
+                    {getPanelSubtitle()}
                   </p>
                 </div>
 
@@ -558,89 +519,74 @@ export const LoginPage: React.FC = () => {
                   </Button>
                 </form>
 
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setMode("register")}
-                    className="text-primary hover:text-primary/80"
-                  >
-                    {t("login.newTeacher")}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setMode("reset-password")}
-                    className="text-primary hover:text-primary/80"
-                  >
-                    {t("login.forgotPassword")}
-                  </Button>
-                </div>
+                {activeTab === "password" && (
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setMode("register")}
+                      className="text-primary hover:text-primary/80"
+                    >
+                      {t("login.createAccount")}
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setMode(mode === "reset-password" ? "password" : "reset-password")
+                      }
+                      className="text-primary hover:text-primary/80"
+                    >
+                      {t(
+                        mode === "reset-password"
+                          ? "login.backToPasswordLogin"
+                          : "login.forgotPassword",
+                      )}
+                    </Button>
+                  </div>
+                )}
 
-                {mode === "teacher" && (
+                {activeTab === "email-code" && mode === "email-code" && (
+                  <div className="text-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setMode("register")}
+                      className="text-primary hover:text-primary/80"
+                    >
+                      {t("login.newTeacher")}
+                    </Button>
+                  </div>
+                )}
+
+                {mode === "register" ? (
+                  <div className="text-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setMode("email-code")}
+                      className="text-primary hover:text-primary/80"
+                    >
+                      {t("login.haveAccount")}
+                    </Button>
+                  </div>
+                ) : mode === "verification-code" ? (
                   <div className="text-center">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setMode("teacher-password")}
+                      onClick={() => setMode("email-code")}
                       className="text-muted-foreground hover:text-foreground"
                     >
-                      {t("login.orLoginWithPassword")}
+                      {t("login.backToEmailCodeLogin")}
                     </Button>
                   </div>
-                )}
-
-                {mode === "teacher-password" && (
-                  <div className="text-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setMode("teacher")}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      {t("login.orLoginWithEmailCode")}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="admin" className="space-y-6">
-              <div className="space-y-4">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-foreground mb-2">
-                    {t("login.adminLogin")}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {t("login.adminSubtitle")}
-                  </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {getFormFields()}
-
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full h-11"
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center gap-2">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-foreground"></div>
-                        {getButtonText()}
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <LogIn className="h-4 w-4" />
-                        {getButtonText()}
-                      </div>
-                    )}
-                  </Button>
-                </form>
+                ) : null}
               </div>
             </TabsContent>
           </Tabs>
@@ -669,9 +615,6 @@ export const LoginPage: React.FC = () => {
                 </div>
               )}
             </Button>
-            <p className="text-xs text-muted-foreground mt-2">
-              {t("login.browseWithoutAccount")}
-            </p>
           </div>
 
           {message && (
@@ -693,24 +636,6 @@ export const LoginPage: React.FC = () => {
                 {message}
               </AlertDescription>
             </Alert>
-          )}
-
-          <Separator />
-
-          {/* Environment Display */}
-          {environment && (
-            <div className="flex items-center justify-center gap-2 py-2">
-              <Server className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">
-                {t("login.connectingTo")}
-              </span>
-              <Badge
-                variant={getEnvironmentBadgeVariant(environment)}
-                className="text-xs font-medium px-2.5 py-0.5"
-              >
-                {getEnvironmentDisplayText(environment)}
-              </Badge>
-            </div>
           )}
         </CardContent>
       </Card>

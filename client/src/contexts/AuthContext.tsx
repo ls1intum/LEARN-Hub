@@ -12,10 +12,6 @@ export interface AuthContextType {
     email: string,
     password: string,
   ) => Promise<{ success: boolean; message?: string; user?: User }>;
-  teacherLogin: (
-    email: string,
-    password: string,
-  ) => Promise<{ success: boolean; message?: string; user?: User }>;
   verificationCodeLogin: (
     code: string,
     email: string,
@@ -81,15 +77,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const result = await authService.adminLogin(email, password);
-    if (result.success && result.user) {
-      setUser(result.user);
-    }
-    return result;
-  };
-
-  const teacherLogin = async (email: string, password: string) => {
-    const result = await authService.teacherLogin(email, password);
+    const result = await authService.login(email, password);
     if (result.success && result.user) {
       setUser(result.user);
     }
@@ -194,7 +182,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     isAuthenticated,
     isLoading,
     login,
-    teacherLogin,
     verificationCodeLogin,
     requestVerificationCode,
     registerTeacher,

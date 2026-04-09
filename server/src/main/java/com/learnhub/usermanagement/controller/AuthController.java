@@ -116,28 +116,6 @@ public class AuthController {
 		}
 	}
 
-	@PostMapping("/admin/login")
-	@PreAuthorize("permitAll()")
-	@Operation(summary = "Admin login", description = "Login with admin credentials")
-	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Admin login result", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class)))})
-	public ResponseEntity<?> adminLogin(@Valid @RequestBody LoginRequest request) {
-		logger.info("POST /api/auth/admin/login - Admin login called for email={}", request.getEmail());
-		try {
-			LoginResponse response = authService.login(request);
-			// Verify user is admin
-			if (!"ADMIN".equals(response.getUser().getRole())) {
-				logger.error("POST /api/auth/admin/login - Non-admin login attempt for email={}", request.getEmail());
-				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
-			}
-			logger.info("POST /api/auth/admin/login - Admin login successful for email={}", request.getEmail());
-			return ResponseEntity.ok(response);
-		} catch (Exception e) {
-			logger.error("POST /api/auth/admin/login - Admin login failed: {}", e.getMessage());
-			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-		}
-	}
-
 	@GetMapping("/me")
 	@PreAuthorize("isAuthenticated()")
 	@SecurityRequirement(name = "BearerAuth")

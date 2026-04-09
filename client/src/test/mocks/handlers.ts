@@ -10,6 +10,18 @@ export const handlers = [
   http.post("/api/auth/login", async ({ request }) => {
     const body = (await request.json()) as { email: string; password: string };
 
+    if (body.email === "admin@example.com" && body.password === "password123") {
+      return HttpResponse.json({
+        accessToken: "mock-admin-token",
+        refreshToken: "mock-refresh-token",
+        user: {
+          id: 99,
+          email: "admin@example.com",
+          role: "ADMIN",
+        },
+      });
+    }
+
     if (body.email === "test@example.com" && body.password === "password123") {
       return HttpResponse.json({
         accessToken: "mock-access-token",
@@ -17,27 +29,6 @@ export const handlers = [
         user: {
           id: 1,
           email: "test@example.com",
-          role: "TEACHER",
-        },
-      });
-    }
-
-    return HttpResponse.json({ error: "Invalid credentials" }, { status: 401 });
-  }),
-
-  http.post("/api/auth/teacher/login", async ({ request }) => {
-    const body = (await request.json()) as { email: string; password: string };
-
-    if (
-      body.email === "teacher@example.com" &&
-      body.password === "teacher123"
-    ) {
-      return HttpResponse.json({
-        accessToken: "mock-teacher-token",
-        refreshToken: "mock-refresh-token",
-        user: {
-          id: 2,
-          email: "teacher@example.com",
           role: "TEACHER",
         },
       });

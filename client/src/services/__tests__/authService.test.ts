@@ -145,12 +145,9 @@ describe("AuthService", () => {
     });
   });
 
-  describe("Teacher Login", () => {
+  describe("Password Login", () => {
     it("should successfully login with valid credentials", async () => {
-      const result = await authService.teacherLogin(
-        "test@example.com",
-        "password123",
-      );
+      const result = await authService.login("test@example.com", "password123");
 
       expect(result.success).toBe(true);
       expect(result.user).toBeDefined();
@@ -162,10 +159,7 @@ describe("AuthService", () => {
     });
 
     it("should fail with invalid credentials", async () => {
-      const result = await authService.teacherLogin(
-        "wrong@example.com",
-        "wrongpass",
-      );
+      const result = await authService.login("wrong@example.com", "wrongpass");
 
       expect(result.success).toBe(false);
       expect(result.message).toBe("Invalid credentials");

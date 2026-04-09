@@ -189,13 +189,8 @@ export class AuthService {
     }
   }
 
-  // Login with admin credentials
-  async adminLogin(email: string, password: string): Promise<AuthResponse> {
-    return this.performLogin("/api/auth/admin/login", { email, password });
-  }
-
-  // Teacher login with password
-  async teacherLogin(email: string, password: string): Promise<AuthResponse> {
+  // Login with email and password
+  async login(email: string, password: string): Promise<AuthResponse> {
     return this.performLogin("/api/auth/login", { email, password });
   }
 
