@@ -21,8 +21,8 @@ import { useTranslation } from "react-i18next";
 import { openPdfInNewTab } from "@/utils/pdf";
 
 interface ActivityDetailsLocationState {
-  useHistoryBack?: boolean;
   backTo?: string;
+  restoreScrollY?: number;
 }
 
 export const ActivityDetails: React.FC = () => {
@@ -34,8 +34,8 @@ export const ActivityDetails: React.FC = () => {
   const { t } = useTranslation();
 
   const navigationState = location.state as ActivityDetailsLocationState | null;
-  const useHistoryBack = navigationState?.useHistoryBack ?? false;
   const backTo = navigationState?.backTo;
+  const restoreScrollY = navigationState?.restoreScrollY;
 
   const documentApi = useApi();
   const fetchActivity = useCallback(async () => {
@@ -144,13 +144,14 @@ export const ActivityDetails: React.FC = () => {
   };
 
   const handleBack = () => {
-    if (useHistoryBack) {
-      navigate(-1);
-      return;
-    }
-
     if (backTo) {
-      navigate(backTo);
+      navigate(backTo, {
+        replace: true,
+        state:
+          typeof restoreScrollY === "number"
+            ? { restoreScrollY }
+            : undefined,
+      });
       return;
     }
 

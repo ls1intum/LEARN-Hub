@@ -6,6 +6,7 @@ import { LessonPlanCard } from "./LessonPlanCard";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity } from "@/types/activity";
+import { useRestoreScroll } from "@/hooks/useRestoreScroll";
 
 interface LessonPlanFavourite {
   id: string;
@@ -80,6 +81,8 @@ export const LessonPlanFavouritesTab: React.FC = () => {
   useEffect(() => {
     loadFavourites();
   }, [loadFavourites]);
+
+  useRestoreScroll(!loading);
 
   if (loading) {
     return (

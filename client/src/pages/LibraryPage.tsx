@@ -1,5 +1,10 @@
-import React, { useState, useMemo, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
+import {
+  useNavigate,
+  Link,
+  useLocation,
+  useSearchParams,
+} from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +38,12 @@ import {
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { useTranslation } from "react-i18next";
+import { useRestoreScroll } from "@/hooks/useRestoreScroll";
+import { getAppScrollTop, setAppScrollTop } from "@/utils/scroll";
+
+interface LibraryLocationState {
+  restoreScrollY?: number;
+}
 
 interface FilterFormData {
   name: string;
@@ -64,20 +75,73 @@ const initialFilterData: FilterFormData = {
 
 export const LibraryPage: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
   const { fieldValues } = useFieldValues();
   const { t } = useTranslation();
+  const restoreScrollY = (location.state as LibraryLocationState | null)
+    ?.restoreScrollY;
+
+  const parseNumberParam = useCallback(
+    (key: string, fallback: number) => {
+      const rawValue = searchParams.get(key);
+      if (rawValue === null || rawValue === "") {
+        return fallback;
+      }
+
+      const value = Number(rawValue);
+      return Number.isFinite(value) ? value : fallback;
+    },
+    [searchParams],
+  );
+  const parseArrayParam = useCallback(
+    (key: string) =>
+      searchParams
+        .get(key)
+        ?.split(",")
+        .filter(Boolean) ?? [],
+    [searchParams],
+  );
+  const initialFilters = useMemo<FilterFormData>(
+    () => ({
+      name: searchParams.get("name") ?? initialFilterData.name,
+      ageMin: parseNumberParam("ageMin", initialFilterData.ageMin),
+      ageMax: parseNumberParam("ageMax", initialFilterData.ageMax),
+      format: parseArrayParam("format"),
+      bloomLevel: parseArrayParam("bloomLevel"),
+      resourcesNeeded: parseArrayParam("resourcesNeeded"),
+      topics: parseArrayParam("topics"),
+      mentalLoad: parseArrayParam("mentalLoad"),
+      physicalEnergy: parseArrayParam("physicalEnergy"),
+      durationMin: parseNumberParam("durationMin", initialFilterData.durationMin),
+      durationMax: parseNumberParam("durationMax", initialFilterData.durationMax),
+    }),
+    [parseArrayParam, parseNumberParam, searchParams],
+  );
 
   const translateEnum = (category: string, value: string): string => {
     const key = `enums.${category}.${value}`;
     const translated = t(key);
     return translated === key ? value : translated;
   };
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
+  const [currentPage, setCurrentPage] = useState(() =>
+    parseNumberParam("page", 1),
+  );
+  const [showFilters, setShowFilters] = useState(
+    () => searchParams.get("showFilters") === "true",
+  );
   const [favouritedActivityIds, setFavouritedActivityIds] = useState<
     Set<string>
   >(new Set());
+
+  const scrollToTop = useCallback(() => {
+    if (typeof restoreScrollY === "number") {
+      // A pending scroll restoration is about to run; don't fight it.
+      return;
+    }
+    setAppScrollTop(0);
+  }, [restoreScrollY]);
 
   const itemsPerPage = ACTIVITY_CONSTANTS.ITEMS_PER_PAGE;
   const isAdmin = user?.role === "ADMIN";
@@ -97,7 +161,7 @@ export const LibraryPage: React.FC = () => {
 
   // Form management for filters
   const filterForm = useForm({
-    initialValues: initialFilterData,
+    initialValues: initialFilters,
     onSubmit: async () => {
       // This will be handled by the data fetch hook
     },
@@ -155,7 +219,7 @@ export const LibraryPage: React.FC = () => {
   const total = activitiesData?.total || 0;
 
   // Fetch all favourited activities in bulk (avoid N+1 requests)
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchFavourites = async () => {
       if (!user) {
         return;
@@ -180,6 +244,7 @@ export const LibraryPage: React.FC = () => {
     filterType: keyof FilterFormData,
     value: string | number,
   ) => {
+    scrollToTop();
     filterForm.setValue(
       filterType,
       value as FilterFormData[keyof FilterFormData],
@@ -192,6 +257,7 @@ export const LibraryPage: React.FC = () => {
     value: string,
     checked: boolean,
   ) => {
+    scrollToTop();
     const currentValues = filterForm.values[filterType] as string[];
     const newValues = checked
       ? [...currentValues, value]
@@ -205,11 +271,63 @@ export const LibraryPage: React.FC = () => {
   };
 
   const clearFilters = () => {
-    filterForm.reset();
+    scrollToTop();
+    filterForm.setValues(initialFilterData);
     setCurrentPage(1);
+    setShowFilters(false);
   };
 
   const totalPages = Math.ceil(total / itemsPerPage);
+
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (filterForm.values.name) params.set("name", filterForm.values.name);
+    if (filterForm.values.ageMin !== initialFilterData.ageMin) {
+      params.set("ageMin", String(filterForm.values.ageMin));
+    }
+    if (filterForm.values.ageMax !== initialFilterData.ageMax) {
+      params.set("ageMax", String(filterForm.values.ageMax));
+    }
+    if (filterForm.values.durationMin !== initialFilterData.durationMin) {
+      params.set("durationMin", String(filterForm.values.durationMin));
+    }
+    if (filterForm.values.durationMax !== initialFilterData.durationMax) {
+      params.set("durationMax", String(filterForm.values.durationMax));
+    }
+
+    const setArrayParam = (key: string, values: string[]) => {
+      if (values.length > 0) {
+        params.set(key, values.join(","));
+      }
+    };
+
+    setArrayParam("format", filterForm.values.format);
+    setArrayParam("bloomLevel", filterForm.values.bloomLevel);
+    setArrayParam("resourcesNeeded", filterForm.values.resourcesNeeded);
+    setArrayParam("topics", filterForm.values.topics);
+    setArrayParam("mentalLoad", filterForm.values.mentalLoad);
+    setArrayParam("physicalEnergy", filterForm.values.physicalEnergy);
+
+    if (currentPage > 1) {
+      params.set("page", String(currentPage));
+    }
+    if (showFilters) {
+      params.set("showFilters", "true");
+    }
+
+    if (params.toString() !== searchParams.toString()) {
+      setSearchParams(params, { replace: true });
+    }
+  }, [currentPage, filterForm.values, searchParams, setSearchParams, showFilters]);
+
+  useRestoreScroll(!!activitiesData && !isLoading);
 
   return (
     <div className="w-full space-y-6 py-6">
@@ -647,8 +765,8 @@ export const LibraryPage: React.FC = () => {
                             navigate(`/activity-details/${activity.id}`, {
                               state: {
                                 activity,
-                                useHistoryBack: true,
-                                backTo: "/library",
+                                backTo: `${location.pathname}${location.search}`,
+                                restoreScrollY: getAppScrollTop(),
                               },
                             })
                           }
@@ -783,8 +901,8 @@ export const LibraryPage: React.FC = () => {
                                       {
                                         state: {
                                           activity,
-                                          useHistoryBack: true,
-                                          backTo: "/library",
+                                          backTo: `${location.pathname}${location.search}`,
+                                          restoreScrollY: getAppScrollTop(),
                                         },
                                       },
                                     )
@@ -807,9 +925,11 @@ export const LibraryPage: React.FC = () => {
                   <div className="flex justify-center items-center gap-4 mt-6">
                     <Button
                       variant="outline"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(1, prev - 1))
-                      }
+                      onClick={(event) => {
+                        scrollToTop();
+                        event.currentTarget.blur();
+                        setCurrentPage((prev) => Math.max(1, prev - 1));
+                      }}
                       disabled={currentPage === 1}
                       className="flex items-center gap-2"
                     >
@@ -822,9 +942,13 @@ export const LibraryPage: React.FC = () => {
                     </span>
                     <Button
                       variant="outline"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                      }
+                      onClick={(event) => {
+                        scrollToTop();
+                        event.currentTarget.blur();
+                        setCurrentPage((prev) =>
+                          Math.min(totalPages, prev + 1),
+                        );
+                      }}
                       disabled={currentPage === totalPages}
                       className="flex items-center gap-2"
                     >

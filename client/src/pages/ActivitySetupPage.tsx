@@ -39,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
+import { getAppScrollTop } from "@/utils/scroll";
 
 type Step = "upload" | "metadata" | "documents";
 type MarkdownTab =
@@ -371,8 +372,8 @@ export const ActivitySetupPage: React.FC = () => {
 
       navigate(`/activity-details/${response.activity.id}`, {
         state: {
-          useHistoryBack: true,
           backTo: "/upload",
+          restoreScrollY: getAppScrollTop(),
         },
       });
     } catch (error) {

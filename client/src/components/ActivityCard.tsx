@@ -7,6 +7,7 @@ import { Clock, Users } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import type { Activity } from "@/types/activity";
 import { useTranslation } from "react-i18next";
+import { getAppScrollTop } from "@/utils/scroll";
 
 interface ActivityCardProps {
   activity: Activity;
@@ -51,8 +52,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       navigate(`/activity-details/${activity.id}`, {
         state: {
           activity,
-          useHistoryBack: true,
           backTo: `${location.pathname}${location.search}`,
+          restoreScrollY: getAppScrollTop(),
         },
       });
     }

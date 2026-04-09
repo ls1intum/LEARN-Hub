@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
+import { getAppScrollTop } from "@/utils/scroll";
 
 type Step = "metadata" | "documents";
 type MarkdownTab =
@@ -280,8 +281,8 @@ export const ActivityEditPage: React.FC = () => {
 
       navigate(`/activity-details/${id}`, {
         state: {
-          useHistoryBack: true,
           backTo: `/activity-edit/${id}`,
+          restoreScrollY: getAppScrollTop(),
         },
       });
     } catch (error) {

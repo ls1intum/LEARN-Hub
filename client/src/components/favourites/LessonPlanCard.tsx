@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ActivityCard } from "@/components/ActivityCard";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import {
 import type { Activity } from "@/types/activity";
 import { BreakCard } from "@/components/BreakCard";
 import { useTranslation } from "react-i18next";
+import { getAppScrollTop } from "@/utils/scroll";
 
 interface LessonPlanFavourite {
   id: string;
@@ -40,6 +41,7 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
   isRemoving,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
   const [showAllActivities, setShowAllActivities] = useState(false);
 
@@ -69,8 +71,8 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
       navigate(`/activity-details/${activity.id}`, {
         state: {
           activity,
-          useHistoryBack: true,
-          backTo: "/favourites",
+          backTo: `${location.pathname}${location.search}`,
+          restoreScrollY: getAppScrollTop(),
         },
       });
     }

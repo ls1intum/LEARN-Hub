@@ -1,12 +1,24 @@
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ActivityFavouritesTab } from "@/components/favourites/ActivityFavouritesTab";
 import { LessonPlanFavouritesTab } from "@/components/favourites/LessonPlanFavouritesTab";
 import { useTranslation } from "react-i18next";
 
 export const FavouritesPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState("activities");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState(
+    () => searchParams.get("tab") || "activities",
+  );
   const { t } = useTranslation();
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    setSearchParams(
+      value === "activities" ? {} : { tab: value },
+      { replace: true },
+    );
+  };
 
   return (
     <div className="py-6">
@@ -19,7 +31,7 @@ export const FavouritesPage: React.FC = () => {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="activities">
             {t("favourites.activities")}

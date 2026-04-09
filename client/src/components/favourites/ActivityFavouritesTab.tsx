@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Heart, Trash2, Calendar, Clock, Users, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,8 @@ import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity } from "@/types/activity";
 import { useTranslation } from "react-i18next";
+import { useRestoreScroll } from "@/hooks/useRestoreScroll";
+import { getAppScrollTop } from "@/utils/scroll";
 
 interface ActivityFavourite {
   id: string;
@@ -22,6 +24,7 @@ interface ActivityFavourite {
 export const ActivityFavouritesTab: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
 
   const translateEnum = (category: string, value: string): string => {
@@ -92,8 +95,8 @@ export const ActivityFavouritesTab: React.FC = () => {
     navigate(`/activity-details/${activity.id}`, {
       state: {
         activity,
-        useHistoryBack: true,
-        backTo: "/favourites",
+        backTo: `${location.pathname}${location.search}`,
+        restoreScrollY: getAppScrollTop(),
       },
     });
   };
@@ -101,6 +104,8 @@ export const ActivityFavouritesTab: React.FC = () => {
   useEffect(() => {
     loadFavourites();
   }, [loadFavourites]);
+
+  useRestoreScroll(!loading);
 
   if (loading) {
     return (

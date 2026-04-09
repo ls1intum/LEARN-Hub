@@ -32,6 +32,7 @@ import {
   getEnvironmentBadgeVariant,
 } from "@/utils/environment";
 import { useTranslation } from "react-i18next";
+import { APP_SCROLL_CONTAINER_ID } from "@/utils/scroll";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -379,7 +380,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           </div>
         </div>
 
-        <main className="flex-1 flex flex-col overflow-x-hidden overflow-y-auto">
+        <main
+          id={APP_SCROLL_CONTAINER_ID}
+          className="flex-1 flex flex-col overflow-x-hidden overflow-y-auto"
+        >
           <div
             className={cn(
               "flex-1 p-4 sm:p-6 lg:p-8",

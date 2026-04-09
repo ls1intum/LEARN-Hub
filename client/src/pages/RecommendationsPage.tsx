@@ -13,6 +13,7 @@ import { ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ResultsData } from "@/types/activity";
 import { useTranslation } from "react-i18next";
+import { useRestoreScroll } from "@/hooks/useRestoreScroll";
 
 interface FormData {
   targetAge: number;
@@ -48,12 +49,46 @@ export const RecommendationsPage: React.FC = () => {
   const searchParamsString = searchParams.toString();
   const { t } = useTranslation();
 
-  const getInitialFormData = () => {
+  const getInitialFormData = (): FormData => {
+    if (searchParamsString) {
+      const parseCsv = (key: string) =>
+        searchParams
+          .get(key)
+          ?.split(",")
+          .filter(Boolean) ?? [];
+      const parseNumber = (key: string, fallback: number) => {
+        const value = Number(searchParams.get(key));
+        return Number.isFinite(value) ? value : fallback;
+      };
+
+      return {
+        targetAge: parseNumber("targetAge", initialFormData.targetAge),
+        format: parseCsv("format"),
+        resourcesNeeded: parseCsv("availableResources"),
+        bloomLevels: parseCsv("bloomLevels"),
+        targetDuration: parseNumber(
+          "targetDuration",
+          initialFormData.targetDuration,
+        ),
+        topics: parseCsv("preferredTopics"),
+        allowLessonPlans:
+          searchParams.get("allowLessonPlans") !== "false",
+        maxActivityCount: parseNumber(
+          "maxActivityCount",
+          initialFormData.maxActivityCount,
+        ),
+        includeBreaks: searchParams.get("includeBreaks") === "true",
+        priorityCategories: searchParams.getAll("priorityCategories"),
+      };
+    }
+
     const state = location.state as {
       searchCriteria?: Record<string, unknown>;
     } | null;
     if (state?.searchCriteria) {
-      return convertSearchCriteriaToFormData(state.searchCriteria);
+      return convertSearchCriteriaToFormData(
+        state.searchCriteria,
+      ) as FormData;
     }
     return initialFormData;
   };
@@ -97,10 +132,8 @@ export const RecommendationsPage: React.FC = () => {
         params.append("priorityCategories", category),
       );
 
-      params.set("limit", "5");
-
-      const data = await apiService.getRecommendations(params.toString());
-      setResults(data);
+      setResults(null);
+      setSearchParams(params);
       setActiveTab("results");
     },
   });
@@ -152,9 +185,8 @@ export const RecommendationsPage: React.FC = () => {
     formData.priorityCategories.forEach((category) =>
       params.append("priorityCategories", category),
     );
-    params.set("limit", "5");
-    const data = await apiService.getRecommendations(params.toString());
-    setResults(data);
+    setResults(null);
+    setSearchParams(params);
     setActiveTab("results");
   };
 
@@ -169,7 +201,9 @@ export const RecommendationsPage: React.FC = () => {
     if (searchParamsString) setSearchParams({});
   };
 
-  const showResults = !!(results || (isLoading && !!searchParamsString));
+  const showResults = !!(searchParamsString || results);
+
+  useRestoreScroll(showResults ? !!results && !isLoading : true);
 
   return (
     <div className="py-6">
