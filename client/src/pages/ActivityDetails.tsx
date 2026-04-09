@@ -148,9 +148,7 @@ export const ActivityDetails: React.FC = () => {
       navigate(backTo, {
         replace: true,
         state:
-          typeof restoreScrollY === "number"
-            ? { restoreScrollY }
-            : undefined,
+          typeof restoreScrollY === "number" ? { restoreScrollY } : undefined,
       });
       return;
     }

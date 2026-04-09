@@ -190,10 +190,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     return location.pathname;
   }, [detailNavigationState?.backTo, location.pathname]);
 
-  const currentTab = useMemo(
-    () => getCurrentTab(activePath),
-    [activePath],
-  );
+  const currentTab = useMemo(() => getCurrentTab(activePath), [activePath]);
 
   const visibleTabs = useMemo(
     () =>

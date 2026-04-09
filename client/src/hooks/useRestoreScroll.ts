@@ -16,16 +16,19 @@ export function useRestoreScroll(ready = true) {
   const location = useLocation();
   const navigate = useNavigate();
   const hasRestoredRef = useRef(false);
-  const restoreScrollY = (
-    location.state as RestoreScrollLocationState | null
-  )?.restoreScrollY;
+  const restoreScrollY = (location.state as RestoreScrollLocationState | null)
+    ?.restoreScrollY;
 
   useEffect(() => {
     hasRestoredRef.current = false;
   }, [location.key]);
 
   useEffect(() => {
-    if (!ready || hasRestoredRef.current || typeof restoreScrollY !== "number") {
+    if (
+      !ready ||
+      hasRestoredRef.current ||
+      typeof restoreScrollY !== "number"
+    ) {
       return;
     }
 
@@ -39,7 +42,10 @@ export function useRestoreScroll(ready = true) {
 
       const target = getAppScrollTarget();
 
-      if (target.maxScroll >= restoreScrollY || attempts >= MAX_RESTORE_ATTEMPTS) {
+      if (
+        target.maxScroll >= restoreScrollY ||
+        attempts >= MAX_RESTORE_ATTEMPTS
+      ) {
         target.scrollTo(restoreScrollY);
         navigate(
           {

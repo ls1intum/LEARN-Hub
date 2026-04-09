@@ -7,6 +7,7 @@ interface BadgeSelectorProps {
   options: string[];
   selectedValues: string[];
   onToggle: (value: string) => void;
+  allowEmptySelection?: boolean;
   disabled?: boolean;
   className?: string;
   priorityToggle?: React.ReactNode;
@@ -18,6 +19,7 @@ export const BadgeSelector: React.FC<BadgeSelectorProps> = ({
   options,
   selectedValues,
   onToggle,
+  allowEmptySelection = false,
   disabled = false,
   className = "",
   priorityToggle,
@@ -25,7 +27,8 @@ export const BadgeSelector: React.FC<BadgeSelectorProps> = ({
 }) => {
   const isBadgeDisabled = (value: string) => {
     if (disabled) return true;
-    // Disable if this is the last selected item
+    if (allowEmptySelection) return false;
+    // Keep the last active selection when empty state is not allowed.
     return selectedValues.includes(value) && selectedValues.length === 1;
   };
 

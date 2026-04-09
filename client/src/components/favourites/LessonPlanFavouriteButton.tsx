@@ -146,11 +146,7 @@ export const LessonPlanFavouriteButton: React.FC<
             >
               {t("lessonPlanFavourite.cancel")}
             </Button>
-            <Button
-              onClick={handleSave}
-              disabled={loading}
-              className="bg-red-500 hover:bg-red-600"
-            >
+            <Button onClick={handleSave} disabled={loading}>
               {loading
                 ? t("lessonPlanFavourite.saving")
                 : t("lessonPlanFavourite.saveToFavourites")}

@@ -14,10 +14,9 @@ export const FavouritesPage: React.FC = () => {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    setSearchParams(
-      value === "activities" ? {} : { tab: value },
-      { replace: true },
-    );
+    setSearchParams(value === "activities" ? {} : { tab: value }, {
+      replace: true,
+    });
   };
 
   return (
@@ -31,7 +30,11 @@ export const FavouritesPage: React.FC = () => {
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="activities">
             {t("favourites.activities")}

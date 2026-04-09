@@ -52,10 +52,7 @@ export const RecommendationsPage: React.FC = () => {
   const getInitialFormData = (): FormData => {
     if (searchParamsString) {
       const parseCsv = (key: string) =>
-        searchParams
-          .get(key)
-          ?.split(",")
-          .filter(Boolean) ?? [];
+        searchParams.get(key)?.split(",").filter(Boolean) ?? [];
       const parseNumber = (key: string, fallback: number) => {
         const value = Number(searchParams.get(key));
         return Number.isFinite(value) ? value : fallback;
@@ -71,8 +68,7 @@ export const RecommendationsPage: React.FC = () => {
           initialFormData.targetDuration,
         ),
         topics: parseCsv("preferredTopics"),
-        allowLessonPlans:
-          searchParams.get("allowLessonPlans") !== "false",
+        allowLessonPlans: searchParams.get("allowLessonPlans") !== "false",
         maxActivityCount: parseNumber(
           "maxActivityCount",
           initialFormData.maxActivityCount,
@@ -86,9 +82,7 @@ export const RecommendationsPage: React.FC = () => {
       searchCriteria?: Record<string, unknown>;
     } | null;
     if (state?.searchCriteria) {
-      return convertSearchCriteriaToFormData(
-        state.searchCriteria,
-      ) as FormData;
+      return convertSearchCriteriaToFormData(state.searchCriteria) as FormData;
     }
     return initialFormData;
   };

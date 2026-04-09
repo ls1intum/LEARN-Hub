@@ -96,11 +96,7 @@ export const LibraryPage: React.FC = () => {
     [searchParams],
   );
   const parseArrayParam = useCallback(
-    (key: string) =>
-      searchParams
-        .get(key)
-        ?.split(",")
-        .filter(Boolean) ?? [],
+    (key: string) => searchParams.get(key)?.split(",").filter(Boolean) ?? [],
     [searchParams],
   );
   const initialFilters = useMemo<FilterFormData>(
@@ -114,8 +110,14 @@ export const LibraryPage: React.FC = () => {
       topics: parseArrayParam("topics"),
       mentalLoad: parseArrayParam("mentalLoad"),
       physicalEnergy: parseArrayParam("physicalEnergy"),
-      durationMin: parseNumberParam("durationMin", initialFilterData.durationMin),
-      durationMax: parseNumberParam("durationMax", initialFilterData.durationMax),
+      durationMin: parseNumberParam(
+        "durationMin",
+        initialFilterData.durationMin,
+      ),
+      durationMax: parseNumberParam(
+        "durationMax",
+        initialFilterData.durationMax,
+      ),
     }),
     [parseArrayParam, parseNumberParam, searchParams],
   );
@@ -166,10 +168,17 @@ export const LibraryPage: React.FC = () => {
       // This will be handled by the data fetch hook
     },
   });
+  const [appliedFilters, setAppliedFilters] =
+    useState<FilterFormData>(initialFilters);
+
+  const applyFiltersImmediately = useCallback((nextFilters: FilterFormData) => {
+    setAppliedFilters(nextFilters);
+    setCurrentPage(1);
+  }, []);
 
   // Data fetching with automatic refetch on filter changes
   const fetchActivities = useCallback(async () => {
-    const filters = filterForm.values;
+    const filters = appliedFilters;
     return await apiService.getActivities({
       name: filters.name || undefined,
       ageMin:
@@ -203,7 +212,7 @@ export const LibraryPage: React.FC = () => {
       limit: itemsPerPage,
       offset: (currentPage - 1) * itemsPerPage,
     });
-  }, [filterForm.values, currentPage, itemsPerPage]);
+  }, [appliedFilters, currentPage, itemsPerPage]);
 
   const {
     data: activitiesData,
@@ -245,11 +254,15 @@ export const LibraryPage: React.FC = () => {
     value: string | number,
   ) => {
     scrollToTop();
+    const nextFilters = {
+      ...filterForm.values,
+      [filterType]: value,
+    } as FilterFormData;
     filterForm.setValue(
       filterType,
       value as FilterFormData[keyof FilterFormData],
     );
-    setCurrentPage(1);
+    applyFiltersImmediately(nextFilters);
   };
 
   const handleMultiSelectFilter = (
@@ -262,19 +275,61 @@ export const LibraryPage: React.FC = () => {
     const newValues = checked
       ? [...currentValues, value]
       : currentValues.filter((item) => item !== value);
+    const nextFilters = {
+      ...filterForm.values,
+      [filterType]: newValues,
+    } as FilterFormData;
 
     filterForm.setValue(
       filterType,
       newValues as FilterFormData[keyof FilterFormData],
     );
-    setCurrentPage(1);
+    applyFiltersImmediately(nextFilters);
   };
 
-  const clearFilters = () => {
+  const handleRangeFilterChange = useCallback(
+    (
+      minField: "ageMin" | "durationMin",
+      maxField: "ageMax" | "durationMax",
+      values: number[],
+    ) => {
+      scrollToTop();
+      const [minValue, maxValue] = values;
+      filterForm.setValues({
+        [minField]: minValue,
+        [maxField]: maxValue,
+      } as Partial<FilterFormData>);
+    },
+    [filterForm, scrollToTop],
+  );
+
+  const handleRangeFilterCommit = useCallback(
+    (
+      minField: "ageMin" | "durationMin",
+      maxField: "ageMax" | "durationMax",
+      values: number[],
+    ) => {
+      const [minValue, maxValue] = values;
+      applyFiltersImmediately({
+        ...filterForm.values,
+        [minField]: minValue,
+        [maxField]: maxValue,
+      } as FilterFormData);
+    },
+    [applyFiltersImmediately, filterForm.values],
+  );
+
+  const handleClearFilters = useCallback(() => {
     scrollToTop();
     filterForm.setValues(initialFilterData);
-    setCurrentPage(1);
+    applyFiltersImmediately(initialFilterData);
     setShowFilters(false);
+  }, [applyFiltersImmediately, filterForm, scrollToTop]);
+
+  const activeFilters = appliedFilters;
+
+  const clearFilters = () => {
+    handleClearFilters();
   };
 
   const totalPages = Math.ceil(total / itemsPerPage);
@@ -288,18 +343,18 @@ export const LibraryPage: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams();
 
-    if (filterForm.values.name) params.set("name", filterForm.values.name);
-    if (filterForm.values.ageMin !== initialFilterData.ageMin) {
-      params.set("ageMin", String(filterForm.values.ageMin));
+    if (activeFilters.name) params.set("name", activeFilters.name);
+    if (activeFilters.ageMin !== initialFilterData.ageMin) {
+      params.set("ageMin", String(activeFilters.ageMin));
     }
-    if (filterForm.values.ageMax !== initialFilterData.ageMax) {
-      params.set("ageMax", String(filterForm.values.ageMax));
+    if (activeFilters.ageMax !== initialFilterData.ageMax) {
+      params.set("ageMax", String(activeFilters.ageMax));
     }
-    if (filterForm.values.durationMin !== initialFilterData.durationMin) {
-      params.set("durationMin", String(filterForm.values.durationMin));
+    if (activeFilters.durationMin !== initialFilterData.durationMin) {
+      params.set("durationMin", String(activeFilters.durationMin));
     }
-    if (filterForm.values.durationMax !== initialFilterData.durationMax) {
-      params.set("durationMax", String(filterForm.values.durationMax));
+    if (activeFilters.durationMax !== initialFilterData.durationMax) {
+      params.set("durationMax", String(activeFilters.durationMax));
     }
 
     const setArrayParam = (key: string, values: string[]) => {
@@ -308,12 +363,12 @@ export const LibraryPage: React.FC = () => {
       }
     };
 
-    setArrayParam("format", filterForm.values.format);
-    setArrayParam("bloomLevel", filterForm.values.bloomLevel);
-    setArrayParam("resourcesNeeded", filterForm.values.resourcesNeeded);
-    setArrayParam("topics", filterForm.values.topics);
-    setArrayParam("mentalLoad", filterForm.values.mentalLoad);
-    setArrayParam("physicalEnergy", filterForm.values.physicalEnergy);
+    setArrayParam("format", activeFilters.format);
+    setArrayParam("bloomLevel", activeFilters.bloomLevel);
+    setArrayParam("resourcesNeeded", activeFilters.resourcesNeeded);
+    setArrayParam("topics", activeFilters.topics);
+    setArrayParam("mentalLoad", activeFilters.mentalLoad);
+    setArrayParam("physicalEnergy", activeFilters.physicalEnergy);
 
     if (currentPage > 1) {
       params.set("page", String(currentPage));
@@ -325,7 +380,7 @@ export const LibraryPage: React.FC = () => {
     if (params.toString() !== searchParams.toString()) {
       setSearchParams(params, { replace: true });
     }
-  }, [currentPage, filterForm.values, searchParams, setSearchParams, showFilters]);
+  }, [activeFilters, currentPage, searchParams, setSearchParams, showFilters]);
 
   useRestoreScroll(!!activitiesData && !isLoading);
 
@@ -457,10 +512,12 @@ export const LibraryPage: React.FC = () => {
                         filterForm.values.ageMin,
                         filterForm.values.ageMax,
                       ]}
-                      onValueChange={(value) => {
-                        handleFilterChange("ageMin", value[0]);
-                        handleFilterChange("ageMax", value[1]);
-                      }}
+                      onValueChange={(value) =>
+                        handleRangeFilterChange("ageMin", "ageMax", value)
+                      }
+                      onValueCommit={(value) =>
+                        handleRangeFilterCommit("ageMin", "ageMax", value)
+                      }
                       max={ACTIVITY_CONSTANTS.AGE_RANGE.MAX}
                       min={ACTIVITY_CONSTANTS.AGE_RANGE.MIN}
                       step={1}
@@ -490,10 +547,20 @@ export const LibraryPage: React.FC = () => {
                         filterForm.values.durationMin,
                         filterForm.values.durationMax,
                       ]}
-                      onValueChange={(value) => {
-                        handleFilterChange("durationMin", value[0]);
-                        handleFilterChange("durationMax", value[1]);
-                      }}
+                      onValueChange={(value) =>
+                        handleRangeFilterChange(
+                          "durationMin",
+                          "durationMax",
+                          value,
+                        )
+                      }
+                      onValueCommit={(value) =>
+                        handleRangeFilterCommit(
+                          "durationMin",
+                          "durationMax",
+                          value,
+                        )
+                      }
                       max={ACTIVITY_CONSTANTS.DURATION_RANGE.MAX}
                       min={ACTIVITY_CONSTANTS.DURATION_RANGE.MIN}
                       step={ACTIVITY_CONSTANTS.DURATION_RANGE.STEP}
@@ -521,6 +588,7 @@ export const LibraryPage: React.FC = () => {
                       label=""
                       options={filterOptions.format}
                       selectedValues={filterForm.values.format}
+                      allowEmptySelection
                       onToggle={(value) =>
                         handleMultiSelectFilter(
                           "format",
@@ -544,6 +612,7 @@ export const LibraryPage: React.FC = () => {
                       label=""
                       options={filterOptions.bloomLevel}
                       selectedValues={filterForm.values.bloomLevel}
+                      allowEmptySelection
                       onToggle={(value) =>
                         handleMultiSelectFilter(
                           "bloomLevel",
@@ -567,6 +636,7 @@ export const LibraryPage: React.FC = () => {
                       label=""
                       options={filterOptions.resourcesAvailable}
                       selectedValues={filterForm.values.resourcesNeeded}
+                      allowEmptySelection
                       onToggle={(value) =>
                         handleMultiSelectFilter(
                           "resourcesNeeded",
@@ -590,6 +660,7 @@ export const LibraryPage: React.FC = () => {
                       label=""
                       options={filterOptions.topics}
                       selectedValues={filterForm.values.topics}
+                      allowEmptySelection
                       onToggle={(value) =>
                         handleMultiSelectFilter(
                           "topics",
@@ -621,6 +692,7 @@ export const LibraryPage: React.FC = () => {
                       label=""
                       options={filterOptions.mentalLoad}
                       selectedValues={filterForm.values.mentalLoad}
+                      allowEmptySelection
                       onToggle={(value) =>
                         handleMultiSelectFilter(
                           "mentalLoad",
@@ -644,6 +716,7 @@ export const LibraryPage: React.FC = () => {
                       label=""
                       options={filterOptions.physicalEnergy}
                       selectedValues={filterForm.values.physicalEnergy}
+                      allowEmptySelection
                       onToggle={(value) =>
                         handleMultiSelectFilter(
                           "physicalEnergy",
