@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -71,13 +71,6 @@ export const LoginPage: React.FC = () => {
   const setSuccessMessage = (msg: string) => {
     setIsSuccess(true);
     setMessage(msg);
-  };
-
-  const handleGuestLogin = async () => {
-    setIsLoading(true);
-    setSuccessMessage(t("login.welcomeGuest"));
-    navigate("/recommendations");
-    setIsLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -410,7 +403,9 @@ export const LoginPage: React.FC = () => {
   };
 
   const activeTab =
-    mode === "password" || mode === "reset-password" ? "password" : "email-code";
+    mode === "password" || mode === "reset-password"
+      ? "password"
+      : "email-code";
 
   const getPanelTitle = () => {
     switch (mode) {
@@ -535,7 +530,11 @@ export const LoginPage: React.FC = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() =>
-                        setMode(mode === "reset-password" ? "password" : "reset-password")
+                        setMode(
+                          mode === "reset-password"
+                            ? "password"
+                            : "reset-password",
+                        )
                       }
                       className="text-primary hover:text-primary/80"
                     >
@@ -595,25 +594,18 @@ export const LoginPage: React.FC = () => {
 
           <div className="text-center">
             <Button
-              type="button"
-              onClick={handleGuestLogin}
-              disabled={isLoading}
+              asChild
               variant="outline"
               className="w-full h-12 text-base font-semibold border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
             >
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-muted-foreground"></div>
-                  {t("login.continuingAsGuest")}
-                </div>
-              ) : (
+              <Link to="/recommendations">
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   <span className="text-muted-foreground">
                     {t("login.guestAccess")}
                   </span>
                 </div>
-              )}
+              </Link>
             </Button>
           </div>
 

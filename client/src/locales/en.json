@@ -220,7 +220,6 @@
     "orLoginWithEmailCode": "Or login with email code",
     "backToPasswordLogin": "Login",
     "backToEmailCodeLogin": "Back to email code login",
-    "continuingAsGuest": "Continuing as Guest...",
     "enterBothEmailPassword": "Please enter both email and password",
     "loginSuccessRedirecting": "Login successful! Redirecting...",
     "enterEmailAddress": "Please enter your email address",
@@ -229,8 +228,7 @@
     "enterEmailFirstLastName": "Please enter email, first name, and last name",
     "registrationSuccess": "Registration successful! Check your email for login credentials.",
     "resetSuccess": "Password reset successful! Check your email for the new password.",
-    "operationFailed": "Operation failed",
-    "welcomeGuest": "Welcome! You're now browsing as a guest."
+    "operationFailed": "Operation failed"
   },
   "authVerify": {
     "title": "Verify Your Login",

@@ -311,7 +311,8 @@ public class AuthController {
 	@Operation(summary = "Update profile", description = "Update current user's profile")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Updated profile", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))})
-	public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest request, Authentication authentication) {
+	public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest request,
+			Authentication authentication) {
 		logger.info("PUT /api/auth/me - Update profile called");
 		try {
 			UUID userId = CurrentUser.getUserId(authentication);

@@ -220,7 +220,6 @@
     "orLoginWithEmailCode": "Oder mit E-Mail-Code anmelden",
     "backToPasswordLogin": "Anmelden",
     "backToEmailCodeLogin": "Zurück zur E-Mail-Code-Anmeldung",
-    "continuingAsGuest": "Gastzugang wird geladen...",
     "enterBothEmailPassword": "Bitte geben Sie E-Mail und Passwort ein",
     "loginSuccessRedirecting": "Anmeldung erfolgreich! Weiterleitung...",
     "enterEmailAddress": "Bitte geben Sie Ihre E-Mail-Adresse ein",
@@ -229,8 +228,7 @@
     "enterEmailFirstLastName": "Bitte geben Sie E-Mail, Vorname und Nachname ein",
     "registrationSuccess": "Registrierung erfolgreich! Prüfen Sie Ihre E-Mail für die Anmeldedaten.",
     "resetSuccess": "Passwort erfolgreich zurückgesetzt! Prüfen Sie Ihre E-Mail für das neue Passwort.",
-    "operationFailed": "Vorgang fehlgeschlagen",
-    "welcomeGuest": "Willkommen! Sie durchsuchen als Gast."
+    "operationFailed": "Vorgang fehlgeschlagen"
   },
   "authVerify": {
     "title": "Anmeldung bestätigen",

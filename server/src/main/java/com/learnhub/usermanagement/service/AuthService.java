@@ -76,7 +76,8 @@ public class AuthService {
 
 		// For admin users with password
 		if (request.getPassword() != null && passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-			String accessToken = jwtTokenService.generateAccessToken(user.getEmail(), user.getId(), user.getRole().name());
+			String accessToken = jwtTokenService.generateAccessToken(user.getEmail(), user.getId(),
+					user.getRole().name());
 			String refreshToken = jwtTokenService.generateRefreshToken(user.getEmail(), user.getId(),
 					user.getRole().name());
 			return new LoginResponse(accessToken, refreshToken, mapToUserResponse(user));
