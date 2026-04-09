@@ -18,6 +18,7 @@ import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
+import { openPdfInNewTab } from "@/utils/pdf";
 
 export const ActivityDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -53,10 +54,12 @@ export const ActivityDetails: React.FC = () => {
     dependencies: [fetchActivity],
   });
 
-  const openBlobInNewTab = async (getBlob: () => Promise<Blob>) => {
+  const openBlobInNewTab = async (
+    getBlob: () => Promise<Blob>,
+    title?: string,
+  ) => {
     const blob = await getBlob();
-    const url = window.URL.createObjectURL(blob);
-    window.open(url, "_blank");
+    openPdfInNewTab(blob, title);
   };
 
   const downloadBlob = async (
@@ -74,15 +77,24 @@ export const ActivityDetails: React.FC = () => {
     window.URL.revokeObjectURL(url);
   };
 
-  const handleOpenDocument = async (documentId: string) => {
+  const handleOpenDocument = async (documentId: string, filename?: string) => {
     await documentApi.call(async () => {
-      await openBlobInNewTab(() => apiService.downloadDocument(documentId));
+      await openBlobInNewTab(
+        () => apiService.downloadDocument(documentId),
+        filename,
+      );
     });
   };
 
-  const handleDownloadMarkdownPdf = async (markdownId: string) => {
+  const handleDownloadMarkdownPdf = async (
+    markdownId: string,
+    title: string,
+  ) => {
     await documentApi.call(async () => {
-      await openBlobInNewTab(() => apiService.getMarkdownPdf(markdownId));
+      await openBlobInNewTab(
+        () => apiService.getMarkdownPdf(markdownId),
+        title,
+      );
     });
   };
 
@@ -105,7 +117,10 @@ export const ActivityDetails: React.FC = () => {
     if (!activity?.id) return;
 
     await documentApi.call(async () => {
-      await openBlobInNewTab(() => apiService.downloadActivityPdf(activity.id));
+      await openBlobInNewTab(
+        () => apiService.downloadActivityPdf(activity.id),
+        activity.name,
+      );
     });
   };
 
@@ -435,7 +450,7 @@ export const ActivityDetails: React.FC = () => {
                       variant="outline"
                       size="sm"
                       disabled={documentApi.isLoading}
-                      onClick={() => handleOpenDocument(doc.id)}
+                      onClick={() => handleOpenDocument(doc.id, doc.filename)}
                       title={t("activityDetails.downloadPdf")}
                       className="flex items-center gap-1.5"
                     >
@@ -466,7 +481,12 @@ export const ActivityDetails: React.FC = () => {
                       variant="outline"
                       size="sm"
                       disabled={documentApi.isLoading}
-                      onClick={() => handleDownloadMarkdownPdf(md.id)}
+                      onClick={() =>
+                        handleDownloadMarkdownPdf(
+                          md.id,
+                          [activity.name, md.type].filter(Boolean).join(" "),
+                        )
+                      }
                       title="Download as PDF"
                       className="flex items-center gap-1.5"
                     >

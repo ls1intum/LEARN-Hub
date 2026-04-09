@@ -2,7 +2,10 @@ package com.learnhub.documentmanagement.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfReader;
 import com.learnhub.service.SanitizationService;
+import java.io.ByteArrayInputStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -154,5 +157,24 @@ class MarkdownToPdfServiceTest {
 		assertThat(result).isNotNull();
 		assertThat(result.length).isGreaterThan(0);
 		assertThat(new String(result, 0, 5)).startsWith("%PDF");
+	}
+
+	@Test
+	void renderHtmlToPdfSetsDocumentTitle() throws Exception {
+		byte[] result = service.renderHtmlToPdf("<p>Preview</p>", true, "Binary Bracelets");
+
+		try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(new ByteArrayInputStream(result)))) {
+			assertThat(pdfDocument.getDocumentInfo().getTitle()).isEqualTo("Binary Bracelets");
+		}
+	}
+
+	@Test
+	void applyDocumentTitleOverridesExistingTitle() throws Exception {
+		byte[] initialPdf = service.renderMarkdownToPdf("# Test");
+		byte[] retitledPdf = service.applyDocumentTitle(initialPdf, "Retitled Document");
+
+		try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(new ByteArrayInputStream(retitledPdf)))) {
+			assertThat(pdfDocument.getDocumentInfo().getTitle()).isEqualTo("Retitled Document");
+		}
 	}
 }

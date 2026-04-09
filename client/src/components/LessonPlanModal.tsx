@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { TimelineItem } from "@/components/ui/TimelineItem";
 import { BreakCard } from "@/components/ui/BreakCard";
 import { TimelineContainer } from "@/components/ui/TimelineContainer";
+import { openPdfInNewTab } from "@/utils/pdf";
 
 interface LessonPlanData {
   activities: Activity[];
@@ -74,10 +75,7 @@ export const LessonPlanModal: React.FC<LessonPlanModalProps> = ({
       });
 
       // Open the PDF in a new browser tab via a blob URL
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, "_blank");
-      // Revoke after a short delay so the new tab has time to load the resource
-      setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+      openPdfInNewTab(blob, lessonPlanData.title || t("lessonPlan.title"));
     } catch (error) {
       logger.error("Error downloading lesson plan", error, "LessonPlanModal");
       alert(t("lessonPlan.downloadFailed"));

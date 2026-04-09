@@ -59,7 +59,7 @@ public class MarkdownToPdfService {
 	 */
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName) {
 		String html = markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName);
-		return renderHtmlDocumentToPdf(html);
+		return renderHtmlDocumentToPdf(html, activityName);
 	}
 
 	/**
@@ -68,16 +68,38 @@ public class MarkdownToPdfService {
 	 */
 	public byte[] renderHtmlToPdf(String htmlBody, boolean landscape, String activityName) {
 		String html = markdownToHtmlService.renderHtmlBodyToHtmlDocument(htmlBody, landscape, activityName);
-		return renderHtmlDocumentToPdf(html);
+		return renderHtmlDocumentToPdf(html, activityName);
 	}
 
 	private byte[] renderHtmlDocumentToPdf(String html) {
+		return renderHtmlDocumentToPdf(html, null);
+	}
+
+	private byte[] renderHtmlDocumentToPdf(String html, String documentTitle) {
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 			HtmlConverter.convertToPdf(html, baos);
-			return baos.toByteArray();
+			return applyDocumentTitle(baos.toByteArray(), documentTitle);
 		} catch (Exception e) {
 			logger.error("Failed to render markdown PDF: {}", e.getMessage(), e);
 			throw new RuntimeException("Failed to render markdown PDF: " + e.getMessage(), e);
+		}
+	}
+
+	public byte[] applyDocumentTitle(byte[] pdfBytes, String documentTitle) {
+		String normalizedTitle = normalizeDocumentTitle(documentTitle);
+		if (normalizedTitle == null || pdfBytes == null || pdfBytes.length == 0) {
+			return pdfBytes;
+		}
+
+		try (ByteArrayInputStream inputStream = new ByteArrayInputStream(pdfBytes);
+				ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+				PdfDocument pdfDocument = new PdfDocument(new PdfReader(inputStream), new PdfWriter(outputStream))) {
+			pdfDocument.getDocumentInfo().setTitle(normalizedTitle);
+			pdfDocument.close();
+			return outputStream.toByteArray();
+		} catch (Exception e) {
+			logger.warn("Failed to set PDF document title '{}': {}", normalizedTitle, e.getMessage());
+			return pdfBytes;
 		}
 	}
 
@@ -85,6 +107,10 @@ public class MarkdownToPdfService {
 	 * Merge multiple PDF byte arrays into a single PDF document.
 	 */
 	public byte[] mergePdfs(List<byte[]> pdfParts) {
+		return mergePdfs(pdfParts, null);
+	}
+
+	public byte[] mergePdfs(List<byte[]> pdfParts, String documentTitle) {
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
 				PdfDocument mergedDoc = new PdfDocument(new PdfWriter(baos))) {
 			PdfMerger merger = new PdfMerger(mergedDoc);
@@ -96,10 +122,19 @@ public class MarkdownToPdfService {
 			}
 
 			mergedDoc.close();
-			return baos.toByteArray();
+			return applyDocumentTitle(baos.toByteArray(), documentTitle);
 		} catch (Exception e) {
 			logger.error("Failed to merge PDFs: {}", e.getMessage(), e);
 			throw new RuntimeException("Failed to merge PDFs: " + e.getMessage(), e);
 		}
+	}
+
+	private String normalizeDocumentTitle(String title) {
+		if (title == null) {
+			return null;
+		}
+
+		String normalized = title.trim();
+		return normalized.isEmpty() ? null : normalized;
 	}
 }

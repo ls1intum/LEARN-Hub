@@ -211,6 +211,7 @@ public class ActivityController {
 		logger.info("POST /api/activities/lesson-plan - Lesson plan PDF generated successfully, size={} bytes",
 				lessonPlanPdf.length);
 
+		lessonPlanPdf = markdownToPdfService.applyDocumentTitle(lessonPlanPdf, "Lesson Plan");
 		return buildFileDownloadResponse(lessonPlanPdf, "lesson_plan", ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
@@ -364,6 +365,7 @@ public class ActivityController {
 		}
 
 		byte[] pdfBytes = pdfParts.size() == 1 ? pdfParts.get(0) : markdownToPdfService.mergePdfs(pdfParts);
+		pdfBytes = markdownToPdfService.applyDocumentTitle(pdfBytes, activity.getName());
 
 		return buildFileDownloadResponse(pdfBytes, activity.getName(), ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}

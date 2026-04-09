@@ -56,10 +56,12 @@ public class MarkdownController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown content is empty"));
 			}
 
-			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape(),
-					markdown.getActivity() != null ? markdown.getActivity().getName() : "");
+			String activityName = markdown.getActivity() != null ? markdown.getActivity().getName() : "";
+			String documentTitle = buildDocumentTitle(activityName, markdown.getType().getValue());
+			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape(), activityName);
+			pdfBytes = markdownToPdfService.applyDocumentTitle(pdfBytes, documentTitle);
 
-			String downloadName = sanitizeFilename(markdown.getType().getValue()) + ".pdf";
+			String downloadName = sanitizeFilename(documentTitle) + ".pdf";
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_PDF);
@@ -128,10 +130,14 @@ public class MarkdownController {
 			String activityName = request.getActivityName();
 			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown, landscape,
 					activityName != null ? activityName : "");
+			String documentTitle = (activityName == null || activityName.isBlank())
+					? "Markdown Preview"
+					: activityName.trim() + " Preview";
+			pdfBytes = markdownToPdfService.applyDocumentTitle(pdfBytes, documentTitle);
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_PDF);
-			headers.setContentDispositionFormData("inline", "markdown_preview.pdf");
+			headers.setContentDispositionFormData("inline", sanitizeFilename(documentTitle) + ".pdf");
 			headers.setContentLength(pdfBytes.length);
 
 			return ResponseEntity.ok().headers(headers).body(pdfBytes);
@@ -147,5 +153,12 @@ public class MarkdownController {
 		}
 		String sanitized = name.replaceAll("[^a-zA-Z0-9._\\- ]", "_").trim();
 		return sanitized.isEmpty() ? "markdown" : sanitized;
+	}
+
+	private String buildDocumentTitle(String activityName, String sectionName) {
+		if (activityName == null || activityName.isBlank()) {
+			return sectionName;
+		}
+		return activityName.trim() + " " + sectionName;
 	}
 }
