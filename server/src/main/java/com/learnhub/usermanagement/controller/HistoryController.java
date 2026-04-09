@@ -3,6 +3,7 @@ package com.learnhub.usermanagement.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.dto.response.MessageResponse;
+import com.learnhub.security.CurrentUser;
 import com.learnhub.usermanagement.dto.request.ActivityFavouriteRequest;
 import com.learnhub.usermanagement.dto.request.LessonPlanFavouriteRequest;
 import com.learnhub.usermanagement.dto.response.ActivityFavouriteItemResponse;
@@ -26,7 +27,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -61,10 +62,10 @@ public class HistoryController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Search history", content = @Content(mediaType = "application/json", schema = @Schema(implementation = SearchHistoryListResponse.class)))})
 	public ResponseEntity<?> getSearchHistory(@RequestParam(required = false, defaultValue = "50") Integer limit,
-			@RequestParam(required = false, defaultValue = "0") Integer offset, HttpServletRequest request) {
+			@RequestParam(required = false, defaultValue = "0") Integer offset, Authentication authentication) {
 		logger.info("GET /api/history/search - Get search history called with limit={}, offset={}", limit, offset);
 		try {
-			UUID userId = (UUID) request.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error("GET /api/history/search - Unauthorized: userId not found in request");
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
@@ -97,10 +98,10 @@ public class HistoryController {
 	@Operation(summary = "Delete search history entry", description = "Delete a specific search history entry")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
-	public ResponseEntity<?> deleteSearchHistory(@PathVariable UUID historyId, HttpServletRequest request) {
+	public ResponseEntity<?> deleteSearchHistory(@PathVariable UUID historyId, Authentication authentication) {
 		logger.info("DELETE /api/history/search/{} - Delete search history entry called", historyId);
 		try {
-			UUID userId = (UUID) request.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error("DELETE /api/history/search/{} - Unauthorized: userId not found in request", historyId);
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
@@ -128,11 +129,11 @@ public class HistoryController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Activity favourites", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ActivityFavouritesListResponse.class)))})
 	public ResponseEntity<?> getActivityFavourites(@RequestParam(required = false, defaultValue = "50") Integer limit,
-			@RequestParam(required = false, defaultValue = "0") Integer offset, HttpServletRequest request) {
+			@RequestParam(required = false, defaultValue = "0") Integer offset, Authentication authentication) {
 		logger.info("GET /api/history/favourites/activities - Get activity favourites called with limit={}, offset={}",
 				limit, offset);
 		try {
-			UUID userId = (UUID) request.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error("GET /api/history/favourites/activities - Unauthorized: userId not found in request");
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
@@ -161,12 +162,12 @@ public class HistoryController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Lesson plan favourites", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LessonPlanFavouritesListResponse.class)))})
 	public ResponseEntity<?> getLessonPlanFavourites(@RequestParam(required = false, defaultValue = "50") Integer limit,
-			@RequestParam(required = false, defaultValue = "0") Integer offset, HttpServletRequest request) {
+			@RequestParam(required = false, defaultValue = "0") Integer offset, Authentication authentication) {
 		logger.info(
 				"GET /api/history/favourites/lesson-plans - Get lesson plan favourites called with limit={}, offset={}",
 				limit, offset);
 		try {
-			UUID userId = (UUID) request.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error("GET /api/history/favourites/lesson-plans - Unauthorized: userId not found in request");
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
@@ -208,10 +209,10 @@ public class HistoryController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Favourite saved", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FavouriteSaveResponse.class)))})
 	public ResponseEntity<?> saveActivityFavourite(@RequestBody ActivityFavouriteRequest requestBody,
-			HttpServletRequest request) {
+			Authentication authentication) {
 		logger.info("POST /api/history/favourites/activities - Save activity favourite called");
 		try {
-			UUID userId = (UUID) request.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error("POST /api/history/favourites/activities - Unauthorized: userId not found in request");
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
@@ -243,10 +244,10 @@ public class HistoryController {
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Favourite saved", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FavouriteSaveResponse.class)))})
 	public ResponseEntity<?> saveLessonPlanFavourite(@RequestBody LessonPlanFavouriteRequest requestBody,
-			HttpServletRequest request) {
+			Authentication authentication) {
 		logger.info("POST /api/history/favourites/lesson-plans - Save lesson plan favourite called");
 		try {
-			UUID userId = (UUID) request.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error("POST /api/history/favourites/lesson-plans - Unauthorized: userId not found in request");
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
@@ -280,10 +281,10 @@ public class HistoryController {
 	@Operation(summary = "Delete favourite", description = "Delete a favourite (activity or lesson plan)")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
-	public ResponseEntity<?> deleteFavourite(@PathVariable UUID favouriteId, HttpServletRequest request) {
+	public ResponseEntity<?> deleteFavourite(@PathVariable UUID favouriteId, Authentication authentication) {
 		logger.info("DELETE /api/history/favourites/{} - Delete favourite called", favouriteId);
 		try {
-			UUID userId = (UUID) request.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error("DELETE /api/history/favourites/{} - Unauthorized: userId not found in request",
 						favouriteId);
@@ -310,10 +311,10 @@ public class HistoryController {
 	@Operation(summary = "Remove activity favourite", description = "Remove an activity from favourites")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
-	public ResponseEntity<?> removeActivityFavourite(@PathVariable UUID activityId, HttpServletRequest request) {
+	public ResponseEntity<?> removeActivityFavourite(@PathVariable UUID activityId, Authentication authentication) {
 		logger.info("DELETE /api/history/favourites/activities/{} - Remove activity favourite called", activityId);
 		try {
-			UUID userId = (UUID) request.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error("DELETE /api/history/favourites/activities/{} - Unauthorized: userId not found in request",
 						activityId);
@@ -342,11 +343,12 @@ public class HistoryController {
 	@Operation(summary = "Check activity favourite status", description = "Check if an activity is favourited by the user")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Favourite status", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FavouriteStatusResponse.class)))})
-	public ResponseEntity<?> checkActivityFavouriteStatus(@PathVariable UUID activityId, HttpServletRequest request) {
+	public ResponseEntity<?> checkActivityFavouriteStatus(@PathVariable UUID activityId,
+			Authentication authentication) {
 		logger.info("GET /api/history/favourites/activities/{}/status - Check activity favourite status called",
 				activityId);
 		try {
-			UUID userId = (UUID) request.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error(
 						"GET /api/history/favourites/activities/{}/status - Unauthorized: userId not found in request",

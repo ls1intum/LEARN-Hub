@@ -3,6 +3,7 @@ package com.learnhub.usermanagement.controller;
 import com.learnhub.dto.request.EmailRequest;
 import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.dto.response.MessageResponse;
+import com.learnhub.security.CurrentUser;
 import com.learnhub.usermanagement.dto.request.CreateUserRequest;
 import com.learnhub.usermanagement.dto.request.LoginRequest;
 import com.learnhub.usermanagement.dto.request.PasswordResetRequest;
@@ -25,7 +26,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -122,10 +123,10 @@ public class AuthController {
 	@Operation(summary = "Get current user", description = "Get information about the currently authenticated user")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Current user", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))})
-	public ResponseEntity<?> getCurrentUser(HttpServletRequest request) {
+	public ResponseEntity<?> getCurrentUser(Authentication authentication) {
 		logger.info("GET /api/auth/me - Get current user called");
 		try {
-			UUID userId = (UUID) request.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error("GET /api/auth/me - Unauthorized: userId not found in request");
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
@@ -280,10 +281,14 @@ public class AuthController {
 	@Operation(summary = "Delete user", description = "Delete a user (admin only)")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
-	public ResponseEntity<?> deleteUser(@PathVariable UUID userId, HttpServletRequest httpRequest) {
+	public ResponseEntity<?> deleteUser(@PathVariable UUID userId, Authentication authentication) {
 		logger.info("DELETE /api/auth/users/{} - Delete user called", userId);
 		try {
-			UUID currentUserId = (UUID) httpRequest.getAttribute("userId");
+			UUID currentUserId = CurrentUser.getUserId(authentication);
+			if (currentUserId == null) {
+				logger.error("DELETE /api/auth/users/{} - Unauthorized: userId not found in token", userId);
+				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
+			}
 			boolean deleted = authService.deleteUser(userId, currentUserId);
 			if (!deleted) {
 				logger.error("DELETE /api/auth/users/{} - User not found", userId);
@@ -306,11 +311,10 @@ public class AuthController {
 	@Operation(summary = "Update profile", description = "Update current user's profile")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Updated profile", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))})
-	public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest request,
-			HttpServletRequest httpRequest) {
+	public ResponseEntity<?> updateProfile(@Valid @RequestBody UpdateProfileRequest request, Authentication authentication) {
 		logger.info("PUT /api/auth/me - Update profile called");
 		try {
-			UUID userId = (UUID) httpRequest.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error("PUT /api/auth/me - Unauthorized: userId not found in request");
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
@@ -342,10 +346,10 @@ public class AuthController {
 	@Operation(summary = "Delete account", description = "Delete current user's account")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Delete confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
-	public ResponseEntity<?> deleteAccount(HttpServletRequest httpRequest) {
+	public ResponseEntity<?> deleteAccount(Authentication authentication) {
 		logger.info("DELETE /api/auth/me - Delete account called");
 		try {
-			UUID userId = (UUID) httpRequest.getAttribute("userId");
+			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
 				logger.error("DELETE /api/auth/me - Unauthorized: userId not found in request");
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));

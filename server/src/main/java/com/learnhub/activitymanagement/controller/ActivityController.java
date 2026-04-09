@@ -24,6 +24,7 @@ import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.exception.ResourceNotFoundException;
+import com.learnhub.security.CurrentUser;
 import com.learnhub.usermanagement.service.UserSearchHistoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,7 +33,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -163,7 +163,7 @@ public class ActivityController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get activity recommendations", description = "Get personalized activity recommendations with scoring")
 	public ResponseEntity<RecommendationsResponse> getRecommendations(@ModelAttribute RecommendationRequest request,
-			HttpServletRequest httpRequest) {
+			Authentication authentication) {
 		logger.info(
 				"GET /api/activities/recommendations - Get recommendations called with targetAge={}, format={}, maxActivityCount={}, limit={}",
 				request.targetAge(), request.format(), request.maxActivityCount(), request.limit());
@@ -173,7 +173,7 @@ public class ActivityController {
 				request.preferredTopics(), request.priorityCategories());
 
 		// Save search history if user is authenticated
-		UUID userId = (UUID) httpRequest.getAttribute("userId");
+		UUID userId = CurrentUser.getUserId(authentication);
 		if (userId != null) {
 			searchHistoryService.saveSearchQuery(userId, criteria);
 		}

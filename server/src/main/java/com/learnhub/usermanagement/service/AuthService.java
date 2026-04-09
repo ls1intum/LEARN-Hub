@@ -1,6 +1,6 @@
 package com.learnhub.usermanagement.service;
 
-import com.learnhub.security.JwtUtil;
+import com.learnhub.security.JwtTokenService;
 import com.learnhub.usermanagement.dto.request.LoginRequest;
 import com.learnhub.usermanagement.dto.request.TeacherRegistrationRequest;
 import com.learnhub.usermanagement.dto.request.VerifyCodeRequest;
@@ -37,7 +37,7 @@ public class AuthService {
 	private PasswordEncoder passwordEncoder;
 
 	@Autowired
-	private JwtUtil jwtUtil;
+	private JwtTokenService jwtTokenService;
 
 	@Autowired
 	private EmailService emailService;
@@ -76,8 +76,9 @@ public class AuthService {
 
 		// For admin users with password
 		if (request.getPassword() != null && passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-			String accessToken = jwtUtil.generateToken(user.getEmail(), user.getId(), user.getRole().name());
-			String refreshToken = jwtUtil.generateRefreshToken(user.getEmail(), user.getId(), user.getRole().name());
+			String accessToken = jwtTokenService.generateAccessToken(user.getEmail(), user.getId(), user.getRole().name());
+			String refreshToken = jwtTokenService.generateRefreshToken(user.getEmail(), user.getId(),
+					user.getRole().name());
 			return new LoginResponse(accessToken, refreshToken, mapToUserResponse(user));
 		}
 
@@ -98,8 +99,9 @@ public class AuthService {
 		verificationCodeRepository.save(verificationCode);
 
 		// Generate JWT tokens
-		String accessToken = jwtUtil.generateToken(user.getEmail(), user.getId(), user.getRole().name());
-		String refreshToken = jwtUtil.generateRefreshToken(user.getEmail(), user.getId(), user.getRole().name());
+		String accessToken = jwtTokenService.generateAccessToken(user.getEmail(), user.getId(), user.getRole().name());
+		String refreshToken = jwtTokenService.generateRefreshToken(user.getEmail(), user.getId(),
+				user.getRole().name());
 		return new LoginResponse(accessToken, refreshToken, mapToUserResponse(user));
 	}
 
@@ -287,21 +289,21 @@ public class AuthService {
 
 	public LoginResponse refreshToken(String refreshToken) {
 		// Validate refresh token
-		if (!jwtUtil.validateRefreshToken(refreshToken)) {
+		if (!jwtTokenService.validateRefreshToken(refreshToken)) {
 			throw new RuntimeException("Invalid or expired refresh token");
 		}
 
 		// Extract user information from refresh token
-		UUID userId = jwtUtil.extractUserId(refreshToken);
-		String email = jwtUtil.extractUsername(refreshToken);
-		String role = jwtUtil.extractRole(refreshToken);
+		UUID userId = jwtTokenService.extractUserId(refreshToken);
+		String email = jwtTokenService.extractUsername(refreshToken);
+		String role = jwtTokenService.extractRole(refreshToken);
 
 		// Verify user still exists
 		User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
 
 		// Generate new tokens
-		String newAccessToken = jwtUtil.generateToken(email, userId, role);
-		String newRefreshToken = jwtUtil.generateRefreshToken(email, userId, role);
+		String newAccessToken = jwtTokenService.generateAccessToken(email, userId, role);
+		String newRefreshToken = jwtTokenService.generateRefreshToken(email, userId, role);
 
 		return new LoginResponse(newAccessToken, newRefreshToken, mapToUserResponse(user));
 	}
