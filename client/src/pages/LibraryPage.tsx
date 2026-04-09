@@ -645,7 +645,11 @@ export const LibraryPage: React.FC = () => {
                           size="sm"
                           onClick={() =>
                             navigate(`/activity-details/${activity.id}`, {
-                              state: { fromBrowser: true, activity },
+                              state: {
+                                activity,
+                                useHistoryBack: true,
+                                backTo: "/library",
+                              },
                             })
                           }
                         >
@@ -777,7 +781,11 @@ export const LibraryPage: React.FC = () => {
                                     navigate(
                                       `/activity-details/${activity.id}`,
                                       {
-                                        state: { fromBrowser: true, activity },
+                                        state: {
+                                          activity,
+                                          useHistoryBack: true,
+                                          backTo: "/library",
+                                        },
                                       },
                                     )
                                   }

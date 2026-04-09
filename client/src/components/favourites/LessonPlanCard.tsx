@@ -67,7 +67,11 @@ export const LessonPlanCard: React.FC<LessonPlanCardProps> = ({
   const handleViewActivityDetails = (activity: Activity) => {
     if (activity.id && activity.type === "activity") {
       navigate(`/activity-details/${activity.id}`, {
-        state: { activity, fromBrowser: true },
+        state: {
+          activity,
+          useHistoryBack: true,
+          backTo: "/favourites",
+        },
       });
     }
   };

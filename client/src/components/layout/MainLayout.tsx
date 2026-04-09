@@ -39,6 +39,10 @@ interface MainLayoutProps {
   fullWidth?: boolean;
 }
 
+interface DetailNavigationState {
+  backTo?: string;
+}
+
 function getUserInitials(
   user: {
     firstName?: string;
@@ -173,10 +177,21 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     (user?.role as "ADMIN" | "TEACHER" | "GUEST") || "GUEST";
   const isAdmin = effectiveRole === "ADMIN";
   const isGuest = effectiveRole === "GUEST";
+  const detailNavigationState = location.state as DetailNavigationState | null;
+  const activePath = useMemo(() => {
+    if (
+      location.pathname.startsWith("/activity-details/") &&
+      detailNavigationState?.backTo
+    ) {
+      return detailNavigationState.backTo;
+    }
+
+    return location.pathname;
+  }, [detailNavigationState?.backTo, location.pathname]);
 
   const currentTab = useMemo(
-    () => getCurrentTab(location.pathname),
-    [location.pathname],
+    () => getCurrentTab(activePath),
+    [activePath],
   );
 
   const visibleTabs = useMemo(

@@ -328,8 +328,6 @@
   "activityDetails": {
     "title": "Aktivitätsdetails",
     "description": "Detaillierte Informationen zu dieser Lernaktivität.",
-    "backToLibrary": "Zurück zur Bibliothek",
-    "backToForm": "Zurück zum Formular",
     "edit": "Bearbeiten",
     "descriptionLabel": "Beschreibung",
     "ageRange": "Altersbereich",

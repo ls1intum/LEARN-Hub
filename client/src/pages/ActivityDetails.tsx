@@ -20,6 +20,11 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { openPdfInNewTab } from "@/utils/pdf";
 
+interface ActivityDetailsLocationState {
+  useHistoryBack?: boolean;
+  backTo?: string;
+}
+
 export const ActivityDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -28,7 +33,9 @@ export const ActivityDetails: React.FC = () => {
   const isAdmin = user?.role === "ADMIN";
   const { t } = useTranslation();
 
-  const fromBrowser = location.state?.fromBrowser as boolean | undefined;
+  const navigationState = location.state as ActivityDetailsLocationState | null;
+  const useHistoryBack = navigationState?.useHistoryBack ?? false;
+  const backTo = navigationState?.backTo;
 
   const documentApi = useApi();
   const fetchActivity = useCallback(async () => {
@@ -137,11 +144,17 @@ export const ActivityDetails: React.FC = () => {
   };
 
   const handleBack = () => {
-    if (fromBrowser) {
+    if (useHistoryBack) {
       navigate(-1);
-    } else {
-      navigate("/recommendations");
+      return;
     }
+
+    if (backTo) {
+      navigate(backTo);
+      return;
+    }
+
+    navigate("/recommendations");
   };
 
   const translateEnum = (
@@ -217,11 +230,7 @@ export const ActivityDetails: React.FC = () => {
                 variant="ghost"
                 size="icon"
                 onClick={handleBack}
-                aria-label={
-                  fromBrowser
-                    ? t("activityDetails.backToLibrary")
-                    : t("activityDetails.backToForm")
-                }
+                aria-label={t("activityDetails.goBack")}
                 className="h-9 w-9 flex-shrink-0"
               >
                 <ArrowLeft className="h-5 w-5" />

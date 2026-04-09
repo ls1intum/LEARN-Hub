@@ -278,7 +278,12 @@ export const ActivityEditPage: React.FC = () => {
         uebungLoesungMarkdown: uebungLoesungMarkdown || undefined,
       });
 
-      navigate(`/activity-details/${id}`);
+      navigate(`/activity-details/${id}`, {
+        state: {
+          useHistoryBack: true,
+          backTo: `/activity-edit/${id}`,
+        },
+      });
     } catch (error) {
       logger.error("Save error", error, "ActivityEditPage");
       setSaveError(

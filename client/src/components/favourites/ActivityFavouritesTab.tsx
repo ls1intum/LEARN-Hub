@@ -90,7 +90,11 @@ export const ActivityFavouritesTab: React.FC = () => {
 
   const handleViewDetails = (activity: Activity) => {
     navigate(`/activity-details/${activity.id}`, {
-      state: { activity, fromBrowser: true },
+      state: {
+        activity,
+        useHistoryBack: true,
+        backTo: "/favourites",
+      },
     });
   };
 

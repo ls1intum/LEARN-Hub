@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   isFavourited,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useTranslation();
 
   const translateEnum = (category: string, value: string): string => {
@@ -48,7 +49,11 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
     e.stopPropagation();
     if (activity.id && activity.type === "activity") {
       navigate(`/activity-details/${activity.id}`, {
-        state: { activity },
+        state: {
+          activity,
+          useHistoryBack: true,
+          backTo: `${location.pathname}${location.search}`,
+        },
       });
     }
   };

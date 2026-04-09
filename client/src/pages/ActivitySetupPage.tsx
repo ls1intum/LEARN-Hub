@@ -369,7 +369,12 @@ export const ActivitySetupPage: React.FC = () => {
         uebungLoesungMarkdown: uebungLoesungMarkdown || undefined,
       })) as { activity: Activity };
 
-      navigate(`/activity-details/${response.activity.id}`);
+      navigate(`/activity-details/${response.activity.id}`, {
+        state: {
+          useHistoryBack: true,
+          backTo: "/upload",
+        },
+      });
     } catch (error) {
       logger.error("Save error", error, "ActivitySetupPage");
       setSchemaError(
