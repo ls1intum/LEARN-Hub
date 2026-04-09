@@ -59,7 +59,7 @@ export const SearchHistoryPage: React.FC = () => {
     };
 
     fetchSearchHistory();
-  }, [currentPage]);
+  }, [currentPage, t]);
 
   const handleDeleteEntry = async (historyId: number) => {
     try {

@@ -151,7 +151,6 @@ export const RecommendationsPage: React.FC = () => {
   const { isLoading, error, refetch } = useDataFetch({
     fetchFn: fetchRecommendations,
     enabled: !!searchParamsString,
-    dependencies: [fetchRecommendations],
     onSuccess: handleFetchSuccess,
   });
 

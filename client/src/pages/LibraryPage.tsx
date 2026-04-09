@@ -221,7 +221,6 @@ export const LibraryPage: React.FC = () => {
     refetch,
   } = useDataFetch({
     fetchFn: fetchActivities,
-    dependencies: [fetchActivities],
   });
 
   const activities = activitiesData?.activities || [];

@@ -1,17 +1,10 @@
-import React, { createContext, useState } from "react";
+import React, { useState } from "react";
 import i18n from "@/i18n";
-
-export type Language = "de" | "en";
-
-export interface LanguageContextType {
-  language: Language;
-  setLanguage: (lang: Language) => void;
-  toggleLanguage: () => void;
-}
-
-export const LanguageContext = createContext<LanguageContextType | undefined>(
-  undefined,
-);
+import {
+  LanguageContext,
+  type Language,
+  type LanguageContextType,
+} from "@/contexts/language-context";
 
 interface LanguageProviderProps {
   children: React.ReactNode;

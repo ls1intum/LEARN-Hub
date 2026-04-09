@@ -58,7 +58,6 @@ export const ActivityDetails: React.FC = () => {
   } = useDataFetch({
     fetchFn: fetchActivity,
     enabled: !!id,
-    dependencies: [fetchActivity],
   });
 
   const openBlobInNewTab = async (

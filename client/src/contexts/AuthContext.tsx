@@ -2,6 +2,7 @@ import React, { createContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { authService } from "@/services/authService";
 import type { User } from "@/services/authService";
+import { apiService } from "@/services/apiService";
 import { logger } from "@/services/logger";
 
 export interface AuthContextType {
@@ -140,7 +141,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     data: import("@/types/api").UpdateProfileRequest,
   ) => {
     try {
-      const { apiService } = await import("@/services/apiService");
       await apiService.updateProfile(data);
 
       // Refresh user data to get updated information
@@ -159,7 +159,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const deleteAccount = async () => {
     try {
-      const { apiService } = await import("@/services/apiService");
       await apiService.deleteProfile();
 
       // Clear tokens and user state

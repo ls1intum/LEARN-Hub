@@ -3,7 +3,6 @@ import { usePageState } from "./usePageState";
 
 interface UseDataFetchOptions<T> {
   fetchFn: () => Promise<T>;
-  dependencies?: unknown[];
   enabled?: boolean;
   onSuccess?: (data: T) => void;
   onError?: (error: Error) => void;
@@ -11,7 +10,6 @@ interface UseDataFetchOptions<T> {
 
 export function useDataFetch<T>({
   fetchFn,
-  dependencies = [],
   enabled = true,
   onSuccess,
   onError,
@@ -31,7 +29,7 @@ export function useDataFetch<T>({
         onError?.(err instanceof Error ? err : new Error(String(err)));
       });
     }
-  }, [enabled, refetch, onError, ...dependencies]);
+  }, [enabled, refetch, onError]);
 
   return {
     data,
