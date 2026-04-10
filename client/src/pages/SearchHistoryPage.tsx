@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Trash2,
-  Clock,
-  Search,
-  Play,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Trash2, Clock, Search, Play } from "lucide-react";
 import { apiService } from "@/services/apiService";
 import type { SearchHistoryEntry } from "@/types/activity";
 import { logger } from "@/services/logger";
 import { useTranslation } from "react-i18next";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 
 export const SearchHistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -30,10 +24,10 @@ export const SearchHistoryPage: React.FC = () => {
   const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
 
   const ITEMS_PER_PAGE = 20;
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   useEffect(() => {
     const fetchSearchHistory = async () => {
@@ -48,7 +42,6 @@ export const SearchHistoryPage: React.FC = () => {
         if (response) {
           setSearchHistory(response.searchHistory);
           setTotalCount(response.pagination.count);
-          setHasMore(response.searchHistory.length === ITEMS_PER_PAGE);
         }
       } catch (err) {
         logger.error("Error fetching search history", err, "SearchHistoryPage");
@@ -64,9 +57,8 @@ export const SearchHistoryPage: React.FC = () => {
   const handleDeleteEntry = async (historyId: number) => {
     try {
       await apiService.deleteSearchHistoryEntry(historyId);
-      setSearchHistory((prev) =>
-        prev.filter((entry) => entry.id !== historyId),
-      );
+      setSearchHistory((prev) => prev.filter((entry) => entry.id !== historyId));
+      setTotalCount((prev) => prev - 1);
     } catch (err) {
       logger.error(
         "Error deleting search history entry",
@@ -78,17 +70,9 @@ export const SearchHistoryPage: React.FC = () => {
   };
 
   const handleRerunSearch = (entry: SearchHistoryEntry) => {
-    try {
-      // Navigate to recommendations page with pre-filled search criteria
-      navigate("/recommendations", {
-        state: {
-          searchCriteria: entry.searchCriteria,
-        },
-      });
-    } catch (err) {
-      logger.error("Error re-running search", err, "SearchHistoryPage");
-      setError(t("history.failedRerun"));
-    }
+    navigate("/recommendations", {
+      state: { searchCriteria: entry.searchCriteria },
+    });
   };
 
   const formatDate = (dateString: string) => {
@@ -96,21 +80,17 @@ export const SearchHistoryPage: React.FC = () => {
       year: "numeric",
       month: "short",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
   };
 
-  const formatSearchCriteria = (criteria: Record<string, unknown>) => {
+  const formatSearchCriteria = (criteria: Record<string, unknown>): string[] => {
     const formatted: string[] = [];
 
     if (criteria.target_age) {
       formatted.push(t("history.age", { value: criteria.target_age }));
     }
     if (criteria.target_duration) {
-      formatted.push(
-        t("history.duration", { value: criteria.target_duration }),
-      );
+      formatted.push(t("history.duration", { value: criteria.target_duration }));
     }
     if (criteria.bloomLevel && criteria.bloomLevel !== "any") {
       formatted.push(
@@ -175,43 +155,9 @@ export const SearchHistoryPage: React.FC = () => {
     return formatted.length > 0 ? formatted : [t("history.noSpecificCriteria")];
   };
 
-  if (loading) {
-    return (
-      <div className="w-full">
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">{t("history.loading")}</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="w-full py-6">
-        <div className="mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
-            {t("history.title")}
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base">
-            {t("history.subtitle")}
-          </p>
-        </div>
-        <div className="text-center py-8">
-          <p className="text-destructive mb-4">{error || t("common.error")}</p>
-          <Button onClick={() => window.location.reload()}>
-            {t("history.tryAgain")}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full py-6">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
           {t("history.title")}
         </h1>
@@ -225,134 +171,121 @@ export const SearchHistoryPage: React.FC = () => {
         </p>
       </div>
 
-      {searchHistory.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Search className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold text-foreground mb-2">
-              {t("history.empty")}
-            </h3>
-            <p className="text-muted-foreground text-center">
-              {t("history.emptyDesc")}
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-2">
-          {searchHistory.map((entry) => (
-            <Card
-              key={entry.id}
-              className="hover:shadow-sm transition-shadow cursor-pointer group"
-              onClick={() => handleRerunSearch(entry)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-sm font-semibold group-hover:text-primary transition-colors truncate">
-                        {t("history.search", { id: entry.id })}
-                      </h3>
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {formatDate(entry.createdAt)}
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-1">
-                      {formatSearchCriteria(entry.searchCriteria)
-                        .slice(0, 4)
-                        .map((criterion, index) => (
-                          <Badge
-                            key={index}
-                            variant="secondary"
-                            className="text-xs px-2 py-0.5"
-                          >
-                            {criterion}
-                          </Badge>
-                        ))}
-                      {formatSearchCriteria(entry.searchCriteria).length >
-                        4 && (
-                        <Badge
-                          variant="outline"
-                          className="text-xs px-2 py-0.5"
-                        >
-                          {t("history.more", {
-                            count:
-                              formatSearchCriteria(entry.searchCriteria)
-                                .length - 4,
-                          })}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex gap-1 ml-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRerunSearch(entry);
-                      }}
-                      className="text-primary hover:text-primary-foreground hover:bg-primary h-8 px-3"
-                      aria-label="Re-run this search"
-                    >
-                      <Play className="h-3 w-3 mr-1" />
-                      {t("history.rerun")}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteEntry(entry.id);
-                      }}
-                      className="text-destructive hover:text-destructive h-8 px-2"
-                      aria-label="Delete search history entry"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+      {error && (
+        <div className="text-center py-8">
+          <p className="text-destructive mb-4">{error}</p>
+          <Button onClick={() => window.location.reload()}>
+            {t("history.tryAgain")}
+          </Button>
         </div>
       )}
 
-      {/* Pagination */}
-      {searchHistory.length > 0 && (
-        <div className="flex items-center justify-between mt-6 pt-4 border-t border-border">
-          <div className="text-sm text-muted-foreground">
-            {t("history.showing", {
-              from: currentPage * ITEMS_PER_PAGE + 1,
-              to: Math.min((currentPage + 1) * ITEMS_PER_PAGE, totalCount),
-              total: totalCount,
-            })}
+      {!error && (
+        <div className="border border-border rounded-lg overflow-hidden">
+          {/* Column header */}
+          <div className="flex items-center gap-3 px-3 py-2 bg-muted/40 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <span className="w-[110px] shrink-0">{t("history.dateHeader")}</span>
+            <span className="flex-1">{t("history.criteriaHeader")}</span>
+            <span className="w-[64px] shrink-0" />
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
-              disabled={currentPage === 0}
-              className="h-8 px-3"
-            >
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              {t("history.previous")}
-            </Button>
-            <span className="text-sm text-muted-foreground px-2">
-              {t("history.page")} {currentPage + 1}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage((prev) => prev + 1)}
-              disabled={!hasMore}
-              className="h-8 px-3"
-            >
-              {t("history.next")}
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
+
+          {loading ? (
+            <div className="divide-y divide-border">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center gap-3 px-3 py-2.5">
+                  <Skeleton className="h-4 w-[110px] shrink-0" />
+                  <div className="flex-1 flex gap-1.5">
+                    <Skeleton className="h-5 w-20" />
+                    <Skeleton className="h-5 w-24" />
+                    <Skeleton className="h-5 w-16" />
+                  </div>
+                  <Skeleton className="h-7 w-[64px] shrink-0" />
+                </div>
+              ))}
+            </div>
+          ) : searchHistory.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Search className="h-10 w-10 text-muted-foreground mb-3" />
+              <p className="text-sm font-medium text-foreground">
+                {t("history.empty")}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("history.emptyDesc")}
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {searchHistory.map((entry) => {
+                const criteria = formatSearchCriteria(entry.searchCriteria);
+                return (
+                  <div
+                    key={entry.id}
+                    className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer group"
+                    onClick={() => handleRerunSearch(entry)}
+                  >
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground tabular-nums w-[110px] shrink-0">
+                      <Clock className="h-3 w-3 shrink-0" />
+                      {formatDate(entry.createdAt)}
+                    </div>
+                    <div className="flex-1 flex flex-wrap gap-1 min-w-0">
+                      {criteria.slice(0, 3).map((criterion, index) => (
+                        <Badge
+                          key={index}
+                          variant="secondary"
+                          className="text-xs px-2 py-0.5 font-normal"
+                        >
+                          {criterion}
+                        </Badge>
+                      ))}
+                      {criteria.length > 3 && (
+                        <Badge variant="outline" className="text-xs px-2 py-0.5">
+                          +{criteria.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex gap-1 shrink-0 w-[64px] justify-end">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRerunSearch(entry);
+                        }}
+                        aria-label="Re-run this search"
+                      >
+                        <Play className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteEntry(entry.id);
+                        }}
+                        aria-label="Delete search history entry"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {!loading && searchHistory.length > 0 && (
+            <div className="px-3">
+              <PaginationBar
+                currentPage={currentPage + 1}
+                totalPages={totalPages}
+                totalItems={totalCount}
+                itemsPerPage={ITEMS_PER_PAGE}
+                onPageChange={(page) => setCurrentPage(page - 1)}
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

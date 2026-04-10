@@ -119,6 +119,8 @@
     "failedDelete": "Suchverlauf-Eintrag konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
     "failedRerun": "Suche konnte nicht wiederholt werden. Bitte versuchen Sie es erneut.",
     "tryAgain": "Erneut versuchen",
+    "dateHeader": "Datum",
+    "criteriaHeader": "Kriterien",
     "noSpecificCriteria": "Keine spezifischen Kriterien",
     "age": "Alter: {{value}}",
     "duration": "Dauer: {{value}}min",
@@ -501,7 +503,14 @@
     "viewDetails": "Details anzeigen",
     "ages": "Alter",
     "favourited": "Favorisiert",
-    "customName": "Eigener Name:"
+    "customName": "Eigener Name:",
+    "searchPlaceholder": "Nach Name suchen…",
+    "nameHeader": "Name",
+    "ageHeader": "Alter",
+    "durationHeader": "Dauer",
+    "formatHeader": "Format",
+    "dateHeader": "Favorisiert",
+    "noResults": "Keine Favoriten entsprechen Ihrer Suche"
   },
   "lessonPlan": {
     "title": "Unterrichtsplan",

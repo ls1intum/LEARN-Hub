@@ -1,17 +1,18 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Heart, Trash2, Calendar, Clock, Users, Eye } from "lucide-react";
+import { Heart, Trash2, Clock, Users, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity } from "@/types/activity";
 import { useTranslation } from "react-i18next";
 import { useRestoreScroll } from "@/hooks/useRestoreScroll";
 import { getAppScrollTop } from "@/utils/scroll";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 
 interface ActivityFavourite {
   id: string;
@@ -20,6 +21,8 @@ interface ActivityFavourite {
   name: string | null;
   createdAt: string;
 }
+
+const ITEMS_PER_PAGE = 20;
 
 export const ActivityFavouritesTab: React.FC = () => {
   const { user } = useAuth();
@@ -32,11 +35,14 @@ export const ActivityFavouritesTab: React.FC = () => {
     const translated = t(key);
     return translated === key ? value : translated;
   };
+
   const [favourites, setFavourites] = useState<ActivityFavourite[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const loadFavourites = useCallback(async () => {
     if (!user) return;
@@ -48,17 +54,13 @@ export const ActivityFavouritesTab: React.FC = () => {
       const response = await apiService.getActivityFavourites();
       setFavourites(response.favourites);
 
-      // Load activity details for each favourite
       const activityIds = response.favourites.map((fav) => fav.activityId);
       if (activityIds.length > 0) {
-        const activityDetails =
-          await apiService.getActivitiesByIds(activityIds);
+        const activityDetails = await apiService.getActivitiesByIds(activityIds);
         setActivities(activityDetails);
       }
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to load favourites",
-      );
+      setError(err instanceof Error ? err.message : "Failed to load favourites");
     } finally {
       setLoading(false);
     }
@@ -70,18 +72,10 @@ export const ActivityFavouritesTab: React.FC = () => {
     try {
       setRemovingIds((prev) => new Set(prev).add(activityId));
       await apiService.removeActivityFavourite(activityId);
-
-      // Remove from local state
-      setFavourites((prev) =>
-        prev.filter((fav) => fav.activityId !== activityId),
-      );
-      setActivities((prev) =>
-        prev.filter((activity) => activity.id !== activityId),
-      );
+      setFavourites((prev) => prev.filter((fav) => fav.activityId !== activityId));
+      setActivities((prev) => prev.filter((activity) => activity.id !== activityId));
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to remove favourite",
-      );
+      setError(err instanceof Error ? err.message : "Failed to remove favourite");
     } finally {
       setRemovingIds((prev) => {
         const newSet = new Set(prev);
@@ -107,25 +101,49 @@ export const ActivityFavouritesTab: React.FC = () => {
 
   useRestoreScroll(!loading);
 
+  // Client-side filtering
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return favourites
+      .map((fav) => ({
+        favourite: fav,
+        activity: activities.find((a) => a.id === fav.activityId),
+      }))
+      .filter(({ activity }) => {
+        if (!activity) return false;
+        if (!q) return true;
+        return activity.name.toLowerCase().includes(q);
+      });
+  }, [favourites, activities, search]);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.ceil(filteredRows.length / ITEMS_PER_PAGE);
+  const pagedRows = filteredRows.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+
   if (loading) {
     return (
-      <div className="space-y-4">
-        {[...Array(3)].map((_, i) => (
-          <Card key={i}>
-            <CardHeader>
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2 mb-4">
-                <Skeleton className="h-6 w-16" />
-                <Skeleton className="h-6 w-20" />
-                <Skeleton className="h-6 w-24" />
-              </div>
-              <Skeleton className="h-4 w-full" />
-            </CardContent>
-          </Card>
-        ))}
+      <div className="border border-border rounded-lg overflow-hidden">
+        <div className="flex items-center gap-3 px-3 py-2 bg-muted/40 border-b border-border">
+          <Skeleton className="h-4 w-32" />
+        </div>
+        <div className="divide-y divide-border">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="flex items-center gap-3 px-3 py-2.5">
+              <Skeleton className="h-4 flex-1" />
+              <Skeleton className="h-5 w-12 hidden sm:block" />
+              <Skeleton className="h-5 w-14 hidden sm:block" />
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-7 w-[56px]" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -141,11 +159,11 @@ export const ActivityFavouritesTab: React.FC = () => {
   if (favourites.length === 0) {
     return (
       <div className="text-center py-12">
-        <Heart className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-lg font-semibold text-foreground mb-2">
+        <Heart className="mx-auto h-10 w-10 text-muted-foreground mb-3" />
+        <h3 className="text-sm font-semibold text-foreground mb-1">
           {t("activityFavourites.noFavourites")}
         </h3>
-        <p className="text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {t("activityFavourites.noFavouritesDesc")}
         </p>
       </div>
@@ -154,96 +172,130 @@ export const ActivityFavouritesTab: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      {favourites.map((favourite) => {
-        const activity = activities.find((a) => a.id === favourite.activityId);
-        if (!activity) return null;
+      {/* Search */}
+      <div className="relative w-full">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t("activityFavourites.searchPlaceholder")}
+          className="pl-8 h-8 text-sm w-full"
+        />
+      </div>
+      <p className="text-xs text-muted-foreground tabular-nums">
+        {filteredRows.length} {t("library.totalActivities")}
+      </p>
 
-        const isRemoving = removingIds.has(activity.id);
+      <div className="border border-border rounded-lg overflow-hidden">
+        {/* Column header */}
+        <div className="flex items-center gap-3 px-3 py-2 bg-muted/40 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <span className="flex-1">{t("activityFavourites.nameHeader")}</span>
+          <span className="w-[52px] shrink-0 hidden sm:block">
+            {t("activityFavourites.ageHeader")}
+          </span>
+          <span className="w-[68px] shrink-0 hidden sm:block">
+            {t("activityFavourites.durationHeader")}
+          </span>
+          <span className="w-[76px] shrink-0">
+            {t("activityFavourites.formatHeader")}
+          </span>
+          <span className="w-[100px] shrink-0 hidden lg:block">
+            {t("activityFavourites.dateHeader")}
+          </span>
+          <span className="w-[32px] shrink-0" />
+        </div>
 
-        return (
-          <Card
-            key={favourite.id}
-            className="hover:shadow-md transition-shadow"
-          >
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{activity.name}</CardTitle>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {activity.description}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleViewDetails(activity)}
-                    className="flex items-center gap-1"
-                  >
-                    <Eye className="h-4 w-4" />
-                    {t("activityFavourites.viewDetails")}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeFavourite(activity.id)}
-                    disabled={isRemoving}
-                    className="text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-2 mb-4">
-                <Badge variant="secondary">
-                  <Users className="h-3 w-3 mr-1" />
-                  {t("activityFavourites.ages")} {activity.ageMin}-
-                  {activity.ageMax}
-                </Badge>
-                <Badge variant="secondary">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {activity.durationMinMinutes}
-                  {activity.durationMaxMinutes &&
-                    `-${activity.durationMaxMinutes}`}{" "}
-                  min
-                </Badge>
-                <Badge variant="secondary">
-                  {translateEnum("format", activity.format)}
-                </Badge>
-                <Badge variant="outline">
-                  {translateEnum("bloomLevel", activity.bloomLevel)}
-                </Badge>
-              </div>
+        {pagedRows.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center">
+            <p className="text-sm text-muted-foreground">
+              {t("activityFavourites.noResults")}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {pagedRows.map(({ favourite, activity }) => {
+              if (!activity) return null;
+              const isRemoving = removingIds.has(activity.id);
 
-              <div className="flex flex-wrap gap-1 mb-4">
-                {activity.topics.map((topic) => (
-                  <Badge key={topic} variant="outline" className="text-xs">
-                    {translateEnum("topics", topic)}
-                  </Badge>
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <div className="flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  {t("activityFavourites.favourited")}{" "}
-                  {new Date(favourite.createdAt).toLocaleDateString()}
-                </div>
-                {favourite.name && (
-                  <div className="text-right">
-                    <span className="font-medium">
-                      {t("activityFavourites.customName")}
-                    </span>{" "}
-                    {favourite.name}
+              return (
+                <div
+                  key={favourite.id}
+                  className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer"
+                  onClick={() => handleViewDetails(activity)}
+                >
+                  {/* Name */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {activity.name}
+                    </p>
+                    {favourite.name && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {favourite.name}
+                      </p>
+                    )}
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+
+                  {/* Age */}
+                  <div className="w-[52px] shrink-0 hidden sm:flex items-center gap-0.5 text-xs text-muted-foreground">
+                    <Users className="h-3 w-3 shrink-0" />
+                    {activity.ageMin}–{activity.ageMax}
+                  </div>
+
+                  {/* Duration */}
+                  <div className="w-[68px] shrink-0 hidden sm:flex items-center gap-0.5 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3 shrink-0" />
+                    {activity.durationMinMinutes}
+                    {activity.durationMaxMinutes &&
+                      `–${activity.durationMaxMinutes}`}
+                    &nbsp;min
+                  </div>
+
+                  {/* Format badge */}
+                  <div className="w-[76px] shrink-0">
+                    <Badge variant="secondary" className="text-xs px-1.5 py-0 font-normal">
+                      {translateEnum("format", activity.format)}
+                    </Badge>
+                  </div>
+
+                  {/* Favourited date */}
+                  <div className="w-[100px] shrink-0 hidden lg:block text-xs text-muted-foreground tabular-nums">
+                    {new Date(favourite.createdAt).toLocaleDateString()}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="w-[32px] shrink-0 flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFavourite(activity.id);
+                      }}
+                      disabled={isRemoving}
+                      aria-label="Remove favourite"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {pagedRows.length > 0 && (
+          <div className="px-3">
+            <PaginationBar
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredRows.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={setCurrentPage}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 };

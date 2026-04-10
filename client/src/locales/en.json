@@ -119,6 +119,8 @@
     "failedDelete": "Failed to delete search history entry. Please try again.",
     "failedRerun": "Failed to re-run search. Please try again.",
     "tryAgain": "Try Again",
+    "dateHeader": "Date",
+    "criteriaHeader": "Criteria",
     "noSpecificCriteria": "No specific criteria",
     "age": "Age: {{value}}",
     "duration": "Duration: {{value}}min",
@@ -501,7 +503,14 @@
     "viewDetails": "View Details",
     "ages": "Ages",
     "favourited": "Favourited",
-    "customName": "Custom name:"
+    "customName": "Custom name:",
+    "searchPlaceholder": "Search by name…",
+    "nameHeader": "Name",
+    "ageHeader": "Age",
+    "durationHeader": "Duration",
+    "formatHeader": "Format",
+    "dateHeader": "Favourited",
+    "noResults": "No favourites match your search"
   },
   "lessonPlan": {
     "title": "Lesson Plan",

@@ -7,12 +7,13 @@ import {
 } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Card, CardContent } from "@/components/ui/card";
-import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { BadgeSelector } from "@/components/ui/BadgeSelector";
+import { PaginationBar } from "@/components/ui/PaginationBar";
 import { useAuth } from "@/hooks/useAuth";
 import { useDataFetch } from "@/hooks/useDataFetch";
 import { useForm } from "@/hooks/useForm";
@@ -24,9 +25,6 @@ import {
   Search,
   Filter,
   Plus,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
   Brain,
   Activity as ActivityIcon,
   Users,
@@ -86,10 +84,7 @@ export const LibraryPage: React.FC = () => {
   const parseNumberParam = useCallback(
     (key: string, fallback: number) => {
       const rawValue = searchParams.get(key);
-      if (rawValue === null || rawValue === "") {
-        return fallback;
-      }
-
+      if (rawValue === null || rawValue === "") return fallback;
       const value = Number(rawValue);
       return Number.isFinite(value) ? value : fallback;
     },
@@ -110,14 +105,8 @@ export const LibraryPage: React.FC = () => {
       topics: parseArrayParam("topics"),
       mentalLoad: parseArrayParam("mentalLoad"),
       physicalEnergy: parseArrayParam("physicalEnergy"),
-      durationMin: parseNumberParam(
-        "durationMin",
-        initialFilterData.durationMin,
-      ),
-      durationMax: parseNumberParam(
-        "durationMax",
-        initialFilterData.durationMax,
-      ),
+      durationMin: parseNumberParam("durationMin", initialFilterData.durationMin),
+      durationMax: parseNumberParam("durationMax", initialFilterData.durationMax),
     }),
     [parseArrayParam, parseNumberParam, searchParams],
   );
@@ -127,6 +116,7 @@ export const LibraryPage: React.FC = () => {
     const translated = t(key);
     return translated === key ? value : translated;
   };
+
   const [currentPage, setCurrentPage] = useState(() =>
     parseNumberParam("page", 1),
   );
@@ -138,17 +128,13 @@ export const LibraryPage: React.FC = () => {
   >(new Set());
 
   const scrollToTop = useCallback(() => {
-    if (typeof restoreScrollY === "number") {
-      // A pending scroll restoration is about to run; don't fight it.
-      return;
-    }
+    if (typeof restoreScrollY === "number") return;
     setAppScrollTop(0);
   }, [restoreScrollY]);
 
   const itemsPerPage = ACTIVITY_CONSTANTS.ITEMS_PER_PAGE;
   const isAdmin = user?.role === "ADMIN";
 
-  // Filter options from field values
   const filterOptions: FilterOptions = useMemo(
     () => ({
       format: fieldValues.format,
@@ -161,12 +147,9 @@ export const LibraryPage: React.FC = () => {
     [fieldValues],
   );
 
-  // Form management for filters
   const filterForm = useForm({
     initialValues: initialFilters,
-    onSubmit: async () => {
-      // This will be handled by the data fetch hook
-    },
+    onSubmit: async () => { },
   });
   const [appliedFilters, setAppliedFilters] =
     useState<FilterFormData>(initialFilters);
@@ -176,7 +159,6 @@ export const LibraryPage: React.FC = () => {
     setCurrentPage(1);
   }, []);
 
-  // Data fetching with automatic refetch on filter changes
   const fetchActivities = useCallback(async () => {
     const filters = appliedFilters;
     return await apiService.getActivities({
@@ -198,15 +180,11 @@ export const LibraryPage: React.FC = () => {
           ? filters.durationMax
           : undefined,
       format: filters.format.length > 0 ? filters.format : undefined,
-      bloomLevel:
-        filters.bloomLevel.length > 0 ? filters.bloomLevel : undefined,
+      bloomLevel: filters.bloomLevel.length > 0 ? filters.bloomLevel : undefined,
       resourcesNeeded:
-        filters.resourcesNeeded.length > 0
-          ? filters.resourcesNeeded
-          : undefined,
+        filters.resourcesNeeded.length > 0 ? filters.resourcesNeeded : undefined,
       topics: filters.topics.length > 0 ? filters.topics : undefined,
-      mentalLoad:
-        filters.mentalLoad.length > 0 ? filters.mentalLoad : undefined,
+      mentalLoad: filters.mentalLoad.length > 0 ? filters.mentalLoad : undefined,
       physicalEnergy:
         filters.physicalEnergy.length > 0 ? filters.physicalEnergy : undefined,
       limit: itemsPerPage,
@@ -219,32 +197,23 @@ export const LibraryPage: React.FC = () => {
     isLoading,
     error,
     refetch,
-  } = useDataFetch({
-    fetchFn: fetchActivities,
-  });
+  } = useDataFetch({ fetchFn: fetchActivities });
 
   const activities = activitiesData?.activities || [];
   const total = activitiesData?.total || 0;
 
-  // Fetch all favourited activities in bulk (avoid N+1 requests)
   useEffect(() => {
     const fetchFavourites = async () => {
-      if (!user) {
-        return;
-      }
-
+      if (!user) return;
       try {
         const response = await apiService.getActivityFavourites();
-        const favouritedIds = new Set(
-          response.favourites.map((fav) => fav.activityId),
+        setFavouritedActivityIds(
+          new Set(response.favourites.map((fav) => fav.activityId)),
         );
-        setFavouritedActivityIds(favouritedIds);
       } catch {
-        // Silently fail - this is optional feature
         setFavouritedActivityIds(new Set());
       }
     };
-
     fetchFavourites();
   }, [user]);
 
@@ -257,10 +226,7 @@ export const LibraryPage: React.FC = () => {
       ...filterForm.values,
       [filterType]: value,
     } as FilterFormData;
-    filterForm.setValue(
-      filterType,
-      value as FilterFormData[keyof FilterFormData],
-    );
+    filterForm.setValue(filterType, value as FilterFormData[keyof FilterFormData]);
     applyFiltersImmediately(nextFilters);
   };
 
@@ -278,11 +244,7 @@ export const LibraryPage: React.FC = () => {
       ...filterForm.values,
       [filterType]: newValues,
     } as FilterFormData;
-
-    filterForm.setValue(
-      filterType,
-      newValues as FilterFormData[keyof FilterFormData],
-    );
+    filterForm.setValue(filterType, newValues as FilterFormData[keyof FilterFormData]);
     applyFiltersImmediately(nextFilters);
   };
 
@@ -294,10 +256,7 @@ export const LibraryPage: React.FC = () => {
     ) => {
       scrollToTop();
       const [minValue, maxValue] = values;
-      filterForm.setValues({
-        [minField]: minValue,
-        [maxField]: maxValue,
-      } as Partial<FilterFormData>);
+      filterForm.setValues({ [minField]: minValue, [maxField]: maxValue } as Partial<FilterFormData>);
     },
     [filterForm, scrollToTop],
   );
@@ -326,714 +285,435 @@ export const LibraryPage: React.FC = () => {
   }, [applyFiltersImmediately, filterForm, scrollToTop]);
 
   const activeFilters = appliedFilters;
-
-  const clearFilters = () => {
-    handleClearFilters();
-  };
-
+  const clearFilters = () => handleClearFilters();
   const totalPages = Math.ceil(total / itemsPerPage);
 
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (appliedFilters.name) count++;
+    if (
+      appliedFilters.ageMin !== initialFilterData.ageMin ||
+      appliedFilters.ageMax !== initialFilterData.ageMax
+    ) count++;
+    if (
+      appliedFilters.durationMin !== initialFilterData.durationMin ||
+      appliedFilters.durationMax !== initialFilterData.durationMax
+    ) count++;
+    if (appliedFilters.format.length > 0) count++;
+    if (appliedFilters.bloomLevel.length > 0) count++;
+    if (appliedFilters.resourcesNeeded.length > 0) count++;
+    if (appliedFilters.topics.length > 0) count++;
+    if (appliedFilters.mentalLoad.length > 0) count++;
+    if (appliedFilters.physicalEnergy.length > 0) count++;
+    return count;
+  }, [appliedFilters]);
+
   useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      setCurrentPage(totalPages);
-    }
+    if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
   useEffect(() => {
     const params = new URLSearchParams();
-
     if (activeFilters.name) params.set("name", activeFilters.name);
-    if (activeFilters.ageMin !== initialFilterData.ageMin) {
+    if (activeFilters.ageMin !== initialFilterData.ageMin)
       params.set("ageMin", String(activeFilters.ageMin));
-    }
-    if (activeFilters.ageMax !== initialFilterData.ageMax) {
+    if (activeFilters.ageMax !== initialFilterData.ageMax)
       params.set("ageMax", String(activeFilters.ageMax));
-    }
-    if (activeFilters.durationMin !== initialFilterData.durationMin) {
+    if (activeFilters.durationMin !== initialFilterData.durationMin)
       params.set("durationMin", String(activeFilters.durationMin));
-    }
-    if (activeFilters.durationMax !== initialFilterData.durationMax) {
+    if (activeFilters.durationMax !== initialFilterData.durationMax)
       params.set("durationMax", String(activeFilters.durationMax));
-    }
-
     const setArrayParam = (key: string, values: string[]) => {
-      if (values.length > 0) {
-        params.set(key, values.join(","));
-      }
+      if (values.length > 0) params.set(key, values.join(","));
     };
-
     setArrayParam("format", activeFilters.format);
     setArrayParam("bloomLevel", activeFilters.bloomLevel);
     setArrayParam("resourcesNeeded", activeFilters.resourcesNeeded);
     setArrayParam("topics", activeFilters.topics);
     setArrayParam("mentalLoad", activeFilters.mentalLoad);
     setArrayParam("physicalEnergy", activeFilters.physicalEnergy);
-
-    if (currentPage > 1) {
-      params.set("page", String(currentPage));
-    }
-    if (showFilters) {
-      params.set("showFilters", "true");
-    }
-
-    if (params.toString() !== searchParams.toString()) {
+    if (currentPage > 1) params.set("page", String(currentPage));
+    if (showFilters) params.set("showFilters", "true");
+    if (params.toString() !== searchParams.toString())
       setSearchParams(params, { replace: true });
-    }
   }, [activeFilters, currentPage, searchParams, setSearchParams, showFilters]);
 
   useRestoreScroll(!!activitiesData && !isLoading);
 
   return (
-    <div className="w-full space-y-6 py-6">
+    <div className="w-full space-y-4 py-6">
       {/* Header */}
-      <div className="space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              {t("library.title")}
-            </h2>
-            <p className="text-muted-foreground mt-1.5 text-sm sm:text-base">
-              {t("library.subtitle")}
-            </p>
-          </div>
-
-          {/* Action Buttons */}
-          {isAdmin && (
-            <Button asChild className="flex-shrink-0">
-              <Link to="/upload">
-                <Plus className="h-4 w-4 mr-2" />
-                {t("library.addActivity")}
-              </Link>
-            </Button>
-          )}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            {t("library.title")}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {t("library.subtitle")}
+          </p>
         </div>
+        {isAdmin && (
+          <Button asChild size="sm" className="shrink-0">
+            <Link to="/upload">
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              {t("library.addActivity")}
+            </Link>
+          </Button>
+        )}
       </div>
 
-      <Card>
-        <CardContent className="p-4 sm:p-6 lg:p-8">
-          {/* Search and Quick Filters */}
-          <div className="mb-6">
-            <div className="flex flex-col sm:flex-row gap-4 mb-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder={t("library.searchPlaceholder")}
-                    value={filterForm.values.name}
-                    onChange={(e) => handleFilterChange("name", e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2"
-                >
-                  <Filter className="h-4 w-4" />
-                  {showFilters
-                    ? t("library.hideFilters")
-                    : t("library.showFilters")}
-                </Button>
-                <Button variant="outline" onClick={clearFilters}>
-                  {t("library.clearFilters")}
-                </Button>
-              </div>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-              <div className="bg-primary/5 p-6 rounded-xl border border-primary/10">
-                <div className="flex items-center">
-                  <div className="p-3 bg-primary/15 rounded-xl">
-                    <Plus className="h-6 w-6 text-primary" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-primary">
-                      {t("library.totalActivities")}
-                    </p>
-                    <p className="text-3xl font-bold text-primary">{total}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-success/5 p-6 rounded-xl border border-success/10">
-                <div className="flex items-center">
-                  <div className="p-3 bg-success/15 rounded-xl">
-                    <Filter className="h-6 w-6 text-success" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-success">
-                      {t("resultsDisplay.showing")}
-                    </p>
-                    <p className="text-3xl font-bold text-success">
-                      {activities?.length || 0}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Advanced Filters */}
-          {showFilters && (
-            <div className="mb-8 p-6 bg-gradient-to-br from-muted/20 to-muted/10 rounded-xl border border-border/50 shadow-sm">
-              <div className="flex justify-between items-center mb-8">
-                <h3 className="text-lg font-semibold text-foreground">
-                  {t("library.advancedFilters")}
-                </h3>
-              </div>
-
-              {/* Range Filters Section */}
-              <div className="mb-8">
-                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                  {t("library.rangeFilters")}
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Age Range */}
-                  <div className="bg-card/50 border border-border/50 rounded-lg p-5 shadow-xs">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Users className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">
-                        {t("library.ageRange")}
-                      </Label>
-                    </div>
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-sm text-muted-foreground">
-                        {t("library.selectAgeRange")}
-                      </span>
-                      <span className="text-lg font-bold text-primary">
-                        {filterForm.values.ageMin} - {filterForm.values.ageMax}
-                      </span>
-                    </div>
-                    <Slider
-                      value={[
-                        filterForm.values.ageMin,
-                        filterForm.values.ageMax,
-                      ]}
-                      onValueChange={(value) =>
-                        handleRangeFilterChange("ageMin", "ageMax", value)
-                      }
-                      onValueCommit={(value) =>
-                        handleRangeFilterCommit("ageMin", "ageMax", value)
-                      }
-                      max={ACTIVITY_CONSTANTS.AGE_RANGE.MAX}
-                      min={ACTIVITY_CONSTANTS.AGE_RANGE.MIN}
-                      step={1}
-                      className="w-full"
-                    />
-                  </div>
-
-                  {/* Duration Range */}
-                  <div className="bg-card/50 border border-border/50 rounded-lg p-5 shadow-xs">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Clock className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">
-                        {t("library.durationRange")}
-                      </Label>
-                    </div>
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-sm text-muted-foreground">
-                        {t("library.selectDuration")}
-                      </span>
-                      <span className="text-lg font-bold text-primary">
-                        {filterForm.values.durationMin} -{" "}
-                        {filterForm.values.durationMax}
-                      </span>
-                    </div>
-                    <Slider
-                      value={[
-                        filterForm.values.durationMin,
-                        filterForm.values.durationMax,
-                      ]}
-                      onValueChange={(value) =>
-                        handleRangeFilterChange(
-                          "durationMin",
-                          "durationMax",
-                          value,
-                        )
-                      }
-                      onValueCommit={(value) =>
-                        handleRangeFilterCommit(
-                          "durationMin",
-                          "durationMax",
-                          value,
-                        )
-                      }
-                      max={ACTIVITY_CONSTANTS.DURATION_RANGE.MAX}
-                      min={ACTIVITY_CONSTANTS.DURATION_RANGE.MIN}
-                      step={ACTIVITY_CONSTANTS.DURATION_RANGE.STEP}
-                      className="w-full"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Activity Characteristics Section */}
-              <div className="mb-8">
-                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                  {t("library.activityCharacteristics")}
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Format */}
-                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Grid3x3 className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">
-                        {t("library.format")}
-                      </Label>
-                    </div>
-                    <BadgeSelector
-                      label=""
-                      options={filterOptions.format}
-                      selectedValues={filterForm.values.format}
-                      allowEmptySelection
-                      onToggle={(value) =>
-                        handleMultiSelectFilter(
-                          "format",
-                          value,
-                          !filterForm.values.format.includes(value),
-                        )
-                      }
-                      labelFn={(value) => translateEnum("format", value)}
-                    />
-                  </div>
-
-                  {/* Bloom Level */}
-                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <GraduationCap className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">
-                        {t("library.bloomLevel")}
-                      </Label>
-                    </div>
-                    <BadgeSelector
-                      label=""
-                      options={filterOptions.bloomLevel}
-                      selectedValues={filterForm.values.bloomLevel}
-                      allowEmptySelection
-                      onToggle={(value) =>
-                        handleMultiSelectFilter(
-                          "bloomLevel",
-                          value,
-                          !filterForm.values.bloomLevel.includes(value),
-                        )
-                      }
-                      labelFn={(value) => translateEnum("bloomLevel", value)}
-                    />
-                  </div>
-
-                  {/* Resources */}
-                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Package className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">
-                        {t("library.resources")}
-                      </Label>
-                    </div>
-                    <BadgeSelector
-                      label=""
-                      options={filterOptions.resourcesAvailable}
-                      selectedValues={filterForm.values.resourcesNeeded}
-                      allowEmptySelection
-                      onToggle={(value) =>
-                        handleMultiSelectFilter(
-                          "resourcesNeeded",
-                          value,
-                          !filterForm.values.resourcesNeeded.includes(value),
-                        )
-                      }
-                      labelFn={(value) => translateEnum("resources", value)}
-                    />
-                  </div>
-
-                  {/* Topics */}
-                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Tag className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">
-                        {t("library.topics")}
-                      </Label>
-                    </div>
-                    <BadgeSelector
-                      label=""
-                      options={filterOptions.topics}
-                      selectedValues={filterForm.values.topics}
-                      allowEmptySelection
-                      onToggle={(value) =>
-                        handleMultiSelectFilter(
-                          "topics",
-                          value,
-                          !filterForm.values.topics.includes(value),
-                        )
-                      }
-                      labelFn={(value) => translateEnum("topics", value)}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Teacher Context Section */}
-              <div>
-                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
-                  {t("library.teacherContext")}
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Mental Load */}
-                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Brain className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">
-                        {t("library.mentalLoad")}
-                      </Label>
-                    </div>
-                    <BadgeSelector
-                      label=""
-                      options={filterOptions.mentalLoad}
-                      selectedValues={filterForm.values.mentalLoad}
-                      allowEmptySelection
-                      onToggle={(value) =>
-                        handleMultiSelectFilter(
-                          "mentalLoad",
-                          value,
-                          !filterForm.values.mentalLoad.includes(value),
-                        )
-                      }
-                      labelFn={(value) => translateEnum("energy", value)}
-                    />
-                  </div>
-
-                  {/* Physical Energy */}
-                  <div className="bg-card/50 border border-border/50 rounded-lg p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <ActivityIcon className="h-4 w-4 text-primary" />
-                      <Label className="font-semibold">
-                        {t("library.physicalEnergy")}
-                      </Label>
-                    </div>
-                    <BadgeSelector
-                      label=""
-                      options={filterOptions.physicalEnergy}
-                      selectedValues={filterForm.values.physicalEnergy}
-                      allowEmptySelection
-                      onToggle={(value) =>
-                        handleMultiSelectFilter(
-                          "physicalEnergy",
-                          value,
-                          !filterForm.values.physicalEnergy.includes(value),
-                        )
-                      }
-                      labelFn={(value) => translateEnum("energy", value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+      {/* Toolbar */}
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            placeholder={t("library.searchPlaceholder")}
+            value={filterForm.values.name}
+            onChange={(e) => handleFilterChange("name", e.target.value)}
+            className="pl-8 h-8 text-sm w-full"
+          />
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-8 gap-1.5 shrink-0"
+          onClick={() => setShowFilters(!showFilters)}
+        >
+          <Filter className="h-3.5 w-3.5" />
+          {showFilters ? t("library.hideFilters") : t("library.showFilters")}
+          {activeFilterCount > 0 && (
+            <span className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-semibold w-4 h-4 leading-none">
+              {activeFilterCount}
+            </span>
           )}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 text-muted-foreground shrink-0"
+          onClick={clearFilters}
+          disabled={activeFilterCount === 0}
+        >
+          {t("library.clearFilters")}
+        </Button>
+      </div>
 
-          {/* Results Summary */}
-          <div className="mb-8 p-6 bg-primary/5 rounded-xl border border-primary/10">
-            <p className="text-primary font-medium">
-              {t("library.showing", {
-                from: (currentPage - 1) * itemsPerPage + 1,
-                to: Math.min(currentPage * itemsPerPage, total),
-                total,
-              })}
-              {totalPages > 1 &&
-                ` (${t("library.page")} ${currentPage} ${t("library.of")} ${totalPages})`}
-            </p>
+      {/* Filter Panel */}
+      {showFilters && (
+        <div className="border border-border rounded-lg p-4 space-y-5 bg-muted/20">
+          {/* Range Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-medium">{t("library.ageRange")}</span>
+                </div>
+                <span className="text-sm font-semibold text-primary tabular-nums">
+                  {filterForm.values.ageMin}–{filterForm.values.ageMax}
+                </span>
+              </div>
+              <Slider
+                value={[filterForm.values.ageMin, filterForm.values.ageMax]}
+                onValueChange={(v) => handleRangeFilterChange("ageMin", "ageMax", v)}
+                onValueCommit={(v) => handleRangeFilterCommit("ageMin", "ageMax", v)}
+                max={ACTIVITY_CONSTANTS.AGE_RANGE.MAX}
+                min={ACTIVITY_CONSTANTS.AGE_RANGE.MIN}
+                step={1}
+              />
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-sm font-medium">{t("library.durationRange")}</span>
+                </div>
+                <span className="text-sm font-semibold text-primary tabular-nums">
+                  {filterForm.values.durationMin}–{filterForm.values.durationMax}m
+                </span>
+              </div>
+              <Slider
+                value={[filterForm.values.durationMin, filterForm.values.durationMax]}
+                onValueChange={(v) => handleRangeFilterChange("durationMin", "durationMax", v)}
+                onValueCommit={(v) => handleRangeFilterCommit("durationMin", "durationMax", v)}
+                max={ACTIVITY_CONSTANTS.DURATION_RANGE.MAX}
+                min={ACTIVITY_CONSTANTS.DURATION_RANGE.MIN}
+                step={ACTIVITY_CONSTANTS.DURATION_RANGE.STEP}
+              />
+            </div>
           </div>
 
-          {/* Error Display */}
-          <ErrorDisplay error={error} onRetry={refetch} />
+          <div className="border-t border-border" />
 
-          {/* Activities Display */}
-          <LoadingState isLoading={isLoading} fallback={<SkeletonGrid />}>
-            {(activities?.length || 0) === 0 ? (
-              <div className="text-center py-16">
-                <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Filter className="h-10 w-10 text-muted-foreground" />
+          {/* Activity Characteristics */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              {t("library.activityCharacteristics")}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Grid3x3 className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">{t("library.format")}</span>
                 </div>
-                <h3 className="text-lg font-semibold text-foreground mb-3">
-                  {t("library.noActivities")}
-                </h3>
-                <p className="text-muted-foreground mb-8 leading-relaxed">
-                  {t("library.noActivitiesDesc")}
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={clearFilters}
-                  size="lg"
-                  className="h-12 px-8"
-                >
-                  {t("library.clearFilters")}
-                </Button>
+                <BadgeSelector
+                  label=""
+                  options={filterOptions.format}
+                  selectedValues={filterForm.values.format}
+                  allowEmptySelection
+                  onToggle={(v) =>
+                    handleMultiSelectFilter("format", v, !filterForm.values.format.includes(v))
+                  }
+                  labelFn={(v) => translateEnum("format", v)}
+                />
               </div>
-            ) : (
-              <>
-                {/* Mobile Card View */}
-                <div className="lg:hidden space-y-4">
-                  {activities.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="bg-card rounded-xl shadow-sm border border-border p-6"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-foreground mb-1">
-                            {activity.name}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {activity.source}
-                          </p>
-                        </div>
-                        <FavouriteButton
-                          activityId={activity.id}
-                          initialIsFavourited={favouritedActivityIds.has(
-                            activity.id,
-                          )}
-                        />
-                      </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">{t("library.bloomLevel")}</span>
+                </div>
+                <BadgeSelector
+                  label=""
+                  options={filterOptions.bloomLevel}
+                  selectedValues={filterForm.values.bloomLevel}
+                  allowEmptySelection
+                  onToggle={(v) =>
+                    handleMultiSelectFilter("bloomLevel", v, !filterForm.values.bloomLevel.includes(v))
+                  }
+                  labelFn={(v) => translateEnum("bloomLevel", v)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">{t("library.resources")}</span>
+                </div>
+                <BadgeSelector
+                  label=""
+                  options={filterOptions.resourcesAvailable}
+                  selectedValues={filterForm.values.resourcesNeeded}
+                  allowEmptySelection
+                  onToggle={(v) =>
+                    handleMultiSelectFilter("resourcesNeeded", v, !filterForm.values.resourcesNeeded.includes(v))
+                  }
+                  labelFn={(v) => translateEnum("resources", v)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">{t("library.topics")}</span>
+                </div>
+                <BadgeSelector
+                  label=""
+                  options={filterOptions.topics}
+                  selectedValues={filterForm.values.topics}
+                  allowEmptySelection
+                  onToggle={(v) =>
+                    handleMultiSelectFilter("topics", v, !filterForm.values.topics.includes(v))
+                  }
+                  labelFn={(v) => translateEnum("topics", v)}
+                />
+              </div>
+            </div>
+          </div>
 
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <span className="text-xs text-muted-foreground">
-                            {t("library.ageRange")}
-                          </span>
-                          <p className="text-sm font-medium">
-                            {activity.ageMin}-{activity.ageMax}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-xs text-muted-foreground">
-                            {t("library.durationRange")}
-                          </span>
-                          <p className="text-sm font-medium">
-                            {activity.durationMinMinutes}-
-                            {activity.durationMaxMinutes} min
-                          </p>
-                        </div>
-                      </div>
+          <div className="border-t border-border" />
 
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                          {translateEnum("format", activity.format)}
-                        </span>
-                        {activity.topics?.slice(0, 2).map((topic, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-muted/30 text-foreground border border-border"
-                          >
-                            {translateEnum("topics", topic)}
-                          </span>
-                        ))}
-                      </div>
+          {/* Teacher Context */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              {t("library.teacherContext")}
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Brain className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">{t("library.mentalLoad")}</span>
+                </div>
+                <BadgeSelector
+                  label=""
+                  options={filterOptions.mentalLoad}
+                  selectedValues={filterForm.values.mentalLoad}
+                  allowEmptySelection
+                  onToggle={(v) =>
+                    handleMultiSelectFilter("mentalLoad", v, !filterForm.values.mentalLoad.includes(v))
+                  }
+                  labelFn={(v) => translateEnum("energy", v)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <ActivityIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs font-medium text-muted-foreground">{t("library.physicalEnergy")}</span>
+                </div>
+                <BadgeSelector
+                  label=""
+                  options={filterOptions.physicalEnergy}
+                  selectedValues={filterForm.values.physicalEnergy}
+                  allowEmptySelection
+                  onToggle={(v) =>
+                    handleMultiSelectFilter("physicalEnergy", v, !filterForm.values.physicalEnergy.includes(v))
+                  }
+                  labelFn={(v) => translateEnum("energy", v)}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-                      <div className="flex items-center justify-end space-x-2 pt-4 border-t border-border">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            navigate(`/activity-details/${activity.id}`, {
-                              state: {
-                                activity,
-                                backTo: `${location.pathname}${location.search}`,
-                                restoreScrollY: getAppScrollTop(),
-                              },
-                            })
-                          }
-                        >
-                          <Eye className="h-3 w-3 mr-2" />
-                          {t("library.viewDetails")}
-                        </Button>
-                      </div>
+      {!isLoading && (
+        <p className="text-xs text-muted-foreground tabular-nums">
+          {total} {t("library.totalActivities")}
+        </p>
+      )}
+
+      <ErrorDisplay error={error} onRetry={refetch} />
+
+      {/* Activity List */}
+      <LoadingState
+        isLoading={isLoading}
+        fallback={
+          <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-2 px-3 py-2.5">
+                <Skeleton className="h-4 flex-1 max-w-[220px]" />
+                <Skeleton className="h-4 w-10 hidden sm:block" />
+                <Skeleton className="h-4 w-14 hidden sm:block" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+                <Skeleton className="h-5 w-16 rounded-full hidden md:block" />
+                <div className="ml-auto flex gap-1">
+                  <Skeleton className="h-7 w-7 rounded" />
+                  <Skeleton className="h-7 w-7 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        }
+      >
+        {activities.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 border border-border rounded-lg">
+            <Filter className="h-8 w-8 text-muted-foreground mb-3" />
+            <p className="text-sm font-medium mb-1">{t("library.noActivities")}</p>
+            <p className="text-xs text-muted-foreground mb-4 text-center max-w-xs">
+              {t("library.noActivitiesDesc")}
+            </p>
+            <Button variant="outline" size="sm" onClick={clearFilters}>
+              {t("library.clearFilters")}
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="border border-border rounded-lg overflow-hidden">
+              {/* Column headers */}
+              <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 border-b border-border">
+                <span className="flex-1 text-xs font-medium text-muted-foreground">
+                  {t("library.colActivity")}
+                </span>
+                <span className="w-[52px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
+                  {t("library.colAge")}
+                </span>
+                <span className="w-[68px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
+                  {t("library.colDuration")}
+                </span>
+                <span className="w-[76px] text-xs font-medium text-muted-foreground shrink-0">
+                  {t("library.colFormat")}
+                </span>
+                <span className="w-[84px] text-xs font-medium text-muted-foreground hidden md:block shrink-0">
+                  {t("library.colTopics")}
+                </span>
+                <span className="w-[64px] text-right text-xs font-medium text-muted-foreground shrink-0">
+                  {t("library.colActions")}
+                </span>
+              </div>
+
+              {/* Rows */}
+              <div className="divide-y divide-border">
+                {activities.map((activity) => (
+                  <div
+                    key={activity.id}
+                    className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/40 transition-colors cursor-pointer"
+                    onClick={() =>
+                      navigate(`/activity-details/${activity.id}`, {
+                        state: {
+                          activity,
+                          backTo: `${location.pathname}${location.search}`,
+                          restoreScrollY: getAppScrollTop(),
+                        },
+                      })
+                    }
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate leading-snug">
+                        {activity.name}
+                      </p>
+                      {activity.source && (
+                        <p className="text-xs text-muted-foreground truncate leading-snug">
+                          {activity.source}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                </div>
-
-                {/* Desktop Table View */}
-                <div className="hidden lg:block bg-card rounded-xl shadow-sm border border-border overflow-hidden">
-                  <div className="px-4 py-3 border-b border-border bg-muted/20">
-                    <h3 className="text-lg font-semibold text-card-foreground">
-                      {t("library.activitiesTable")}
-                    </h3>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table
-                      className="w-full divide-y divide-border"
-                      style={{ minWidth: "600px" }}
-                    >
-                      <thead className="bg-muted/30">
-                        <tr>
-                          <th className="px-2 py-3 text-left text-sm font-semibold text-foreground min-w-[200px]">
-                            {t("library.colActivity")}
-                          </th>
-                          <th className="px-2 py-3 text-left text-sm font-semibold text-foreground w-16">
-                            {t("library.colAge")}
-                          </th>
-                          <th className="px-2 py-3 text-left text-sm font-semibold text-foreground w-16">
-                            {t("library.colFormat")}
-                          </th>
-                          <th className="px-2 py-3 text-left text-sm font-semibold text-foreground w-20">
-                            {t("library.colDuration")}
-                          </th>
-                          <th className="px-2 py-3 text-left text-sm font-semibold text-foreground min-w-[120px]">
-                            {t("library.colTopics")}
-                          </th>
-                          <th className="px-2 py-3 text-right text-sm font-semibold text-foreground w-24">
-                            {t("library.colActions")}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-card divide-y divide-border">
-                        {activities.map((activity) => (
-                          <tr
-                            key={activity.id}
-                            className="hover:bg-muted/30 transition-colors duration-150"
-                          >
-                            <td className="px-2 py-3">
-                              <div>
-                                <div className="text-sm font-semibold text-foreground line-clamp-2">
-                                  {activity.name}
-                                </div>
-                                <div className="text-xs text-muted-foreground mt-1">
-                                  {activity.source}
-                                </div>
-                                <div className="flex items-center gap-1 mt-1">
-                                  <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-xs font-medium bg-warning/10 text-warning border border-warning/20">
-                                    <Brain className="h-2 w-2" />
-                                    {activity.mentalLoad &&
-                                      translateEnum(
-                                        "energy",
-                                        activity.mentalLoad,
-                                      )}
-                                  </span>
-                                  <span className="inline-flex items-center gap-1 px-1 py-0.5 rounded-full text-xs font-medium bg-success/10 text-success border border-success/20">
-                                    <ActivityIcon className="h-2 w-2" />
-                                    {activity.physicalEnergy &&
-                                      translateEnum(
-                                        "energy",
-                                        activity.physicalEnergy,
-                                      )}
-                                  </span>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-2 py-3 whitespace-nowrap">
-                              <div className="text-sm font-medium text-foreground">
-                                {activity.ageMin}-{activity.ageMax}
-                              </div>
-                            </td>
-                            <td className="px-2 py-3 whitespace-nowrap">
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                                {translateEnum("format", activity.format)}
-                              </span>
-                            </td>
-                            <td className="px-2 py-3 whitespace-nowrap">
-                              <div className="text-sm font-medium text-foreground">
-                                {activity.durationMinMinutes}-
-                                {activity.durationMaxMinutes}m
-                              </div>
-                            </td>
-                            <td className="px-2 py-3">
-                              <div className="flex flex-wrap gap-1">
-                                {activity.topics
-                                  ?.slice(0, 1)
-                                  .map((topic, index) => (
-                                    <span
-                                      key={index}
-                                      className="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-muted/30 text-foreground border border-border"
-                                    >
-                                      {topic}
-                                    </span>
-                                  ))}
-                                {activity.topics &&
-                                  activity.topics.length > 1 && (
-                                    <span className="inline-flex items-center px-1 py-0.5 rounded-full text-xs font-medium bg-muted/20 text-muted-foreground">
-                                      +{activity.topics.length - 1}
-                                    </span>
-                                  )}
-                              </div>
-                            </td>
-                            <td className="px-2 py-3 whitespace-nowrap text-right text-sm font-medium">
-                              <div className="flex items-center justify-end space-x-2">
-                                <FavouriteButton
-                                  activityId={activity.id}
-                                  initialIsFavourited={favouritedActivityIds.has(
-                                    activity.id,
-                                  )}
-                                />
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() =>
-                                    navigate(
-                                      `/activity-details/${activity.id}`,
-                                      {
-                                        state: {
-                                          activity,
-                                          backTo: `${location.pathname}${location.search}`,
-                                          restoreScrollY: getAppScrollTop(),
-                                        },
-                                      },
-                                    )
-                                  }
-                                >
-                                  <Eye className="h-3 w-3 mr-2" />
-                                  {t("library.viewDetails")}
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-4 mt-6">
-                    <Button
-                      variant="outline"
-                      onClick={(event) => {
-                        scrollToTop();
-                        event.currentTarget.blur();
-                        setCurrentPage((prev) => Math.max(1, prev - 1));
-                      }}
-                      disabled={currentPage === 1}
-                      className="flex items-center gap-2"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      {t("library.previous")}
-                    </Button>
-                    <span className="text-muted-foreground">
-                      {t("library.page")} {currentPage} {t("library.of")}{" "}
-                      {totalPages}
+                    <span className="w-[52px] text-xs text-muted-foreground tabular-nums hidden sm:block shrink-0">
+                      {activity.ageMin}–{activity.ageMax}
                     </span>
-                    <Button
-                      variant="outline"
-                      onClick={(event) => {
-                        scrollToTop();
-                        event.currentTarget.blur();
-                        setCurrentPage((prev) =>
-                          Math.min(totalPages, prev + 1),
-                        );
-                      }}
-                      disabled={currentPage === totalPages}
-                      className="flex items-center gap-2"
+                    <span className="w-[68px] text-xs text-muted-foreground tabular-nums hidden sm:block shrink-0">
+                      {activity.durationMinMinutes}–{activity.durationMaxMinutes}m
+                    </span>
+                    <div className="w-[76px] shrink-0">
+                      <Badge
+                        variant="secondary"
+                        className="text-[11px] px-1.5 py-0 font-normal truncate max-w-full"
+                      >
+                        {translateEnum("format", activity.format)}
+                      </Badge>
+                    </div>
+                    <div className="w-[84px] hidden md:flex items-center gap-1 shrink-0 min-w-0">
+                      {activity.topics?.slice(0, 1).map((topic) => (
+                        <Badge
+                          key={topic}
+                          variant="outline"
+                          className="text-[11px] px-1.5 py-0 font-normal truncate max-w-full"
+                        >
+                          {translateEnum("topics", topic)}
+                        </Badge>
+                      ))}
+                      {activity.topics && activity.topics.length > 1 && (
+                        <span className="text-[11px] text-muted-foreground shrink-0">
+                          +{activity.topics.length - 1}
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className="w-[64px] flex items-center justify-end shrink-0"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {t("library.next")}
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+                      <FavouriteButton
+                        activityId={activity.id}
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        initialIsFavourited={favouritedActivityIds.has(activity.id)}
+                      />
+                    </div>
                   </div>
-                )}
-              </>
-            )}
-          </LoadingState>
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            </div>
+
+            <PaginationBar
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={total}
+              itemsPerPage={itemsPerPage}
+              onPageChange={(page) => {
+                scrollToTop();
+                setCurrentPage(page);
+              }}
+            />
+          </>
+        )}
+      </LoadingState>
     </div>
   );
 };

@@ -75,5 +75,5 @@ export const NAVIGATION_TABS: NavigationTab[] = [
 export const getCurrentTab = (path: string): string => {
   const normalizedPath = path.split("?")[0].split("#")[0];
   const tab = NAVIGATION_TABS.find((tab) => tab.path === normalizedPath);
-  return tab?.id || "recommendations";
+  return tab?.id || "";
 };

@@ -234,12 +234,9 @@ export const ActivityDetails: React.FC = () => {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                {t("activityDetails.title")}
+                {activity.name}
               </h2>
             </div>
-            <p className="text-sm sm:text-base text-muted-foreground mt-1.5 ml-12">
-              {t("activityDetails.description")}
-            </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <FavouriteButton activityId={activity.id} size="default" />
@@ -257,15 +254,10 @@ export const ActivityDetails: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
-        <div className="p-2 sm:p-4">
-          <h3 className="text-2xl font-bold mb-4 text-foreground">
-            {activity.name}
-          </h3>
-
-          {/* Description */}
-          {activity.description && (
-            <div className="mb-8 p-4 bg-muted/30 rounded-lg border border-border/50">
+      <div>
+        {/* Description */}
+        {activity.description && (
+          <div className="mb-8 p-4 bg-muted/30 rounded-lg border border-border/50">
               <h4 className="text-lg font-semibold mb-3 text-foreground">
                 {t("activityDetails.descriptionLabel")}
               </h4>
@@ -560,7 +552,6 @@ export const ActivityDetails: React.FC = () => {
               )}
             </div>
           )}
-        </div>
       </div>
     </div>
   );
