@@ -59,19 +59,19 @@ public class LLMService {
 	}
 
 	// Compact JSON with ~20 short fields — 800 tokens is more than sufficient.
-	private static final int MAX_TOKENS_EXTRACTION = 800;
+	private static final int MAX_TOKENS_EXTRACTION = 4000;
 
 	// Exactly 6 AVIVA+ rows with concrete per-cell content.
-	private static final int MAX_TOKENS_ARTIKULATIONSSCHEMA = 2000;
+	private static final int MAX_TOKENS_ARTIKULATIONSSCHEMA = 10000;
 
 	// Structured cover-page markdown (4 sections, numbered list, bullet lists).
-	private static final int MAX_TOKENS_DECKBLATT = 1500;
+	private static final int MAX_TOKENS_DECKBLATT = 8000;
 
 	// Three free-text sections of teacher background knowledge.
-	private static final int MAX_TOKENS_HINTERGRUNDWISSEN = 2000;
+	private static final int MAX_TOKENS_HINTERGRUNDWISSEN = 10000;
 
 	// Exercise sheet + matching solution sheet in one response.
-	private static final int MAX_TOKENS_UEBUNG = 3500;
+	private static final int MAX_TOKENS_UEBUNG = 16000;
 
 	public Map<String, Object> extractActivityData(String pdfText) {
 
