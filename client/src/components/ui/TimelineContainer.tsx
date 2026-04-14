@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Clock, Users, BookOpen, ExternalLink } from "lucide-react";
 import type { Activity } from "@/types/activity";
 import { useTranslation } from "react-i18next";
+import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 
 interface TimelineContainerProps {
   children: React.ReactNode;
@@ -38,12 +39,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   className = "",
 }) => {
   const { t } = useTranslation();
-
-  const translateEnum = (category: string, value: string): string => {
-    const key = `enums.${category}.${value}`;
-    const translated = t(key);
-    return translated === key ? value : translated;
-  };
+  const translateEnum = useTranslateEnum();
 
   const getAgeRange = (activity: Activity) => {
     if (activity.ageMin && activity.ageMax) {

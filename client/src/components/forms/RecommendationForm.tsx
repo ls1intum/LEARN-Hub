@@ -9,6 +9,7 @@ import { FormSection } from "@/components/ui/FormSection";
 import { RangeSlider } from "@/components/ui/RangeSlider";
 import { PriorityToggle } from "@/components/ui/PriorityToggle";
 import { useTranslation } from "react-i18next";
+import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 
 interface FormData {
   targetAge: number;
@@ -40,11 +41,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
   const { fieldValues } = useFieldValues();
   const { t } = useTranslation();
 
-  const translateEnum = (category: string, value: string): string => {
-    const key = `enums.${category}.${value}`;
-    const translated = t(key);
-    return translated === key ? value : translated;
-  };
+  const translateEnum = useTranslateEnum();
 
   // Note: This form is still using the old state management approach
   // The useForm hook is imported but not yet fully integrated

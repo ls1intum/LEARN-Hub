@@ -7,6 +7,7 @@ import { Clock, Users } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import type { Activity } from "@/types/activity";
 import { useTranslation } from "react-i18next";
+import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 import { getAppScrollTop } from "@/utils/scroll";
 
 interface ActivityCardProps {
@@ -25,12 +26,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
-
-  const translateEnum = (category: string, value: string): string => {
-    const key = `enums.${category}.${value}`;
-    const translated = t(key);
-    return translated === key ? value : translated;
-  };
+  const translateEnum = useTranslateEnum();
 
   const ageRange =
     activity.ageMin && activity.ageMax

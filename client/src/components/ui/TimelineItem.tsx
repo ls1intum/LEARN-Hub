@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Users, BookOpen } from "lucide-react";
 import type { Activity } from "@/types/activity";
 import { useTranslation } from "react-i18next";
+import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 
 interface TimelineItemProps {
   activity: Activity;
@@ -15,12 +16,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
   stepNumber,
 }) => {
   const { t } = useTranslation();
-
-  const translateEnum = (category: string, value: string): string => {
-    const key = `enums.${category}.${value}`;
-    const translated = t(key);
-    return translated === key ? value : translated;
-  };
+  const translateEnum = useTranslateEnum();
   const formatDuration = (minutes: number) => {
     if (minutes < 60) {
       return `${minutes}m`;

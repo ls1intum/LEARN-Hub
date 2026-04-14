@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { useTranslation } from "react-i18next";
+import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 import { useRestoreScroll } from "@/hooks/useRestoreScroll";
 import { getAppScrollTop, setAppScrollTop } from "@/utils/scroll";
 
@@ -111,11 +112,7 @@ export const LibraryPage: React.FC = () => {
     [parseArrayParam, parseNumberParam, searchParams],
   );
 
-  const translateEnum = (category: string, value: string): string => {
-    const key = `enums.${category}.${value}`;
-    const translated = t(key);
-    return translated === key ? value : translated;
-  };
+  const translateEnum = useTranslateEnum();
 
   const [currentPage, setCurrentPage] = useState(() =>
     parseNumberParam("page", 1),

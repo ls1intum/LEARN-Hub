@@ -53,7 +53,11 @@
     "hideFilters": "Filter ausblenden",
     "showFilters": "Filter anzeigen",
     "clearFilters": "Filter zurücksetzen",
-    "lessonPlan": "Unterrichtsplan"
+    "lessonPlan": "Unterrichtsplan",
+    "colScore": "Bewertung",
+    "colActivities": "Aktivitäten",
+    "categoryScores": "Kategoriebewertungen:",
+    "select": "Auswählen"
   },
   "library": {
     "title": "Aktivitätsbibliothek",
@@ -511,6 +515,16 @@
     "formatHeader": "Format",
     "dateHeader": "Favorisiert",
     "noResults": "Keine Favoriten entsprechen Ihrer Suche"
+  },
+  "lessonPlanFavourites": {
+    "noFavourites": "Noch keine Lieblings-Unterrichtspläne",
+    "noFavouritesDesc": "Beginnen Sie, Unterrichtspläne aus den Empfehlungen zu favorisieren, um sie hier zu sehen.",
+    "searchPlaceholder": "Unterrichtspläne suchen…",
+    "totalPlans": "Unterrichtspläne",
+    "totalDuration": "Dauer (Minuten)",
+    "activityCount": "Aktivitäten",
+    "colActivities": "Aktivitäten",
+    "noResults": "Keine Unterrichtspläne entsprechen Ihren Filtern"
   },
   "lessonPlan": {
     "title": "Unterrichtsplan",

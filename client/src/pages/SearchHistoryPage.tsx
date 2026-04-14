@@ -8,17 +8,13 @@ import { apiService } from "@/services/apiService";
 import type { SearchHistoryEntry } from "@/types/activity";
 import { logger } from "@/services/logger";
 import { useTranslation } from "react-i18next";
+import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 
 export const SearchHistoryPage: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-
-  const translateEnum = (category: string, value: string): string => {
-    const key = `enums.${category}.${value}`;
-    const translated = t(key);
-    return translated === key ? value : translated;
-  };
+  const translateEnum = useTranslateEnum();
 
   const [error, setError] = useState<string | null>(null);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryEntry[]>([]);

@@ -10,6 +10,7 @@ import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity } from "@/types/activity";
 import { useTranslation } from "react-i18next";
+import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 import { useRestoreScroll } from "@/hooks/useRestoreScroll";
 import { getAppScrollTop } from "@/utils/scroll";
 import { PaginationBar } from "@/components/ui/PaginationBar";
@@ -29,12 +30,7 @@ export const ActivityFavouritesTab: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
-
-  const translateEnum = (category: string, value: string): string => {
-    const key = `enums.${category}.${value}`;
-    const translated = t(key);
-    return translated === key ? value : translated;
-  };
+  const translateEnum = useTranslateEnum();
 
   const [favourites, setFavourites] = useState<ActivityFavourite[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
