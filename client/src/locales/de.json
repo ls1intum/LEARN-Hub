@@ -419,8 +419,6 @@
     "renderingPreview": "Vorschau wird gerendert...",
     "editToPreview": "Bearbeiten Sie das Markdown, um eine PDF-Vorschau zu sehen",
     "previewTitle": "Dokumentvorschau",
-    "collapseBase64": "Bilder einklappen",
-    "editRaw": "Rohtext bearbeiten",
     "regenerateImage": "Bild neu generieren",
     "imagePromptPlaceholder": "Zusätzlicher Prompt (optional)…",
     "imageRegenError": "Bildgenerierung fehlgeschlagen. Bitte erneut versuchen."

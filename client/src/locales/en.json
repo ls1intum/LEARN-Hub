@@ -419,8 +419,6 @@
     "renderingPreview": "Rendering preview...",
     "editToPreview": "Edit the markdown to see a PDF preview",
     "previewTitle": "Document Preview",
-    "collapseBase64": "Collapse images",
-    "editRaw": "Edit raw",
     "regenerateImage": "Re-generate image",
     "imagePromptPlaceholder": "Additional prompt (optional)…",
     "imageRegenError": "Image generation failed. Please try again."

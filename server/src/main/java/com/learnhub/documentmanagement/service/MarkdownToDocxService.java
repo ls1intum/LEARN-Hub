@@ -20,7 +20,9 @@ public class MarkdownToDocxService {
 
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToDocxService.class);
 
-	private static final String FONT_FAMILY = "Helvetica, Arial, sans-serif";
+	private static final String FONT_FAMILY = "\"Comic Sans MS\", \"Comic Sans\", cursive";
+	private static final int LANDSCAPE_IMAGE_MAX_HEIGHT_MM = 43;
+	private static final int PORTRAIT_IMAGE_MAX_HEIGHT_MM = 64;
 
 	/**
 	 * Matches the iText-specific running header/footer divs that should not appear
@@ -45,6 +47,13 @@ public class MarkdownToDocxService {
 	/** Matches any opening HTML tag for font injection. */
 	private static final Pattern HEADING_TAG_PATTERN = Pattern.compile("<(h[1-6])(\\s|>)", Pattern.CASE_INSENSITIVE);
 
+	/** Matches opening {@code <img} tags for inline size caps. */
+	private static final Pattern IMAGE_TAG_PATTERN = Pattern.compile("<img(\\s+[^>]*?)?>", Pattern.CASE_INSENSITIVE);
+
+	/** Matches inline {@code style="..."} attributes for style merging. */
+	private static final Pattern STYLE_ATTRIBUTE_PATTERN = Pattern.compile("\\bstyle\\s*=\\s*([\"'])(.*?)\\1",
+			Pattern.CASE_INSENSITIVE);
+
 	private final MarkdownToHtmlService markdownToHtmlService;
 	private final LibreOfficeConversionService libreOfficeConversionService;
 	private final DocxPostProcessor docxPostProcessor;
@@ -66,8 +75,8 @@ public class MarkdownToDocxService {
 
 	public byte[] renderMarkdownToDocx(String markdown, boolean landscape, String activityName) {
 		try {
-			String html = prepareHtmlForDocx(
-					markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName));
+			String html = prepareHtmlForDocx(markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName),
+					landscape);
 			byte[] rawDocx = libreOfficeConversionService.convertHtmlToDocx(html.getBytes(StandardCharsets.UTF_8));
 			return docxPostProcessor.process(rawDocx, landscape, activityName);
 		} catch (Exception e) {
@@ -79,7 +88,7 @@ public class MarkdownToDocxService {
 	public byte[] renderHtmlToDocx(String htmlBody, boolean landscape, String activityName) {
 		try {
 			String html = prepareHtmlForDocx(
-					markdownToHtmlService.renderHtmlBodyToHtmlDocument(htmlBody, landscape, activityName));
+					markdownToHtmlService.renderHtmlBodyToHtmlDocument(htmlBody, landscape, activityName), landscape);
 			byte[] rawDocx = libreOfficeConversionService.convertHtmlToDocx(html.getBytes(StandardCharsets.UTF_8));
 			return docxPostProcessor.process(rawDocx, landscape, activityName);
 		} catch (Exception e) {
@@ -97,7 +106,8 @@ public class MarkdownToDocxService {
 			List<byte[]> sectionDocxBytes = new java.util.ArrayList<>();
 			for (int i = 0; i < markdowns.size(); i++) {
 				String sectionHtml = prepareHtmlForDocx(
-						markdownToHtmlService.renderMarkdownToHtml(markdowns.get(i), landscapes.get(i), activityName));
+						markdownToHtmlService.renderMarkdownToHtml(markdowns.get(i), landscapes.get(i), activityName),
+						landscapes.get(i));
 				byte[] rawDocx = libreOfficeConversionService
 						.convertHtmlToDocx(sectionHtml.getBytes(StandardCharsets.UTF_8));
 				sectionDocxBytes.add(rawDocx);
@@ -114,7 +124,7 @@ public class MarkdownToDocxService {
 	 * Prepare HTML for LibreOffice: remove iText running elements, add inline
 	 * styles for table borders/colors and enforce font family on headings.
 	 */
-	private String prepareHtmlForDocx(String html) {
+	private String prepareHtmlForDocx(String html, boolean landscape) {
 		// 1. Remove running header/footer divs
 		String result = RUNNING_ELEMENT_PATTERN.matcher(html).replaceAll("");
 
@@ -140,7 +150,31 @@ public class MarkdownToDocxService {
 		// 4. Enforce sans-serif font on headings
 		result = HEADING_TAG_PATTERN.matcher(result).replaceAll("<$1 style=\"font-family: " + FONT_FAMILY + ";\"$2");
 
+		// 5. Inline image caps so LibreOffice applies the same constraints as the PDF
+		String imageStyle = createImageStyle(landscape);
+		result = IMAGE_TAG_PATTERN.matcher(result)
+				.replaceAll(match -> Matcher.quoteReplacement(appendInlineStyle(match.group(), imageStyle)));
+
 		return result;
+	}
+
+	private String createImageStyle(boolean landscape) {
+		int maxHeightMm = landscape ? LANDSCAPE_IMAGE_MAX_HEIGHT_MM : PORTRAIT_IMAGE_MAX_HEIGHT_MM;
+		return "display: block; max-width: 100%; height: auto; max-height: " + maxHeightMm
+				+ "mm; object-fit: contain; margin: 10pt auto;";
+	}
+
+	private String appendInlineStyle(String tag, String inlineStyle) {
+		Matcher styleMatcher = STYLE_ATTRIBUTE_PATTERN.matcher(tag);
+		if (!styleMatcher.find()) {
+			return tag.replaceFirst("<img", "<img style=\"" + inlineStyle + "\"");
+		}
+
+		String existingStyle = styleMatcher.group(2).strip();
+		String mergedStyle = existingStyle.endsWith(";") ? existingStyle + " " + inlineStyle
+				: existingStyle + "; " + inlineStyle;
+		String replacement = "style=" + styleMatcher.group(1) + mergedStyle + styleMatcher.group(1);
+		return styleMatcher.replaceFirst(Matcher.quoteReplacement(replacement));
 	}
 
 }

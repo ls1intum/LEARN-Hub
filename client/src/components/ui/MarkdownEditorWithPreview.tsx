@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -15,102 +15,43 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { FileText, Loader2, Eye, Edit3, Code2, RefreshCw } from "lucide-react";
+import { FileText, Loader2, Eye, Edit3, RefreshCw } from "lucide-react";
 import { logger } from "@/services/logger";
 import { useTranslation } from "react-i18next";
 
-// ─── Base64 Collapse Helpers ─────────────────────────────────────
+// ─── Base64 placeholder helpers ──────────────────────────────────
+//
+// The textarea always stays editable. We just swap out the raw base64
+// payload with a short token so the editor isn't flooded with megabytes
+// of characters. The real data lives in a Map and is restored on every
+// onChange before the value is handed back to the parent.
+//
+// Token format:  <img:0>  <img:1>  …  (never appears in normal markdown)
 
-const COLLAPSE_CHARS = 3 * 80; // ~3 rows at 80 chars/row
+const PLACEHOLDER_RE = /<img:(\d+)>/g;
 
-type Segment =
-  | { type: "text"; content: string }
-  | { type: "base64"; prefix: string; data: string; index: number };
-
-function parseSegments(text: string): Segment[] {
-  const re = /(data:[^;\s"'`]+;base64,)([A-Za-z0-9+/]+=*)/g;
-  const segments: Segment[] = [];
-  let lastIndex = 0;
+function toDisplayValue(real: string): [display: string, map: Map<number, string>] {
+  const map = new Map<number, string>();
   let idx = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = re.exec(text)) !== null) {
-    if (match.index > lastIndex) {
-      segments.push({ type: "text", content: text.slice(lastIndex, match.index) });
-    }
-    segments.push({ type: "base64", prefix: match[1], data: match[2], index: idx++ });
-    lastIndex = match.index + match[0].length;
-  }
-
-  if (lastIndex < text.length) {
-    segments.push({ type: "text", content: text.slice(lastIndex) });
-  }
-
-  return segments;
-}
-
-function containsBase64(text: string): boolean {
-  return /(data:[^;\s"'`]+;base64,)[A-Za-z0-9+/]{50,}/.test(text);
-}
-
-// ─── Collapsed Source View ───────────────────────────────────────
-
-const CollapsedSourceView: React.FC<{
-  value: string;
-  onEditClick: () => void;
-}> = ({ value, onEditClick }) => {
-  const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
-  const segments = parseSegments(value);
-
-  const toggle = (idx: number) => {
-    setExpandedSet((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
-      return next;
-    });
-  };
-
-  return (
-    <pre
-      className="w-full h-full min-h-[400px] overflow-auto rounded-md border border-input bg-background px-3 py-2 text-sm font-mono whitespace-pre-wrap break-all cursor-text select-text"
-      onClick={onEditClick}
-    >
-      {segments.map((seg, i) => {
-        if (seg.type === "text") {
-          return <span key={i}>{seg.content}</span>;
-        }
-
-        const expanded = expandedSet.has(seg.index);
-        const isLong = seg.data.length > COLLAPSE_CHARS;
-        const shown = !isLong || expanded ? seg.data : seg.data.slice(0, COLLAPSE_CHARS);
-
-        return (
-          <span key={i}>
-            <span className="text-muted-foreground">{seg.prefix}</span>
-            {shown}
-            {isLong && (
-              <button
-                className="text-xs text-primary hover:underline ml-1"
-                onClick={(e) => { e.stopPropagation(); toggle(seg.index); }}
-              >
-                {expanded
-                  ? " [collapse]"
-                  : ` … [+${(seg.data.length - COLLAPSE_CHARS).toLocaleString()} chars]`}
-              </button>
-            )}
-          </span>
-        );
-      })}
-    </pre>
+  const display = real.replace(
+    /(data:[^;\s"'`]+;base64,)([A-Za-z0-9+/]+=*)/g,
+    (_full, prefix, b64) => {
+      map.set(idx, b64);
+      return `${prefix}<img:${idx++}>`;
+    },
   );
-};
+  return [display, map];
+}
+
+function toRealValue(display: string, map: Map<number, string>): string {
+  return display.replace(PLACEHOLDER_RE, (_match, i) => map.get(Number(i)) ?? "");
+}
 
 // ─── Image Regeneration Helpers ──────────────────────────────────
 
 interface EmbeddedImage {
-  position: number; // 1-based
-  id: string;       // alt text / image ID
+  position: number;    // 1-based
+  id: string;          // alt text / image ID
   description: string; // from HTML comment prompt, or empty
 }
 
@@ -141,7 +82,11 @@ function replaceImageAtPosition(
   let pos = 1;
   while ((match = IMAGE_BLOCK_RE.exec(markdown)) !== null) {
     if (pos === position) {
-      return markdown.slice(0, match.index) + newBlock + markdown.slice(match.index + match[0].length);
+      return (
+        markdown.slice(0, match.index) +
+        newBlock +
+        markdown.slice(match.index + match[0].length)
+      );
     }
     pos++;
   }
@@ -268,19 +213,17 @@ export const MarkdownEditorWithPreview: React.FC<
   const [isRenderingPreview, setIsRenderingPreview] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
-  // Collapsed source view state
-  const [showRaw, setShowRaw] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
   // Debounce ref for preview rendering
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Derive the display value: base64 payloads replaced with short tokens.
+  // Re-computed only when `value` (the real markdown) changes.
+  const [displayValue, base64Map] = useMemo(() => toDisplayValue(value), [value]);
 
   // Cleanup blob URL on unmount or change
   useEffect(() => {
     return () => {
-      if (previewPdfUrl) {
-        URL.revokeObjectURL(previewPdfUrl);
-      }
+      if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl);
     };
   }, [previewPdfUrl]);
 
@@ -301,7 +244,6 @@ export const MarkdownEditorWithPreview: React.FC<
     html.style.overflow = "hidden";
     document.body.style.overflow = "hidden";
     document.body.style.touchAction = "none";
-
     if (appScrollContainer instanceof HTMLElement) {
       appScrollContainer.style.overflowY = "hidden";
     }
@@ -324,7 +266,6 @@ export const MarkdownEditorWithPreview: React.FC<
         setPreviewPdfUrl(null);
         return;
       }
-
       setIsRenderingPreview(true);
       try {
         const blob = await renderPreviewFn(markdown);
@@ -334,11 +275,7 @@ export const MarkdownEditorWithPreview: React.FC<
           return url;
         });
       } catch (error) {
-        logger.error(
-          "Preview render error",
-          error,
-          "MarkdownEditorWithPreview",
-        );
+        logger.error("Preview render error", error, "MarkdownEditorWithPreview");
       } finally {
         setIsRenderingPreview(false);
       }
@@ -348,12 +285,8 @@ export const MarkdownEditorWithPreview: React.FC<
 
   const debouncedRenderPreview = useCallback(
     (markdown: string) => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-      debounceTimer.current = setTimeout(() => {
-        renderPreview(markdown);
-      }, 800);
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      debounceTimer.current = setTimeout(() => renderPreview(markdown), 800);
     },
     [renderPreview],
   );
@@ -362,14 +295,14 @@ export const MarkdownEditorWithPreview: React.FC<
   useEffect(() => {
     debouncedRenderPreview(value);
     return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
   }, [value, debouncedRenderPreview]);
 
+  // Convert the display value (with placeholders) back to the real value
+  // (with full base64) before handing it to the parent.
   const handleMarkdownChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onChange(e.target.value);
+    onChange(toRealValue(e.target.value, base64Map));
   };
 
   // ─── Preview Content ────────────────────────────────────────────
@@ -415,45 +348,15 @@ export const MarkdownEditorWithPreview: React.FC<
             <CardTitle className="flex items-center gap-2 text-base">
               <Edit3 className="h-4 w-4" />
               {t("markdownEditor.editorTitle")}
-              {containsBase64(value) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-auto h-6 px-2 text-xs text-muted-foreground"
-                  onClick={() => {
-                    setShowRaw((prev) => {
-                      if (prev) return false; // switching to collapsed — nothing extra needed
-                      // switching to raw — focus textarea after render
-                      setTimeout(() => textareaRef.current?.focus(), 0);
-                      return true;
-                    });
-                  }}
-                  title={showRaw ? t("markdownEditor.collapseBase64") : t("markdownEditor.editRaw")}
-                >
-                  <Code2 className="h-3.5 w-3.5 mr-1" />
-                  {showRaw ? t("markdownEditor.collapseBase64") : t("markdownEditor.editRaw")}
-                </Button>
-              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 min-h-0 pb-4">
-            {containsBase64(value) && !showRaw ? (
-              <CollapsedSourceView
-                value={value}
-                onEditClick={() => {
-                  setShowRaw(true);
-                  setTimeout(() => textareaRef.current?.focus(), 0);
-                }}
-              />
-            ) : (
-              <textarea
-                ref={textareaRef}
-                value={value}
-                onChange={handleMarkdownChange}
-                className="w-full h-full min-h-[400px] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                placeholder="# Artikulationsschema&#10;&#10;**Thema:** ...&#10;&#10;| Zeit | Phase | Handlungsschritte | Sozialform | Kompetenzen | Medien/Material |&#10;|------|-------|-------------------|------------|-------------|-----------------|&#10;| 5 min | Einstieg | ... | Plenum | ... | ... |"
-              />
-            )}
+            <textarea
+              value={displayValue}
+              onChange={handleMarkdownChange}
+              className="w-full h-full min-h-[400px] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              placeholder="# Artikulationsschema&#10;&#10;**Thema:** ...&#10;&#10;| Zeit | Phase | Handlungsschritte | Sozialform | Kompetenzen | Medien/Material |&#10;|------|-------|-------------------|------------|-------------|-----------------|&#10;| 5 min | Einstieg | ... | Plenum | ... | ... |"
+            />
           </CardContent>
         </Card>
 
@@ -478,9 +381,7 @@ export const MarkdownEditorWithPreview: React.FC<
           variant="outline"
           className="w-full"
           onClick={() => {
-            if (!previewPdfUrl && value) {
-              debouncedRenderPreview(value);
-            }
+            if (!previewPdfUrl && value) debouncedRenderPreview(value);
             setIsPreviewModalOpen(true);
           }}
           disabled={!value}

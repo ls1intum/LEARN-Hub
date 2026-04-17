@@ -13,6 +13,9 @@ import org.apache.poi.wp.usermodel.HeaderFooterType;
 import org.apache.poi.xwpf.usermodel.*;
 import org.apache.xmlbeans.XmlCursor;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
+import org.openxmlformats.schemas.drawingml.x2006.main.CTPositiveSize2D;
+import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor;
+import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -31,10 +34,16 @@ public class DocxPostProcessor {
 	private static final String LOGO_PATH = "templates/markdown/header-logo.png";
 	private static final DateTimeFormatter FOOTER_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
 	private static final String FOOTER_BRANDING_TEXT = "LEARN-Hub \u2013 a TUM Applied Education Technologies application \u00B7 aet.cit.tum.de";
+	private static final String WORKSHEET_FONT_FAMILY = "Comic Sans MS";
 
 	private static final int HEADER_FONT_SIZE = 10;
 	private static final int FOOTER_FONT_SIZE = 7;
 	private static final String ACCENT_COLOR = "555555";
+	private static final long LANDSCAPE_IMAGE_MAX_HEIGHT_MM = 43L;
+	private static final long PORTRAIT_IMAGE_MAX_HEIGHT_MM = 64L;
+	private static final long EMUS_PER_MM = 36000L;
+	private static final long EMUS_PER_TWIP = 635L;
+	private static final long PAGE_MARGIN_LEFT_RIGHT_TWIPS = 1200L;
 
 	/** A4 dimensions in twips (twentieths of a point). */
 	private static final long A4_SHORT = 11906; // 210mm
@@ -46,7 +55,9 @@ public class DocxPostProcessor {
 	public byte[] process(byte[] docxBytes, boolean landscape, String activityName) throws IOException {
 		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(docxBytes))) {
 			setPageOrientation(doc, landscape);
+			enforceImageSizeCaps(doc, landscape);
 			addHeaderAndFooter(doc, activityName);
+			applyWorksheetFontFamily(doc);
 
 			try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 				doc.write(out);
@@ -82,6 +93,8 @@ public class DocxPostProcessor {
 
 			for (int i = 0; i < sectionDocxBytes.size(); i++) {
 				try (XWPFDocument section = new XWPFDocument(new ByteArrayInputStream(sectionDocxBytes.get(i)))) {
+					enforceImageSizeCaps(section, landscapes.get(i));
+
 					// Before appending content (except for the first section), insert a
 					// section-break paragraph that carries the PREVIOUS section's orientation.
 					if (i > 0) {
@@ -103,6 +116,7 @@ public class DocxPostProcessor {
 
 			// Set the body-level sectPr for the LAST section's orientation
 			setPageOrientation(merged, landscapes.get(landscapes.size() - 1));
+			applyWorksheetFontFamily(merged);
 
 			try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 				merged.write(out);
@@ -156,6 +170,104 @@ public class DocxPostProcessor {
 		dest.getCTTbl().set(src.getCTTbl().copy());
 	}
 
+	private void applyWorksheetFontFamily(XWPFDocument doc) {
+		applyWorksheetFontFamily(doc.getBodyElements());
+		for (XWPFHeader header : doc.getHeaderList()) {
+			applyWorksheetFontFamily(header.getBodyElements());
+		}
+		for (XWPFFooter footer : doc.getFooterList()) {
+			applyWorksheetFontFamily(footer.getBodyElements());
+		}
+	}
+
+	private void applyWorksheetFontFamily(List<IBodyElement> bodyElements) {
+		for (IBodyElement element : bodyElements) {
+			if (element instanceof XWPFParagraph paragraph) {
+				applyWorksheetFontFamily(paragraph);
+			} else if (element instanceof XWPFTable table) {
+				applyWorksheetFontFamily(table);
+			}
+		}
+	}
+
+	private void applyWorksheetFontFamily(XWPFTable table) {
+		for (XWPFTableRow row : table.getRows()) {
+			for (XWPFTableCell cell : row.getTableCells()) {
+				applyWorksheetFontFamily(cell.getBodyElements());
+			}
+		}
+	}
+
+	private void applyWorksheetFontFamily(XWPFParagraph paragraph) {
+		for (XWPFRun run : paragraph.getRuns()) {
+			CTRPr runProperties = run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr();
+			CTFonts fonts = runProperties.sizeOfRFontsArray() > 0 ? runProperties.getRFontsArray(0)
+					: runProperties.addNewRFonts();
+			fonts.setAscii(WORKSHEET_FONT_FAMILY);
+			fonts.setHAnsi(WORKSHEET_FONT_FAMILY);
+			fonts.setCs(WORKSHEET_FONT_FAMILY);
+			fonts.setEastAsia(WORKSHEET_FONT_FAMILY);
+			run.setFontFamily(WORKSHEET_FONT_FAMILY);
+		}
+	}
+
+	private void enforceImageSizeCaps(XWPFDocument doc, boolean landscape) {
+		long maxWidthEmu = ((landscape ? A4_LONG : A4_SHORT) - PAGE_MARGIN_LEFT_RIGHT_TWIPS) * EMUS_PER_TWIP;
+		long maxHeightEmu = (landscape ? LANDSCAPE_IMAGE_MAX_HEIGHT_MM : PORTRAIT_IMAGE_MAX_HEIGHT_MM) * EMUS_PER_MM;
+		enforceImageSizeCaps(doc.getBodyElements(), maxWidthEmu, maxHeightEmu);
+	}
+
+	private void enforceImageSizeCaps(List<IBodyElement> bodyElements, long maxWidthEmu, long maxHeightEmu) {
+		for (IBodyElement element : bodyElements) {
+			if (element instanceof XWPFParagraph paragraph) {
+				enforceImageSizeCaps(paragraph, maxWidthEmu, maxHeightEmu);
+			} else if (element instanceof XWPFTable table) {
+				enforceImageSizeCaps(table, maxWidthEmu, maxHeightEmu);
+			}
+		}
+	}
+
+	private void enforceImageSizeCaps(XWPFTable table, long maxWidthEmu, long maxHeightEmu) {
+		for (XWPFTableRow row : table.getRows()) {
+			for (XWPFTableCell cell : row.getTableCells()) {
+				enforceImageSizeCaps(cell.getBodyElements(), maxWidthEmu, maxHeightEmu);
+			}
+		}
+	}
+
+	private void enforceImageSizeCaps(XWPFParagraph paragraph, long maxWidthEmu, long maxHeightEmu) {
+		for (XWPFRun run : paragraph.getRuns()) {
+			for (CTDrawing drawing : run.getCTR().getDrawingList()) {
+				for (CTInline inline : drawing.getInlineList()) {
+					scaleDownExtent(inline.getExtent(), maxWidthEmu, maxHeightEmu);
+				}
+				for (CTAnchor anchor : drawing.getAnchorList()) {
+					scaleDownExtent(anchor.getExtent(), maxWidthEmu, maxHeightEmu);
+				}
+			}
+		}
+	}
+
+	private void scaleDownExtent(CTPositiveSize2D extent, long maxWidthEmu, long maxHeightEmu) {
+		if (extent == null) {
+			return;
+		}
+
+		long width = extent.getCx();
+		long height = extent.getCy();
+		if (width <= 0 || height <= 0) {
+			return;
+		}
+
+		double scale = Math.min(1d, Math.min((double) maxWidthEmu / width, (double) maxHeightEmu / height));
+		if (scale >= 1d) {
+			return;
+		}
+
+		extent.setCx(Math.max(1L, Math.round(width * scale)));
+		extent.setCy(Math.max(1L, Math.round(height * scale)));
+	}
+
 	private void setPageOrientation(XWPFDocument doc, boolean landscape) {
 		CTSectPr sectPr = doc.getDocument().getBody().getSectPr();
 		if (sectPr == null) {
@@ -196,6 +308,7 @@ public class DocxPostProcessor {
 			nameRun.setText(activityName + "  ");
 			nameRun.setFontSize(HEADER_FONT_SIZE);
 			nameRun.setColor(ACCENT_COLOR);
+			nameRun.setFontFamily(WORKSHEET_FONT_FAMILY);
 		}
 		addLogoToHeader(headerPara);
 
@@ -262,6 +375,7 @@ public class DocxPostProcessor {
 		run.setText(text);
 		run.setFontSize(FOOTER_FONT_SIZE);
 		run.setColor(ACCENT_COLOR);
+		run.setFontFamily(WORKSHEET_FONT_FAMILY);
 	}
 
 	private void setFooterPageNumber(XWPFTableCell cell) {
@@ -277,6 +391,7 @@ public class DocxPostProcessor {
 		prefixRun.setText("Page ");
 		prefixRun.setFontSize(FOOTER_FONT_SIZE);
 		prefixRun.setColor(ACCENT_COLOR);
+		prefixRun.setFontFamily(WORKSHEET_FONT_FAMILY);
 
 		// PAGE field
 		addSimpleField(para, "PAGE");
@@ -286,6 +401,7 @@ public class DocxPostProcessor {
 		ofRun.setText(" of ");
 		ofRun.setFontSize(FOOTER_FONT_SIZE);
 		ofRun.setColor(ACCENT_COLOR);
+		ofRun.setFontFamily(WORKSHEET_FONT_FAMILY);
 
 		// NUMPAGES field
 		addSimpleField(para, "NUMPAGES");
@@ -299,6 +415,11 @@ public class DocxPostProcessor {
 		rPr.addNewSz().setVal(BigInteger.valueOf(FOOTER_FONT_SIZE * 2L));
 		rPr.addNewSzCs().setVal(BigInteger.valueOf(FOOTER_FONT_SIZE * 2L));
 		rPr.addNewColor().setVal(ACCENT_COLOR);
+		CTFonts fonts = rPr.addNewRFonts();
+		fonts.setAscii(WORKSHEET_FONT_FAMILY);
+		fonts.setHAnsi(WORKSHEET_FONT_FAMILY);
+		fonts.setCs(WORKSHEET_FONT_FAMILY);
+		fonts.setEastAsia(WORKSHEET_FONT_FAMILY);
 	}
 
 	private void setNilBorder(CTBorder border) {

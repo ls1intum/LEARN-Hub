@@ -45,6 +45,24 @@ class MarkdownToDocxServiceTest {
 	}
 
 	@Test
+	void renderMarkdownToDocxUsesComicSansAndLandscapeImageCapInPreparedHtml() {
+		service.renderMarkdownToDocx("# Hello\n\n![Bild](data:image/png;base64,ZmFrZQ==)");
+
+		String html = new String(stubConversionService.lastInput);
+		assertThat(html).contains("font-family: \"Comic Sans MS\", \"Comic Sans\", cursive;");
+		assertThat(html).contains("max-height: 43mm");
+		assertThat(html).doesNotContain("Helvetica, Arial, sans-serif");
+	}
+
+	@Test
+	void renderMarkdownToDocxUsesPortraitImageCapInPreparedHtml() {
+		service.renderMarkdownToDocx("![Bild](data:image/png;base64,ZmFrZQ==)", false, "");
+
+		String html = new String(stubConversionService.lastInput);
+		assertThat(html).contains("max-height: 64mm");
+	}
+
+	@Test
 	void renderMarkdownToDocxAddsHeaderAndFooter() throws Exception {
 		byte[] result = service.renderMarkdownToDocx("# Test", true, "My Activity");
 
