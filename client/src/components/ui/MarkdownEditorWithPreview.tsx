@@ -7,9 +7,96 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FileText, Loader2, Eye, Edit3 } from "lucide-react";
+import { FileText, Loader2, Eye, Edit3, Code2 } from "lucide-react";
 import { logger } from "@/services/logger";
 import { useTranslation } from "react-i18next";
+
+// ─── Base64 Collapse Helpers ─────────────────────────────────────
+
+const COLLAPSE_CHARS = 3 * 80; // ~3 rows at 80 chars/row
+
+type Segment =
+  | { type: "text"; content: string }
+  | { type: "base64"; prefix: string; data: string; index: number };
+
+function parseSegments(text: string): Segment[] {
+  const re = /(data:[^;\s"'`]+;base64,)([A-Za-z0-9+/]+=*)/g;
+  const segments: Segment[] = [];
+  let lastIndex = 0;
+  let idx = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = re.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ type: "text", content: text.slice(lastIndex, match.index) });
+    }
+    segments.push({ type: "base64", prefix: match[1], data: match[2], index: idx++ });
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ type: "text", content: text.slice(lastIndex) });
+  }
+
+  return segments;
+}
+
+function containsBase64(text: string): boolean {
+  return /(data:[^;\s"'`]+;base64,)[A-Za-z0-9+/]{50,}/.test(text);
+}
+
+// ─── Collapsed Source View ───────────────────────────────────────
+
+const CollapsedSourceView: React.FC<{
+  value: string;
+  onEditClick: () => void;
+}> = ({ value, onEditClick }) => {
+  const [expandedSet, setExpandedSet] = useState<Set<number>>(new Set());
+  const segments = parseSegments(value);
+
+  const toggle = (idx: number) => {
+    setExpandedSet((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
+  return (
+    <pre
+      className="w-full h-full min-h-[400px] overflow-auto rounded-md border border-input bg-background px-3 py-2 text-sm font-mono whitespace-pre-wrap break-all cursor-text select-text"
+      onClick={onEditClick}
+    >
+      {segments.map((seg, i) => {
+        if (seg.type === "text") {
+          return <span key={i}>{seg.content}</span>;
+        }
+
+        const expanded = expandedSet.has(seg.index);
+        const isLong = seg.data.length > COLLAPSE_CHARS;
+        const shown = !isLong || expanded ? seg.data : seg.data.slice(0, COLLAPSE_CHARS);
+
+        return (
+          <span key={i}>
+            <span className="text-muted-foreground">{seg.prefix}</span>
+            {shown}
+            {isLong && (
+              <button
+                className="text-xs text-primary hover:underline ml-1"
+                onClick={(e) => { e.stopPropagation(); toggle(seg.index); }}
+              >
+                {expanded
+                  ? " [collapse]"
+                  : ` … [+${(seg.data.length - COLLAPSE_CHARS).toLocaleString()} chars]`}
+              </button>
+            )}
+          </span>
+        );
+      })}
+    </pre>
+  );
+};
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -33,6 +120,10 @@ export const MarkdownEditorWithPreview: React.FC<
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
   const [isRenderingPreview, setIsRenderingPreview] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+
+  // Collapsed source view state
+  const [showRaw, setShowRaw] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Debounce ref for preview rendering
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -170,15 +261,45 @@ export const MarkdownEditorWithPreview: React.FC<
             <CardTitle className="flex items-center gap-2 text-base">
               <Edit3 className="h-4 w-4" />
               {t("markdownEditor.editorTitle")}
+              {containsBase64(value) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-auto h-6 px-2 text-xs text-muted-foreground"
+                  onClick={() => {
+                    setShowRaw((prev) => {
+                      if (prev) return false; // switching to collapsed — nothing extra needed
+                      // switching to raw — focus textarea after render
+                      setTimeout(() => textareaRef.current?.focus(), 0);
+                      return true;
+                    });
+                  }}
+                  title={showRaw ? t("markdownEditor.collapseBase64") : t("markdownEditor.editRaw")}
+                >
+                  <Code2 className="h-3.5 w-3.5 mr-1" />
+                  {showRaw ? t("markdownEditor.collapseBase64") : t("markdownEditor.editRaw")}
+                </Button>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 min-h-0 pb-4">
-            <textarea
-              value={value}
-              onChange={handleMarkdownChange}
-              className="w-full h-full min-h-[400px] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              placeholder="# Artikulationsschema&#10;&#10;**Thema:** ...&#10;&#10;| Zeit | Phase | Handlungsschritte | Sozialform | Kompetenzen | Medien/Material |&#10;|------|-------|-------------------|------------|-------------|-----------------|&#10;| 5 min | Einstieg | ... | Plenum | ... | ... |"
-            />
+            {containsBase64(value) && !showRaw ? (
+              <CollapsedSourceView
+                value={value}
+                onEditClick={() => {
+                  setShowRaw(true);
+                  setTimeout(() => textareaRef.current?.focus(), 0);
+                }}
+              />
+            ) : (
+              <textarea
+                ref={textareaRef}
+                value={value}
+                onChange={handleMarkdownChange}
+                className="w-full h-full min-h-[400px] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                placeholder="# Artikulationsschema&#10;&#10;**Thema:** ...&#10;&#10;| Zeit | Phase | Handlungsschritte | Sozialform | Kompetenzen | Medien/Material |&#10;|------|-------|-------------------|------------|-------------|-----------------|&#10;| 5 min | Einstieg | ... | Plenum | ... | ... |"
+              />
+            )}
           </CardContent>
         </Card>
 

@@ -418,7 +418,9 @@
     "renderPreview": "Render Preview",
     "renderingPreview": "Rendering preview...",
     "editToPreview": "Edit the markdown to see a PDF preview",
-    "previewTitle": "Document Preview"
+    "previewTitle": "Document Preview",
+    "collapseBase64": "Collapse images",
+    "editRaw": "Edit raw"
   },
   "errorDisplay": {
     "defaultTitle": "Something went wrong",

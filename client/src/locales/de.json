@@ -418,7 +418,9 @@
     "renderPreview": "Vorschau rendern",
     "renderingPreview": "Vorschau wird gerendert...",
     "editToPreview": "Bearbeiten Sie das Markdown, um eine PDF-Vorschau zu sehen",
-    "previewTitle": "Dokumentvorschau"
+    "previewTitle": "Dokumentvorschau",
+    "collapseBase64": "Bilder einklappen",
+    "editRaw": "Rohtext bearbeiten"
   },
   "errorDisplay": {
     "defaultTitle": "Etwas ist schiefgelaufen",
