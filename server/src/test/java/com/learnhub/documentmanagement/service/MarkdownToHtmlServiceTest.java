@@ -49,6 +49,18 @@ class MarkdownToHtmlServiceTest {
 	}
 
 	@Test
+	void renderMarkdownToHtmlLimitsImageWidthAndLandscapeHeight() {
+		String html = service.renderMarkdownToHtml("![Bild](data:image/png;base64,ZmFrZQ==)");
+		assertThat(html).contains("max-width: 100%").contains("max-height: 43mm");
+	}
+
+	@Test
+	void renderMarkdownToHtmlLimitsPortraitImageHeight() {
+		String html = service.renderMarkdownToHtml("![Bild](data:image/png;base64,ZmFrZQ==)", false);
+		assertThat(html).contains("max-height: 64mm");
+	}
+
+	@Test
 	void parseToNodeReturnsNonNull() {
 		var node = service.parseToNode("# Hello\n\nParagraph.");
 		assertThat(node).isNotNull();

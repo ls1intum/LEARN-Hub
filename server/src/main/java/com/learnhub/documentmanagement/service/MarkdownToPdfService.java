@@ -1,6 +1,8 @@
 package com.learnhub.documentmanagement.service;
 
 import com.itextpdf.html2pdf.HtmlConverter;
+import com.itextpdf.html2pdf.ConverterProperties;
+import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -8,6 +10,8 @@ import com.itextpdf.kernel.utils.PdfMerger;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -20,6 +24,14 @@ import org.springframework.stereotype.Service;
 public class MarkdownToPdfService {
 
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToPdfService.class);
+	private static final String WORKSHEET_FONT_FAMILY = "Comic Sans MS";
+	private static final List<String> WORKSHEET_FONT_PATHS = List.of(
+			"/System/Library/Fonts/Supplemental/Comic Sans MS.ttf",
+			"/System/Library/Fonts/Supplemental/Comic Sans MS Bold.ttf",
+			"/Library/Fonts/Comic Sans MS.ttf",
+			"/Library/Fonts/Comic Sans MS Bold.ttf",
+			"C:/Windows/Fonts/comic.ttf",
+			"C:/Windows/Fonts/comicbd.ttf");
 
 	private final MarkdownToHtmlService markdownToHtmlService;
 
@@ -77,12 +89,34 @@ public class MarkdownToPdfService {
 
 	private byte[] renderHtmlDocumentToPdf(String html, String documentTitle) {
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-			HtmlConverter.convertToPdf(html, baos);
+			HtmlConverter.convertToPdf(html, baos, createConverterProperties());
 			return applyDocumentTitle(baos.toByteArray(), documentTitle);
 		} catch (Exception e) {
 			logger.error("Failed to render markdown PDF: {}", e.getMessage(), e);
 			throw new RuntimeException("Failed to render markdown PDF: " + e.getMessage(), e);
 		}
+	}
+
+	ConverterProperties createConverterProperties() {
+		DefaultFontProvider fontProvider = new DefaultFontProvider(false, false, false, WORKSHEET_FONT_FAMILY);
+		fontProvider.addSystemFonts();
+
+		boolean worksheetFontRegistered = false;
+		for (String fontPath : WORKSHEET_FONT_PATHS) {
+			if (!Files.exists(Path.of(fontPath))) {
+				continue;
+			}
+			if (fontProvider.addFont(fontPath)) {
+				worksheetFontRegistered = true;
+			}
+		}
+
+		if (!worksheetFontRegistered) {
+			logger.warn("Worksheet PDF font '{}' was not registered from the known font paths. Falling back to other system fonts.",
+					WORKSHEET_FONT_FAMILY);
+		}
+
+		return new ConverterProperties().setFontProvider(fontProvider);
 	}
 
 	public byte[] applyDocumentTitle(byte[] pdfBytes, String documentTitle) {

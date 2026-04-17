@@ -9,7 +9,7 @@
     @bottom-left {
         content: element(footer-date);
         font-size: 7pt;
-        font-family: Helvetica, Arial, sans-serif;
+        font-family: "Comic Sans MS", "Comic Sans", cursive;
         color: #555555;
         vertical-align: middle;
     }
@@ -21,7 +21,7 @@
     @bottom-right {
         content: "Page " counter(page) " of " counter(pages);
         font-size: 7pt;
-        font-family: Helvetica, Arial, sans-serif;
+        font-family: "Comic Sans MS", "Comic Sans", cursive;
         color: #555555;
         vertical-align: middle;
     }
@@ -58,7 +58,11 @@
 #footer-center {
     position: running(footer-center);
     font-size: 7pt;
-    font-family: Helvetica, Arial, sans-serif;
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
     color: #555555;
     text-align: center;
+}
+
+.content-wrapper img {
+    max-height: 64mm;
 }

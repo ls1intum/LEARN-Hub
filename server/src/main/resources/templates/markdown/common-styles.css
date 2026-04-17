@@ -1,5 +1,9 @@
+body,
+body * {
+    font-family: "Comic Sans MS", "Comic Sans", cursive !important;
+}
+
 body {
-    font-family: Helvetica, Arial, sans-serif;
     font-size: 11pt;
     margin: 0;
     padding: 0;
@@ -91,14 +95,14 @@ table.artikulationsschema-table tbody td {
 }
 
 code {
-    font-family: Courier, monospace;
+    font-family: Courier, monospace !important;
     font-size: 9pt;
     background-color: #F0F0F0;
     padding: 1pt 2pt;
 }
 
 pre {
-    font-family: Courier, monospace;
+    font-family: Courier, monospace !important;
     font-size: 9pt;
     background-color: #F5F5F5;
     padding: 8pt;
@@ -107,6 +111,7 @@ pre {
 }
 
 pre code {
+    font-family: Courier, monospace !important;
     background-color: transparent;
     padding: 0;
 }
@@ -153,4 +158,13 @@ li {
 .content-wrapper {
     margin-top: 0;
     padding-top: 2pt;
+}
+
+.content-wrapper img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+    margin: 10pt auto;
+    page-break-inside: avoid;
 }

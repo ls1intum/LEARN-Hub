@@ -7,13 +7,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.image.ImageModel;
+import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.web.client.RestClientCustomizer;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.core.type.AnnotatedTypeMetadata;
+import org.springframework.util.StringUtils;
 
 /**
  * Configuration for Spring AI chat clients. Manually configures the ChatClient
@@ -86,5 +95,66 @@ public class SpringAIConfiguration {
 		}
 		ChatModel chatModel = chatModels.getFirst();
 		return ChatClient.builder(chatModel).build();
+	}
+
+	@Bean(name = "exerciseImageModel")
+	@Conditional(AzureImageConfigurationPresentCondition.class)
+	public ImageModel exerciseImageModel(ApplicationContext applicationContext) {
+		return applicationContext.getBean("azureOpenAiImageClient", ImageModel.class);
+	}
+
+	@Bean
+	public ApplicationRunner exerciseImageModelDiagnostics(Environment environment, ApplicationContext applicationContext) {
+		return args -> {
+			if (applicationContext.containsBean("exerciseImageModel")) {
+				log.info("Exercise image model enabled via Azure OpenAI configuration.");
+				return;
+			}
+
+			String endpoint = environment.getProperty("spring.ai.azure.openai.endpoint");
+			String apiKey = environment.getProperty("spring.ai.azure.openai.api-key");
+			String deploymentName = environment.getProperty("spring.ai.azure.openai.image.options.deployment-name");
+			String model = environment.getProperty("spring.ai.azure.openai.image.options.model");
+
+			if (!StringUtils.hasText(endpoint)) {
+				log.info("Exercise image model disabled: spring.ai.azure.openai.endpoint is empty.");
+				return;
+			}
+			if (endpoint.contains("your-resource-name")) {
+				log.info("Exercise image model disabled: spring.ai.azure.openai.endpoint still uses the placeholder value '{}'.",
+						endpoint);
+				return;
+			}
+			if (!StringUtils.hasText(apiKey)) {
+				log.info("Exercise image model disabled: spring.ai.azure.openai.api-key is empty.");
+				return;
+			}
+			if (!StringUtils.hasText(deploymentName) && !StringUtils.hasText(model)) {
+				log.info("Exercise image model disabled: both Azure image deployment-name and model are empty.");
+				return;
+			}
+			if (!applicationContext.containsBean("azureOpenAiImageClient")) {
+				log.warn("Exercise image model disabled: Azure OpenAI image client bean was not created despite apparently valid configuration.");
+				return;
+			}
+
+			log.warn("Exercise image model disabled for an unknown reason. Azure image client exists, but the alias bean was not exposed.");
+		};
+	}
+
+	static final class AzureImageConfigurationPresentCondition implements Condition {
+
+		@Override
+		public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+			String endpoint = context.getEnvironment().getProperty("spring.ai.azure.openai.endpoint");
+			String apiKey = context.getEnvironment().getProperty("spring.ai.azure.openai.api-key");
+			String deploymentName = context.getEnvironment()
+					.getProperty("spring.ai.azure.openai.image.options.deployment-name");
+			String model = context.getEnvironment().getProperty("spring.ai.azure.openai.image.options.model");
+
+			return StringUtils.hasText(endpoint) && !endpoint.contains("your-resource-name")
+					&& StringUtils.hasText(apiKey)
+					&& (StringUtils.hasText(deploymentName) || StringUtils.hasText(model));
+		}
 	}
 }

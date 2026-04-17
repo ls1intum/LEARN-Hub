@@ -169,6 +169,11 @@ class MarkdownToPdfServiceTest {
 	}
 
 	@Test
+	void createConverterPropertiesConfiguresFontProvider() {
+		assertThat(service.createConverterProperties().getFontProvider()).isNotNull();
+	}
+
+	@Test
 	void applyDocumentTitleOverridesExistingTitle() throws Exception {
 		byte[] initialPdf = service.renderMarkdownToPdf("# Test");
 		byte[] retitledPdf = service.applyDocumentTitle(initialPdf, "Retitled Document");

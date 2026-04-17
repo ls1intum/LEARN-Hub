@@ -3,8 +3,16 @@ package com.learnhub.documentmanagement.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -12,13 +20,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.prompt.PromptTemplate;
+import org.springframework.ai.image.Image;
+import org.springframework.ai.image.ImageModel;
+import org.springframework.ai.image.ImagePrompt;
+import org.springframework.ai.image.ImageResponse;
 import org.springframework.ai.model.Media;
 import org.springframework.ai.openai.OpenAiChatOptions;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeTypeUtils;
+import org.springframework.util.StringUtils;
 
 @Service
 public class LLMService {
@@ -26,12 +42,50 @@ public class LLMService {
 	private static final Logger logger = LoggerFactory.getLogger(LLMService.class);
 	private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*?})\\s*```",
 			Pattern.DOTALL);
+	private static final Pattern IMAGE_PLACEHOLDER_PATTERN = Pattern
+			.compile("\\[\\[IMAGE_PLACEHOLDER:\\s*(.*?)\\s*]\\s*]", Pattern.DOTALL);
+	private static final Pattern IMAGE_PLACEHOLDER_WITH_ID_PATTERN = Pattern
+			.compile("^id\\s*=\\s*([A-Za-z0-9_-]+)\\s*:\\s*(.+)$", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+	private static final String GENERATED_IMAGE_ALT_TEXT = "Generiertes Bild";
+	private static final Duration IMAGE_FETCH_TIMEOUT = Duration.ofSeconds(30);
+	private static final HttpClient IMAGE_FETCH_CLIENT = HttpClient.newBuilder()
+			.followRedirects(HttpClient.Redirect.NORMAL)
+			.build();
+	private static final List<String> EXERCISE_IMAGE_REPLACEMENT_ORDER = List.of("uebung", "uebung_loesung");
 
 	@Value("${llm.visual.model:}")
 	private String visualModelName;
 
 	@Value("${llm.visual.max-tokens:8000}")
 	private int visualMaxTokens;
+
+	private final ChatClient chatClient;
+	private final ImageModel exerciseImageModel;
+	private final ObjectMapper objectMapper = new ObjectMapper();
+
+	private static final String DEFAULT_EXERCISE_IMAGE_PROMPT_TEMPLATE = """
+			You generate images for school exercise sheets.
+
+			These images are not decorative. They explain tasks and must be accurate enough that the exercise still makes sense when learners look at the image.
+
+			Follow these rules for every generated image:
+			- Treat the provided description as task-critical context.
+			- Preserve all important factual details from the description exactly.
+			- Make spatial relationships, counts, labels, symbols, paths, positions, and visual distinctions unambiguous.
+			- If the description mentions specific objects, icons, text labels, arrows, routes, grids, numbers, start/goal fields, or left/right/top/bottom placement, include them exactly as described.
+			- Do not invent extra task elements that could confuse the learner.
+			- Do not add hidden hints, extra solutions, teacher-only annotations, or highlighted answers unless the description explicitly asks for them.
+			- Prefer clean, readable composition over artistic flair. Clarity and correctness matter more than style.
+			- Ensure the final image is coherent, classroom-safe, and easy to understand in the context of an exercise sheet.
+
+			Use the following generated exercise and solution text as additional context for factual accuracy. The image must match this generated worksheet content exactly:
+
+			{contextText}
+
+			Use this exact exercise-image specification:
+
+			{description}
+			""";
 
 	@Value("classpath:prompts/ActivityDataExtraction.st")
 	private Resource extractionPromptResource;
@@ -48,14 +102,25 @@ public class LLMService {
 	@Value("classpath:prompts/UebungGeneration.st")
 	private Resource uebungPromptResource;
 
-	private final ChatClient chatClient;
-	private final ObjectMapper objectMapper = new ObjectMapper();
+	@Value("classpath:prompts/ExerciseImageGeneration.st")
+	private Resource exerciseImagePromptResource;
+
+	@Autowired
+	public LLMService(ChatClient chatClient,
+			@Qualifier("exerciseImageModel") ObjectProvider<ImageModel> exerciseImageModelProvider) {
+		this(chatClient, exerciseImageModelProvider.getIfAvailable());
+	}
 
 	public LLMService(ChatClient chatClient) {
+		this(chatClient, (ImageModel) null);
+	}
+
+	LLMService(ChatClient chatClient, ImageModel exerciseImageModel) {
 		if (chatClient == null) {
 			throw new IllegalStateException("ChatClient is not available. Please configure a ChatModel.");
 		}
 		this.chatClient = chatClient;
+		this.exerciseImageModel = exerciseImageModel;
 	}
 
 	// Compact JSON with ~20 short fields — 800 tokens is more than sufficient.
@@ -206,7 +271,9 @@ public class LLMService {
 
 			logger.debug("LLM Uebung Response: {}", responseText);
 
-			return extractUebungPayload(responseText);
+			Map<String, String> generatedMarkdowns = extractUebungPayload(responseText);
+			String imageContext = buildExerciseImageContext(generatedMarkdowns);
+			return replaceExerciseImagePlaceholders(generatedMarkdowns, imageContext);
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to generate Übung and Lösung: " + e.getMessage(), e);
 		}
@@ -260,10 +327,201 @@ public class LLMService {
 					"LLM response missing required delimiters ===UEBUNG_START=== / ===LOESUNG_START===");
 		}
 
-		Map<String, String> result = new HashMap<>();
+		Map<String, String> result = new LinkedHashMap<>();
 		result.put("uebung", uebungMatcher.group(1).trim());
 		result.put("uebung_loesung", loesungMatcher.group(1).trim());
 		return result;
+	}
+
+	Map<String, String> replaceExerciseImagePlaceholders(Map<String, String> markdowns, String pdfText) {
+		if (markdowns == null || markdowns.isEmpty()) {
+			return markdowns;
+		}
+
+		Map<String, String> imageMarkdownCache = new HashMap<>();
+		Map<String, String> imageDescriptionCache = new HashMap<>();
+		Map<String, String> replacedMarkdowns = new LinkedHashMap<>();
+
+		for (String key : EXERCISE_IMAGE_REPLACEMENT_ORDER) {
+			if (markdowns.containsKey(key)) {
+				replacedMarkdowns.put(key,
+						replaceImagePlaceholders(markdowns.get(key), imageMarkdownCache, imageDescriptionCache, pdfText));
+			}
+		}
+		for (Map.Entry<String, String> entry : markdowns.entrySet()) {
+			if (replacedMarkdowns.containsKey(entry.getKey())) {
+				continue;
+			}
+			replacedMarkdowns.put(entry.getKey(),
+					replaceImagePlaceholders(entry.getValue(), imageMarkdownCache, imageDescriptionCache, pdfText));
+		}
+
+		return replacedMarkdowns;
+	}
+
+	String buildExerciseImageContext(Map<String, String> generatedMarkdowns) {
+		if (generatedMarkdowns == null || generatedMarkdowns.isEmpty()) {
+			return "";
+		}
+		String exerciseMarkdown = generatedMarkdowns.getOrDefault("uebung", "").trim();
+		String solutionMarkdown = generatedMarkdowns.getOrDefault("uebung_loesung", "").trim();
+		if (!StringUtils.hasText(exerciseMarkdown) && !StringUtils.hasText(solutionMarkdown)) {
+			return "";
+		}
+
+		StringBuilder context = new StringBuilder();
+		if (StringUtils.hasText(exerciseMarkdown)) {
+			context.append("Generiertes Übungsblatt:\n").append(exerciseMarkdown.trim());
+		}
+		if (StringUtils.hasText(solutionMarkdown)) {
+			if (context.length() > 0) {
+				context.append("\n\n");
+			}
+			context.append("Generiertes Lösungsblatt:\n").append(solutionMarkdown.trim());
+		}
+		return context.toString();
+	}
+
+	String replaceImagePlaceholders(String markdown, Map<String, String> imageMarkdownCache, String pdfText) {
+		return replaceImagePlaceholders(markdown, imageMarkdownCache, new HashMap<>(), pdfText);
+	}
+
+	String replaceImagePlaceholders(String markdown, Map<String, String> imageMarkdownCache,
+			Map<String, String> imageDescriptionCache, String pdfText) {
+		if (!StringUtils.hasText(markdown)) {
+			return markdown;
+		}
+
+		Matcher matcher = IMAGE_PLACEHOLDER_PATTERN.matcher(markdown);
+		if (!matcher.find()) {
+			return markdown;
+		}
+
+		matcher.reset();
+		StringBuffer replaced = new StringBuffer();
+		while (matcher.find()) {
+			ImagePlaceholder placeholder = parseImagePlaceholder(matcher.group(1));
+			String existingDescription = imageDescriptionCache.putIfAbsent(placeholder.cacheKey(),
+					placeholder.description());
+			if (placeholder.id() != null && existingDescription != null
+					&& !existingDescription.equals(placeholder.description())) {
+				logger.info(
+						"Reusing exercise image id '{}' with a different description. Keeping the first generated image.",
+						placeholder.id());
+			}
+			String imageMarkdown = imageMarkdownCache.computeIfAbsent(placeholder.cacheKey(),
+					key -> generateImageMarkdownSafely(placeholder, pdfText));
+			matcher.appendReplacement(replaced, Matcher.quoteReplacement(imageMarkdown));
+		}
+		matcher.appendTail(replaced);
+		return replaced.toString();
+	}
+
+	String generateImageMarkdown(String description, String pdfText) {
+		if (exerciseImageModel == null) {
+			throw new IllegalStateException("Exercise image model is not configured");
+		}
+
+		ImageResponse response = exerciseImageModel.call(new ImagePrompt(buildExerciseImagePrompt(description, pdfText)));
+		if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
+			throw new IllegalStateException("Image model returned an empty response");
+		}
+
+		Image image = response.getResult().getOutput();
+		if (StringUtils.hasText(image.getB64Json())) {
+			return "![" + GENERATED_IMAGE_ALT_TEXT + "](data:image/png;base64," + image.getB64Json() + ")";
+		}
+		if (StringUtils.hasText(image.getUrl())) {
+			return toMarkdownImageFromUrl(image.getUrl());
+		}
+		throw new IllegalStateException("Image model response contained neither base64 image data nor a URL");
+	}
+
+	private String generateImageMarkdownSafely(ImagePlaceholder placeholder, String pdfText) {
+		if (exerciseImageModel == null) {
+			logger.warn("Skipping image placeholder replacement because no exercise image model is configured");
+			return placeholder.marker();
+		}
+
+		try {
+			return generateImageMarkdown(placeholder.description(), pdfText);
+		} catch (Exception e) {
+			logger.warn("Failed to replace image placeholder '{}': {}", placeholder.description(), e.getMessage());
+			return placeholder.marker();
+		}
+	}
+
+	String buildExerciseImagePrompt(String description, String contextText) {
+		String normalizedDescription = description == null ? "" : description.trim();
+		String normalizedContextText = contextText == null ? "" : contextText.trim();
+		if (exerciseImagePromptResource == null) {
+			return DEFAULT_EXERCISE_IMAGE_PROMPT_TEMPLATE
+					.replace("{contextText}", normalizedContextText)
+					.replace("{description}", normalizedDescription);
+		}
+		return new PromptTemplate(exerciseImagePromptResource)
+				.render(Map.of("description", normalizedDescription, "contextText", normalizedContextText));
+	}
+
+	private String toMarkdownImageFromUrl(String imageUrl) {
+		try {
+			HttpRequest request = HttpRequest.newBuilder(URI.create(imageUrl))
+					.GET()
+					.timeout(IMAGE_FETCH_TIMEOUT)
+					.build();
+			HttpResponse<byte[]> response = IMAGE_FETCH_CLIENT.send(request, HttpResponse.BodyHandlers.ofByteArray());
+			if (response.statusCode() < 200 || response.statusCode() >= 300) {
+				throw new IllegalStateException("Failed to download generated image: HTTP " + response.statusCode());
+			}
+
+			String mimeType = response.headers().firstValue("Content-Type")
+					.map(value -> value.split(";", 2)[0].trim())
+					.filter(StringUtils::hasText)
+					.orElseGet(() -> inferImageMimeType(imageUrl));
+			String base64 = Base64.getEncoder().encodeToString(response.body());
+			return "![" + GENERATED_IMAGE_ALT_TEXT + "](data:" + mimeType + ";base64," + base64 + ")";
+		} catch (Exception e) {
+			throw new IllegalStateException("Failed to download generated image from URL", e);
+		}
+	}
+
+	private String inferImageMimeType(String imageUrl) {
+		String normalizedUrl = imageUrl == null ? "" : imageUrl.toLowerCase();
+		if (normalizedUrl.contains(".jpg") || normalizedUrl.contains(".jpeg")) {
+			return "image/jpeg";
+		}
+		if (normalizedUrl.contains(".webp")) {
+			return "image/webp";
+		}
+		if (normalizedUrl.contains(".gif")) {
+			return "image/gif";
+		}
+		return "image/png";
+	}
+
+	private ImagePlaceholder parseImagePlaceholder(String rawPlaceholderContent) {
+		String normalized = rawPlaceholderContent == null ? "" : rawPlaceholderContent.trim();
+		while (normalized.endsWith("]")) {
+			normalized = normalized.substring(0, normalized.length() - 1).trim();
+		}
+		Matcher matcher = IMAGE_PLACEHOLDER_WITH_ID_PATTERN.matcher(normalized);
+		if (!matcher.matches()) {
+			return new ImagePlaceholder("desc:" + normalized, null, normalized, buildImagePlaceholderMarker(null, normalized));
+		}
+
+		String id = matcher.group(1).trim().toLowerCase(Locale.ROOT);
+		String description = matcher.group(2).trim();
+		return new ImagePlaceholder("id:" + id, id, description, buildImagePlaceholderMarker(id, description));
+	}
+
+	private String buildImagePlaceholderMarker(String id, String description) {
+		if (StringUtils.hasText(id)) {
+			return "[[IMAGE_PLACEHOLDER:id=" + id + ": " + description + "]]";
+		}
+		return "[[IMAGE_PLACEHOLDER: " + description + "]]";
+	}
+
+	private record ImagePlaceholder(String cacheKey, String id, String description, String marker) {
 	}
 
 	private String extractJsonPayload(String rawResponse) {

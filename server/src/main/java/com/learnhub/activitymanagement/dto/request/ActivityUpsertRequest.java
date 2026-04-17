@@ -25,4 +25,6 @@ public class ActivityUpsertRequest {
 	private String artikulationsschemaMarkdown;
 	private String deckblattMarkdown;
 	private String hintergrundwissenMarkdown;
+	private String uebungMarkdown;
+	private String uebungLoesungMarkdown;
 }
