@@ -162,7 +162,7 @@ const SharedHeader: React.FC = () => {
           <img
             src="/logo.png"
             alt="LEARN-Hub"
-            className="h-7 w-7 rounded-md bg-primary-foreground/10 p-0.5"
+            className="h-7 w-7 rounded-md"
           />
           <span className="font-bold text-sm sm:text-base tracking-tight leading-none">
             LEARN-Hub
