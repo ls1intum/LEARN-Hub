@@ -3,6 +3,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
+import { EnvironmentProvider } from "@/contexts/EnvironmentContext";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -41,6 +42,7 @@ function App() {
       <ThemeProvider>
         <LanguageProvider>
           <AuthProvider>
+            <EnvironmentProvider>
             <SidebarProvider>
               <TooltipProvider>
                 <Router>
@@ -157,6 +159,7 @@ function App() {
                 </Router>
               </TooltipProvider>
             </SidebarProvider>
+            </EnvironmentProvider>
           </AuthProvider>
         </LanguageProvider>
       </ThemeProvider>

@@ -98,8 +98,10 @@ public class MarkdownToPdfService {
 	}
 
 	ConverterProperties createConverterProperties() {
-		DefaultFontProvider fontProvider = new DefaultFontProvider(false, false, false, WORKSHEET_FONT_FAMILY);
-		fontProvider.addSystemFonts();
+		// Use iText's bundled/shipped fonts for Unicode fallback instead of
+		// addSystemFonts(), which on macOS/Linux includes Apple-specific fonts with
+		// incomplete cmap tables that cause a NullPointerException during rendering.
+		DefaultFontProvider fontProvider = new DefaultFontProvider(false, false, true, WORKSHEET_FONT_FAMILY);
 
 		boolean worksheetFontRegistered = false;
 		for (String fontPath : WORKSHEET_FONT_PATHS) {

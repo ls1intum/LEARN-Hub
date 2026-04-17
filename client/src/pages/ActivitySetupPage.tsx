@@ -403,7 +403,7 @@ export const ActivitySetupPage: React.FC = () => {
   // ─── Render ─────────────────────────────────────────────────────
 
   return (
-    <div className="w-full py-6">
+    <div className="py-6">
       {/* Page Header & Step Indicator */}
       <div className="space-y-6 mb-8">
         <PageHeader

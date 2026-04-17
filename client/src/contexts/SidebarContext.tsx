@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useState } from "react";
 
 interface SidebarContextValue {
   isMobileOpen: boolean;
@@ -28,15 +28,19 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [hasSidebar, setHasSidebar] = useState(false);
 
+  const toggleMobile = useCallback(() => setIsMobileOpen((v) => !v), []);
+  const closeMobile = useCallback(() => setIsMobileOpen(false), []);
+  const toggleCollapsed = useCallback(() => setIsCollapsed((v) => !v), []);
+
   return (
     <SidebarContext.Provider
       value={{
         isMobileOpen,
         isCollapsed,
         hasSidebar,
-        toggleMobile: () => setIsMobileOpen((v) => !v),
-        closeMobile: () => setIsMobileOpen(false),
-        toggleCollapsed: () => setIsCollapsed((v) => !v),
+        toggleMobile,
+        closeMobile,
+        toggleCollapsed,
         setHasSidebar,
       }}
     >

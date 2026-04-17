@@ -342,9 +342,9 @@ export const LibraryPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {t("library.title")}
-          </h2>
+          </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             {t("library.subtitle")}
           </p>

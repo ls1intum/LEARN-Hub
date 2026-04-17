@@ -22,7 +22,11 @@ LABEL org.opencontainers.image.description="Spring Boot API server for LEARN-Hub
 LABEL org.opencontainers.image.vendor="LEARN-Hub Project"
 
 # Install curl for health checks and LibreOffice Writer for PDF-to-DOCX conversion
-RUN apk add --no-cache curl libreoffice-writer font-noto
+RUN apk add --no-cache curl libreoffice-writer font-noto fontconfig
+
+# Install Comic Sans MS (bundled in repo — used by LibreOffice for PDF generation)
+COPY fonts/ /usr/share/fonts/truetype/comic-sans/
+RUN fc-cache -fv
 
 # Create app directory
 WORKDIR /app

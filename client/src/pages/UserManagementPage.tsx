@@ -267,11 +267,11 @@ export const UserManagementPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full py-6">
+    <div className="py-6">
       <div className="mb-8">
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
           {t("userManagement.title")}
-        </h2>
+        </h1>
         <p className="text-muted-foreground text-sm sm:text-base">
           {t("userManagement.subtitle")}
         </p>
@@ -601,7 +601,7 @@ export const UserManagementPage: React.FC = () => {
 
           {/* Edit Password Section */}
           {isEditing && (
-            <div className="mt-4 p-4 bg-yellow-50 rounded-lg">
+            <div className="mt-4 p-4 bg-muted/40 rounded-lg">
               <h3 className="text-md font-semibold mb-2">
                 {t("userManagement.changePassword")}{" "}
                 {editForm.role === "TEACHER"

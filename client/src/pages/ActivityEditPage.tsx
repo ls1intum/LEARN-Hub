@@ -382,7 +382,7 @@ export const ActivityEditPage: React.FC = () => {
   }
 
   return (
-    <div className="w-full py-6">
+    <div className="py-6">
       {/* Page Header & Step Indicator */}
       <div className="space-y-6 mb-8">
         <PageHeader

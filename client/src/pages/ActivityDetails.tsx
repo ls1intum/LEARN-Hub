@@ -219,7 +219,7 @@ export const ActivityDetails: React.FC = () => {
     (activity.markdowns && activity.markdowns.length > 0);
 
   return (
-    <div className="w-full py-6">
+    <div className="py-6">
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div>
@@ -233,9 +233,9 @@ export const ActivityDetails: React.FC = () => {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                 {activity.name}
-              </h2>
+              </h1>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">

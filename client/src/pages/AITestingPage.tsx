@@ -140,7 +140,7 @@ export const AITestingPage: React.FC = () => {
   );
 
   return (
-    <div className="container mx-auto max-w-6xl px-4 py-8 space-y-6">
+    <div className="py-6 space-y-6">
       <PageHeader
         title={t("aiTesting.title")}
         description={t("aiTesting.description")}

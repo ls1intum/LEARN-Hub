@@ -152,7 +152,7 @@ export const SearchHistoryPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full py-6">
+    <div className="py-6">
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
           {t("history.title")}
