@@ -251,6 +251,17 @@
     "title": "Impressum",
     "regulatingAuthority": "Regulierungsbehörde"
   },
+  "header": {
+    "about": "Über uns",
+    "toggleNav": "Navigation ein-/ausblenden",
+    "userMenu": "Benutzermenü",
+    "collapse": "Einklappen",
+    "collapseSidebar": "Seitenleiste einklappen",
+    "expandSidebar": "Seitenleiste ausklappen",
+    "closeNav": "Navigation schließen",
+    "dashboard": "Dashboard",
+    "version": "v1.0"
+  },
   "footer": {
     "impressum": "Impressum"
   },

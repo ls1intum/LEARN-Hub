@@ -13,6 +13,7 @@ interface NavigationMenuProps {
   tabs: Tab[];
   currentTab: string;
   onNavigation: (path: string) => void;
+  collapsed?: boolean;
   className?: string;
 }
 
@@ -20,10 +21,14 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   tabs,
   currentTab,
   onNavigation,
+  collapsed = false,
   className = "",
 }) => {
   return (
-    <nav className={`px-3 py-4 ${className}`} aria-label="Main navigation">
+    <nav
+      className={`px-2 py-4 ${className}`}
+      aria-label="Main navigation"
+    >
       <div className="space-y-1" role="list">
         {tabs.map((tab) => (
           <NavigationItem
@@ -31,6 +36,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
             tab={tab}
             isActive={currentTab === tab.id}
             onClick={onNavigation}
+            collapsed={collapsed}
           />
         ))}
       </div>

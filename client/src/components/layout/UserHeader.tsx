@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
@@ -32,7 +33,10 @@ export const UserHeader: React.FC<UserHeaderProps> = ({
   return (
     <div className={`p-4 border-b border-border ${className}`}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5 min-w-0">
+        <Link
+          to="/"
+          className="flex items-center gap-2.5 min-w-0 hover:opacity-80 transition-opacity"
+        >
           <img
             src="/logo.png"
             alt="LEARN-Hub"
@@ -46,7 +50,7 @@ export const UserHeader: React.FC<UserHeaderProps> = ({
               {roleDescription}
             </p>
           </div>
-        </div>
+        </Link>
         {isMobile && onClose && (
           <Button
             onClick={onClose}

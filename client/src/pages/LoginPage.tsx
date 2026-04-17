@@ -7,8 +7,6 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ThemeToggle } from "@/components/ThemeToggle";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useAuth } from "@/hooks/useAuth";
 import {
   LogIn,
@@ -437,28 +435,20 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="h-full overflow-y-auto flex items-center justify-center p-4">
       <Card className="max-w-lg w-full shadow-lg">
         <CardHeader className="text-center pb-6">
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <div className="flex items-center justify-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                  <LogIn className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <CardTitle className="text-2xl font-bold text-foreground">
-                  {t("login.welcomeBack")}
-                </CardTitle>
-              </div>
-              <p className="text-muted-foreground text-sm">
-                {t("login.chooseLoginMethod")}
-              </p>
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
+              <LogIn className="h-5 w-5 text-primary-foreground" />
             </div>
-            <div className="flex items-center gap-1">
-              <LanguageSwitcher />
-              <ThemeToggle />
-            </div>
+            <CardTitle className="text-2xl font-bold text-foreground">
+              {t("login.welcomeBack")}
+            </CardTitle>
           </div>
+          <p className="text-muted-foreground text-sm">
+            {t("login.chooseLoginMethod")}
+          </p>
         </CardHeader>
 
         <CardContent className="space-y-6">
