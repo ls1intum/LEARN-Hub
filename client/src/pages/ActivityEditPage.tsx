@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,7 +39,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
-import { getAppScrollTop } from "@/utils/scroll";
+import {
+  getActivityBackTarget,
+  type ActivityNavigationState,
+} from "@/utils/activityNavigation";
 
 type Step = "metadata" | "documents";
 type MarkdownTab =
@@ -61,8 +64,15 @@ const MARKDOWN_TAB_KEYS: MarkdownTab[] = [
 
 export const ActivityEditPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const navigationState = location.state as ActivityNavigationState | null;
+  const backTo = getActivityBackTarget(navigationState?.backTo);
+  const detailNavigationState: ActivityNavigationState = {
+    backTo,
+    restoreScrollY: navigationState?.restoreScrollY,
+  };
 
   // Loading / error state for initial fetch
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -297,10 +307,7 @@ export const ActivityEditPage: React.FC = () => {
       });
 
       navigate(`/activity-details/${id}`, {
-        state: {
-          backTo: `/activity-edit/${id}`,
-          restoreScrollY: getAppScrollTop(),
-        },
+        state: detailNavigationState,
       });
     } catch (error) {
       logger.error("Save error", error, "ActivityEditPage");
@@ -389,7 +396,15 @@ export const ActivityEditPage: React.FC = () => {
             }}
           />
           <div className="mt-4">
-            <Button onClick={() => navigate(-1)}>
+            <Button
+              onClick={() =>
+                id
+                  ? navigate(`/activity-details/${id}`, {
+                      state: detailNavigationState,
+                    })
+                  : navigate("/recommendations")
+              }
+            >
               {t("editActivity.goBack")}
             </Button>
           </div>
@@ -411,7 +426,10 @@ export const ActivityEditPage: React.FC = () => {
           currentStepIndex={currentStepIndex}
           onBack={
             currentStep === "metadata"
-              ? () => navigate(`/activity-details/${id}`)
+              ? () =>
+                  navigate(`/activity-details/${id}`, {
+                    state: detailNavigationState,
+                  })
               : currentStep === "documents"
                 ? () => setCurrentStep("metadata")
                 : undefined

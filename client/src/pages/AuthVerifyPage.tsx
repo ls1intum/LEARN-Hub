@@ -1,15 +1,27 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams, Link, useNavigate } from "react-router-dom";
+import {
+  useSearchParams,
+  Link,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  getPostLoginRedirectPath,
+  type AuthRedirectState,
+} from "@/utils/authRedirect";
 import { useTranslation } from "react-i18next";
 
 export const AuthVerifyPage: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { verificationCodeLogin } = useAuth();
+  const loginLocationState = location.state as AuthRedirectState | null;
+  const postLoginRedirectPath = getPostLoginRedirectPath(loginLocationState);
 
   const [code, setCode] = useState("");
   const [email, setEmail] = useState("");
@@ -43,8 +55,7 @@ export const AuthVerifyPage: React.FC = () => {
     if (result.success) {
       setMessage("Login successful! Redirecting...");
       setTimeout(() => {
-        // Redirect to recommendations page
-        navigate("/recommendations");
+        navigate(postLoginRedirectPath, { replace: true });
       }, 1000);
     } else {
       setMessage(result.message || "Invalid or expired code");
@@ -122,6 +133,7 @@ export const AuthVerifyPage: React.FC = () => {
         <div className="mt-6 text-center">
           <Link
             to="/login"
+            state={loginLocationState ?? undefined}
             className="text-primary hover:text-primary/80 text-sm"
           >
             {t("authVerify.backToLogin")}

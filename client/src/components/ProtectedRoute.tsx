@@ -1,6 +1,7 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { getLoginRedirectState } from "@/utils/authRedirect";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,6 +15,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   allowedRoles,
 }) => {
   const { user, isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+
+  const loginRedirectState = getLoginRedirectState(location);
 
   if (isLoading) {
     return (
@@ -27,17 +31,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={loginRedirectState} />;
   }
 
   // Check role-based access
   if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={loginRedirectState} />;
   }
 
   // Check allowed roles (for routes that should be accessible to multiple roles)
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={loginRedirectState} />;
   }
 
   return <>{children}</>;

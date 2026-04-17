@@ -263,7 +263,83 @@
     "version": "v1.0"
   },
   "footer": {
-    "impressum": "Impressum"
+    "impressum": "Impressum",
+    "codeOfConduct": "Verhaltenskodex",
+    "appliedEducationTechnologies": "Applied Education Technologies",
+    "tumCenterForEducationalTechnologies": "TUM Center for Educational Technologies"
+  },
+  "landingPage": {
+    "hero": {
+      "badge": "KI-gestützte Informatikdidaktik",
+      "titlePrefix": "Entdecke Aktivitäten für",
+      "titleHighlight": "Informatik",
+      "titleSuffix": "im Unterricht",
+      "description": "LEARN-Hub hilft Informatiklehrkräften dabei, hochwertige analoge und digitale Lernaktivitäten zu finden, zu organisieren und zu planen, unterstützt durch KI-Empfehlungen für den konkreten Unterrichtskontext.",
+      "primaryCta": "Empfehlungen erhalten",
+      "secondaryCta": "Bibliothek durchsuchen",
+      "signInPrompt": "Zum Stöbern ist kein Konto erforderlich.",
+      "signInLink": "Anmelden",
+      "signInSuffix": "für personalisierte Funktionen.",
+      "imageAlt": "Screenshot der LEARN-Hub-Anwendung"
+    },
+    "trust": {
+      "eyebrow": "Forschungsbasiert · Entwickelt an der",
+      "tum": "Technische Universität München",
+      "aet": "Applied Education Technologies"
+    },
+    "features": {
+      "title": "Alles, was du für guten Informatikunterricht brauchst",
+      "description": "Von KI-gestützten Empfehlungen bis zu einer kuratierten Sammlung analoger und digitaler Aktivitäten: LEARN-Hub unterstützt Lehrkräfte bei der Unterrichtsplanung.",
+      "cards": {
+        "recommendations": {
+          "title": "KI-gestützte Empfehlungen",
+          "description": "Beschreibe deine Lerngruppe, dein Thema oder dein Lernziel und unsere KI findet in Sekunden die passendsten Aktivitäten aus einem kuratierten Datensatz."
+        },
+        "library": {
+          "title": "Kuratiertes Aktivitätsarchiv",
+          "description": "Durchsuche und filtere hunderte Informatikaktivitäten. LEARN-Hub bündelt Struktur, Hintergrundinformationen und Übungsmaterialien."
+        },
+        "filtering": {
+          "title": "Intelligente Filter",
+          "description": "Filtere nach Thema, Altersgruppe, Dauer, Schwierigkeitsgrad und Unterrichtsformat. So findest du genau die richtige Aktivität für jede Unterrichtssituation."
+        },
+        "favourites": {
+          "title": "Favoriten & Unterrichtspläne",
+          "description": "Speichere Aktivitäten in deinen Favoriten und baue wiederverwendbare Unterrichtspläne. Dein persönliches Werkzeugset für den Unterricht ist immer griffbereit."
+        },
+        "teachers": {
+          "title": "Für Lehrkräfte entwickelt",
+          "description": "Entwickelt für Informatiklehrkräfte an weiterführenden Schulen und Hochschulen. Jede Funktion adressiert reale Herausforderungen bei der Planung motivierender Informatikstunden."
+        },
+        "research": {
+          "title": "Forschungsbasiert",
+          "description": "Entwickelt am Lehrstuhl Applied Education Technologies der TUM. Die Materialien orientieren sich am aktuellen Stand der Bildungsforschung."
+        }
+      }
+    },
+    "imageRows": {
+      "recommendations": {
+        "title": "Sag uns, was du brauchst, wir finden die passende Aktivität",
+        "description": "Gib Lernziele, Altersgruppe und verfügbare Zeit ein. Die KI analysiert die gesamte Aktivitätsbibliothek und priorisiert die besten Treffer für deinen konkreten Unterrichtskontext.",
+        "cta": "Empfehlungen testen",
+        "imageAlt": "Ergebnisse der KI-Empfehlungen"
+      },
+      "library": {
+        "title": "Hunderte kuratierte Aktivitäten, nur eine Suche entfernt",
+        "description": "Unsere Bibliothek umfasst CS Unplugged, Code.org, Barefoot Computing und mehr. Filtere nach Thema, Format, Klassenstufe und Dauer, um die beste Aktivität zu finden.",
+        "cta": "Bibliothek öffnen",
+        "imageAlt": "Ansicht der Aktivitätsbibliothek"
+      }
+    },
+    "cta": {
+      "title": "Bereit, deinen Informatikunterricht zu verändern?",
+      "description": "Nutze LEARN-Hub wie viele andere Lehrkräfte, um spannende Informatikaktivitäten zu entdecken und zu planen. Für den Einstieg ist kein Konto nötig.",
+      "primaryCta": "Kostenlos starten",
+      "secondaryCta": "Aktivitäten durchsuchen",
+      "signUpPrompt": "Lehrkräfte können",
+      "signUpLink": "ein kostenloses Konto erstellen",
+      "signUpSuffix": "für Favoriten, Verlauf und Unterrichtspläne."
+    }
   },
   "common": {
     "loading": "Lädt...",

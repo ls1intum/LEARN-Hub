@@ -5,15 +5,15 @@ import { useTranslation } from "react-i18next";
 
 const EXTERNAL_LINKS = [
   {
-    label: "Code of Conduct",
+    labelKey: "footer.codeOfConduct",
     href: "https://aet.cit.tum.de/code-of-conduct",
   },
   {
-    label: "Applied Education Technologies",
+    labelKey: "footer.appliedEducationTechnologies",
     href: "https://aet.cit.tum.de/",
   },
   {
-    label: "TUM Center for Educational Technologies",
+    labelKey: "footer.tumCenterForEducationalTechnologies",
     href: "https://www.edtech.tum.de/",
   },
 ] as const;
@@ -32,7 +32,7 @@ export const Footer: React.FC = () => {
         </Link>
 
         {/* External Links */}
-        {EXTERNAL_LINKS.map(({ label, href }) => (
+        {EXTERNAL_LINKS.map(({ labelKey, href }) => (
           <a
             key={href}
             href={href}
@@ -40,7 +40,7 @@ export const Footer: React.FC = () => {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
           >
-            {label}
+            {t(labelKey)}
             <ExternalLink className="h-3 w-3" />
           </a>
         ))}

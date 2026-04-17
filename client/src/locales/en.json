@@ -263,7 +263,83 @@
     "version": "v1.0"
   },
   "footer": {
-    "impressum": "Impressum"
+    "impressum": "Impressum",
+    "codeOfConduct": "Code of Conduct",
+    "appliedEducationTechnologies": "Applied Education Technologies",
+    "tumCenterForEducationalTechnologies": "TUM Center for Educational Technologies"
+  },
+  "landingPage": {
+    "hero": {
+      "badge": "AI-Powered CS Education",
+      "titlePrefix": "Discover Activities for",
+      "titleHighlight": "Computer Science",
+      "titleSuffix": "Education",
+      "description": "LEARN-Hub helps CS teachers find, organise, and plan high-quality unplugged and digital learning activities, powered by AI recommendations tailored to your classroom.",
+      "primaryCta": "Get Recommendations",
+      "secondaryCta": "Browse Library",
+      "signInPrompt": "No account required to browse.",
+      "signInLink": "Sign in",
+      "signInSuffix": "for personalised features.",
+      "imageAlt": "LEARN-Hub app screenshot"
+    },
+    "trust": {
+      "eyebrow": "Research-backed · Built at",
+      "tum": "Technical University of Munich",
+      "aet": "Applied Education Technologies"
+    },
+    "features": {
+      "title": "Everything you need to plan great CS lessons",
+      "description": "From AI-driven recommendations to a curated library of unplugged and digital activities, LEARN-Hub has teachers covered.",
+      "cards": {
+        "recommendations": {
+          "title": "AI-Powered Recommendations",
+          "description": "Describe your class, topic, or learning goal and our AI matches you with the most relevant activities from a curated dataset in seconds."
+        },
+        "library": {
+          "title": "Curated Activity Library",
+          "description": "Browse and filter hundreds of CS education activities. LEARN-Hub brings structure, background information, and exercise material."
+        },
+        "filtering": {
+          "title": "Smart Filtering",
+          "description": "Filter by topic, age group, duration, skill level, and teaching format. Find exactly the right activity for any classroom situation."
+        },
+        "favourites": {
+          "title": "Favourites & Lesson Plans",
+          "description": "Save activities to your favourites and build reusable lesson plans. Your personalised teaching toolkit, always ready."
+        },
+        "teachers": {
+          "title": "Built for Teachers",
+          "description": "Designed with secondary and university CS teachers in mind. Every feature targets the real-world challenges of planning engaging CS lessons."
+        },
+        "research": {
+          "title": "Research-Backed",
+          "description": "Developed at TUM's Applied Education Technologies chair. Material follows state-of-the-art education research."
+        }
+      }
+    },
+    "imageRows": {
+      "recommendations": {
+        "title": "Tell us what you need — we find the right activity",
+        "description": "Enter your learning objectives, student age group, and available time. The AI recommendation engine analyses the full activity library and ranks the best matches for your exact teaching context.",
+        "cta": "Try Recommendations",
+        "imageAlt": "AI recommendation results"
+      },
+      "library": {
+        "title": "Hundreds of curated activities, one search away",
+        "description": "Our library spans CS Unplugged, Code.org, Barefoot Computing, and more. Filter by topic, format, grade level, and duration to find the perfect fit.",
+        "cta": "Browse Library",
+        "imageAlt": "Activity library view"
+      }
+    },
+    "cta": {
+      "title": "Ready to transform your CS lessons?",
+      "description": "Join teachers already using LEARN-Hub to discover and plan engaging computer science activities. No account needed to start.",
+      "primaryCta": "Get Started Free",
+      "secondaryCta": "Browse Activities",
+      "signUpPrompt": "Teachers can",
+      "signUpLink": "create a free account",
+      "signUpSuffix": "for favourites, history, and lesson plans."
+    }
   },
   "common": {
     "loading": "Loading...",

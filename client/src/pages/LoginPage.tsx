@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,10 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  getPostLoginRedirectPath,
+  type AuthRedirectState,
+} from "@/utils/authRedirect";
 import {
   LogIn,
   Mail,
@@ -49,17 +53,26 @@ export const LoginPage: React.FC = () => {
     resetPassword,
     user,
   } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const loginLocationState = location.state as AuthRedirectState | null;
+  const postLoginRedirectPath = getPostLoginRedirectPath(loginLocationState);
 
   // Handle redirect after user state is updated
   useEffect(() => {
     if (shouldRedirect && user && redirectPath) {
-      navigate(redirectPath);
+      navigate(redirectPath, { replace: true });
       setShouldRedirect(false);
       setRedirectPath("");
     }
   }, [user, shouldRedirect, redirectPath, navigate]);
+
+  useEffect(() => {
+    if (loginLocationState?.message) {
+      setSuccessMessage(loginLocationState.message);
+    }
+  }, [loginLocationState?.message]);
 
   const setErrorMessage = (msg: string) => {
     setIsSuccess(false);
@@ -87,7 +100,7 @@ export const LoginPage: React.FC = () => {
           result = await login(formData.email, formData.password);
           if (result.success) {
             setSuccessMessage(t("login.loginSuccessRedirecting"));
-            setRedirectPath("/recommendations");
+            setRedirectPath(postLoginRedirectPath);
             setShouldRedirect(true);
           }
           break;
@@ -112,7 +125,7 @@ export const LoginPage: React.FC = () => {
           result = await verificationCodeLogin(formData.code, formData.email);
           if (result.success) {
             setSuccessMessage(t("login.loginSuccessRedirecting"));
-            setRedirectPath("/recommendations");
+            setRedirectPath(postLoginRedirectPath);
             setShouldRedirect(true);
           }
           break;

@@ -19,11 +19,10 @@ import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { openPdfInNewTab } from "@/utils/pdf";
-
-interface ActivityDetailsLocationState {
-  backTo?: string;
-  restoreScrollY?: number;
-}
+import {
+  getActivityBackTarget,
+  type ActivityNavigationState,
+} from "@/utils/activityNavigation";
 
 export const ActivityDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,8 +32,8 @@ export const ActivityDetails: React.FC = () => {
   const isAdmin = user?.role === "ADMIN";
   const { t } = useTranslation();
 
-  const navigationState = location.state as ActivityDetailsLocationState | null;
-  const backTo = navigationState?.backTo;
+  const navigationState = location.state as ActivityNavigationState | null;
+  const backTo = getActivityBackTarget(navigationState?.backTo);
   const restoreScrollY = navigationState?.restoreScrollY;
 
   const documentApi = useApi();
@@ -242,7 +241,14 @@ export const ActivityDetails: React.FC = () => {
             <FavouriteButton activityId={activity.id} size="default" />
             {isAdmin && (
               <Button
-                onClick={() => navigate(`/activity-edit/${activity.id}`)}
+                onClick={() =>
+                  navigate(`/activity-edit/${activity.id}`, {
+                    state: {
+                      backTo,
+                      restoreScrollY,
+                    } satisfies ActivityNavigationState,
+                  })
+                }
                 variant="outline"
                 className="flex items-center gap-2"
               >

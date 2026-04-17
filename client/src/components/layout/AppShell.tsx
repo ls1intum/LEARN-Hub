@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useEnvironment } from "@/hooks/useEnvironment";
 import { getEnvironmentDisplayText } from "@/utils/environment";
+import { getLoginRedirectState } from "@/utils/authRedirect";
 import { useTranslation } from "react-i18next";
 import { Menu, LogIn, LogOut, Settings } from "lucide-react";
 import {
@@ -125,6 +126,7 @@ const UserAvatarDropdown: React.FC<UserAvatarDropdownProps> = ({
 const SharedHeader: React.FC = () => {
   const { t } = useTranslation();
   const { user, isAuthenticated, logout } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const { hasSidebar, toggleMobile } = useSidebar();
   const { environment } = useEnvironment();
@@ -199,7 +201,11 @@ const SharedHeader: React.FC = () => {
           {isGuest ? (
             <Button
               size="sm"
-              onClick={() => navigate("/login")}
+              onClick={() =>
+                navigate("/login", {
+                  state: getLoginRedirectState(location),
+                })
+              }
               className="ml-1 bg-primary-foreground text-primary hover:bg-primary-foreground/90 h-8 px-3 text-sm font-medium"
             >
               <LogIn className="h-3.5 w-3.5 mr-1.5" />

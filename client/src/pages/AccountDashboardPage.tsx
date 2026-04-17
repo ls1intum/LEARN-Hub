@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,11 +23,13 @@ import {
   History,
 } from "lucide-react";
 import { logger } from "@/services/logger";
+import { getLoginRedirectState } from "@/utils/authRedirect";
 import type { UpdateProfileRequest } from "@/types/api";
 import { useTranslation } from "react-i18next";
 
 export const AccountDashboardPage: React.FC = () => {
   const { user, updateProfile, deleteAccount } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
@@ -167,7 +169,7 @@ export const AccountDashboardPage: React.FC = () => {
   };
 
   const handleRegisterClick = () => {
-    navigate("/login");
+    navigate("/login", { state: getLoginRedirectState(location) });
   };
 
   if (isGuest) {
