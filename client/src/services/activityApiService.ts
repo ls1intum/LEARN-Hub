@@ -210,6 +210,31 @@ export const ActivityApi = {
   },
 
   /**
+   * Re-generate a single exercise image with an optional custom prompt.
+   */
+  async regenerateImage(params: {
+    imageId: string;
+    description: string;
+    customPrompt?: string;
+    exerciseContext?: string;
+  }): Promise<string> {
+    const data = await ApiRequestMixin.request<{ imageMarkdown: string }>(
+      "/api/activities/regenerate-image",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageId: params.imageId,
+          description: params.description,
+          customPrompt: params.customPrompt ?? "",
+          exerciseContext: params.exerciseContext ?? "",
+        }),
+      },
+    );
+    return data.imageMarkdown;
+  },
+
+  /**
    * Generate all activity markdowns (Deckblatt, Artikulationsschema, Hintergrundwissen).
    */
   async generateActivityMarkdowns(

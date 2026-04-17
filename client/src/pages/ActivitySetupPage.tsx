@@ -26,7 +26,10 @@ import {
 } from "@/components/forms/ActivityForm";
 import { StepIndicator } from "@/components/ui/StepIndicator";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { MarkdownEditorWithPreview } from "@/components/ui/MarkdownEditorWithPreview";
+import {
+  MarkdownEditorWithPreview,
+  type RegenerateImageParams,
+} from "@/components/ui/MarkdownEditorWithPreview";
 import { logger } from "@/services/logger";
 import type { Activity } from "@/types/activity";
 import type { FormFieldData } from "@/types/api";
@@ -103,6 +106,20 @@ export const ActivitySetupPage: React.FC = () => {
 
   // Final save state
   const [isSaving, setIsSaving] = useState(false);
+
+  const handleRegenerateImage = useCallback(
+    async (params: RegenerateImageParams) => {
+      return apiService.regenerateImage({
+        imageId: params.imageId,
+        description: params.description,
+        customPrompt: params.customPrompt,
+        exerciseContext: [uebungMarkdown, uebungLoesungMarkdown]
+          .filter(Boolean)
+          .join("\n\n"),
+      });
+    },
+    [uebungMarkdown, uebungLoesungMarkdown],
+  );
 
   /** Whether the currently active markdown tab already has content */
   const activeTabHasContent =
@@ -771,6 +788,7 @@ export const ActivitySetupPage: React.FC = () => {
                   value={uebungMarkdown}
                   onChange={setUebungMarkdown}
                   renderPreviewFn={renderPreviewPortrait}
+                  onRegenerateImage={handleRegenerateImage}
                 />
               )}
               {activeMarkdownTab === "uebung_loesung" && (
@@ -778,6 +796,7 @@ export const ActivitySetupPage: React.FC = () => {
                   value={uebungLoesungMarkdown}
                   onChange={setUebungLoesungMarkdown}
                   renderPreviewFn={renderPreviewPortrait}
+                  onRegenerateImage={handleRegenerateImage}
                 />
               )}
             </>

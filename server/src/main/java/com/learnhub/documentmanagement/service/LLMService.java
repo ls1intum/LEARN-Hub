@@ -52,6 +52,11 @@ public class LLMService {
 			.followRedirects(HttpClient.Redirect.NORMAL)
 			.build();
 	private static final List<String> EXERCISE_IMAGE_REPLACEMENT_ORDER = List.of("uebung", "uebung_loesung");
+	// Strips embedded base64 image data (and their learnhub HTML comments) from markdown
+	// to prevent sending megabytes of image data to text/image LLMs as context.
+	private static final Pattern EMBEDDED_IMAGE_PATTERN = Pattern.compile(
+			"(?:<!--\\s*learnhub-image[^>]*-->\\s*)?!\\[[^\\]]*\\]\\(data:[^;)\"'\\s]+;base64,[A-Za-z0-9+/]+=*\\)",
+			Pattern.DOTALL);
 
 	@Value("${llm.visual.model:}")
 	private String visualModelName;
@@ -417,24 +422,32 @@ public class LLMService {
 		return replaced.toString();
 	}
 
-	String generateImageMarkdown(String description, String pdfText) {
+	public String generateImageMarkdown(String id, String description, String contextText) {
 		if (exerciseImageModel == null) {
 			throw new IllegalStateException("Exercise image model is not configured");
 		}
 
-		ImageResponse response = exerciseImageModel.call(new ImagePrompt(buildExerciseImagePrompt(description, pdfText)));
+		ImageResponse response = exerciseImageModel.call(new ImagePrompt(buildExerciseImagePrompt(description, contextText)));
 		if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
 			throw new IllegalStateException("Image model returned an empty response");
 		}
 
+		String altText = StringUtils.hasText(id) ? id : GENERATED_IMAGE_ALT_TEXT;
+		String comment = buildImageComment(id, description);
 		Image image = response.getResult().getOutput();
 		if (StringUtils.hasText(image.getB64Json())) {
-			return "![" + GENERATED_IMAGE_ALT_TEXT + "](data:image/png;base64," + image.getB64Json() + ")";
+			return comment + "\n![" + altText + "](data:image/png;base64," + image.getB64Json() + ")";
 		}
 		if (StringUtils.hasText(image.getUrl())) {
-			return toMarkdownImageFromUrl(image.getUrl());
+			return comment + "\n" + toMarkdownImageFromUrl(image.getUrl(), altText);
 		}
 		throw new IllegalStateException("Image model response contained neither base64 image data nor a URL");
+	}
+
+	private String buildImageComment(String id, String description) {
+		String safeId = id != null ? id : "";
+		String safeDesc = description != null ? description.replace("-->", "-- >") : "";
+		return "<!-- learnhub-image:id=" + safeId + "; prompt=" + safeDesc + " -->";
 	}
 
 	private String generateImageMarkdownSafely(ImagePlaceholder placeholder, String pdfText) {
@@ -444,16 +457,23 @@ public class LLMService {
 		}
 
 		try {
-			return generateImageMarkdown(placeholder.description(), pdfText);
+			return generateImageMarkdown(placeholder.id(), placeholder.description(), pdfText);
 		} catch (Exception e) {
 			logger.warn("Failed to replace image placeholder '{}': {}", placeholder.description(), e.getMessage());
 			return placeholder.marker();
 		}
 	}
 
+	static String stripEmbeddedImages(String markdown) {
+		if (markdown == null || markdown.isEmpty()) {
+			return markdown;
+		}
+		return EMBEDDED_IMAGE_PATTERN.matcher(markdown).replaceAll("[Bild]");
+	}
+
 	String buildExerciseImagePrompt(String description, String contextText) {
 		String normalizedDescription = description == null ? "" : description.trim();
-		String normalizedContextText = contextText == null ? "" : contextText.trim();
+		String normalizedContextText = stripEmbeddedImages(contextText == null ? "" : contextText.trim());
 		if (exerciseImagePromptResource == null) {
 			return DEFAULT_EXERCISE_IMAGE_PROMPT_TEMPLATE
 					.replace("{contextText}", normalizedContextText)
@@ -463,7 +483,7 @@ public class LLMService {
 				.render(Map.of("description", normalizedDescription, "contextText", normalizedContextText));
 	}
 
-	private String toMarkdownImageFromUrl(String imageUrl) {
+	private String toMarkdownImageFromUrl(String imageUrl, String altText) {
 		try {
 			HttpRequest request = HttpRequest.newBuilder(URI.create(imageUrl))
 					.GET()
@@ -479,7 +499,7 @@ public class LLMService {
 					.filter(StringUtils::hasText)
 					.orElseGet(() -> inferImageMimeType(imageUrl));
 			String base64 = Base64.getEncoder().encodeToString(response.body());
-			return "![" + GENERATED_IMAGE_ALT_TEXT + "](data:" + mimeType + ";base64," + base64 + ")";
+			return "![" + altText + "](data:" + mimeType + ";base64," + base64 + ")";
 		} catch (Exception e) {
 			throw new IllegalStateException("Failed to download generated image from URL", e);
 		}

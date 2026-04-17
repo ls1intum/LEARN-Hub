@@ -25,7 +25,10 @@ import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { StepIndicator } from "@/components/ui/StepIndicator";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { MarkdownEditorWithPreview } from "@/components/ui/MarkdownEditorWithPreview";
+import {
+  MarkdownEditorWithPreview,
+  type RegenerateImageParams,
+} from "@/components/ui/MarkdownEditorWithPreview";
 import { logger } from "@/services/logger";
 import type { Activity } from "@/types/activity";
 import {
@@ -98,6 +101,20 @@ export const ActivityEditPage: React.FC = () => {
   // Document ID for AI regeneration (from persisted source_pdf)
   const documentId =
     activity?.documents?.find((d) => d.type === "source_pdf")?.id || null;
+
+  const handleRegenerateImage = useCallback(
+    async (params: RegenerateImageParams) => {
+      return apiService.regenerateImage({
+        imageId: params.imageId,
+        description: params.description,
+        customPrompt: params.customPrompt,
+        exerciseContext: [uebungMarkdown, uebungLoesungMarkdown]
+          .filter(Boolean)
+          .join("\n\n"),
+      });
+    },
+    [uebungMarkdown, uebungLoesungMarkdown],
+  );
 
   /** Whether the currently active markdown tab already has content */
   const activeTabHasContent =
@@ -632,6 +649,7 @@ export const ActivityEditPage: React.FC = () => {
                   value={uebungMarkdown}
                   onChange={setUebungMarkdown}
                   renderPreviewFn={renderPreviewPortrait}
+                  onRegenerateImage={handleRegenerateImage}
                 />
               )}
               {activeMarkdownTab === "uebung_loesung" && (
@@ -639,6 +657,7 @@ export const ActivityEditPage: React.FC = () => {
                   value={uebungLoesungMarkdown}
                   onChange={setUebungLoesungMarkdown}
                   renderPreviewFn={renderPreviewPortrait}
+                  onRegenerateImage={handleRegenerateImage}
                 />
               )}
             </>

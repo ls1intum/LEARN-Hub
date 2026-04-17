@@ -7,7 +7,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FileText, Loader2, Eye, Edit3, Code2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { FileText, Loader2, Eye, Edit3, Code2, RefreshCw } from "lucide-react";
 import { logger } from "@/services/logger";
 import { useTranslation } from "react-i18next";
 
@@ -98,6 +106,143 @@ const CollapsedSourceView: React.FC<{
   );
 };
 
+// ─── Image Regeneration Helpers ──────────────────────────────────
+
+interface EmbeddedImage {
+  position: number; // 1-based
+  id: string;       // alt text / image ID
+  description: string; // from HTML comment prompt, or empty
+}
+
+// Matches optional <!-- learnhub-image:id=...; prompt=... --> then the image tag
+const IMAGE_BLOCK_RE =
+  /(?:<!--\s*learnhub-image:id=([^;]*?);\s*prompt=([\s\S]*?)\s*-->\s*)?!\[([^\]]*)\]\(data:[^;]+;base64,[A-Za-z0-9+/]+=*\)/g;
+
+function parseEmbeddedImages(markdown: string): EmbeddedImage[] {
+  const images: EmbeddedImage[] = [];
+  IMAGE_BLOCK_RE.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let pos = 1;
+  while ((match = IMAGE_BLOCK_RE.exec(markdown)) !== null) {
+    const id = (match[1] ?? match[3] ?? "").trim() || `image-${pos}`;
+    const description = (match[2] ?? "").trim();
+    images.push({ position: pos++, id, description });
+  }
+  return images;
+}
+
+function replaceImageAtPosition(
+  markdown: string,
+  position: number,
+  newBlock: string,
+): string {
+  IMAGE_BLOCK_RE.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  let pos = 1;
+  while ((match = IMAGE_BLOCK_RE.exec(markdown)) !== null) {
+    if (pos === position) {
+      return markdown.slice(0, match.index) + newBlock + markdown.slice(match.index + match[0].length);
+    }
+    pos++;
+  }
+  return markdown;
+}
+
+// ─── Image Regeneration Bar ───────────────────────────────────────
+
+export interface RegenerateImageParams {
+  imageId: string;
+  description: string;
+  customPrompt: string;
+}
+
+const ImageRegenerationBar: React.FC<{
+  value: string;
+  onChange: (value: string) => void;
+  onRegenerateImage: (params: RegenerateImageParams) => Promise<string>;
+}> = ({ value, onChange, onRegenerateImage }) => {
+  const { t } = useTranslation();
+  const images = parseEmbeddedImages(value);
+  const [selectedPosition, setSelectedPosition] = useState<number>(1);
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Clamp selection when image list changes
+  useEffect(() => {
+    if (images.length > 0 && !images.find((i) => i.position === selectedPosition)) {
+      setSelectedPosition(images[0].position);
+    }
+  }, [images.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (images.length === 0) return null;
+
+  const selectedImage = images.find((i) => i.position === selectedPosition) ?? images[0];
+
+  const handleRegenerate = async () => {
+    setError(null);
+    setIsRegenerating(true);
+    try {
+      const newBlock = await onRegenerateImage({
+        imageId: selectedImage.id,
+        description: selectedImage.description,
+        customPrompt,
+      });
+      onChange(replaceImageAtPosition(value, selectedImage.position, newBlock));
+    } catch (e) {
+      logger.error("Image regeneration failed", e, "ImageRegenerationBar");
+      setError(t("markdownEditor.imageRegenError"));
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-1.5 mb-3">
+      <div className="flex flex-wrap items-center gap-2 rounded-md border bg-muted/30 px-3 py-2">
+        <Select
+          value={String(selectedPosition)}
+          onValueChange={(v) => setSelectedPosition(Number(v))}
+          disabled={isRegenerating}
+        >
+          <SelectTrigger className="h-8 w-auto min-w-[180px] max-w-[260px] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {images.map((img) => (
+              <SelectItem key={img.position} value={String(img.position)} className="text-xs">
+                #{img.position} – {img.id}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          value={customPrompt}
+          onChange={(e) => setCustomPrompt(e.target.value)}
+          placeholder={t("markdownEditor.imagePromptPlaceholder")}
+          className="h-8 text-xs flex-1 min-w-[160px]"
+          disabled={isRegenerating}
+        />
+        <Button
+          size="sm"
+          variant="secondary"
+          className="h-8 text-xs shrink-0"
+          onClick={handleRegenerate}
+          disabled={isRegenerating}
+        >
+          {isRegenerating ? (
+            <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5 mr-1" />
+          )}
+          {t("markdownEditor.regenerateImage")}
+        </Button>
+      </div>
+      {error && <p className="text-xs text-destructive px-1">{error}</p>}
+    </div>
+  );
+};
+
 // ─── Types ───────────────────────────────────────────────────────
 
 interface MarkdownEditorWithPreviewProps {
@@ -107,13 +252,15 @@ interface MarkdownEditorWithPreviewProps {
   onChange: (value: string) => void;
   /** Async function that converts markdown to a PDF blob */
   renderPreviewFn: (markdown: string) => Promise<Blob>;
+  /** When provided, shows the image re-generation toolbar above the editor */
+  onRegenerateImage?: (params: RegenerateImageParams) => Promise<string>;
 }
 
 // ─── Component ───────────────────────────────────────────────────
 
 export const MarkdownEditorWithPreview: React.FC<
   MarkdownEditorWithPreviewProps
-> = ({ value, onChange, renderPreviewFn }) => {
+> = ({ value, onChange, renderPreviewFn, onRegenerateImage }) => {
   const { t } = useTranslation();
 
   // PDF preview state
@@ -254,6 +401,13 @@ export const MarkdownEditorWithPreview: React.FC<
 
   return (
     <>
+      {onRegenerateImage && (
+        <ImageRegenerationBar
+          value={value}
+          onChange={onChange}
+          onRegenerateImage={onRegenerateImage}
+        />
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-16rem)]">
         {/* Left: Markdown Editor */}
         <Card className="flex flex-col min-h-0">

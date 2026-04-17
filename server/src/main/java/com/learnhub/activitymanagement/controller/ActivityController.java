@@ -227,6 +227,25 @@ public class ActivityController {
 		return ResponseEntity.status(201).body(toMetadataExtractionResponse(result));
 	}
 
+	@PostMapping("/regenerate-image")
+	@PreAuthorize("hasRole('ADMIN')")
+	@SecurityRequirement(name = "BearerAuth")
+	@Operation(summary = "Regenerate exercise image", description = "Re-generate a single exercise image with an optional custom prompt (admin only)")
+	public ResponseEntity<Map<String, String>> regenerateImage(
+			@RequestBody com.learnhub.activitymanagement.dto.request.RegenerateImageRequest request) {
+		logger.info("POST /api/activities/regenerate-image called");
+		String description = request.getDescription() != null ? request.getDescription().trim() : "";
+		String finalDescription = description;
+		if (org.springframework.util.StringUtils.hasText(request.getCustomPrompt())) {
+			finalDescription = description
+					+ (description.isEmpty() ? "" : "\n\nAdditional instructions:\n")
+					+ request.getCustomPrompt().trim();
+		}
+		String contextText = request.getExerciseContext() != null ? request.getExerciseContext() : "";
+		String imageMarkdown = llmService.generateImageMarkdown(request.getImageId(), finalDescription, contextText);
+		return ResponseEntity.ok(Map.of("imageMarkdown", imageMarkdown));
+	}
+
 	@PostMapping("/regenerate-metadata")
 	@PreAuthorize("hasRole('ADMIN')")
 	@SecurityRequirement(name = "BearerAuth")

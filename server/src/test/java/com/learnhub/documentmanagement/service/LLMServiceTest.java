@@ -76,7 +76,7 @@ class LLMServiceTest {
 		CountingImageModel imageModel = new CountingImageModel("ZmFrZS1pbWFnZQ==");
 		LLMService service = new LLMService(unsupportedChatClient(), imageModel);
 
-		service.generateImageMarkdown("Ein 4x4-Labyrinth mit Start unten links.", "Im Material geht es um Wege im Raster.");
+		service.generateImageMarkdown("labyrinth-1", "Ein 4x4-Labyrinth mit Start unten links.", "Im Material geht es um Wege im Raster.");
 
 		assertThat(imageModel.lastPromptText).contains("school exercise sheets")
 				.contains("must be accurate enough")
