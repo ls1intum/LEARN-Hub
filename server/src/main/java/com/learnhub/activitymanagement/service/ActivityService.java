@@ -12,6 +12,7 @@ import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.exception.ResourceNotFoundException;
 import com.learnhub.service.SanitizationService;
+import com.learnhub.usermanagement.repository.UserFavouritesRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ActivityService {
@@ -48,6 +50,9 @@ public class ActivityService {
 
 	@Autowired
 	private SanitizationService sanitizationService;
+
+	@Autowired
+	private UserFavouritesRepository userFavouritesRepository;
 
 	public long countActivitiesWithFilters(String name, Integer ageMin, Integer ageMax, Integer durationMin,
 			Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
@@ -147,13 +152,13 @@ public class ActivityService {
 
 	private EnergyLevel convertStringToEnergyLevel(String value) {
 		switch (value.toLowerCase()) {
-			case "low" :
+			case "low":
 				return EnergyLevel.LOW;
-			case "medium" :
+			case "medium":
 				return EnergyLevel.MEDIUM;
-			case "high" :
+			case "high":
 				return EnergyLevel.HIGH;
-			default :
+			default:
 				throw new IllegalArgumentException(
 						"Invalid energy level: " + value + ". Must be 'low', 'medium', or 'high'");
 		}
@@ -262,6 +267,7 @@ public class ActivityService {
 
 	public void deleteActivity(UUID id) {
 		logger.debug("Deleting activity with id={}", id);
+		userFavouritesRepository.deleteByActivityId(id);
 		activityRepository.deleteById(id);
 	}
 

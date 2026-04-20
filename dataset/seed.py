@@ -5,10 +5,15 @@ Seed and export script for LEARN-Hub activities.
 Subcommands:
     seed    Upload PDFs and create activities from the dataset CSV.
     export  Fetch generated markdowns from the server and write them back into the CSV.
+    delete  Delete selected activities from the server.
+    delete-all
+            Delete all activities from the server.
 
 Usage:
     python seed.py seed [options]
     python seed.py export [options]
+    python seed.py delete [options]
+    python seed.py delete-all [options]
 
 See --help on each subcommand for details.
 
@@ -30,8 +35,7 @@ from pathlib import Path
 try:
     import requests
 except ImportError:
-    print("Error: 'requests' package is required. Install it with: pip install requests")
-    sys.exit(1)
+    requests = None
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 CSV_PATH = SCRIPT_DIR / "dataset.csv"
@@ -75,11 +79,25 @@ def read_csv() -> tuple[list[str], list[dict]]:
         return list(reader.fieldnames), list(reader)
 
 
-def fetch_activities(base_url: str, timeout: int) -> list[dict]:
-    """Fetch all activities with their markdowns from the API (no auth required)."""
+def require_requests():
+    """Fail clearly when a network command is run without the requests package."""
+    if requests is None:
+        print("Error: 'requests' package is required. Install it with: pip install requests")
+        sys.exit(1)
+
+
+def auth_headers(token: str) -> dict[str, str]:
+    """Build authorization headers for admin endpoints."""
+    return {"Authorization": f"Bearer {token}"}
+
+
+def fetch_activities(base_url: str, timeout: int, token: str | None = None) -> list[dict]:
+    """Fetch all activities with their markdowns from the API."""
+    headers = auth_headers(token) if token else None
     resp = requests.get(
         f"{base_url}/api/activities/",
         params={"limit": 1000, "offset": 0},
+        headers=headers,
         timeout=timeout,
     )
     if resp.status_code != 200:
@@ -118,6 +136,28 @@ def login(base_url: str, email: str, password: str, timeout: int) -> str:
         sys.exit(1)
 
     return token
+
+
+def confirm_or_exit(message: str, assume_yes: bool = False):
+    """Require an explicit confirmation for destructive operations."""
+    if assume_yes:
+        return
+
+    answer = input(f"{message}\nType 'yes' to continue: ").strip().lower()
+    if answer != "yes":
+        print("Aborted.")
+        sys.exit(1)
+
+
+def delete_activity(base_url: str, token: str, activity_id: str, timeout: int):
+    """Delete one activity by ID."""
+    resp = requests.delete(
+        f"{base_url}/api/activities/{activity_id}",
+        headers=auth_headers(token),
+        timeout=timeout,
+    )
+    if resp.status_code not in (200, 204):
+        raise RuntimeError(f"Delete failed ({resp.status_code}): {resp.text}")
 
 
 # ---------------------------------------------------------------------------
@@ -336,6 +376,183 @@ def cmd_seed(args):
 
 
 # ---------------------------------------------------------------------------
+# Subcommands: delete / delete-all
+# ---------------------------------------------------------------------------
+
+def csv_filenames_to_names(filenames: list[str]) -> tuple[list[str], list[str]]:
+    """Resolve CSV PDF filenames to activity names. Returns (names, missing filenames)."""
+    if not CSV_PATH.exists():
+        print(f"Error: CSV file not found at {CSV_PATH}")
+        sys.exit(1)
+
+    _, rows = read_csv()
+    names_by_filename = {row.get("filename", ""): row.get("name", "") for row in rows}
+
+    names = []
+    missing = []
+    for filename in filenames:
+        name = names_by_filename.get(filename)
+        if name:
+            names.append(name)
+        else:
+            missing.append(filename)
+    return names, missing
+
+
+def find_activities_by_name(activities: list[dict], names: list[str]) -> tuple[list[dict], list[str]]:
+    """Find activities by exact name, case-insensitively. Returns (matches, missing names)."""
+    activities_by_name: dict[str, list[dict]] = {}
+    for activity in activities:
+        name = activity.get("name", "")
+        if name:
+            activities_by_name.setdefault(name.casefold(), []).append(activity)
+
+    matches = []
+    missing = []
+    for name in names:
+        found = activities_by_name.get(name.casefold(), [])
+        if found:
+            matches.extend(found)
+        else:
+            missing.append(name)
+    return matches, missing
+
+
+def unique_delete_targets(targets: list[dict]) -> list[dict]:
+    """Deduplicate delete targets by activity ID while preserving order."""
+    unique = []
+    seen = set()
+    for target in targets:
+        activity_id = target.get("id")
+        if not activity_id or activity_id in seen:
+            continue
+        unique.append(target)
+        seen.add(activity_id)
+    return unique
+
+
+def print_delete_plan(targets: list[dict]):
+    for target in targets:
+        name = target.get("name")
+        if name:
+            print(f"  - {name} ({target.get('id')})")
+        else:
+            print(f"  - {target.get('id')}")
+
+
+def delete_targets(base_url: str, token: str, timeout: int, targets: list[dict]) -> tuple[int, int]:
+    succeeded = 0
+    failed = 0
+
+    for i, target in enumerate(targets, 1):
+        activity_id = target.get("id")
+        label = target.get("name") or activity_id
+        print(f"[{i}/{len(targets)}] Deleting {label}...")
+        try:
+            delete_activity(base_url, token, activity_id, timeout)
+            print("  Deleted")
+            succeeded += 1
+        except Exception as e:
+            print(f"  FAILED: {e}")
+            failed += 1
+
+    return succeeded, failed
+
+
+def cmd_delete(args):
+    if not args.password:
+        print("Error: Admin password is required. Use --password or set SEED_ADMIN_PASSWORD.")
+        sys.exit(1)
+
+    if not args.id and not args.name and not args.only:
+        print("Error: Provide at least one of --id, --name, or --only.")
+        sys.exit(1)
+
+    print(f"\nLogging in as {args.email} at {args.base_url}...")
+    token = login(args.base_url, args.email, args.password, args.timeout)
+    print("Authenticated successfully.\n")
+
+    targets = [{"id": activity_id} for activity_id in (args.id or [])]
+
+    names_to_delete = list(args.name or [])
+    if args.only:
+        csv_names, missing_filenames = csv_filenames_to_names(args.only)
+        names_to_delete.extend(csv_names)
+        if missing_filenames:
+            print(f"Warning: {len(missing_filenames)} filename(s) not found in {CSV_PATH.name}:")
+            for filename in missing_filenames:
+                print(f"  - {filename}")
+
+    if names_to_delete:
+        print(f"Fetching activities from {args.base_url}...")
+        activities = fetch_activities(args.base_url, args.timeout, token)
+        name_matches, missing_names = find_activities_by_name(activities, names_to_delete)
+        targets.extend(name_matches)
+
+        if missing_names:
+            print(f"Warning: {len(missing_names)} activity name(s) not found on server:")
+            for name in missing_names:
+                print(f"  - {name}")
+
+    targets = unique_delete_targets(targets)
+    if not targets:
+        print("No matching activities to delete.")
+        sys.exit(1)
+
+    print(f"\nActivities selected for deletion ({len(targets)}):")
+    print_delete_plan(targets)
+
+    confirm_or_exit(
+        f"\nThis will permanently delete {len(targets)} activity record(s).",
+        args.yes,
+    )
+
+    succeeded, failed = delete_targets(args.base_url, token, args.timeout, targets)
+
+    print("=" * 60)
+    print(f"Delete complete: {succeeded} deleted, {failed} failed")
+    print("=" * 60)
+
+    if failed > 0:
+        sys.exit(1)
+
+
+def cmd_delete_all(args):
+    if not args.password:
+        print("Error: Admin password is required. Use --password or set SEED_ADMIN_PASSWORD.")
+        sys.exit(1)
+
+    print(f"\nLogging in as {args.email} at {args.base_url}...")
+    token = login(args.base_url, args.email, args.password, args.timeout)
+    print("Authenticated successfully.\n")
+
+    print(f"Fetching activities from {args.base_url}...")
+    activities = fetch_activities(args.base_url, args.timeout, token)
+    targets = unique_delete_targets(activities)
+
+    if not targets:
+        print("No activities to delete.")
+        return
+
+    print(f"\nAll activities selected for deletion ({len(targets)}):")
+    print_delete_plan(targets)
+
+    confirm_or_exit(
+        f"\nThis will permanently delete all {len(targets)} activity record(s).",
+        args.yes,
+    )
+
+    succeeded, failed = delete_targets(args.base_url, token, args.timeout, targets)
+
+    print("=" * 60)
+    print(f"Delete-all complete: {succeeded} deleted, {failed} failed")
+    print("=" * 60)
+
+    if failed > 0:
+        sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
 # Subcommand: export
 # ---------------------------------------------------------------------------
 
@@ -440,12 +657,71 @@ def main():
         help="Output CSV path (default: overwrite dataset.csv in-place)",
     )
 
+    # -- delete --
+    delete_parser = subparsers.add_parser("delete", help="Delete selected activities")
+    delete_parser.add_argument(
+        "--email",
+        default=os.environ.get("SEED_ADMIN_EMAIL", "admin@learnhub.com"),
+        help="Admin email (default: $SEED_ADMIN_EMAIL or admin@learnhub.com)",
+    )
+    delete_parser.add_argument(
+        "--password",
+        default=os.environ.get("SEED_ADMIN_PASSWORD"),
+        help="Admin password (default: $SEED_ADMIN_PASSWORD)",
+    )
+    delete_parser.add_argument(
+        "--id",
+        nargs="+",
+        metavar="UUID",
+        help="Delete activities by server UUID",
+    )
+    delete_parser.add_argument(
+        "--name",
+        nargs="+",
+        metavar="NAME",
+        help="Delete activities by exact activity name (quote names containing spaces)",
+    )
+    delete_parser.add_argument(
+        "--only",
+        nargs="+",
+        metavar="FILENAME",
+        help="Delete activities whose names match these CSV PDF filenames",
+    )
+    delete_parser.add_argument(
+        "-y", "--yes",
+        action="store_true",
+        help="Skip the confirmation prompt",
+    )
+
+    # -- delete-all --
+    delete_all_parser = subparsers.add_parser("delete-all", help="Delete all activities")
+    delete_all_parser.add_argument(
+        "--email",
+        default=os.environ.get("SEED_ADMIN_EMAIL", "admin@learnhub.com"),
+        help="Admin email (default: $SEED_ADMIN_EMAIL or admin@learnhub.com)",
+    )
+    delete_all_parser.add_argument(
+        "--password",
+        default=os.environ.get("SEED_ADMIN_PASSWORD"),
+        help="Admin password (default: $SEED_ADMIN_PASSWORD)",
+    )
+    delete_all_parser.add_argument(
+        "-y", "--yes",
+        action="store_true",
+        help="Skip the confirmation prompt",
+    )
+
     args = parser.parse_args()
+    require_requests()
 
     if args.command == "seed":
         cmd_seed(args)
     elif args.command == "export":
         cmd_export(args)
+    elif args.command == "delete":
+        cmd_delete(args)
+    elif args.command == "delete-all":
+        cmd_delete_all(args)
 
 
 if __name__ == "__main__":

@@ -60,7 +60,7 @@ The LEARN-Hub server must be running and accessible.
 
 ## Usage
 
-The `seed.py` script has two subcommands: `seed` and `export`.
+The `seed.py` script has four subcommands: `seed`, `export`, `delete`, and `delete-all`.
 
 ### Seeding activities
 
@@ -96,6 +96,27 @@ python seed.py export -o dataset_backup.csv
 
 # Export from a different server
 python seed.py --base-url https://learnhub-test.aet.cit.tum.de export
+```
+
+### Deleting activities
+
+Deletes activities through the admin API. By default, destructive commands ask for confirmation; add `--yes` to run non-interactively.
+
+```bash
+# Delete by server UUID
+python seed.py delete --password <admin-password> --id <activity-id>
+
+# Delete by exact activity name
+python seed.py delete --password <admin-password> --name "Pizza Party"
+
+# Delete activities matching CSV PDF filenames
+python seed.py delete --password <admin-password> --only barefoot-pizzaparty.pdf
+
+# Delete all activities on the server
+python seed.py delete-all --password <admin-password>
+
+# Delete all activities without an interactive prompt
+python seed.py delete-all --password <admin-password> --yes
 ```
 
 ### Typical workflow

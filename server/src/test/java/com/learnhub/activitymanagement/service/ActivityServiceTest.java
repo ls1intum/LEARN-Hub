@@ -22,6 +22,7 @@ import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.service.SanitizationService;
+import com.learnhub.usermanagement.repository.UserFavouritesRepository;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -43,6 +45,7 @@ class ActivityServiceTest {
 	private PDFDocumentRepository pdfDocumentRepository;
 	private PDFService pdfService;
 	private LLMService llmService;
+	private UserFavouritesRepository userFavouritesRepository;
 
 	@BeforeEach
 	void setUp() {
@@ -52,12 +55,14 @@ class ActivityServiceTest {
 		pdfDocumentRepository = mock(PDFDocumentRepository.class);
 		pdfService = mock(PDFService.class);
 		llmService = mock(LLMService.class);
+		userFavouritesRepository = mock(UserFavouritesRepository.class);
 
 		ReflectionTestUtils.setField(activityService, "activityRepository", activityRepository);
 		ReflectionTestUtils.setField(activityService, "pdfDocumentRepository", pdfDocumentRepository);
 		ReflectionTestUtils.setField(activityService, "pdfService", pdfService);
 		ReflectionTestUtils.setField(activityService, "extractionService", extractionService);
 		ReflectionTestUtils.setField(activityService, "sanitizationService", new SanitizationService());
+		ReflectionTestUtils.setField(activityService, "userFavouritesRepository", userFavouritesRepository);
 		ReflectionTestUtils.setField(extractionService, "pdfService", pdfService);
 		ReflectionTestUtils.setField(extractionService, "llmService", llmService);
 	}
@@ -139,6 +144,17 @@ class ActivityServiceTest {
 
 		assertThatThrownBy(() -> activityService.createActivityFromMap(data))
 				.isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Invalid documentId format");
+	}
+
+	@Test
+	void deleteActivityRemovesActivityFavouritesBeforeDeletingActivity() {
+		UUID activityId = UUID.randomUUID();
+
+		activityService.deleteActivity(activityId);
+
+		InOrder inOrder = org.mockito.Mockito.inOrder(userFavouritesRepository, activityRepository);
+		inOrder.verify(userFavouritesRepository).deleteByActivityId(activityId);
+		inOrder.verify(activityRepository).deleteById(activityId);
 	}
 
 	@Test

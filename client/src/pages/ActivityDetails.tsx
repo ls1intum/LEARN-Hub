@@ -1,6 +1,14 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { useDataFetch } from "@/hooks/useDataFetch";
@@ -13,6 +21,8 @@ import {
   Edit3,
   ArrowLeft,
   Download,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
@@ -37,6 +47,9 @@ export const ActivityDetails: React.FC = () => {
   const restoreScrollY = navigationState?.restoreScrollY;
 
   const documentApi = useApi();
+  const deleteApi = useApi();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   const fetchActivity = useCallback(async () => {
     if (id) {
       const fetchedActivity = await apiService.getActivity(id);
@@ -154,6 +167,24 @@ export const ActivityDetails: React.FC = () => {
     navigate("/recommendations");
   };
 
+  const handleDeleteActivity = async () => {
+    if (!activity?.id) return;
+
+    await deleteApi.call(
+      () => apiService.deleteActivity(activity.id),
+      () => {
+        setDeleteDialogOpen(false);
+        navigate(backTo || "/library", {
+          replace: true,
+          state:
+            typeof restoreScrollY === "number"
+              ? { restoreScrollY }
+              : undefined,
+        });
+      },
+    );
+  };
+
   const translateEnum = (
     category: string,
     value: string | undefined,
@@ -240,25 +271,77 @@ export const ActivityDetails: React.FC = () => {
           <div className="flex flex-wrap gap-2">
             <FavouriteButton activityId={activity.id} size="default" />
             {isAdmin && (
-              <Button
-                onClick={() =>
-                  navigate(`/activity-edit/${activity.id}`, {
-                    state: {
-                      backTo,
-                      restoreScrollY,
-                    } satisfies ActivityNavigationState,
-                  })
-                }
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Edit3 className="h-4 w-4" />
-                {t("activityDetails.edit")}
-              </Button>
+              <>
+                <Button
+                  onClick={() =>
+                    navigate(`/activity-edit/${activity.id}`, {
+                      state: {
+                        backTo,
+                        restoreScrollY,
+                      } satisfies ActivityNavigationState,
+                    })
+                  }
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Edit3 className="h-4 w-4" />
+                  {t("activityDetails.edit")}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  variant="destructive"
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {t("activityDetails.delete")}
+                </Button>
+              </>
             )}
           </div>
         </div>
       </div>
+
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {t("activityDetails.deleteTitle")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("activityDetails.deleteDescription", {
+                name: activity.name,
+              })}
+            </DialogDescription>
+          </DialogHeader>
+
+          <ErrorDisplay error={deleteApi.error} />
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteApi.isLoading}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={handleDeleteActivity}
+              disabled={deleteApi.isLoading}
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              {deleteApi.isLoading
+                ? t("activityDetails.deleting")
+                : t("activityDetails.confirmDelete")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div>
         {/* Description */}
