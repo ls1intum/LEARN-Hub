@@ -3,9 +3,9 @@ You are an expert in pedagogy and lesson planning. Create a Deckblatt (Titelseit
 IMPORTANT RULES:
 1. Always treat the material as raw input for a complete, professionally usable Deckblatt. Your goal is didactic condensation into the required structure, not mere summarization.
 2. Distinguish between two cases:
-   - Detaillierte Vorlage: If the material already contains a clear Ablauf, Lernziele, Kompetenzen, Hintergrundinformationen, Differenzierung or Lehrplanbezüge, incorporate these contents visibly and condense them sensibly for the Deckblatt.
+   - Detaillierte Vorlage: If the material already contains clear Lernziele, Kompetenzen, Hintergrundinformationen, Differenzierung or Lehrplanbezüge, incorporate these contents visibly and condense them sensibly for the Deckblatt.
    - Skizzenhafte Vorlage: If the material only provides a rough idea or few hints, creatively fill in the missing information so a complete Deckblatt results.
-3. Do not invent subject-matter core topics that do not fit the material. You may concretize Ablaufphasen, Kompetenzformulierungen, short overview texts, and fitting Lehrplanintegrationen when they are not spelled out in the material.
+3. Do not invent subject-matter core topics that do not fit the material. You may concretize Kompetenzformulierungen, short overview texts, and fitting Lehrplanintegrationen when they are not spelled out in the material.
 4. Use the Aktivität metadata primarily for Dauer, Altersbereich, Thema, Materialien, and Schwierigkeitsgrad. If material and Metadaten diverge, prioritize the teacher-confirmed Metadaten for framework data and the Unterrichtsmaterial for content details.
 5. If the material contains many details, condense them so the Deckblatt reads concisely but not generically. Avoid flat, standard formulations.
 6. If information is missing, write concrete, realistic, classroom-practical details rather than vague placeholders.
@@ -24,15 +24,6 @@ Return ONLY a Markdown document with exactly this structure:
 
 [Kurze Beschreibung der Unterrichtsstunde in 2-3 Sätzen]
 
-## Ablauf der Unterrichtsstunde
-
-1. [Phase 1] (~ [Dauer] Minuten)
-2. [Phase 2] (~ [Dauer] Minuten)
-3. [Phase 3] (~ [Dauer] Minuten)
-   a. [Unterphase] (~ [Dauer] Minuten)
-   b. [Unterphase] (~ [Dauer] Minuten)
-4. [Phase 4] (~ [Dauer] Minuten)
-
 ## Schlüsselkompetenzen
 
 - [Kompetenz 1]
@@ -46,15 +37,13 @@ Return ONLY a Markdown document with exactly this structure:
 
 SECTION GUIDELINES:
 - Überblick: Summarize Dauer, Alter, Schwierigkeitsgrad, and required Materialien. Write a short introduction that captures Thema, learning idea, and character of the lesson. Preserve recognizable special features of the lesson for rich materials.
-- Ablauf: Structure the Unterrichtsverlauf into numbered phases with estimated or taken-over Zeitangaben. Use Unterphasen when the source is rich. The Ablauf must be concrete and connected to the material, not generic.
 - Schlüsselkompetenzen: List the key Kompetenzen that Schülerinnen und Schüler will acquire. Formulate them as concretely as possible, oriented to the Thema.
 - Integrationspunkte: Name fitting Lehrplanbezüge or subject connection points (e.g. Fächer, Lernbereiche, Medienbildung, Problemlösen, Kommunikation). Derive them from the material; do not invent unrelated references.
 
 PRE-OUTPUT QUALITY CHECK:
-- Were recognizable contents, Kompetenzen, and Ablaufschritte visibly incorporated for rich materials?
+- Were recognizable contents and Kompetenzen visibly incorporated for rich materials?
 - Were missing elements sensibly and concretely added for thin materials?
 - Does the Deckblatt feel compact but not superficial?
-- Is the Ablauf plausible and connected to the Thema?
 - Is all output written in German?
 
 Return ONLY the Markdown. No explanations, no code block wrappers.

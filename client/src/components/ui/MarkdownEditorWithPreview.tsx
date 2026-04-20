@@ -27,27 +27,35 @@ import { useTranslation } from "react-i18next";
 
 // ─── Base64 placeholder helpers ──────────────────────────────────
 //
-// The textarea always stays editable. We just swap out the raw base64
-// payload with a short token so the editor isn't flooded with megabytes
+// The textarea always stays editable. We swap out the raw base64 payload
+// with a collapsed preview token so the editor isn't flooded with megabytes
 // of characters. The real data lives in a Map and is restored on every
 // onChange before the value is handed back to the parent.
 //
-// Token format:  <img:0>  <img:1>  …  (never appears in normal markdown)
+// Token format:  <base64-img:0:abcd...wxyz (123 chars)>  (unlikely in markdown)
 
-const PLACEHOLDER_RE = /<img:(\d+)>/g;
+const PLACEHOLDER_RE = /<base64-img:(\d+):[^>]*>/g;
+const BASE64_DATA_URI_RE = /(data:[^;\s"'`]+;base64,)([A-Za-z0-9+/]+=*)/g;
+
+function toCollapsedBase64Token(index: number, base64: string): string {
+  if (base64.length <= 32) {
+    return `<base64-img:${index}:${base64}>`;
+  }
+
+  return `<base64-img:${index}:${base64.slice(0, 16)}...${base64.slice(
+    -8,
+  )} (${base64.length} chars)>`;
+}
 
 function toDisplayValue(
   real: string,
 ): [display: string, map: Map<number, string>] {
   const map = new Map<number, string>();
   let idx = 0;
-  const display = real.replace(
-    /(data:[^;\s"'`]+;base64,)([A-Za-z0-9+/]+=*)/g,
-    (_full, prefix, b64) => {
-      map.set(idx, b64);
-      return `${prefix}<img:${idx++}>`;
-    },
-  );
+  const display = real.replace(BASE64_DATA_URI_RE, (_full, prefix, b64) => {
+    map.set(idx, b64);
+    return `${prefix}${toCollapsedBase64Token(idx++, b64)}`;
+  });
   return [display, map];
 }
 
@@ -232,6 +240,8 @@ export const MarkdownEditorWithPreview: React.FC<
   const [isRenderingPreview, setIsRenderingPreview] = useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
   // Debounce ref for preview rendering
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -331,6 +341,47 @@ export const MarkdownEditorWithPreview: React.FC<
     onChange(toRealValue(e.target.value, base64Map));
   };
 
+  const getSelectedDisplayText = () => {
+    const textarea = textareaRef.current;
+    if (!textarea || textarea.selectionStart === textarea.selectionEnd) {
+      return null;
+    }
+
+    return displayValue.slice(textarea.selectionStart, textarea.selectionEnd);
+  };
+
+  const handleMarkdownCopy = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const selectedText = getSelectedDisplayText();
+    if (!selectedText) return;
+
+    const expandedText = toRealValue(selectedText, base64Map);
+    if (expandedText === selectedText) return;
+
+    e.clipboardData.setData("text/plain", expandedText);
+    e.preventDefault();
+  };
+
+  const handleMarkdownCut = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const textarea = textareaRef.current;
+    const selectedText = getSelectedDisplayText();
+    if (!textarea || !selectedText) return;
+
+    const expandedText = toRealValue(selectedText, base64Map);
+    if (expandedText === selectedText) return;
+
+    const { selectionStart, selectionEnd } = textarea;
+    const nextDisplayValue =
+      displayValue.slice(0, selectionStart) + displayValue.slice(selectionEnd);
+
+    e.clipboardData.setData("text/plain", expandedText);
+    e.preventDefault();
+    onChange(toRealValue(nextDisplayValue, base64Map));
+
+    requestAnimationFrame(() => {
+      textarea.setSelectionRange(selectionStart, selectionStart);
+    });
+  };
+
   // ─── Preview Content ────────────────────────────────────────────
 
   const previewContent = previewPdfUrl ? (
@@ -378,8 +429,11 @@ export const MarkdownEditorWithPreview: React.FC<
           </CardHeader>
           <CardContent className="flex-1 min-h-0 pb-4">
             <textarea
+              ref={textareaRef}
               value={displayValue}
               onChange={handleMarkdownChange}
+              onCopy={handleMarkdownCopy}
+              onCut={handleMarkdownCut}
               className="w-full h-full min-h-[400px] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               placeholder="# Artikulationsschema&#10;&#10;**Thema:** ...&#10;&#10;| Zeit | Phase | Handlungsschritte | Sozialform | Kompetenzen | Medien/Material |&#10;|------|-------|-------------------|------------|-------------|-----------------|&#10;| 5 min | Einstieg | ... | Plenum | ... | ... |"
             />
