@@ -26,6 +26,8 @@ public class MarkdownToPdfService {
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToPdfService.class);
 	private static final String WORKSHEET_FONT_FAMILY = "Comic Sans MS";
 	private static final List<String> WORKSHEET_FONT_PATHS = List.of(
+			"/usr/share/fonts/truetype/comic-sans/ComicSansMS.ttf",
+			"/usr/share/fonts/truetype/comic-sans/ComicSansMSBold.ttf",
 			"/System/Library/Fonts/Supplemental/Comic Sans MS.ttf",
 			"/System/Library/Fonts/Supplemental/Comic Sans MS Bold.ttf", "/Library/Fonts/Comic Sans MS.ttf",
 			"/Library/Fonts/Comic Sans MS Bold.ttf", "C:/Windows/Fonts/comic.ttf", "C:/Windows/Fonts/comicbd.ttf");
