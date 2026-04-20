@@ -61,8 +61,8 @@ class DocxPostProcessorTest {
 		byte[] input;
 		try (XWPFDocument doc = new XWPFDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
 			XWPFParagraph paragraph = doc.createParagraph();
-			paragraph.createRun().addPicture(new ByteArrayInputStream(PNG_BYTES), XWPFDocument.PICTURE_TYPE_PNG, "test.png",
-					Units.toEMU(500), Units.toEMU(500));
+			paragraph.createRun().addPicture(new ByteArrayInputStream(PNG_BYTES), XWPFDocument.PICTURE_TYPE_PNG,
+					"test.png", Units.toEMU(500), Units.toEMU(500));
 			doc.write(out);
 			input = out.toByteArray();
 		}

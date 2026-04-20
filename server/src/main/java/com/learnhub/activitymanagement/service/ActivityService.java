@@ -152,13 +152,13 @@ public class ActivityService {
 
 	private EnergyLevel convertStringToEnergyLevel(String value) {
 		switch (value.toLowerCase()) {
-			case "low":
+			case "low" :
 				return EnergyLevel.LOW;
-			case "medium":
+			case "medium" :
 				return EnergyLevel.MEDIUM;
-			case "high":
+			case "high" :
 				return EnergyLevel.HIGH;
-			default:
+			default :
 				throw new IllegalArgumentException(
 						"Invalid energy level: " + value + ". Must be 'low', 'medium', or 'high'");
 		}

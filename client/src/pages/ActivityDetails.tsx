@@ -177,9 +177,7 @@ export const ActivityDetails: React.FC = () => {
         navigate(backTo || "/library", {
           replace: true,
           state:
-            typeof restoreScrollY === "number"
-              ? { restoreScrollY }
-              : undefined,
+            typeof restoreScrollY === "number" ? { restoreScrollY } : undefined,
         });
       },
     );
@@ -347,300 +345,298 @@ export const ActivityDetails: React.FC = () => {
         {/* Description */}
         {activity.description && (
           <div className="mb-8 p-4 bg-muted/30 rounded-lg border border-border/50">
-              <h4 className="text-lg font-semibold mb-3 text-foreground">
-                {t("activityDetails.descriptionLabel")}
-              </h4>
-              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                {activity.description}
-              </p>
-            </div>
-          )}
+            <h4 className="text-lg font-semibold mb-3 text-foreground">
+              {t("activityDetails.descriptionLabel")}
+            </h4>
+            <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+              {activity.description}
+            </p>
+          </div>
+        )}
 
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="space-y-4">
-              {ageRange && (
-                <div>
-                  <h3 className="font-semibold text-card-foreground">
-                    {t("activityDetails.ageRange")}
-                  </h3>
-                  <p className="text-muted-foreground">{ageRange}</p>
-                </div>
-              )}
+        {/* Basic Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="space-y-4">
+            {ageRange && (
+              <div>
+                <h3 className="font-semibold text-card-foreground">
+                  {t("activityDetails.ageRange")}
+                </h3>
+                <p className="text-muted-foreground">{ageRange}</p>
+              </div>
+            )}
 
-              {activity.format && (
-                <div>
-                  <h3 className="font-semibold text-card-foreground">
-                    {t("activityDetails.format")}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {translateEnum("format", activity.format)}
-                  </p>
-                </div>
-              )}
+            {activity.format && (
+              <div>
+                <h3 className="font-semibold text-card-foreground">
+                  {t("activityDetails.format")}
+                </h3>
+                <p className="text-muted-foreground">
+                  {translateEnum("format", activity.format)}
+                </p>
+              </div>
+            )}
 
-              {activity.bloomLevel && (
-                <div>
-                  <h3 className="font-semibold text-card-foreground">
-                    {t("activityDetails.bloomLevel")}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {translateEnum("bloomLevel", activity.bloomLevel)}
-                  </p>
-                </div>
-              )}
+            {activity.bloomLevel && (
+              <div>
+                <h3 className="font-semibold text-card-foreground">
+                  {t("activityDetails.bloomLevel")}
+                </h3>
+                <p className="text-muted-foreground">
+                  {translateEnum("bloomLevel", activity.bloomLevel)}
+                </p>
+              </div>
+            )}
 
-              {durationRange && (
-                <div>
-                  <h3 className="font-semibold text-card-foreground">
-                    {t("activityDetails.duration")}
-                  </h3>
-                  <p className="text-muted-foreground">{durationRange}</p>
-                </div>
-              )}
+            {durationRange && (
+              <div>
+                <h3 className="font-semibold text-card-foreground">
+                  {t("activityDetails.duration")}
+                </h3>
+                <p className="text-muted-foreground">{durationRange}</p>
+              </div>
+            )}
 
-              {totalTime > 0 && (
-                <div>
-                  <h3 className="font-semibold text-card-foreground">
-                    {t("activityDetails.totalTime")}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {totalTime} {t("common.minutes")}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              {(activity.mentalLoad || activity.physicalEnergy) && (
-                <div>
-                  <h3 className="font-semibold text-card-foreground">
-                    {t("activityDetails.energyRequirements")}
-                  </h3>
-                  <div className="text-muted-foreground space-y-2">
-                    {activity.mentalLoad && (
-                      <div className="flex items-center gap-2">
-                        <Brain className="h-4 w-4 text-blue-500" />
-                        <span>
-                          {t("activityDetails.mental")}:{" "}
-                          {translateEnum("energy", activity.mentalLoad)}
-                        </span>
-                      </div>
-                    )}
-                    {activity.physicalEnergy && (
-                      <div className="flex items-center gap-2">
-                        <ActivityIcon className="h-4 w-4 text-orange-500" />
-                        <span>
-                          {t("activityDetails.physical")}:{" "}
-                          {translateEnum("energy", activity.physicalEnergy)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {activity.resourcesNeeded &&
-                activity.resourcesNeeded.length > 0 && (
-                  <div>
-                    <h3 className="font-semibold text-card-foreground">
-                      {t("activityDetails.resourcesNeeded")}
-                    </h3>
-                    <ul className="text-muted-foreground list-disc list-inside">
-                      {activity.resourcesNeeded.map((resource, index) => (
-                        <li key={index}>
-                          {translateEnum("resources", resource)}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-              {activity.source && (
-                <div>
-                  <h3 className="font-semibold text-card-foreground">
-                    {t("activityDetails.source")}
-                  </h3>
-                  {(() => {
-                    try {
-                      const url = new URL(activity.source);
-                      return (
-                        <a
-                          href={activity.source}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline"
-                        >
-                          {url.hostname}
-                        </a>
-                      );
-                    } catch {
-                      return (
-                        <p className="text-muted-foreground">
-                          {activity.source}
-                        </p>
-                      );
-                    }
-                  })()}
-                </div>
-              )}
-            </div>
+            {totalTime > 0 && (
+              <div>
+                <h3 className="font-semibold text-card-foreground">
+                  {t("activityDetails.totalTime")}
+                </h3>
+                <p className="text-muted-foreground">
+                  {totalTime} {t("common.minutes")}
+                </p>
+              </div>
+            )}
           </div>
 
-          {/* Topics */}
-          {activity.topics && activity.topics.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold mb-4 text-card-foreground">
-                {t("activityDetails.topics")}
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {activity.topics.map((topic, index) => (
-                  <span
-                    key={index}
-                    className="inline-block bg-primary text-primary-foreground text-sm font-medium px-3 py-1 rounded-full"
-                  >
-                    {translateEnum("topics", topic)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Downloads */}
-          {hasDownloads && (
-            <div className="rounded-lg border border-border bg-muted/20">
-              <div className="border-b border-border px-4 py-3">
-                <h3 className="text-lg font-semibold text-card-foreground">
-                  {t("activityDetails.downloads")}
+          <div className="space-y-4">
+            {(activity.mentalLoad || activity.physicalEnergy) && (
+              <div>
+                <h3 className="font-semibold text-card-foreground">
+                  {t("activityDetails.energyRequirements")}
                 </h3>
+                <div className="text-muted-foreground space-y-2">
+                  {activity.mentalLoad && (
+                    <div className="flex items-center gap-2">
+                      <Brain className="h-4 w-4 text-blue-500" />
+                      <span>
+                        {t("activityDetails.mental")}:{" "}
+                        {translateEnum("energy", activity.mentalLoad)}
+                      </span>
+                    </div>
+                  )}
+                  {activity.physicalEnergy && (
+                    <div className="flex items-center gap-2">
+                      <ActivityIcon className="h-4 w-4 text-orange-500" />
+                      <span>
+                        {t("activityDetails.physical")}:{" "}
+                        {translateEnum("energy", activity.physicalEnergy)}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
+            )}
 
-              {activity.documents?.map((doc, index) => (
-                <div
-                  key={doc.id}
-                  className={`flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between${index > 0 ? " border-t border-border" : ""}`}
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 text-card-foreground">
-                      <FileText className="h-4 w-4 text-green-600" />
-                      <p className="font-medium break-all">{doc.filename}</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {doc.type}
-                      {Number.isFinite(doc.fileSize)
-                        ? ` • ${(doc.fileSize / 1024).toFixed(1)} KB`
-                        : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 sm:shrink-0">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={documentApi.isLoading}
-                      onClick={() => handleOpenDocument(doc.id, doc.filename)}
-                      title={t("activityDetails.downloadPdf")}
-                      className="flex items-center gap-1.5"
-                    >
-                      <Download className="h-4 w-4 text-red-600" />
-                      <span>{t("activityDetails.downloadPdf")}</span>
-                    </Button>
-                  </div>
-                </div>
-              ))}
-
-              {activity.markdowns?.map((md) => (
-                <div
-                  key={md.id}
-                  className="flex flex-col gap-4 border-t border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 text-card-foreground">
-                      <BookOpen className="h-4 w-4 text-blue-600" />
-                      <p className="font-medium break-all">
-                        {activity.name} {md.type}
-                      </p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{md.type}</p>
-                  </div>
-                  <div className="flex items-center gap-2 sm:shrink-0">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={documentApi.isLoading}
-                      onClick={() =>
-                        handleDownloadMarkdownPdf(
-                          md.id,
-                          [activity.name, md.type].filter(Boolean).join(" "),
-                        )
-                      }
-                      title="Download as PDF"
-                      className="flex items-center gap-1.5"
-                    >
-                      <Download className="h-4 w-4 text-red-600" />
-                      <span>{t("activityDetails.downloadPdf")}</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={documentApi.isLoading}
-                      onClick={() => handleDownloadMarkdownDocx(md.id, md.type)}
-                      title="Download as Word document"
-                      className="flex items-center gap-1.5"
-                    >
-                      <Download className="h-4 w-4 text-blue-600" />
-                      <span>{t("activityDetails.downloadDocx")}</span>
-                    </Button>
-                  </div>
-                </div>
-              ))}
-
-              {/* Download Activity (combined) */}
-              {activity.markdowns && activity.markdowns.length > 0 && (
-                <div className="flex flex-col gap-4 border-t border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between bg-muted/30">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 text-card-foreground">
-                      <Download className="h-4 w-4 text-primary" />
-                      <p className="font-medium">
-                        {t("activityDetails.downloadActivity")}
-                      </p>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {t("activityDetails.combinedDocument")}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 sm:shrink-0">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={documentApi.isLoading}
-                      onClick={handleOpenActivityPdf}
-                      title="Open combined activity as PDF"
-                      className="flex items-center gap-1.5"
-                    >
-                      <Download className="h-4 w-4 text-red-600" />
-                      <span>{t("activityDetails.downloadPdf")}</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={documentApi.isLoading}
-                      onClick={handleOpenActivityDocx}
-                      title="Download combined activity as Word document"
-                      className="flex items-center gap-1.5"
-                    >
-                      <Download className="h-4 w-4 text-blue-600" />
-                      <span>{t("activityDetails.downloadDocx")}</span>
-                    </Button>
-                  </div>
+            {activity.resourcesNeeded &&
+              activity.resourcesNeeded.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-card-foreground">
+                    {t("activityDetails.resourcesNeeded")}
+                  </h3>
+                  <ul className="text-muted-foreground list-disc list-inside">
+                    {activity.resourcesNeeded.map((resource, index) => (
+                      <li key={index}>
+                        {translateEnum("resources", resource)}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
+
+            {activity.source && (
+              <div>
+                <h3 className="font-semibold text-card-foreground">
+                  {t("activityDetails.source")}
+                </h3>
+                {(() => {
+                  try {
+                    const url = new URL(activity.source);
+                    return (
+                      <a
+                        href={activity.source}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        {url.hostname}
+                      </a>
+                    );
+                  } catch {
+                    return (
+                      <p className="text-muted-foreground">{activity.source}</p>
+                    );
+                  }
+                })()}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Topics */}
+        {activity.topics && activity.topics.length > 0 && (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4 text-card-foreground">
+              {t("activityDetails.topics")}
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {activity.topics.map((topic, index) => (
+                <span
+                  key={index}
+                  className="inline-block bg-primary text-primary-foreground text-sm font-medium px-3 py-1 rounded-full"
+                >
+                  {translateEnum("topics", topic)}
+                </span>
+              ))}
             </div>
-          )}
+          </div>
+        )}
+
+        {/* Downloads */}
+        {hasDownloads && (
+          <div className="rounded-lg border border-border bg-muted/20">
+            <div className="border-b border-border px-4 py-3">
+              <h3 className="text-lg font-semibold text-card-foreground">
+                {t("activityDetails.downloads")}
+              </h3>
+            </div>
+
+            {activity.documents?.map((doc, index) => (
+              <div
+                key={doc.id}
+                className={`flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between${index > 0 ? " border-t border-border" : ""}`}
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-card-foreground">
+                    <FileText className="h-4 w-4 text-green-600" />
+                    <p className="font-medium break-all">{doc.filename}</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {doc.type}
+                    {Number.isFinite(doc.fileSize)
+                      ? ` • ${(doc.fileSize / 1024).toFixed(1)} KB`
+                      : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 sm:shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={documentApi.isLoading}
+                    onClick={() => handleOpenDocument(doc.id, doc.filename)}
+                    title={t("activityDetails.downloadPdf")}
+                    className="flex items-center gap-1.5"
+                  >
+                    <Download className="h-4 w-4 text-red-600" />
+                    <span>{t("activityDetails.downloadPdf")}</span>
+                  </Button>
+                </div>
+              </div>
+            ))}
+
+            {activity.markdowns?.map((md) => (
+              <div
+                key={md.id}
+                className="flex flex-col gap-4 border-t border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-card-foreground">
+                    <BookOpen className="h-4 w-4 text-blue-600" />
+                    <p className="font-medium break-all">
+                      {activity.name} {md.type}
+                    </p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{md.type}</p>
+                </div>
+                <div className="flex items-center gap-2 sm:shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={documentApi.isLoading}
+                    onClick={() =>
+                      handleDownloadMarkdownPdf(
+                        md.id,
+                        [activity.name, md.type].filter(Boolean).join(" "),
+                      )
+                    }
+                    title="Download as PDF"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Download className="h-4 w-4 text-red-600" />
+                    <span>{t("activityDetails.downloadPdf")}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={documentApi.isLoading}
+                    onClick={() => handleDownloadMarkdownDocx(md.id, md.type)}
+                    title="Download as Word document"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Download className="h-4 w-4 text-blue-600" />
+                    <span>{t("activityDetails.downloadDocx")}</span>
+                  </Button>
+                </div>
+              </div>
+            ))}
+
+            {/* Download Activity (combined) */}
+            {activity.markdowns && activity.markdowns.length > 0 && (
+              <div className="flex flex-col gap-4 border-t border-border px-4 py-4 sm:flex-row sm:items-center sm:justify-between bg-muted/30">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-card-foreground">
+                    <Download className="h-4 w-4 text-primary" />
+                    <p className="font-medium">
+                      {t("activityDetails.downloadActivity")}
+                    </p>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t("activityDetails.combinedDocument")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 sm:shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={documentApi.isLoading}
+                    onClick={handleOpenActivityPdf}
+                    title="Open combined activity as PDF"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Download className="h-4 w-4 text-red-600" />
+                    <span>{t("activityDetails.downloadPdf")}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={documentApi.isLoading}
+                    onClick={handleOpenActivityDocx}
+                    title="Download combined activity as Word document"
+                    className="flex items-center gap-1.5"
+                  >
+                    <Download className="h-4 w-4 text-blue-600" />
+                    <span>{t("activityDetails.downloadDocx")}</span>
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

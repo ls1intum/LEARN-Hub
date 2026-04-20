@@ -111,7 +111,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
               "flex w-full items-center gap-2 rounded-md p-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
               isCollapsed && "justify-center",
             )}
-            aria-label={isCollapsed ? t("header.expandSidebar") : t("header.collapseSidebar")}
+            aria-label={
+              isCollapsed
+                ? t("header.expandSidebar")
+                : t("header.collapseSidebar")
+            }
           >
             {isCollapsed ? (
               <ChevronRight className="h-4 w-4 shrink-0" />

@@ -25,10 +25,7 @@ export const NavigationMenu: React.FC<NavigationMenuProps> = ({
   className = "",
 }) => {
   return (
-    <nav
-      className={`px-2 py-4 ${className}`}
-      aria-label="Main navigation"
-    >
+    <nav className={`px-2 py-4 ${className}`} aria-label="Main navigation">
       <div className="space-y-1" role="list">
         {tabs.map((tab) => (
           <NavigationItem

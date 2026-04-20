@@ -75,8 +75,8 @@ public class MarkdownToDocxService {
 
 	public byte[] renderMarkdownToDocx(String markdown, boolean landscape, String activityName) {
 		try {
-			String html = prepareHtmlForDocx(markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName),
-					landscape);
+			String html = prepareHtmlForDocx(
+					markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName), landscape);
 			byte[] rawDocx = libreOfficeConversionService.convertHtmlToDocx(html.getBytes(StandardCharsets.UTF_8));
 			return docxPostProcessor.process(rawDocx, landscape, activityName);
 		} catch (Exception e) {
@@ -171,7 +171,8 @@ public class MarkdownToDocxService {
 		}
 
 		String existingStyle = styleMatcher.group(2).strip();
-		String mergedStyle = existingStyle.endsWith(";") ? existingStyle + " " + inlineStyle
+		String mergedStyle = existingStyle.endsWith(";")
+				? existingStyle + " " + inlineStyle
 				: existingStyle + "; " + inlineStyle;
 		String replacement = "style=" + styleMatcher.group(1) + mergedStyle + styleMatcher.group(1);
 		return styleMatcher.replaceFirst(Matcher.quoteReplacement(replacement));

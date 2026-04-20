@@ -43,122 +43,129 @@ function App() {
         <LanguageProvider>
           <AuthProvider>
             <EnvironmentProvider>
-            <SidebarProvider>
-              <TooltipProvider>
-                <Router>
-                  {/* AppShell: shared header + footer, never re-mounts on navigation */}
-                  <AppShell>
-                    <Routes>
-                      <Route path="/" element={<LandingPage />} />
-                      <Route path="/login" element={<LoginPage />} />
-                      <Route path="/auth/verify" element={<AuthVerifyPage />} />
-                      <Route
-                        path="/home"
-                        element={
-                          <ProtectedRoute requiredRole="TEACHER">
-                            <HomePage />
-                          </ProtectedRoute>
-                        }
-                      />
+              <SidebarProvider>
+                <TooltipProvider>
+                  <Router>
+                    {/* AppShell: shared header + footer, never re-mounts on navigation */}
+                    <AppShell>
+                      <Routes>
+                        <Route path="/" element={<LandingPage />} />
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route
+                          path="/auth/verify"
+                          element={<AuthVerifyPage />}
+                        />
+                        <Route
+                          path="/home"
+                          element={
+                            <ProtectedRoute requiredRole="TEACHER">
+                              <HomePage />
+                            </ProtectedRoute>
+                          }
+                        />
 
-                      {/* Public sidebar routes */}
-                      <Route
-                        path="/recommendations"
-                        element={
-                          <MainLayout>
-                            <RecommendationsPage />
-                          </MainLayout>
-                        }
-                      />
-                      <Route
-                        path="/library"
-                        element={
-                          <MainLayout>
-                            <LibraryPage />
-                          </MainLayout>
-                        }
-                      />
-                      <Route
-                        path="/activity-details/:id"
-                        element={
-                          <MainLayout>
-                            <ActivityDetails />
-                          </MainLayout>
-                        }
-                      />
-                      <Route
-                        path="/impressum"
-                        element={
-                          <MainLayout>
-                            <ImpressumPage />
-                          </MainLayout>
-                        }
-                      />
+                        {/* Public sidebar routes */}
+                        <Route
+                          path="/recommendations"
+                          element={
+                            <MainLayout>
+                              <RecommendationsPage />
+                            </MainLayout>
+                          }
+                        />
+                        <Route
+                          path="/library"
+                          element={
+                            <MainLayout>
+                              <LibraryPage />
+                            </MainLayout>
+                          }
+                        />
+                        <Route
+                          path="/activity-details/:id"
+                          element={
+                            <MainLayout>
+                              <ActivityDetails />
+                            </MainLayout>
+                          }
+                        />
+                        <Route
+                          path="/impressum"
+                          element={
+                            <MainLayout>
+                              <ImpressumPage />
+                            </MainLayout>
+                          }
+                        />
 
-                      {/* Protected sidebar routes */}
-                      <Route
-                        path="/favourites"
-                        element={
-                          <ProtectedLayout allowedRoles={["TEACHER", "ADMIN"]}>
-                            <FavouritesPage />
-                          </ProtectedLayout>
-                        }
-                      />
-                      <Route
-                        path="/history"
-                        element={
-                          <ProtectedLayout allowedRoles={["TEACHER", "ADMIN"]}>
-                            <SearchHistoryPage />
-                          </ProtectedLayout>
-                        }
-                      />
-                      <Route
-                        path="/upload"
-                        element={
-                          <ProtectedLayout requiredRole="ADMIN">
-                            <ActivitySetupPage />
-                          </ProtectedLayout>
-                        }
-                      />
-                      <Route
-                        path="/activity-edit/:id"
-                        element={
-                          <ProtectedLayout requiredRole="ADMIN">
-                            <ActivityEditPage />
-                          </ProtectedLayout>
-                        }
-                      />
-                      <Route
-                        path="/users"
-                        element={
-                          <ProtectedLayout requiredRole="ADMIN">
-                            <UserManagementPage />
-                          </ProtectedLayout>
-                        }
-                      />
-                      <Route
-                        path="/account"
-                        element={
-                          <ProtectedLayout
-                            allowedRoles={["ADMIN", "TEACHER", "GUEST"]}
-                          >
-                            <AccountDashboardPage />
-                          </ProtectedLayout>
-                        }
-                      />
-                      <Route
-                        path="/ai-testing"
-                        element={
-                          <ProtectedLayout requiredRole="ADMIN">
-                            <AITestingPage />
-                          </ProtectedLayout>
-                        }
-                      />
-                    </Routes>
-                  </AppShell>
-                </Router>
-              </TooltipProvider>
-            </SidebarProvider>
+                        {/* Protected sidebar routes */}
+                        <Route
+                          path="/favourites"
+                          element={
+                            <ProtectedLayout
+                              allowedRoles={["TEACHER", "ADMIN"]}
+                            >
+                              <FavouritesPage />
+                            </ProtectedLayout>
+                          }
+                        />
+                        <Route
+                          path="/history"
+                          element={
+                            <ProtectedLayout
+                              allowedRoles={["TEACHER", "ADMIN"]}
+                            >
+                              <SearchHistoryPage />
+                            </ProtectedLayout>
+                          }
+                        />
+                        <Route
+                          path="/upload"
+                          element={
+                            <ProtectedLayout requiredRole="ADMIN">
+                              <ActivitySetupPage />
+                            </ProtectedLayout>
+                          }
+                        />
+                        <Route
+                          path="/activity-edit/:id"
+                          element={
+                            <ProtectedLayout requiredRole="ADMIN">
+                              <ActivityEditPage />
+                            </ProtectedLayout>
+                          }
+                        />
+                        <Route
+                          path="/users"
+                          element={
+                            <ProtectedLayout requiredRole="ADMIN">
+                              <UserManagementPage />
+                            </ProtectedLayout>
+                          }
+                        />
+                        <Route
+                          path="/account"
+                          element={
+                            <ProtectedLayout
+                              allowedRoles={["ADMIN", "TEACHER", "GUEST"]}
+                            >
+                              <AccountDashboardPage />
+                            </ProtectedLayout>
+                          }
+                        />
+                        <Route
+                          path="/ai-testing"
+                          element={
+                            <ProtectedLayout requiredRole="ADMIN">
+                              <AITestingPage />
+                            </ProtectedLayout>
+                          }
+                        />
+                      </Routes>
+                    </AppShell>
+                  </Router>
+                </TooltipProvider>
+              </SidebarProvider>
             </EnvironmentProvider>
           </AuthProvider>
         </LanguageProvider>

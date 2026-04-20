@@ -49,10 +49,10 @@ public class LLMService {
 	private static final String GENERATED_IMAGE_ALT_TEXT = "Generiertes Bild";
 	private static final Duration IMAGE_FETCH_TIMEOUT = Duration.ofSeconds(30);
 	private static final HttpClient IMAGE_FETCH_CLIENT = HttpClient.newBuilder()
-			.followRedirects(HttpClient.Redirect.NORMAL)
-			.build();
+			.followRedirects(HttpClient.Redirect.NORMAL).build();
 	private static final List<String> EXERCISE_IMAGE_REPLACEMENT_ORDER = List.of("uebung", "uebung_loesung");
-	// Strips embedded base64 image data (and their learnhub HTML comments) from markdown
+	// Strips embedded base64 image data (and their learnhub HTML comments) from
+	// markdown
 	// to prevent sending megabytes of image data to text/image LLMs as context.
 	private static final Pattern EMBEDDED_IMAGE_PATTERN = Pattern.compile(
 			"(?:<!--\\s*learnhub-image[^>]*-->\\s*)?!\\[[^\\]]*\\]\\(data:[^;)\"'\\s]+;base64,[A-Za-z0-9+/]+=*\\)",
@@ -349,8 +349,8 @@ public class LLMService {
 
 		for (String key : EXERCISE_IMAGE_REPLACEMENT_ORDER) {
 			if (markdowns.containsKey(key)) {
-				replacedMarkdowns.put(key,
-						replaceImagePlaceholders(markdowns.get(key), imageMarkdownCache, imageDescriptionCache, pdfText));
+				replacedMarkdowns.put(key, replaceImagePlaceholders(markdowns.get(key), imageMarkdownCache,
+						imageDescriptionCache, pdfText));
 			}
 		}
 		for (Map.Entry<String, String> entry : markdowns.entrySet()) {
@@ -427,7 +427,8 @@ public class LLMService {
 			throw new IllegalStateException("Exercise image model is not configured");
 		}
 
-		ImageResponse response = exerciseImageModel.call(new ImagePrompt(buildExerciseImagePrompt(description, contextText)));
+		ImageResponse response = exerciseImageModel
+				.call(new ImagePrompt(buildExerciseImagePrompt(description, contextText)));
 		if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
 			throw new IllegalStateException("Image model returned an empty response");
 		}
@@ -475,8 +476,7 @@ public class LLMService {
 		String normalizedDescription = description == null ? "" : description.trim();
 		String normalizedContextText = stripEmbeddedImages(contextText == null ? "" : contextText.trim());
 		if (exerciseImagePromptResource == null) {
-			return DEFAULT_EXERCISE_IMAGE_PROMPT_TEMPLATE
-					.replace("{contextText}", normalizedContextText)
+			return DEFAULT_EXERCISE_IMAGE_PROMPT_TEMPLATE.replace("{contextText}", normalizedContextText)
 					.replace("{description}", normalizedDescription);
 		}
 		return new PromptTemplate(exerciseImagePromptResource)
@@ -485,19 +485,15 @@ public class LLMService {
 
 	private String toMarkdownImageFromUrl(String imageUrl, String altText) {
 		try {
-			HttpRequest request = HttpRequest.newBuilder(URI.create(imageUrl))
-					.GET()
-					.timeout(IMAGE_FETCH_TIMEOUT)
+			HttpRequest request = HttpRequest.newBuilder(URI.create(imageUrl)).GET().timeout(IMAGE_FETCH_TIMEOUT)
 					.build();
 			HttpResponse<byte[]> response = IMAGE_FETCH_CLIENT.send(request, HttpResponse.BodyHandlers.ofByteArray());
 			if (response.statusCode() < 200 || response.statusCode() >= 300) {
 				throw new IllegalStateException("Failed to download generated image: HTTP " + response.statusCode());
 			}
 
-			String mimeType = response.headers().firstValue("Content-Type")
-					.map(value -> value.split(";", 2)[0].trim())
-					.filter(StringUtils::hasText)
-					.orElseGet(() -> inferImageMimeType(imageUrl));
+			String mimeType = response.headers().firstValue("Content-Type").map(value -> value.split(";", 2)[0].trim())
+					.filter(StringUtils::hasText).orElseGet(() -> inferImageMimeType(imageUrl));
 			String base64 = Base64.getEncoder().encodeToString(response.body());
 			return "![" + altText + "](data:" + mimeType + ";base64," + base64 + ")";
 		} catch (Exception e) {
@@ -526,7 +522,8 @@ public class LLMService {
 		}
 		Matcher matcher = IMAGE_PLACEHOLDER_WITH_ID_PATTERN.matcher(normalized);
 		if (!matcher.matches()) {
-			return new ImagePlaceholder("desc:" + normalized, null, normalized, buildImagePlaceholderMarker(null, normalized));
+			return new ImagePlaceholder("desc:" + normalized, null, normalized,
+					buildImagePlaceholderMarker(null, normalized));
 		}
 
 		String id = matcher.group(1).trim().toLowerCase(Locale.ROOT);

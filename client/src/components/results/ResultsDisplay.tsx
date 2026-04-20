@@ -29,7 +29,11 @@ import {
   Target,
   Users,
 } from "lucide-react";
-import type { ResultsData, Recommendation, LessonPlanData } from "@/types/activity";
+import type {
+  ResultsData,
+  Recommendation,
+  LessonPlanData,
+} from "@/types/activity";
 import { useTranslation } from "react-i18next";
 import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 import { getAppScrollTop } from "@/utils/scroll";
@@ -60,17 +64,23 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
   const location = useLocation();
   const hasRecommendations = Boolean(results?.activities?.length);
   const [isLessonPlanOpen, setIsLessonPlanOpen] = useState(false);
-  const [lessonPlanData, setLessonPlanData] = useState<LessonPlanData | null>(null);
+  const [lessonPlanData, setLessonPlanData] = useState<LessonPlanData | null>(
+    null,
+  );
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
   const [scoreThreshold, setScoreThreshold] = useState(0);
   const [durationRange, setDurationRange] = useState<[number, number]>([0, 0]);
-  const [activityCountRange, setActivityCountRange] = useState<[number, number]>([1, 1]);
+  const [activityCountRange, setActivityCountRange] = useState<
+    [number, number]
+  >([1, 1]);
   const [showFilters, setShowFilters] = useState(false);
 
-  const handleCreateLessonPlanFromRecommendation = (recommendation: Recommendation) => {
+  const handleCreateLessonPlanFromRecommendation = (
+    recommendation: Recommendation,
+  ) => {
     const totalDuration = recommendation.activities.reduce(
       (total, activity) => total + (activity.durationMinMinutes || 0),
       0,
@@ -93,7 +103,9 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     setLessonPlanData(null);
   };
 
-  const handleViewActivityDetails = (activity: Recommendation["activities"][0]) => {
+  const handleViewActivityDetails = (
+    activity: Recommendation["activities"][0],
+  ) => {
     if (activity.id && activity.type === "activity") {
       navigate(`/activity-details/${activity.id}`, {
         state: {
@@ -120,12 +132,19 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
       (results?.activities ?? []).map((recommendation) => {
         const { activities } = recommendation;
         const totalDuration = activities.reduce(
-          (sum, a) => sum + (a.durationMinMinutes || 0) + (a.breakAfter?.duration || 0),
+          (sum, a) =>
+            sum + (a.durationMinMinutes || 0) + (a.breakAfter?.duration || 0),
           0,
         );
         const breakCount = activities.filter((a) => a.breakAfter).length;
-        const minAge = activities.length > 0 ? Math.min(...activities.map((a) => a.ageMin)) : 0;
-        const maxAge = activities.length > 0 ? Math.max(...activities.map((a) => a.ageMax)) : 0;
+        const minAge =
+          activities.length > 0
+            ? Math.min(...activities.map((a) => a.ageMin))
+            : 0;
+        const maxAge =
+          activities.length > 0
+            ? Math.max(...activities.map((a) => a.ageMax))
+            : 0;
         const formats = [...new Set(activities.map((a) => a.format))];
         const searchText = activities
           .flatMap((a) => [a.name, a.description])
@@ -176,20 +195,49 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     return resolved.filter((item) => {
       if (q && !item.searchText.includes(q)) return false;
       if (item.recommendation.score < scoreThreshold) return false;
-      if (item.totalDuration < durationRange[0] || item.totalDuration > durationRange[1]) return false;
-      if (item.activityCount < activityCountRange[0] || item.activityCount > activityCountRange[1]) return false;
+      if (
+        item.totalDuration < durationRange[0] ||
+        item.totalDuration > durationRange[1]
+      )
+        return false;
+      if (
+        item.activityCount < activityCountRange[0] ||
+        item.activityCount > activityCountRange[1]
+      )
+        return false;
       return true;
     });
-  }, [resolved, searchQuery, scoreThreshold, durationRange, activityCountRange]);
+  }, [
+    resolved,
+    searchQuery,
+    scoreThreshold,
+    durationRange,
+    activityCountRange,
+  ]);
 
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (searchQuery) count++;
     if (scoreThreshold > 0) count++;
-    if (durationRange[0] !== durationBounds[0] || durationRange[1] !== durationBounds[1]) count++;
-    if (activityCountRange[0] !== activityCountBounds[0] || activityCountRange[1] !== activityCountBounds[1]) count++;
+    if (
+      durationRange[0] !== durationBounds[0] ||
+      durationRange[1] !== durationBounds[1]
+    )
+      count++;
+    if (
+      activityCountRange[0] !== activityCountBounds[0] ||
+      activityCountRange[1] !== activityCountBounds[1]
+    )
+      count++;
     return count;
-  }, [searchQuery, scoreThreshold, durationRange, durationBounds, activityCountRange, activityCountBounds]);
+  }, [
+    searchQuery,
+    scoreThreshold,
+    durationRange,
+    durationBounds,
+    activityCountRange,
+    activityCountBounds,
+  ]);
 
   const resetFilters = () => {
     setSearchQuery("");
@@ -309,147 +357,174 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {filtered.map(({ recommendation, totalDuration, activityCount, breakCount, minAge, maxAge, formats }, index) => {
-                const isExpanded = expandedIds.has(index);
-                const { score, scoreBreakdown, activities } = recommendation;
+              {filtered.map(
+                (
+                  {
+                    recommendation,
+                    totalDuration,
+                    activityCount,
+                    breakCount,
+                    minAge,
+                    maxAge,
+                    formats,
+                  },
+                  index,
+                ) => {
+                  const isExpanded = expandedIds.has(index);
+                  const { score, scoreBreakdown, activities } = recommendation;
 
-                return (
-                  <React.Fragment key={`rec-${index}`}>
-                    {/* Summary row */}
-                    <div
-                      className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer"
-                      onClick={() => toggleExpand(index)}
-                    >
-                      <div className="w-6 shrink-0 flex items-center justify-center">
-                        <ChevronRight
-                          className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${
-                            isExpanded ? "rotate-90" : ""
-                          }`}
-                        />
-                      </div>
-
-                      {/* Score */}
-                      <div className="w-[52px] shrink-0">
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div
-                                className="flex items-center gap-1.5 cursor-pointer"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <div className={`w-2 h-2 rounded-full shrink-0 ${getScoreColor(score)}`} />
-                                <span className="text-sm font-semibold tabular-nums">
-                                  {Math.round(score)}%
-                                </span>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom" className="max-w-xs">
-                              <div className="space-y-2">
-                                <div className="font-semibold text-xs">
-                                  {t("resultsDisplay.categoryScores")}
-                                </div>
-                                <div className="space-y-1 text-xs">
-                                  {Object.entries(scoreBreakdown || {}).map(
-                                    ([category, scoreData]) => (
-                                      <div key={category} className="flex justify-between gap-4">
-                                        <span className="capitalize">
-                                          {category.replace(/_/g, " ")}
-                                        </span>
-                                        <span className="font-medium tabular-nums">
-                                          {scoreData.score}%
-                                          {scoreData.isPriority && (
-                                            <span className="ml-1 text-yellow-500">★</span>
-                                          )}
-                                        </span>
-                                      </div>
-                                    ),
-                                  )}
-                                </div>
-                              </div>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      </div>
-
-                      {/* Activities summary */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 text-sm">
-                          <span className="font-medium truncate">
-                            {activities.map((a) => a.name).join(", ")}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
-                          <span className="flex items-center gap-0.5">
-                            <Layers className="h-3 w-3" />
-                            {activityCount}
-                          </span>
-                          {breakCount > 0 && (
-                            <span className="flex items-center gap-0.5 text-blue-500">
-                              <Coffee className="h-2.5 w-2.5" />
-                              {breakCount}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="w-[68px] shrink-0 hidden sm:flex items-center gap-0.5 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3 shrink-0" />
-                        <span className="tabular-nums">{totalDuration}m</span>
-                      </div>
-
-                      <div className="w-[52px] shrink-0 hidden md:flex items-center gap-0.5 text-xs text-muted-foreground">
-                        <Users className="h-3 w-3 shrink-0" />
-                        {minAge}–{maxAge}
-                      </div>
-
-                      <div className="w-[76px] shrink-0">
-                        <Badge
-                          variant="secondary"
-                          className="text-[11px] px-1.5 py-0 font-normal truncate max-w-full"
-                        >
-                          {translateEnum("format", formats[0])}
-                        </Badge>
-                      </div>
-
-                      {/* Actions */}
+                  return (
+                    <React.Fragment key={`rec-${index}`}>
+                      {/* Summary row */}
                       <div
-                        className="w-[140px] shrink-0 flex items-center justify-end gap-1.5"
-                        onClick={(e) => e.stopPropagation()}
-                        onPointerDown={(e) => e.stopPropagation()}
+                        className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer"
+                        onClick={() => toggleExpand(index)}
                       >
-                        <LessonPlanFavouriteButton
-                          activities={activities}
-                          size="icon"
-                          className="h-7 w-7 shrink-0"
-                        />
-                        <Button
-                          size="sm"
-                          onClick={() => handleCreateLessonPlanFromRecommendation(recommendation)}
-                          className="h-7 px-2 text-xs"
-                        >
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          {t("resultsDisplay.select")}
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Expanded activity sub-rows */}
-                    {isExpanded && (
-                      <div className="bg-muted/10 border-t border-border/50">
-                        {activities.map((activity, idx) => (
-                          <ActivitySubRow
-                            key={`${index}-${activity.id || idx}`}
-                            activity={activity}
-                            index={idx}
-                            onClick={handleViewActivityDetails}
-                            showDescription
+                        <div className="w-6 shrink-0 flex items-center justify-center">
+                          <ChevronRight
+                            className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${
+                              isExpanded ? "rotate-90" : ""
+                            }`}
                           />
-                        ))}
+                        </div>
+
+                        {/* Score */}
+                        <div className="w-[52px] shrink-0">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div
+                                  className="flex items-center gap-1.5 cursor-pointer"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <div
+                                    className={`w-2 h-2 rounded-full shrink-0 ${getScoreColor(score)}`}
+                                  />
+                                  <span className="text-sm font-semibold tabular-nums">
+                                    {Math.round(score)}%
+                                  </span>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="bottom"
+                                className="max-w-xs"
+                              >
+                                <div className="space-y-2">
+                                  <div className="font-semibold text-xs">
+                                    {t("resultsDisplay.categoryScores")}
+                                  </div>
+                                  <div className="space-y-1 text-xs">
+                                    {Object.entries(scoreBreakdown || {}).map(
+                                      ([category, scoreData]) => (
+                                        <div
+                                          key={category}
+                                          className="flex justify-between gap-4"
+                                        >
+                                          <span className="capitalize">
+                                            {category.replace(/_/g, " ")}
+                                          </span>
+                                          <span className="font-medium tabular-nums">
+                                            {scoreData.score}%
+                                            {scoreData.isPriority && (
+                                              <span className="ml-1 text-yellow-500">
+                                                ★
+                                              </span>
+                                            )}
+                                          </span>
+                                        </div>
+                                      ),
+                                    )}
+                                  </div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
+
+                        {/* Activities summary */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 text-sm">
+                            <span className="font-medium truncate">
+                              {activities.map((a) => a.name).join(", ")}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                            <span className="flex items-center gap-0.5">
+                              <Layers className="h-3 w-3" />
+                              {activityCount}
+                            </span>
+                            {breakCount > 0 && (
+                              <span className="flex items-center gap-0.5 text-blue-500">
+                                <Coffee className="h-2.5 w-2.5" />
+                                {breakCount}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="w-[68px] shrink-0 hidden sm:flex items-center gap-0.5 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3 shrink-0" />
+                          <span className="tabular-nums">{totalDuration}m</span>
+                        </div>
+
+                        <div className="w-[52px] shrink-0 hidden md:flex items-center gap-0.5 text-xs text-muted-foreground">
+                          <Users className="h-3 w-3 shrink-0" />
+                          {minAge}–{maxAge}
+                        </div>
+
+                        <div className="w-[76px] shrink-0">
+                          <Badge
+                            variant="secondary"
+                            className="text-[11px] px-1.5 py-0 font-normal truncate max-w-full"
+                          >
+                            {translateEnum("format", formats[0])}
+                          </Badge>
+                        </div>
+
+                        {/* Actions */}
+                        <div
+                          className="w-[140px] shrink-0 flex items-center justify-end gap-1.5"
+                          onClick={(e) => e.stopPropagation()}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <LessonPlanFavouriteButton
+                            activities={activities}
+                            size="icon"
+                            className="h-7 w-7 shrink-0"
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() =>
+                              handleCreateLessonPlanFromRecommendation(
+                                recommendation,
+                              )
+                            }
+                            className="h-7 px-2 text-xs"
+                          >
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            {t("resultsDisplay.select")}
+                          </Button>
+                        </div>
                       </div>
-                    )}
-                  </React.Fragment>
-                );
-              })}
+
+                      {/* Expanded activity sub-rows */}
+                      {isExpanded && (
+                        <div className="bg-muted/10 border-t border-border/50">
+                          {activities.map((activity, idx) => (
+                            <ActivitySubRow
+                              key={`${index}-${activity.id || idx}`}
+                              activity={activity}
+                              index={idx}
+                              onClick={handleViewActivityDetails}
+                              showDescription
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </React.Fragment>
+                  );
+                },
+              )}
             </div>
           )}
         </div>

@@ -161,21 +161,21 @@ const SharedHeader: React.FC = () => {
           to="/"
           className="flex items-center gap-2 hover:opacity-90 transition-opacity shrink-0"
         >
-          <img
-            src="/logo.png"
-            alt="LEARN-Hub"
-            className="h-7 w-7 rounded-md"
-          />
+          <img src="/logo.png" alt="LEARN-Hub" className="h-7 w-7 rounded-md" />
           <span className="font-bold text-sm sm:text-base tracking-tight leading-none">
             LEARN-Hub
           </span>
           <span className="text-[10px] font-medium opacity-60 leading-none hidden sm:block">
-            {t("header.version")}{envLabel}
+            {t("header.version")}
+            {envLabel}
           </span>
         </Link>
 
         {/* Nav links — desktop only */}
-        <nav className="hidden md:flex items-center gap-0.5 ml-3" aria-label="Global">
+        <nav
+          className="hidden md:flex items-center gap-0.5 ml-3"
+          aria-label="Global"
+        >
           <Link
             to="/library"
             className="px-3 py-1.5 text-sm font-medium rounded-md hover:bg-primary-foreground/10 transition-colors text-primary-foreground/90 hover:text-primary-foreground"

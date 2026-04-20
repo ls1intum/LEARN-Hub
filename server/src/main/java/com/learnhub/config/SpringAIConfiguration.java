@@ -17,11 +17,11 @@ import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpResponse;
-import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.util.StringUtils;
 
 /**
@@ -104,7 +104,8 @@ public class SpringAIConfiguration {
 	}
 
 	@Bean
-	public ApplicationRunner exerciseImageModelDiagnostics(Environment environment, ApplicationContext applicationContext) {
+	public ApplicationRunner exerciseImageModelDiagnostics(Environment environment,
+			ApplicationContext applicationContext) {
 		return args -> {
 			if (applicationContext.containsBean("exerciseImageModel")) {
 				log.info("Exercise image model enabled via Azure OpenAI configuration.");
@@ -121,7 +122,8 @@ public class SpringAIConfiguration {
 				return;
 			}
 			if (endpoint.contains("your-resource-name")) {
-				log.info("Exercise image model disabled: spring.ai.azure.openai.endpoint still uses the placeholder value '{}'.",
+				log.info(
+						"Exercise image model disabled: spring.ai.azure.openai.endpoint still uses the placeholder value '{}'.",
 						endpoint);
 				return;
 			}
@@ -134,11 +136,13 @@ public class SpringAIConfiguration {
 				return;
 			}
 			if (!applicationContext.containsBean("azureOpenAiImageClient")) {
-				log.warn("Exercise image model disabled: Azure OpenAI image client bean was not created despite apparently valid configuration.");
+				log.warn(
+						"Exercise image model disabled: Azure OpenAI image client bean was not created despite apparently valid configuration.");
 				return;
 			}
 
-			log.warn("Exercise image model disabled for an unknown reason. Azure image client exists, but the alias bean was not exposed.");
+			log.warn(
+					"Exercise image model disabled for an unknown reason. Azure image client exists, but the alias bean was not exposed.");
 		};
 	}
 

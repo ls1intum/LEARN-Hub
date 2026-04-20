@@ -66,8 +66,12 @@ export const LessonPlanFavouritesTab: React.FC = () => {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
-  const [durationRange, setDurationRange] = useState<[number, number]>([0, 999]);
-  const [activityCountRange, setActivityCountRange] = useState<[number, number]>([1, 99]);
+  const [durationRange, setDurationRange] = useState<[number, number]>([
+    0, 999,
+  ]);
+  const [activityCountRange, setActivityCountRange] = useState<
+    [number, number]
+  >([1, 99]);
 
   const loadFavourites = useCallback(async () => {
     if (!user) return;
@@ -157,7 +161,9 @@ export const LessonPlanFavouritesTab: React.FC = () => {
         if (!activities || activities.length === 0) return null;
 
         const totalDuration = activities.reduce((sum, a) => {
-          return sum + (a.durationMinMinutes || 0) + (a.breakAfter?.duration || 0);
+          return (
+            sum + (a.durationMinMinutes || 0) + (a.breakAfter?.duration || 0)
+          );
         }, 0);
         const minAge = Math.min(...activities.map((a) => a.ageMin));
         const maxAge = Math.max(...activities.map((a) => a.ageMax));
@@ -211,8 +217,16 @@ export const LessonPlanFavouritesTab: React.FC = () => {
     const q = search.trim().toLowerCase();
     return resolvedPlans.filter((plan) => {
       if (q && !plan.searchText.includes(q)) return false;
-      if (plan.totalDuration < durationRange[0] || plan.totalDuration > durationRange[1]) return false;
-      if (plan.activityCount < activityCountRange[0] || plan.activityCount > activityCountRange[1]) return false;
+      if (
+        plan.totalDuration < durationRange[0] ||
+        plan.totalDuration > durationRange[1]
+      )
+        return false;
+      if (
+        plan.activityCount < activityCountRange[0] ||
+        plan.activityCount > activityCountRange[1]
+      )
+        return false;
       return true;
     });
   }, [resolvedPlans, search, durationRange, activityCountRange]);
@@ -230,10 +244,24 @@ export const LessonPlanFavouritesTab: React.FC = () => {
   const activeFilterCount = useMemo(() => {
     let count = 0;
     if (search) count++;
-    if (durationRange[0] !== durationBounds[0] || durationRange[1] !== durationBounds[1]) count++;
-    if (activityCountRange[0] !== activityCountBounds[0] || activityCountRange[1] !== activityCountBounds[1]) count++;
+    if (
+      durationRange[0] !== durationBounds[0] ||
+      durationRange[1] !== durationBounds[1]
+    )
+      count++;
+    if (
+      activityCountRange[0] !== activityCountBounds[0] ||
+      activityCountRange[1] !== activityCountBounds[1]
+    )
+      count++;
     return count;
-  }, [search, durationRange, durationBounds, activityCountRange, activityCountBounds]);
+  }, [
+    search,
+    durationRange,
+    durationBounds,
+    activityCountRange,
+    activityCountBounds,
+  ]);
 
   const clearFilters = () => {
     setSearch("");
@@ -398,7 +426,9 @@ export const LessonPlanFavouritesTab: React.FC = () => {
 
                     <div className="w-[68px] shrink-0 hidden sm:flex items-center gap-0.5 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3 shrink-0" />
-                      <span className="tabular-nums">{plan.totalDuration}m</span>
+                      <span className="tabular-nums">
+                        {plan.totalDuration}m
+                      </span>
                     </div>
 
                     <div className="w-[52px] shrink-0 hidden md:flex items-center gap-0.5 text-xs text-muted-foreground">

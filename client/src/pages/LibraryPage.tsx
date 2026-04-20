@@ -106,8 +106,14 @@ export const LibraryPage: React.FC = () => {
       topics: parseArrayParam("topics"),
       mentalLoad: parseArrayParam("mentalLoad"),
       physicalEnergy: parseArrayParam("physicalEnergy"),
-      durationMin: parseNumberParam("durationMin", initialFilterData.durationMin),
-      durationMax: parseNumberParam("durationMax", initialFilterData.durationMax),
+      durationMin: parseNumberParam(
+        "durationMin",
+        initialFilterData.durationMin,
+      ),
+      durationMax: parseNumberParam(
+        "durationMax",
+        initialFilterData.durationMax,
+      ),
     }),
     [parseArrayParam, parseNumberParam, searchParams],
   );
@@ -146,7 +152,7 @@ export const LibraryPage: React.FC = () => {
 
   const filterForm = useForm({
     initialValues: initialFilters,
-    onSubmit: async () => { },
+    onSubmit: async () => {},
   });
   const [appliedFilters, setAppliedFilters] =
     useState<FilterFormData>(initialFilters);
@@ -177,11 +183,15 @@ export const LibraryPage: React.FC = () => {
           ? filters.durationMax
           : undefined,
       format: filters.format.length > 0 ? filters.format : undefined,
-      bloomLevel: filters.bloomLevel.length > 0 ? filters.bloomLevel : undefined,
+      bloomLevel:
+        filters.bloomLevel.length > 0 ? filters.bloomLevel : undefined,
       resourcesNeeded:
-        filters.resourcesNeeded.length > 0 ? filters.resourcesNeeded : undefined,
+        filters.resourcesNeeded.length > 0
+          ? filters.resourcesNeeded
+          : undefined,
       topics: filters.topics.length > 0 ? filters.topics : undefined,
-      mentalLoad: filters.mentalLoad.length > 0 ? filters.mentalLoad : undefined,
+      mentalLoad:
+        filters.mentalLoad.length > 0 ? filters.mentalLoad : undefined,
       physicalEnergy:
         filters.physicalEnergy.length > 0 ? filters.physicalEnergy : undefined,
       limit: itemsPerPage,
@@ -223,7 +233,10 @@ export const LibraryPage: React.FC = () => {
       ...filterForm.values,
       [filterType]: value,
     } as FilterFormData;
-    filterForm.setValue(filterType, value as FilterFormData[keyof FilterFormData]);
+    filterForm.setValue(
+      filterType,
+      value as FilterFormData[keyof FilterFormData],
+    );
     applyFiltersImmediately(nextFilters);
   };
 
@@ -241,7 +254,10 @@ export const LibraryPage: React.FC = () => {
       ...filterForm.values,
       [filterType]: newValues,
     } as FilterFormData;
-    filterForm.setValue(filterType, newValues as FilterFormData[keyof FilterFormData]);
+    filterForm.setValue(
+      filterType,
+      newValues as FilterFormData[keyof FilterFormData],
+    );
     applyFiltersImmediately(nextFilters);
   };
 
@@ -253,7 +269,10 @@ export const LibraryPage: React.FC = () => {
     ) => {
       scrollToTop();
       const [minValue, maxValue] = values;
-      filterForm.setValues({ [minField]: minValue, [maxField]: maxValue } as Partial<FilterFormData>);
+      filterForm.setValues({
+        [minField]: minValue,
+        [maxField]: maxValue,
+      } as Partial<FilterFormData>);
     },
     [filterForm, scrollToTop],
   );
@@ -291,11 +310,13 @@ export const LibraryPage: React.FC = () => {
     if (
       appliedFilters.ageMin !== initialFilterData.ageMin ||
       appliedFilters.ageMax !== initialFilterData.ageMax
-    ) count++;
+    )
+      count++;
     if (
       appliedFilters.durationMin !== initialFilterData.durationMin ||
       appliedFilters.durationMax !== initialFilterData.durationMax
-    ) count++;
+    )
+      count++;
     if (appliedFilters.format.length > 0) count++;
     if (appliedFilters.bloomLevel.length > 0) count++;
     if (appliedFilters.resourcesNeeded.length > 0) count++;
@@ -404,7 +425,9 @@ export const LibraryPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-sm font-medium">{t("library.ageRange")}</span>
+                  <span className="text-sm font-medium">
+                    {t("library.ageRange")}
+                  </span>
                 </div>
                 <span className="text-sm font-semibold text-primary tabular-nums">
                   {filterForm.values.ageMin}–{filterForm.values.ageMax}
@@ -412,8 +435,12 @@ export const LibraryPage: React.FC = () => {
               </div>
               <Slider
                 value={[filterForm.values.ageMin, filterForm.values.ageMax]}
-                onValueChange={(v) => handleRangeFilterChange("ageMin", "ageMax", v)}
-                onValueCommit={(v) => handleRangeFilterCommit("ageMin", "ageMax", v)}
+                onValueChange={(v) =>
+                  handleRangeFilterChange("ageMin", "ageMax", v)
+                }
+                onValueCommit={(v) =>
+                  handleRangeFilterCommit("ageMin", "ageMax", v)
+                }
                 max={ACTIVITY_CONSTANTS.AGE_RANGE.MAX}
                 min={ACTIVITY_CONSTANTS.AGE_RANGE.MIN}
                 step={1}
@@ -423,16 +450,26 @@ export const LibraryPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-sm font-medium">{t("library.durationRange")}</span>
+                  <span className="text-sm font-medium">
+                    {t("library.durationRange")}
+                  </span>
                 </div>
                 <span className="text-sm font-semibold text-primary tabular-nums">
-                  {filterForm.values.durationMin}–{filterForm.values.durationMax}m
+                  {filterForm.values.durationMin}–
+                  {filterForm.values.durationMax}m
                 </span>
               </div>
               <Slider
-                value={[filterForm.values.durationMin, filterForm.values.durationMax]}
-                onValueChange={(v) => handleRangeFilterChange("durationMin", "durationMax", v)}
-                onValueCommit={(v) => handleRangeFilterCommit("durationMin", "durationMax", v)}
+                value={[
+                  filterForm.values.durationMin,
+                  filterForm.values.durationMax,
+                ]}
+                onValueChange={(v) =>
+                  handleRangeFilterChange("durationMin", "durationMax", v)
+                }
+                onValueCommit={(v) =>
+                  handleRangeFilterCommit("durationMin", "durationMax", v)
+                }
                 max={ACTIVITY_CONSTANTS.DURATION_RANGE.MAX}
                 min={ACTIVITY_CONSTANTS.DURATION_RANGE.MIN}
                 step={ACTIVITY_CONSTANTS.DURATION_RANGE.STEP}
@@ -451,7 +488,9 @@ export const LibraryPage: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <Grid3x3 className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">{t("library.format")}</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {t("library.format")}
+                  </span>
                 </div>
                 <BadgeSelector
                   label=""
@@ -459,7 +498,11 @@ export const LibraryPage: React.FC = () => {
                   selectedValues={filterForm.values.format}
                   allowEmptySelection
                   onToggle={(v) =>
-                    handleMultiSelectFilter("format", v, !filterForm.values.format.includes(v))
+                    handleMultiSelectFilter(
+                      "format",
+                      v,
+                      !filterForm.values.format.includes(v),
+                    )
                   }
                   labelFn={(v) => translateEnum("format", v)}
                 />
@@ -467,7 +510,9 @@ export const LibraryPage: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">{t("library.bloomLevel")}</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {t("library.bloomLevel")}
+                  </span>
                 </div>
                 <BadgeSelector
                   label=""
@@ -475,7 +520,11 @@ export const LibraryPage: React.FC = () => {
                   selectedValues={filterForm.values.bloomLevel}
                   allowEmptySelection
                   onToggle={(v) =>
-                    handleMultiSelectFilter("bloomLevel", v, !filterForm.values.bloomLevel.includes(v))
+                    handleMultiSelectFilter(
+                      "bloomLevel",
+                      v,
+                      !filterForm.values.bloomLevel.includes(v),
+                    )
                   }
                   labelFn={(v) => translateEnum("bloomLevel", v)}
                 />
@@ -483,7 +532,9 @@ export const LibraryPage: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">{t("library.resources")}</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {t("library.resources")}
+                  </span>
                 </div>
                 <BadgeSelector
                   label=""
@@ -491,7 +542,11 @@ export const LibraryPage: React.FC = () => {
                   selectedValues={filterForm.values.resourcesNeeded}
                   allowEmptySelection
                   onToggle={(v) =>
-                    handleMultiSelectFilter("resourcesNeeded", v, !filterForm.values.resourcesNeeded.includes(v))
+                    handleMultiSelectFilter(
+                      "resourcesNeeded",
+                      v,
+                      !filterForm.values.resourcesNeeded.includes(v),
+                    )
                   }
                   labelFn={(v) => translateEnum("resources", v)}
                 />
@@ -499,7 +554,9 @@ export const LibraryPage: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <Tag className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">{t("library.topics")}</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {t("library.topics")}
+                  </span>
                 </div>
                 <BadgeSelector
                   label=""
@@ -507,7 +564,11 @@ export const LibraryPage: React.FC = () => {
                   selectedValues={filterForm.values.topics}
                   allowEmptySelection
                   onToggle={(v) =>
-                    handleMultiSelectFilter("topics", v, !filterForm.values.topics.includes(v))
+                    handleMultiSelectFilter(
+                      "topics",
+                      v,
+                      !filterForm.values.topics.includes(v),
+                    )
                   }
                   labelFn={(v) => translateEnum("topics", v)}
                 />
@@ -526,7 +587,9 @@ export const LibraryPage: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <Brain className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">{t("library.mentalLoad")}</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {t("library.mentalLoad")}
+                  </span>
                 </div>
                 <BadgeSelector
                   label=""
@@ -534,7 +597,11 @@ export const LibraryPage: React.FC = () => {
                   selectedValues={filterForm.values.mentalLoad}
                   allowEmptySelection
                   onToggle={(v) =>
-                    handleMultiSelectFilter("mentalLoad", v, !filterForm.values.mentalLoad.includes(v))
+                    handleMultiSelectFilter(
+                      "mentalLoad",
+                      v,
+                      !filterForm.values.mentalLoad.includes(v),
+                    )
                   }
                   labelFn={(v) => translateEnum("energy", v)}
                 />
@@ -542,7 +609,9 @@ export const LibraryPage: React.FC = () => {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-1.5">
                   <ActivityIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs font-medium text-muted-foreground">{t("library.physicalEnergy")}</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {t("library.physicalEnergy")}
+                  </span>
                 </div>
                 <BadgeSelector
                   label=""
@@ -550,7 +619,11 @@ export const LibraryPage: React.FC = () => {
                   selectedValues={filterForm.values.physicalEnergy}
                   allowEmptySelection
                   onToggle={(v) =>
-                    handleMultiSelectFilter("physicalEnergy", v, !filterForm.values.physicalEnergy.includes(v))
+                    handleMultiSelectFilter(
+                      "physicalEnergy",
+                      v,
+                      !filterForm.values.physicalEnergy.includes(v),
+                    )
                   }
                   labelFn={(v) => translateEnum("energy", v)}
                 />
@@ -592,7 +665,9 @@ export const LibraryPage: React.FC = () => {
         {activities.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 border border-border rounded-lg">
             <Filter className="h-8 w-8 text-muted-foreground mb-3" />
-            <p className="text-sm font-medium mb-1">{t("library.noActivities")}</p>
+            <p className="text-sm font-medium mb-1">
+              {t("library.noActivities")}
+            </p>
             <p className="text-xs text-muted-foreground mb-4 text-center max-w-xs">
               {t("library.noActivitiesDesc")}
             </p>
@@ -655,7 +730,8 @@ export const LibraryPage: React.FC = () => {
                       {activity.ageMin}–{activity.ageMax}
                     </span>
                     <span className="w-[68px] text-xs text-muted-foreground tabular-nums hidden sm:block shrink-0">
-                      {activity.durationMinMinutes}–{activity.durationMaxMinutes}m
+                      {activity.durationMinMinutes}–
+                      {activity.durationMaxMinutes}m
                     </span>
                     <div className="w-[76px] shrink-0">
                       <Badge
@@ -690,7 +766,9 @@ export const LibraryPage: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
-                        initialIsFavourited={favouritedActivityIds.has(activity.id)}
+                        initialIsFavourited={favouritedActivityIds.has(
+                          activity.id,
+                        )}
                       />
                     </div>
                   </div>

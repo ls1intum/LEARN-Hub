@@ -237,8 +237,7 @@ public class ActivityController {
 		String description = request.getDescription() != null ? request.getDescription().trim() : "";
 		String finalDescription = description;
 		if (org.springframework.util.StringUtils.hasText(request.getCustomPrompt())) {
-			finalDescription = description
-					+ (description.isEmpty() ? "" : "\n\nAdditional instructions:\n")
+			finalDescription = description + (description.isEmpty() ? "" : "\n\nAdditional instructions:\n")
 					+ request.getCustomPrompt().trim();
 		}
 		String contextText = request.getExerciseContext() != null ? request.getExerciseContext() : "";

@@ -53,7 +53,9 @@ export const SearchHistoryPage: React.FC = () => {
   const handleDeleteEntry = async (historyId: number) => {
     try {
       await apiService.deleteSearchHistoryEntry(historyId);
-      setSearchHistory((prev) => prev.filter((entry) => entry.id !== historyId));
+      setSearchHistory((prev) =>
+        prev.filter((entry) => entry.id !== historyId),
+      );
       setTotalCount((prev) => prev - 1);
     } catch (err) {
       logger.error(
@@ -79,14 +81,18 @@ export const SearchHistoryPage: React.FC = () => {
     });
   };
 
-  const formatSearchCriteria = (criteria: Record<string, unknown>): string[] => {
+  const formatSearchCriteria = (
+    criteria: Record<string, unknown>,
+  ): string[] => {
     const formatted: string[] = [];
 
     if (criteria.target_age) {
       formatted.push(t("history.age", { value: criteria.target_age }));
     }
     if (criteria.target_duration) {
-      formatted.push(t("history.duration", { value: criteria.target_duration }));
+      formatted.push(
+        t("history.duration", { value: criteria.target_duration }),
+      );
     }
     if (criteria.bloomLevel && criteria.bloomLevel !== "any") {
       formatted.push(
@@ -180,7 +186,9 @@ export const SearchHistoryPage: React.FC = () => {
         <div className="border border-border rounded-lg overflow-hidden">
           {/* Column header */}
           <div className="flex items-center gap-3 px-3 py-2 bg-muted/40 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            <span className="w-[110px] shrink-0">{t("history.dateHeader")}</span>
+            <span className="w-[110px] shrink-0">
+              {t("history.dateHeader")}
+            </span>
             <span className="flex-1">{t("history.criteriaHeader")}</span>
             <span className="w-[64px] shrink-0" />
           </div>
@@ -234,7 +242,10 @@ export const SearchHistoryPage: React.FC = () => {
                         </Badge>
                       ))}
                       {criteria.length > 3 && (
-                        <Badge variant="outline" className="text-xs px-2 py-0.5">
+                        <Badge
+                          variant="outline"
+                          className="text-xs px-2 py-0.5"
+                        >
                           +{criteria.length - 3}
                         </Badge>
                       )}

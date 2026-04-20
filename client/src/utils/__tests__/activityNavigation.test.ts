@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  getActivityBackTarget,
-  isActivityRoute,
-} from "../activityNavigation";
+import { getActivityBackTarget, isActivityRoute } from "../activityNavigation";
 
 describe("activityNavigation", () => {
   it("detects detail and edit routes", () => {

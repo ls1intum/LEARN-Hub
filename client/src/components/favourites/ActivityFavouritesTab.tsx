@@ -52,11 +52,14 @@ export const ActivityFavouritesTab: React.FC = () => {
 
       const activityIds = response.favourites.map((fav) => fav.activityId);
       if (activityIds.length > 0) {
-        const activityDetails = await apiService.getActivitiesByIds(activityIds);
+        const activityDetails =
+          await apiService.getActivitiesByIds(activityIds);
         setActivities(activityDetails);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load favourites");
+      setError(
+        err instanceof Error ? err.message : "Failed to load favourites",
+      );
     } finally {
       setLoading(false);
     }
@@ -68,10 +71,16 @@ export const ActivityFavouritesTab: React.FC = () => {
     try {
       setRemovingIds((prev) => new Set(prev).add(activityId));
       await apiService.removeActivityFavourite(activityId);
-      setFavourites((prev) => prev.filter((fav) => fav.activityId !== activityId));
-      setActivities((prev) => prev.filter((activity) => activity.id !== activityId));
+      setFavourites((prev) =>
+        prev.filter((fav) => fav.activityId !== activityId),
+      );
+      setActivities((prev) =>
+        prev.filter((activity) => activity.id !== activityId),
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to remove favourite");
+      setError(
+        err instanceof Error ? err.message : "Failed to remove favourite",
+      );
     } finally {
       setRemovingIds((prev) => {
         const newSet = new Set(prev);
@@ -248,7 +257,10 @@ export const ActivityFavouritesTab: React.FC = () => {
 
                   {/* Format badge */}
                   <div className="w-[76px] shrink-0">
-                    <Badge variant="secondary" className="text-xs px-1.5 py-0 font-normal">
+                    <Badge
+                      variant="secondary"
+                      className="text-xs px-1.5 py-0 font-normal"
+                    >
                       {translateEnum("format", activity.format)}
                     </Badge>
                   </div>

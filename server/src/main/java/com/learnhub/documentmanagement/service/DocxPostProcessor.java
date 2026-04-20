@@ -12,10 +12,10 @@ import org.apache.poi.util.Units;
 import org.apache.poi.wp.usermodel.HeaderFooterType;
 import org.apache.poi.xwpf.usermodel.*;
 import org.apache.xmlbeans.XmlCursor;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
 import org.openxmlformats.schemas.drawingml.x2006.main.CTPositiveSize2D;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTAnchor;
 import org.openxmlformats.schemas.drawingml.x2006.wordprocessingDrawing.CTInline;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
@@ -201,7 +201,8 @@ public class DocxPostProcessor {
 	private void applyWorksheetFontFamily(XWPFParagraph paragraph) {
 		for (XWPFRun run : paragraph.getRuns()) {
 			CTRPr runProperties = run.getCTR().isSetRPr() ? run.getCTR().getRPr() : run.getCTR().addNewRPr();
-			CTFonts fonts = runProperties.sizeOfRFontsArray() > 0 ? runProperties.getRFontsArray(0)
+			CTFonts fonts = runProperties.sizeOfRFontsArray() > 0
+					? runProperties.getRFontsArray(0)
 					: runProperties.addNewRFonts();
 			fonts.setAscii(WORKSHEET_FONT_FAMILY);
 			fonts.setHAnsi(WORKSHEET_FONT_FAMILY);

@@ -1,4 +1,10 @@
-import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useRef,
+  useEffect,
+  useMemo,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -30,7 +36,9 @@ import { useTranslation } from "react-i18next";
 
 const PLACEHOLDER_RE = /<img:(\d+)>/g;
 
-function toDisplayValue(real: string): [display: string, map: Map<number, string>] {
+function toDisplayValue(
+  real: string,
+): [display: string, map: Map<number, string>] {
   const map = new Map<number, string>();
   let idx = 0;
   const display = real.replace(
@@ -44,14 +52,17 @@ function toDisplayValue(real: string): [display: string, map: Map<number, string
 }
 
 function toRealValue(display: string, map: Map<number, string>): string {
-  return display.replace(PLACEHOLDER_RE, (_match, i) => map.get(Number(i)) ?? "");
+  return display.replace(
+    PLACEHOLDER_RE,
+    (_match, i) => map.get(Number(i)) ?? "",
+  );
 }
 
 // ─── Image Regeneration Helpers ──────────────────────────────────
 
 interface EmbeddedImage {
-  position: number;    // 1-based
-  id: string;          // alt text / image ID
+  position: number; // 1-based
+  id: string; // alt text / image ID
   description: string; // from HTML comment prompt, or empty
 }
 
@@ -115,14 +126,18 @@ const ImageRegenerationBar: React.FC<{
 
   // Clamp selection when image list changes
   useEffect(() => {
-    if (images.length > 0 && !images.find((i) => i.position === selectedPosition)) {
+    if (
+      images.length > 0 &&
+      !images.find((i) => i.position === selectedPosition)
+    ) {
       setSelectedPosition(images[0].position);
     }
   }, [images.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (images.length === 0) return null;
 
-  const selectedImage = images.find((i) => i.position === selectedPosition) ?? images[0];
+  const selectedImage =
+    images.find((i) => i.position === selectedPosition) ?? images[0];
 
   const handleRegenerate = async () => {
     setError(null);
@@ -155,7 +170,11 @@ const ImageRegenerationBar: React.FC<{
           </SelectTrigger>
           <SelectContent>
             {images.map((img) => (
-              <SelectItem key={img.position} value={String(img.position)} className="text-xs">
+              <SelectItem
+                key={img.position}
+                value={String(img.position)}
+                className="text-xs"
+              >
                 #{img.position} – {img.id}
               </SelectItem>
             ))}
@@ -218,7 +237,10 @@ export const MarkdownEditorWithPreview: React.FC<
 
   // Derive the display value: base64 payloads replaced with short tokens.
   // Re-computed only when `value` (the real markdown) changes.
-  const [displayValue, base64Map] = useMemo(() => toDisplayValue(value), [value]);
+  const [displayValue, base64Map] = useMemo(
+    () => toDisplayValue(value),
+    [value],
+  );
 
   // Cleanup blob URL on unmount or change
   useEffect(() => {
@@ -275,7 +297,11 @@ export const MarkdownEditorWithPreview: React.FC<
           return url;
         });
       } catch (error) {
-        logger.error("Preview render error", error, "MarkdownEditorWithPreview");
+        logger.error(
+          "Preview render error",
+          error,
+          "MarkdownEditorWithPreview",
+        );
       } finally {
         setIsRenderingPreview(false);
       }
