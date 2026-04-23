@@ -16,6 +16,7 @@ import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -305,6 +306,22 @@ class PDFServiceTest {
 	}
 
 	@Test
+	void extractTextFromPdfFallsBackToPdfBoxWhenITextRejectsPdf() throws IOException {
+		String expectedText = "Fallback readable PDF text";
+		PDFService fallbackPdfService = new PDFService() {
+			@Override
+			String extractTextWithIText(byte[] pdfContent) {
+				throw new IllegalArgumentException("Coordinate outside allowed range.");
+			}
+		};
+		UUID key = fallbackPdfService.cachePdf(createPdfWithText(expectedText), "fallback.pdf");
+
+		String extractedText = fallbackPdfService.extractTextFromPdf(key);
+
+		assertThat(extractedText).contains(expectedText);
+	}
+
+	@Test
 	void getLessonPlanInfoDoesNotAcceptSourcePdfDocumentsArrayFallback() {
 		UUID documentId = UUID.randomUUID();
 
@@ -384,5 +401,15 @@ class PDFServiceTest {
 		assertThat(response.isCanGenerateLessonPlan()).isTrue();
 		assertThat(response.getAvailablePdfs()).isEqualTo(1);
 		assertThat(response.getMissingPdfs()).isEmpty();
+	}
+
+	private byte[] createPdfWithText(String text) throws IOException {
+		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		com.itextpdf.kernel.pdf.PdfDocument pdfDocument = new com.itextpdf.kernel.pdf.PdfDocument(
+				new com.itextpdf.kernel.pdf.PdfWriter(outputStream));
+		try (com.itextpdf.layout.Document document = new com.itextpdf.layout.Document(pdfDocument)) {
+			document.add(new com.itextpdf.layout.element.Paragraph(text));
+		}
+		return outputStream.toByteArray();
 	}
 }

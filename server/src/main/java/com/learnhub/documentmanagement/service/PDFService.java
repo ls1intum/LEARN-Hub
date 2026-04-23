@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.imageio.ImageIO;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.rendering.PDFRenderer;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -655,27 +656,52 @@ public class PDFService {
 	 */
 	public String extractTextFromPdf(UUID documentIdOrCacheKey) {
 		try {
-			byte[] pdfContent;
-
-			// First try the in-memory cache
-			CachedPdf cached = pdfCache.get(documentIdOrCacheKey);
-			if (cached != null) {
-				pdfContent = cached.content;
-			} else {
-				// Fall back to persisted PDF
-				pdfContent = getPdfContent(documentIdOrCacheKey);
-			}
-			try (PdfDocument document = new PdfDocument(new PdfReader(new ByteArrayInputStream(pdfContent)))) {
-				StringBuilder extractedText = new StringBuilder();
-				for (int pageNumber = 1; pageNumber <= document.getNumberOfPages(); pageNumber++) {
-					extractedText.append(PdfTextExtractor.getTextFromPage(document.getPage(pageNumber)));
-					extractedText.append(System.lineSeparator());
-				}
-				return extractedText.toString();
-			}
+			byte[] pdfContent = loadPdfContent(documentIdOrCacheKey);
+			return extractTextFromPdfContent(pdfContent, documentIdOrCacheKey);
 		} catch (Exception e) {
 			logger.error("Failed to extract text from PDF {}: {}", documentIdOrCacheKey, e.getMessage());
 			throw new RuntimeException("Failed to extract text from PDF: " + e.getMessage(), e);
+		}
+	}
+
+	private byte[] loadPdfContent(UUID documentIdOrCacheKey) throws IOException {
+		CachedPdf cached = pdfCache.get(documentIdOrCacheKey);
+		if (cached != null) {
+			return cached.content;
+		}
+		return getPdfContent(documentIdOrCacheKey);
+	}
+
+	private String extractTextFromPdfContent(byte[] pdfContent, UUID documentIdOrCacheKey) throws Exception {
+		try {
+			return extractTextWithIText(pdfContent);
+		} catch (Exception iTextException) {
+			logger.warn("iText text extraction failed for PDF {}. Falling back to PDFBox: {}", documentIdOrCacheKey,
+					iTextException.getMessage());
+			try {
+				return extractTextWithPdfBox(pdfContent);
+			} catch (Exception pdfBoxException) {
+				iTextException.addSuppressed(pdfBoxException);
+				throw iTextException;
+			}
+		}
+	}
+
+	// Visible for testing
+	String extractTextWithIText(byte[] pdfContent) throws Exception {
+		try (PdfDocument document = new PdfDocument(new PdfReader(new ByteArrayInputStream(pdfContent)))) {
+			StringBuilder extractedText = new StringBuilder();
+			for (int pageNumber = 1; pageNumber <= document.getNumberOfPages(); pageNumber++) {
+				extractedText.append(PdfTextExtractor.getTextFromPage(document.getPage(pageNumber)));
+				extractedText.append(System.lineSeparator());
+			}
+			return extractedText.toString();
+		}
+	}
+
+	private String extractTextWithPdfBox(byte[] pdfContent) throws IOException {
+		try (org.apache.pdfbox.pdmodel.PDDocument document = Loader.loadPDF(pdfContent)) {
+			return new PDFTextStripper().getText(document);
 		}
 	}
 }
