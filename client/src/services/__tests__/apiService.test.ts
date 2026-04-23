@@ -376,6 +376,32 @@ describe("ApiService", () => {
       );
     });
 
+    it("should strip embedded base64 images from regenerate image context", async () => {
+      vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
+        new Response(JSON.stringify({ imageMarkdown: "![img](data:x)" }), {
+          status: 200,
+        }),
+      );
+      const base64 = "A".repeat(50000);
+      const htmlBase64 = "B".repeat(50000);
+
+      await ApiService.regenerateImage({
+        imageId: "maze-1",
+        description: "A maze",
+        exerciseContext: `Intro\n<!-- learnhub-image:id=maze-1; prompt=A maze -->\n![maze-1](data:image/png;base64,${base64})\n<img alt="maze" src="data:image/png;base64,${htmlBase64}" />\nOutro`,
+      });
+
+      const [, options] = vi.mocked(authService.makeAuthenticatedRequest).mock
+        .calls[0];
+      const body = JSON.parse(String(options?.body));
+      expect(body.exerciseContext).toContain("Intro");
+      expect(body.exerciseContext).toContain("[Bild]");
+      expect(body.exerciseContext).toContain("Outro");
+      expect(body.exerciseContext).not.toContain(base64);
+      expect(body.exerciseContext).not.toContain(htmlBase64);
+      expect(body.exerciseContext.length).toBeLessThan(1000);
+    });
+
     it("should include activity name when rendering preview pdf", async () => {
       vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
         new Response(new Blob(["pdf"]), { status: 200 }),

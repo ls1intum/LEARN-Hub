@@ -84,6 +84,56 @@ class LLMServiceTest {
 	}
 
 	@Test
+	void buildExerciseImagePromptStripsEmbeddedBase64ImageDataFromContext() {
+		LLMService service = new LLMService(unsupportedChatClient());
+		String base64 = "A".repeat(50_000);
+
+		String prompt = service.buildExerciseImagePrompt("Ein Labyrinth.", """
+				Aufgabe
+				<!-- learnhub-image:id=labyrinth-1; prompt=Ein Labyrinth. -->
+				![labyrinth-1](data:image/png;base64,%s)
+				Loesung
+				""".formatted(base64));
+
+		assertThat(prompt).contains("Aufgabe").contains("[Bild]").contains("Loesung").doesNotContain(base64);
+		assertThat(prompt.length()).isLessThan(32_000);
+	}
+
+	@Test
+	void buildExerciseImagePromptStripsBareBase64DataUris() {
+		LLMService service = new LLMService(unsupportedChatClient());
+		String base64 = "A".repeat(50_000);
+
+		String prompt = service.buildExerciseImagePrompt("Ein Labyrinth.",
+				"Vorher data:image/png;base64," + base64 + " Nachher");
+
+		assertThat(prompt).contains("Vorher [Bilddaten entfernt] Nachher").doesNotContain(base64);
+		assertThat(prompt.length()).isLessThan(32_000);
+	}
+
+	@Test
+	void buildExerciseImagePromptStripsHtmlBase64Images() {
+		LLMService service = new LLMService(unsupportedChatClient());
+		String base64 = "A".repeat(50_000);
+
+		String prompt = service.buildExerciseImagePrompt("Ein Labyrinth.",
+				"Vorher <img alt=\"Labyrinth\" src=\"data:image/png;base64," + base64 + "\" /> Nachher");
+
+		assertThat(prompt).contains("Vorher [Bild] Nachher").doesNotContain(base64);
+		assertThat(prompt.length()).isLessThan(32_000);
+	}
+
+	@Test
+	void buildExerciseImagePromptTruncatesOversizedText() {
+		LLMService service = new LLMService(unsupportedChatClient());
+
+		String prompt = service.buildExerciseImagePrompt("D".repeat(20_000), "C".repeat(80_000));
+
+		assertThat(prompt).contains("omitted");
+		assertThat(prompt.length()).isLessThan(32_000);
+	}
+
+	@Test
 	void buildExerciseImageContextUsesGeneratedExerciseAndSolutionText() {
 		LLMService service = new LLMService(unsupportedChatClient());
 

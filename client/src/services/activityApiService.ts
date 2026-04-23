@@ -16,6 +16,31 @@ import type {
 } from "@/types/api";
 import { ApiRequestMixin } from "./apiService";
 
+const EMBEDDED_MARKDOWN_IMAGE_RE =
+  /(?:<!--\s*learnhub-image[\s\S]*?-->\s*)?!\[[^\]]*]\(data:[^)\s"']+;base64,[A-Za-z0-9+/=\r\n]+\)/gi;
+const EMBEDDED_HTML_IMAGE_RE =
+  /<img\b[^>]*\bsrc\s*=\s*(?:"data:[^"]+;base64,[A-Za-z0-9+/=\r\n]+"|'data:[^']+;base64,[A-Za-z0-9+/=\r\n]+'|data:[^\s>]+;base64,[A-Za-z0-9+/=\r\n]+)[^>]*>/gi;
+const BASE64_DATA_URI_RE = /data:[^,\s)"']+;base64,[A-Za-z0-9+/=\r\n]+/gi;
+const MAX_REGENERATE_IMAGE_CONTEXT_CHARS = 16000;
+
+function sanitizeRegenerateImageContext(context?: string): string {
+  if (!context) return "";
+
+  const withoutEmbeddedImages = context
+    .replace(EMBEDDED_MARKDOWN_IMAGE_RE, "[Bild]")
+    .replace(EMBEDDED_HTML_IMAGE_RE, "[Bild]")
+    .replace(BASE64_DATA_URI_RE, "[Bilddaten entfernt]");
+
+  if (withoutEmbeddedImages.length <= MAX_REGENERATE_IMAGE_CONTEXT_CHARS) {
+    return withoutEmbeddedImages;
+  }
+
+  return `${withoutEmbeddedImages.slice(
+    0,
+    MAX_REGENERATE_IMAGE_CONTEXT_CHARS,
+  )}\n\n[... gekuerzt ...]`;
+}
+
 /**
  * Activity-related API methods: CRUD, recommendations, PDF/DOCX downloads,
  * markdown generation, and field values.
@@ -227,7 +252,9 @@ export const ActivityApi = {
           imageId: params.imageId,
           description: params.description,
           customPrompt: params.customPrompt ?? "",
-          exerciseContext: params.exerciseContext ?? "",
+          exerciseContext: sanitizeRegenerateImageContext(
+            params.exerciseContext,
+          ),
         }),
       },
     );

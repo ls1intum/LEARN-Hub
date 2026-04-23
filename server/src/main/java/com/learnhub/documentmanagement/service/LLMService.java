@@ -54,9 +54,16 @@ public class LLMService {
 	// Strips embedded base64 image data (and their learnhub HTML comments) from
 	// markdown
 	// to prevent sending megabytes of image data to text/image LLMs as context.
-	private static final Pattern EMBEDDED_IMAGE_PATTERN = Pattern.compile(
+	private static final Pattern EMBEDDED_MARKDOWN_IMAGE_PATTERN = Pattern.compile(
 			"(?:<!--\\s*learnhub-image[^>]*-->\\s*)?!\\[[^\\]]*\\]\\(data:[^;)\"'\\s]+;base64,[A-Za-z0-9+/]+=*\\)",
 			Pattern.DOTALL);
+	private static final Pattern EMBEDDED_HTML_IMAGE_PATTERN = Pattern.compile(
+			"<img\\b[^>]*\\bsrc\\s*=\\s*(?:\"data:[^\"]+;base64,[A-Za-z0-9+/=\\r\\n]+\"|'data:[^']+;base64,[A-Za-z0-9+/=\\r\\n]+'|data:[^\\s>]+;base64,[A-Za-z0-9+/=\\r\\n]+)[^>]*>",
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+	private static final Pattern BASE64_DATA_URI_PATTERN = Pattern
+			.compile("data:[^,\\s)\"']+;base64,[A-Za-z0-9+/=\\r\\n]+", Pattern.CASE_INSENSITIVE);
+	private static final int MAX_IMAGE_DESCRIPTION_CHARS = 4000;
+	private static final int MAX_IMAGE_CONTEXT_CHARS = 16000;
 
 	@Value("${llm.visual.model:}")
 	private String visualModelName;
@@ -469,18 +476,36 @@ public class LLMService {
 		if (markdown == null || markdown.isEmpty()) {
 			return markdown;
 		}
-		return EMBEDDED_IMAGE_PATTERN.matcher(markdown).replaceAll("[Bild]");
+		String withoutMarkdownImages = EMBEDDED_MARKDOWN_IMAGE_PATTERN.matcher(markdown).replaceAll("[Bild]");
+		String withoutHtmlImages = EMBEDDED_HTML_IMAGE_PATTERN.matcher(withoutMarkdownImages).replaceAll("[Bild]");
+		return BASE64_DATA_URI_PATTERN.matcher(withoutHtmlImages).replaceAll("[Bilddaten entfernt]");
 	}
 
 	String buildExerciseImagePrompt(String description, String contextText) {
-		String normalizedDescription = description == null ? "" : description.trim();
-		String normalizedContextText = stripEmbeddedImages(contextText == null ? "" : contextText.trim());
+		String normalizedDescription = truncateForImagePrompt(
+				stripEmbeddedImages(description == null ? "" : description.trim()), MAX_IMAGE_DESCRIPTION_CHARS,
+				"image description");
+		String normalizedContextText = truncateForImagePrompt(
+				stripEmbeddedImages(contextText == null ? "" : contextText.trim()), MAX_IMAGE_CONTEXT_CHARS,
+				"exercise context");
 		if (exerciseImagePromptResource == null) {
 			return DEFAULT_EXERCISE_IMAGE_PROMPT_TEMPLATE.replace("{contextText}", normalizedContextText)
 					.replace("{description}", normalizedDescription);
 		}
 		return new PromptTemplate(exerciseImagePromptResource)
 				.render(Map.of("description", normalizedDescription, "contextText", normalizedContextText));
+	}
+
+	private String truncateForImagePrompt(String value, int maxChars, String fieldName) {
+		if (value == null || value.length() <= maxChars) {
+			return value;
+		}
+
+		logger.info("Truncating exercise image {} from {} to {} characters", fieldName, value.length(), maxChars);
+		int headLength = Math.max(0, (maxChars * 3) / 4);
+		int tailLength = Math.max(0, maxChars - headLength);
+		return value.substring(0, headLength).trim() + "\n\n[... omitted " + (value.length() - maxChars)
+				+ " characters ...]\n\n" + value.substring(value.length() - tailLength).trim();
 	}
 
 	private String toMarkdownImageFromUrl(String imageUrl, String altText) {
