@@ -17,6 +17,11 @@ import { PaginationBar } from "@/components/ui/PaginationBar";
 import { ListFilterToolbar } from "@/components/lesson-plans/ListFilterToolbar";
 import { RangeFilterSlider } from "@/components/lesson-plans/RangeFilterSlider";
 import { ActivitySubRow } from "@/components/lesson-plans/ActivitySubRow";
+import {
+  LessonPlanCard,
+  LessonPlanCardSkeleton,
+} from "@/components/lesson-plans/LessonPlanCard";
+import { ViewToggle, type ViewMode } from "@/components/ui/ViewToggle";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslateEnum } from "@/hooks/useTranslateEnum";
@@ -64,6 +69,15 @@ export const LessonPlanFavouritesTab: React.FC = () => {
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    () =>
+      (localStorage.getItem("view-lesson-plan-favourites") as ViewMode) ??
+      "grid",
+  );
+  const handleViewChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem("view-lesson-plan-favourites", mode);
+  };
   const [currentPage, setCurrentPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
   const [durationRange, setDurationRange] = useState<[number, number]>([
@@ -272,19 +286,18 @@ export const LessonPlanFavouritesTab: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="flex items-center gap-3 px-3 py-2 bg-muted/40 border-b border-border">
-          <Skeleton className="h-4 w-32" />
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 flex-1" />
+          <Skeleton className="h-8 w-24 rounded" />
         </div>
-        <div className="divide-y divide-border">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-8 w-[76px] rounded" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3 px-3 py-2.5">
-              <Skeleton className="h-4 flex-1" />
-              <Skeleton className="h-5 w-14 hidden sm:block" />
-              <Skeleton className="h-5 w-14 hidden sm:block" />
-              <Skeleton className="h-5 w-16" />
-              <Skeleton className="h-7 w-[56px]" />
-            </div>
+            <LessonPlanCardSkeleton key={i} />
           ))}
         </div>
       </div>
@@ -350,43 +363,75 @@ export const LessonPlanFavouritesTab: React.FC = () => {
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground tabular-nums">
-        {filteredPlans.length} {t("lessonPlanFavourites.totalPlans")}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground tabular-nums">
+          {filteredPlans.length} {t("lessonPlanFavourites.totalPlans")}
+        </p>
+        <ViewToggle value={viewMode} onChange={handleViewChange} />
+      </div>
 
-      {/* Table */}
-      <div className="border border-border rounded-lg overflow-hidden">
-        {/* Column headers */}
-        <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 border-b border-border">
-          <span className="w-6 shrink-0" />
-          <span className="flex-1 text-xs font-medium text-muted-foreground">
-            {t("activityFavourites.nameHeader")}
-          </span>
-          <span className="w-[68px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
-            {t("lessonPlanFavourites.colActivities")}
-          </span>
-          <span className="w-[68px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
-            {t("activityFavourites.durationHeader")}
-          </span>
-          <span className="w-[52px] text-xs font-medium text-muted-foreground hidden md:block shrink-0">
-            {t("activityFavourites.ageHeader")}
-          </span>
-          <span className="w-[76px] text-xs font-medium text-muted-foreground shrink-0">
-            {t("activityFavourites.formatHeader")}
-          </span>
-          <span className="w-[100px] text-xs font-medium text-muted-foreground hidden lg:block shrink-0">
-            {t("activityFavourites.dateHeader")}
-          </span>
-          <span className="w-[32px] shrink-0" />
+      {pagedPlans.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 text-center border border-border rounded-lg">
+          <p className="text-sm text-muted-foreground">
+            {t("lessonPlanFavourites.noResults")}
+          </p>
         </div>
-
-        {pagedPlans.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <p className="text-sm text-muted-foreground">
-              {t("lessonPlanFavourites.noResults")}
-            </p>
+      ) : viewMode === "grid" ? (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {pagedPlans.map((plan) => (
+              <LessonPlanCard
+                key={plan.favourite.id}
+                name={plan.favourite.name}
+                activities={plan.activities}
+                totalDuration={plan.totalDuration}
+                minAge={plan.minAge}
+                maxAge={plan.maxAge}
+                activityCount={plan.activityCount}
+                breakCount={plan.breakCount}
+                formats={plan.formats}
+                createdAt={plan.favourite.createdAt}
+                onRemove={() => removeFavourite(plan.favourite.id)}
+                isRemoving={removingIds.has(plan.favourite.id)}
+                onViewActivity={handleViewActivityDetails}
+              />
+            ))}
           </div>
-        ) : (
+          <PaginationBar
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredPlans.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
+        </>
+      ) : (
+        /* Table view */
+        <div className="border border-border rounded-lg overflow-hidden">
+          {/* Column headers */}
+          <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 border-b border-border">
+            <span className="w-6 shrink-0" />
+            <span className="flex-1 text-xs font-medium text-muted-foreground">
+              {t("activityFavourites.nameHeader")}
+            </span>
+            <span className="w-[68px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
+              {t("lessonPlanFavourites.colActivities")}
+            </span>
+            <span className="w-[68px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
+              {t("activityFavourites.durationHeader")}
+            </span>
+            <span className="w-[52px] text-xs font-medium text-muted-foreground hidden md:block shrink-0">
+              {t("activityFavourites.ageHeader")}
+            </span>
+            <span className="w-[76px] text-xs font-medium text-muted-foreground shrink-0">
+              {t("activityFavourites.formatHeader")}
+            </span>
+            <span className="w-[100px] text-xs font-medium text-muted-foreground hidden lg:block shrink-0">
+              {t("activityFavourites.dateHeader")}
+            </span>
+            <span className="w-[32px] shrink-0" />
+          </div>
+
           <div className="divide-y divide-border">
             {pagedPlans.map((plan) => {
               const isExpanded = expandedIds.has(plan.favourite.id);
@@ -483,9 +528,7 @@ export const LessonPlanFavouritesTab: React.FC = () => {
               );
             })}
           </div>
-        )}
 
-        {pagedPlans.length > 0 && (
           <div className="px-3">
             <PaginationBar
               currentPage={currentPage}
@@ -495,8 +538,8 @@ export const LessonPlanFavouritesTab: React.FC = () => {
               onPageChange={setCurrentPage}
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

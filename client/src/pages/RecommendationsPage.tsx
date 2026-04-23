@@ -3,7 +3,9 @@ import { useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { RecommendationForm } from "@/components/forms/RecommendationForm";
 import { ResultsDisplay } from "@/components/results/ResultsDisplay";
-import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
+import { RecommendationCardSkeleton } from "@/components/results/RecommendationCard";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { useDataFetch } from "@/hooks/useDataFetch";
 import { useForm } from "@/hooks/useForm";
@@ -27,6 +29,28 @@ interface FormData {
   includeBreaks: boolean;
   priorityCategories: string[];
 }
+
+const RecommendationResultsSkeleton: React.FC = () => (
+  <div className="space-y-4">
+    <div className="flex flex-col gap-3">
+      <Skeleton className="h-9 w-full" />
+      <div className="flex flex-wrap gap-2">
+        <Skeleton className="h-8 w-28 rounded" />
+        <Skeleton className="h-8 w-28 rounded" />
+        <Skeleton className="h-8 w-28 rounded" />
+      </div>
+    </div>
+    <div className="flex items-center justify-between">
+      <Skeleton className="h-3 w-28" />
+      <Skeleton className="h-8 w-[76px] rounded" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <RecommendationCardSkeleton key={i} />
+      ))}
+    </div>
+  </div>
+);
 
 const initialFormData: FormData = {
   targetAge: 6,
@@ -234,7 +258,10 @@ export const RecommendationsPage: React.FC = () => {
 
         {showResults ? (
           <div className="space-y-6">
-            <LoadingState isLoading={isLoading} fallback={<SkeletonGrid />}>
+            <LoadingState
+              isLoading={isLoading}
+              fallback={<RecommendationResultsSkeleton />}
+            >
               {results && <ResultsDisplay results={results} />}
             </LoadingState>
           </div>

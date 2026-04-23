@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { ActivityCard, ActivityCardSkeleton } from "@/components/ActivityCard";
+import { ViewToggle, type ViewMode } from "@/components/ui/ViewToggle";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import type { Activity } from "@/types/activity";
@@ -39,6 +41,14 @@ export const ActivityFavouritesTab: React.FC = () => {
   const [removingIds, setRemovingIds] = useState<Set<string>>(new Set());
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    () =>
+      (localStorage.getItem("view-activity-favourites") as ViewMode) ?? "grid",
+  );
+  const handleViewChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem("view-activity-favourites", mode);
+  };
 
   const loadFavourites = useCallback(async () => {
     if (!user) return;
@@ -134,19 +144,15 @@ export const ActivityFavouritesTab: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="border border-border rounded-lg overflow-hidden">
-        <div className="flex items-center gap-3 px-3 py-2 bg-muted/40 border-b border-border">
-          <Skeleton className="h-4 w-32" />
+      <div className="space-y-4">
+        <Skeleton className="h-8 w-full" />
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-8 w-[76px] rounded" />
         </div>
-        <div className="divide-y divide-border">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3 px-3 py-2.5">
-              <Skeleton className="h-4 flex-1" />
-              <Skeleton className="h-5 w-12 hidden sm:block" />
-              <Skeleton className="h-5 w-14 hidden sm:block" />
-              <Skeleton className="h-5 w-16" />
-              <Skeleton className="h-7 w-[56px]" />
-            </div>
+            <ActivityCardSkeleton key={i} />
           ))}
         </div>
       </div>
@@ -187,36 +193,64 @@ export const ActivityFavouritesTab: React.FC = () => {
           className="pl-8 h-8 text-sm w-full"
         />
       </div>
-      <p className="text-xs text-muted-foreground tabular-nums">
-        {filteredRows.length} {t("library.totalActivities")}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted-foreground tabular-nums">
+          {filteredRows.length} {t("library.totalActivities")}
+        </p>
+        <ViewToggle value={viewMode} onChange={handleViewChange} />
+      </div>
 
-      <div className="border border-border rounded-lg overflow-hidden">
-        {/* Column header */}
-        <div className="flex items-center gap-3 px-3 py-2 bg-muted/40 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          <span className="flex-1">{t("activityFavourites.nameHeader")}</span>
-          <span className="w-[52px] shrink-0 hidden sm:block">
-            {t("activityFavourites.ageHeader")}
-          </span>
-          <span className="w-[68px] shrink-0 hidden sm:block">
-            {t("activityFavourites.durationHeader")}
-          </span>
-          <span className="w-[76px] shrink-0">
-            {t("activityFavourites.formatHeader")}
-          </span>
-          <span className="w-[100px] shrink-0 hidden lg:block">
-            {t("activityFavourites.dateHeader")}
-          </span>
-          <span className="w-[32px] shrink-0" />
+      {pagedRows.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <p className="text-sm text-muted-foreground">
+            {t("activityFavourites.noResults")}
+          </p>
         </div>
-
-        {pagedRows.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center">
-            <p className="text-sm text-muted-foreground">
-              {t("activityFavourites.noResults")}
-            </p>
+      ) : viewMode === "grid" ? (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {pagedRows.map(({ favourite, activity }) => {
+              if (!activity) return null;
+              return (
+                <ActivityCard
+                  key={favourite.id}
+                  activity={activity}
+                  onClick={() => handleViewDetails(activity)}
+                  showRemoveButton
+                  isRemoving={removingIds.has(activity.id)}
+                  onRemove={() => removeFavourite(activity.id)}
+                />
+              );
+            })}
           </div>
-        ) : (
+          <PaginationBar
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredRows.length}
+            itemsPerPage={ITEMS_PER_PAGE}
+            onPageChange={setCurrentPage}
+          />
+        </>
+      ) : (
+        <div className="border border-border rounded-lg overflow-hidden">
+          {/* Column header */}
+          <div className="flex items-center gap-3 px-3 py-2 bg-muted/40 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <span className="flex-1">{t("activityFavourites.nameHeader")}</span>
+            <span className="w-[52px] shrink-0 hidden sm:block">
+              {t("activityFavourites.ageHeader")}
+            </span>
+            <span className="w-[68px] shrink-0 hidden sm:block">
+              {t("activityFavourites.durationHeader")}
+            </span>
+            <span className="w-[76px] shrink-0">
+              {t("activityFavourites.formatHeader")}
+            </span>
+            <span className="w-[100px] shrink-0 hidden lg:block">
+              {t("activityFavourites.dateHeader")}
+            </span>
+            <span className="w-[32px] shrink-0" />
+          </div>
+
           <div className="divide-y divide-border">
             {pagedRows.map(({ favourite, activity }) => {
               if (!activity) return null;
@@ -290,9 +324,7 @@ export const ActivityFavouritesTab: React.FC = () => {
               );
             })}
           </div>
-        )}
 
-        {pagedRows.length > 0 && (
           <div className="px-3">
             <PaginationBar
               currentPage={currentPage}
@@ -302,8 +334,8 @@ export const ActivityFavouritesTab: React.FC = () => {
               onPageChange={setCurrentPage}
             />
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

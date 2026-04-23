@@ -34,6 +34,8 @@ import type {
   Recommendation,
   LessonPlanData,
 } from "@/types/activity";
+import { RecommendationCard } from "@/components/results/RecommendationCard";
+import { ViewToggle, type ViewMode } from "@/components/ui/ViewToggle";
 import { useTranslation } from "react-i18next";
 import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 import { getAppScrollTop } from "@/utils/scroll";
@@ -68,6 +70,13 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     null,
   );
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    () => (localStorage.getItem("view-recommendations") as ViewMode) ?? "grid",
+  );
+  const handleViewChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem("view-recommendations", mode);
+  };
 
   // Filters
   const [searchQuery, setSearchQuery] = useState("");
@@ -315,47 +324,82 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
           </div>
         )}
 
-        <p className="text-xs text-muted-foreground tabular-nums">
-          {t("resultsDisplay.showingOf", {
-            filtered: filtered.length,
-            total: results.activities.length,
-          })}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground tabular-nums">
+            {t("resultsDisplay.showingOf", {
+              filtered: filtered.length,
+              total: results.activities.length,
+            })}
+          </p>
+          <ViewToggle value={viewMode} onChange={handleViewChange} />
+        </div>
 
-        {/* Table */}
-        <div className="border border-border rounded-lg overflow-hidden">
-          {/* Column headers */}
-          <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 border-b border-border">
-            <span className="w-6 shrink-0" />
-            <span className="w-[52px] text-xs font-medium text-muted-foreground shrink-0">
-              {t("resultsDisplay.colScore")}
-            </span>
-            <span className="flex-1 text-xs font-medium text-muted-foreground">
-              {t("resultsDisplay.colActivities")}
-            </span>
-            <span className="w-[68px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
-              {t("activityFavourites.durationHeader")}
-            </span>
-            <span className="w-[52px] text-xs font-medium text-muted-foreground hidden md:block shrink-0">
-              {t("activityFavourites.ageHeader")}
-            </span>
-            <span className="w-[76px] text-xs font-medium text-muted-foreground shrink-0">
-              {t("activityFavourites.formatHeader")}
-            </span>
-            <span className="w-[140px] shrink-0" />
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-center border border-border rounded-lg">
+            <AlertCircle className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+            <p className="text-sm font-medium mb-1">
+              {t("resultsDisplay.noMatchFilters")}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {t("resultsDisplay.noMatchFiltersDesc")}
+            </p>
           </div>
-
-          {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
-              <AlertCircle className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-              <p className="text-sm font-medium mb-1">
-                {t("resultsDisplay.noMatchFilters")}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {t("resultsDisplay.noMatchFiltersDesc")}
-              </p>
+        ) : viewMode === "grid" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {filtered.map(
+              (
+                {
+                  recommendation,
+                  totalDuration,
+                  activityCount,
+                  breakCount,
+                  minAge,
+                  maxAge,
+                  formats,
+                },
+                index,
+              ) => (
+                <RecommendationCard
+                  key={`rec-${index}`}
+                  recommendation={recommendation}
+                  totalDuration={totalDuration}
+                  activityCount={activityCount}
+                  breakCount={breakCount}
+                  minAge={minAge}
+                  maxAge={maxAge}
+                  formats={formats}
+                  onSelect={() =>
+                    handleCreateLessonPlanFromRecommendation(recommendation)
+                  }
+                  onViewActivity={handleViewActivityDetails}
+                />
+              ),
+            )}
+          </div>
+        ) : (
+          /* Table view */
+          <div className="border border-border rounded-lg overflow-hidden">
+            {/* Column headers */}
+            <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 border-b border-border">
+              <span className="w-6 shrink-0" />
+              <span className="w-[52px] text-xs font-medium text-muted-foreground shrink-0">
+                {t("resultsDisplay.colScore")}
+              </span>
+              <span className="flex-1 text-xs font-medium text-muted-foreground">
+                {t("resultsDisplay.colActivities")}
+              </span>
+              <span className="w-[68px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
+                {t("activityFavourites.durationHeader")}
+              </span>
+              <span className="w-[52px] text-xs font-medium text-muted-foreground hidden md:block shrink-0">
+                {t("activityFavourites.ageHeader")}
+              </span>
+              <span className="w-[76px] text-xs font-medium text-muted-foreground shrink-0">
+                {t("activityFavourites.formatHeader")}
+              </span>
+              <span className="w-[140px] shrink-0" />
             </div>
-          ) : (
+
             <div className="divide-y divide-border">
               {filtered.map(
                 (
@@ -526,8 +570,8 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
                 },
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Lesson Plan Dialog */}

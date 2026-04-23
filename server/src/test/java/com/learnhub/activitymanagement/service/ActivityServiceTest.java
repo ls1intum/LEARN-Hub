@@ -276,7 +276,8 @@ class ActivityServiceTest {
 		UserFavourites favourite = new UserFavourites();
 		favourite.setActivityId(favouriteActivity.getId());
 
-		when(activityRepository.findAll(any(Specification.class))).thenReturn(List.of(favouriteActivity, otherActivity));
+		when(activityRepository.findAll(any(Specification.class)))
+				.thenReturn(List.of(favouriteActivity, otherActivity));
 		when(userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityIdIn(eq(userId), eq("activity"), any()))
 				.thenReturn(List.of(favourite));
 

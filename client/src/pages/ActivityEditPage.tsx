@@ -334,7 +334,8 @@ export const ActivityEditPage: React.FC = () => {
         updatePayload.deckblattMarkdown = deckblattMarkdown;
       }
       if (
-        artikulationsschemaMarkdown !== initialMarkdownContent.artikulationsschema
+        artikulationsschemaMarkdown !==
+        initialMarkdownContent.artikulationsschema
       ) {
         updatePayload.artikulationsschemaMarkdown = artikulationsschemaMarkdown;
       }

@@ -35,6 +35,8 @@ import {
   Tag,
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
+import { ActivityCard, ActivityCardSkeleton } from "@/components/ActivityCard";
+import { ViewToggle, type ViewMode } from "@/components/ui/ViewToggle";
 import { useTranslation } from "react-i18next";
 import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 import { useRestoreScroll } from "@/hooks/useRestoreScroll";
@@ -126,6 +128,13 @@ export const LibraryPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(
     () => searchParams.get("showFilters") === "true",
   );
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    () => (localStorage.getItem("view-library") as ViewMode) ?? "grid",
+  );
+  const handleViewChange = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem("view-library", mode);
+  };
   const scrollToTop = useCallback(() => {
     if (typeof restoreScrollY === "number") return;
     setAppScrollTop(0);
@@ -615,9 +624,12 @@ export const LibraryPage: React.FC = () => {
       )}
 
       {!isLoading && (
-        <p className="text-xs text-muted-foreground tabular-nums">
-          {total} {t("library.totalActivities")}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground tabular-nums">
+            {total} {t("library.totalActivities")}
+          </p>
+          <ViewToggle value={viewMode} onChange={handleViewChange} />
+        </div>
       )}
 
       <ErrorDisplay error={error} onRetry={refetch} />
@@ -626,21 +638,39 @@ export const LibraryPage: React.FC = () => {
       <LoadingState
         isLoading={isLoading}
         fallback={
-          <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-2 px-3 py-2.5">
-                <Skeleton className="h-4 flex-1 max-w-[220px]" />
-                <Skeleton className="h-4 w-10 hidden sm:block" />
-                <Skeleton className="h-4 w-14 hidden sm:block" />
-                <Skeleton className="h-5 w-16 rounded-full" />
-                <Skeleton className="h-5 w-16 rounded-full hidden md:block" />
-                <div className="ml-auto flex gap-1">
-                  <Skeleton className="h-7 w-7 rounded" />
-                  <Skeleton className="h-7 w-7 rounded" />
-                </div>
+          viewMode === "grid" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <ActivityCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : (
+            <div className="border border-border rounded-lg overflow-hidden">
+              <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 border-b border-border">
+                <Skeleton className="h-3 flex-1 max-w-[180px]" />
+                <Skeleton className="h-3 w-[52px] hidden sm:block" />
+                <Skeleton className="h-3 w-[68px] hidden sm:block" />
+                <Skeleton className="h-3 w-[76px]" />
+                <Skeleton className="h-3 w-[84px] hidden md:block" />
+                <Skeleton className="h-3 w-[64px]" />
               </div>
-            ))}
-          </div>
+              <div className="divide-y divide-border">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-2.5">
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-4 max-w-[220px]" />
+                      <Skeleton className="h-3 max-w-[160px]" />
+                    </div>
+                    <Skeleton className="h-4 w-[52px] hidden sm:block" />
+                    <Skeleton className="h-4 w-[68px] hidden sm:block" />
+                    <Skeleton className="h-5 w-[76px] rounded-full" />
+                    <Skeleton className="h-5 w-[84px] rounded-full hidden md:block" />
+                    <Skeleton className="h-7 w-7 rounded ml-auto" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
         }
       >
         {activities.length === 0 ? (
@@ -658,35 +688,12 @@ export const LibraryPage: React.FC = () => {
           </div>
         ) : (
           <>
-            <div className="border border-border rounded-lg overflow-hidden">
-              {/* Column headers */}
-              <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 border-b border-border">
-                <span className="flex-1 text-xs font-medium text-muted-foreground">
-                  {t("library.colActivity")}
-                </span>
-                <span className="w-[52px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
-                  {t("library.colAge")}
-                </span>
-                <span className="w-[68px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
-                  {t("library.colDuration")}
-                </span>
-                <span className="w-[76px] text-xs font-medium text-muted-foreground shrink-0">
-                  {t("library.colFormat")}
-                </span>
-                <span className="w-[84px] text-xs font-medium text-muted-foreground hidden md:block shrink-0">
-                  {t("library.colTopics")}
-                </span>
-                <span className="w-[64px] text-right text-xs font-medium text-muted-foreground shrink-0">
-                  {t("library.colActions")}
-                </span>
-              </div>
-
-              {/* Rows */}
-              <div className="divide-y divide-border">
+            {viewMode === "grid" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {activities.map((activity) => (
-                  <div
+                  <ActivityCard
                     key={activity.id}
-                    className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/40 transition-colors cursor-pointer"
+                    activity={activity}
                     onClick={() =>
                       navigate(`/activity-details/${activity.id}`, {
                         state: {
@@ -696,64 +703,107 @@ export const LibraryPage: React.FC = () => {
                         },
                       })
                     }
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate leading-snug">
-                        {activity.name}
-                      </p>
-                      {activity.source && (
-                        <p className="text-xs text-muted-foreground truncate leading-snug">
-                          {activity.source}
-                        </p>
-                      )}
-                    </div>
-                    <span className="w-[52px] text-xs text-muted-foreground tabular-nums hidden sm:block shrink-0">
-                      {activity.ageMin}–{activity.ageMax}
-                    </span>
-                    <span className="w-[68px] text-xs text-muted-foreground tabular-nums hidden sm:block shrink-0">
-                      {activity.durationMinMinutes}–
-                      {activity.durationMaxMinutes}m
-                    </span>
-                    <div className="w-[76px] shrink-0">
-                      <Badge
-                        variant="secondary"
-                        className="text-[11px] px-1.5 py-0 font-normal truncate max-w-full"
-                      >
-                        {translateEnum("format", activity.format)}
-                      </Badge>
-                    </div>
-                    <div className="w-[84px] hidden md:flex items-center gap-1 shrink-0 min-w-0">
-                      {activity.topics?.slice(0, 1).map((topic) => (
-                        <Badge
-                          key={topic}
-                          variant="outline"
-                          className="text-[11px] px-1.5 py-0 font-normal truncate max-w-full"
-                        >
-                          {translateEnum("topics", topic)}
-                        </Badge>
-                      ))}
-                      {activity.topics && activity.topics.length > 1 && (
-                        <span className="text-[11px] text-muted-foreground shrink-0">
-                          +{activity.topics.length - 1}
-                        </span>
-                      )}
-                    </div>
-                    <div
-                      className="w-[64px] flex items-center justify-end shrink-0"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <FavouriteButton
-                        activityId={activity.id}
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        initialIsFavourited={activity.isFavourited ?? false}
-                      />
-                    </div>
-                  </div>
+                  />
                 ))}
               </div>
-            </div>
+            ) : (
+              <div className="border border-border rounded-lg overflow-hidden">
+                {/* Column headers */}
+                <div className="flex items-center gap-2 px-3 py-2 bg-muted/30 border-b border-border">
+                  <span className="flex-1 text-xs font-medium text-muted-foreground">
+                    {t("library.colActivity")}
+                  </span>
+                  <span className="w-[52px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
+                    {t("library.colAge")}
+                  </span>
+                  <span className="w-[68px] text-xs font-medium text-muted-foreground hidden sm:block shrink-0">
+                    {t("library.colDuration")}
+                  </span>
+                  <span className="w-[76px] text-xs font-medium text-muted-foreground shrink-0">
+                    {t("library.colFormat")}
+                  </span>
+                  <span className="w-[84px] text-xs font-medium text-muted-foreground hidden md:block shrink-0">
+                    {t("library.colTopics")}
+                  </span>
+                  <span className="w-[64px] text-right text-xs font-medium text-muted-foreground shrink-0">
+                    {t("library.colActions")}
+                  </span>
+                </div>
+
+                {/* Rows */}
+                <div className="divide-y divide-border">
+                  {activities.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/40 transition-colors cursor-pointer"
+                      onClick={() =>
+                        navigate(`/activity-details/${activity.id}`, {
+                          state: {
+                            activity,
+                            backTo: `${location.pathname}${location.search}`,
+                            restoreScrollY: getAppScrollTop(),
+                          },
+                        })
+                      }
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate leading-snug">
+                          {activity.name}
+                        </p>
+                        {activity.source && (
+                          <p className="text-xs text-muted-foreground truncate leading-snug">
+                            {activity.source}
+                          </p>
+                        )}
+                      </div>
+                      <span className="w-[52px] text-xs text-muted-foreground tabular-nums hidden sm:block shrink-0">
+                        {activity.ageMin}–{activity.ageMax}
+                      </span>
+                      <span className="w-[68px] text-xs text-muted-foreground tabular-nums hidden sm:block shrink-0">
+                        {activity.durationMinMinutes}–
+                        {activity.durationMaxMinutes}m
+                      </span>
+                      <div className="w-[76px] shrink-0">
+                        <Badge
+                          variant="secondary"
+                          className="text-[11px] px-1.5 py-0 font-normal truncate max-w-full"
+                        >
+                          {translateEnum("format", activity.format)}
+                        </Badge>
+                      </div>
+                      <div className="w-[84px] hidden md:flex items-center gap-1 shrink-0 min-w-0">
+                        {activity.topics?.slice(0, 1).map((topic) => (
+                          <Badge
+                            key={topic}
+                            variant="outline"
+                            className="text-[11px] px-1.5 py-0 font-normal truncate max-w-full"
+                          >
+                            {translateEnum("topics", topic)}
+                          </Badge>
+                        ))}
+                        {activity.topics && activity.topics.length > 1 && (
+                          <span className="text-[11px] text-muted-foreground shrink-0">
+                            +{activity.topics.length - 1}
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        className="w-[64px] flex items-center justify-end shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <FavouriteButton
+                          activityId={activity.id}
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          initialIsFavourited={activity.isFavourited ?? false}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <PaginationBar
               currentPage={currentPage}
