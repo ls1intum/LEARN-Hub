@@ -3,6 +3,7 @@ package com.learnhub.activitymanagement.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -22,6 +23,7 @@ import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.service.SanitizationService;
+import com.learnhub.usermanagement.entity.UserFavourites;
 import com.learnhub.usermanagement.repository.UserFavouritesRepository;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
@@ -34,6 +36,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -203,6 +206,27 @@ class ActivityServiceTest {
 		MarkdownResponse mdResp = response.getMarkdowns().get(0);
 		assertThat(mdResp.getId()).isEqualTo(actMd.getId());
 		assertThat(mdResp.getType()).isEqualTo("artikulationsschema");
+		assertThat(mdResp.getContent()).isNull();
+	}
+
+	@Test
+	void mapToResponseIncludesMarkdownContentWhenRequested() {
+		Activity activity = createTestActivity();
+
+		ActivityMarkdown actMd = new ActivityMarkdown();
+		actMd.setId(UUID.randomUUID());
+		actMd.setActivity(activity);
+		actMd.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+		actMd.setContent("# Test Schema");
+		actMd.setCreatedAt(LocalDateTime.now());
+		activity.getMarkdowns().add(actMd);
+
+		ActivityResponse response = activityService.convertToResponse(activity, false, true);
+
+		assertThat(response.getMarkdowns()).hasSize(1);
+		MarkdownResponse mdResp = response.getMarkdowns().get(0);
+		assertThat(mdResp.getId()).isEqualTo(actMd.getId());
+		assertThat(mdResp.getType()).isEqualTo("artikulationsschema");
 		assertThat(mdResp.getContent()).isEqualTo("# Test Schema");
 	}
 
@@ -231,7 +255,7 @@ class ActivityServiceTest {
 
 		assertThat(response.getMarkdowns()).hasSize(1);
 		assertThat(response.getMarkdowns().get(0).getId()).isEqualTo(newerMarkdown.getId());
-		assertThat(response.getMarkdowns().get(0).getContent()).isEqualTo("# New Schema");
+		assertThat(response.getMarkdowns().get(0).getContent()).isNull();
 	}
 
 	@Test
@@ -242,6 +266,39 @@ class ActivityServiceTest {
 
 		assertThat(response.getDocuments()).isEmpty();
 		assertThat(response.getMarkdowns()).isEmpty();
+	}
+
+	@Test
+	void getActivitiesWithFiltersMarksAuthenticatedUserFavourites() {
+		UUID userId = UUID.randomUUID();
+		Activity favouriteActivity = createTestActivity();
+		Activity otherActivity = createTestActivity();
+		UserFavourites favourite = new UserFavourites();
+		favourite.setActivityId(favouriteActivity.getId());
+
+		when(activityRepository.findAll(any(Specification.class))).thenReturn(List.of(favouriteActivity, otherActivity));
+		when(userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityIdIn(eq(userId), eq("activity"), any()))
+				.thenReturn(List.of(favourite));
+
+		List<ActivityResponse> responses = activityService.getActivitiesWithFilters(null, null, null, null, null, null,
+				null, null, null, null, null, null, null, false, userId);
+
+		assertThat(responses).hasSize(2);
+		assertThat(responses.get(0).isFavourited()).isTrue();
+		assertThat(responses.get(1).isFavourited()).isFalse();
+	}
+
+	@Test
+	void getActivitiesWithFiltersDoesNotLoadFavouritesForAnonymousUsers() {
+		Activity activity = createTestActivity();
+		when(activityRepository.findAll(any(Specification.class))).thenReturn(List.of(activity));
+
+		List<ActivityResponse> responses = activityService.getActivitiesWithFilters(null, null, null, null, null, null,
+				null, null, null, null, null, null, null, false, null);
+
+		assertThat(responses).hasSize(1);
+		assertThat(responses.get(0).isFavourited()).isFalse();
+		verify(userFavouritesRepository, never()).findByUserIdAndFavouriteTypeAndActivityIdIn(any(), any(), any());
 	}
 
 	@Test
@@ -276,7 +333,38 @@ class ActivityServiceTest {
 		assertThat(existingActivity.getMarkdowns()).hasSize(1);
 		assertThat(existingActivity.getMarkdowns().get(0).getContent()).isEqualTo("New content");
 		assertThat(response.getMarkdowns()).hasSize(1);
-		assertThat(response.getMarkdowns().get(0).getContent()).isEqualTo("New content");
+		assertThat(response.getMarkdowns().get(0).getContent()).isNull();
+	}
+
+	@Test
+	void updateActivityLeavesMarkdownContentAloneWhenNotProvided() {
+		Activity existingActivity = createTestActivity();
+		existingActivity.setId(UUID.randomUUID());
+
+		ActivityMarkdown existingMd = new ActivityMarkdown();
+		existingMd.setId(UUID.randomUUID());
+		existingMd.setActivity(existingActivity);
+		existingMd.setType(MarkdownType.DECKBLATT);
+		existingMd.setContent("Legacy\u2014content");
+		existingMd.setCreatedAt(LocalDateTime.now());
+		existingActivity.getMarkdowns().add(existingMd);
+
+		when(activityRepository.findById(existingActivity.getId())).thenReturn(Optional.of(existingActivity));
+		when(activityRepository.save(any(Activity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+		Map<String, Object> updateData = new HashMap<>();
+		updateData.put("name", "Updated Activity");
+		updateData.put("description", existingActivity.getDescription());
+		updateData.put("ageMin", existingActivity.getAgeMin());
+		updateData.put("ageMax", existingActivity.getAgeMax());
+		updateData.put("format", "unplugged");
+		updateData.put("bloomLevel", "apply");
+		updateData.put("durationMinMinutes", 30);
+
+		activityService.updateActivityFromMap(existingActivity.getId(), updateData);
+
+		assertThat(existingActivity.getMarkdowns()).hasSize(1);
+		assertThat(existingActivity.getMarkdowns().get(0).getContent()).isEqualTo("Legacy\u2014content");
 	}
 
 	@Test
@@ -304,7 +392,7 @@ class ActivityServiceTest {
 		assertThat(existingActivity.getMarkdowns().get(0).getContent()).isEqualTo("New schema");
 		assertThat(existingActivity.getMarkdowns().get(0).getType()).isEqualTo(MarkdownType.ARTIKULATIONSSCHEMA);
 		assertThat(response.getMarkdowns()).hasSize(1);
-		assertThat(response.getMarkdowns().get(0).getContent()).isEqualTo("New schema");
+		assertThat(response.getMarkdowns().get(0).getContent()).isNull();
 	}
 
 	@Test

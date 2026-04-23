@@ -43,6 +43,7 @@ import {
   getActivityBackTarget,
   type ActivityNavigationState,
 } from "@/utils/activityNavigation";
+import type { UpdateActivityRequest } from "@/types/api";
 
 type Step = "metadata" | "documents";
 type MarkdownTab =
@@ -59,6 +60,29 @@ const MARKDOWN_TAB_KEYS: MarkdownTab[] = [
   "uebung",
   "uebung_loesung",
 ];
+
+const EMPTY_MARKDOWN_CONTENT: Record<MarkdownTab, string> = {
+  deckblatt: "",
+  artikulationsschema: "",
+  hintergrundwissen: "",
+  uebung: "",
+  uebung_loesung: "",
+};
+
+const getEmptyMarkdownContent = () => ({ ...EMPTY_MARKDOWN_CONTENT });
+
+const getMarkdownContentByTab = (
+  markdowns: Activity["markdowns"] | undefined,
+) => {
+  const content = getEmptyMarkdownContent();
+  markdowns?.forEach((markdown) => {
+    const type = markdown.type as MarkdownTab;
+    if (MARKDOWN_TAB_KEYS.includes(type)) {
+      content[type] = markdown.content ?? "";
+    }
+  });
+  return content;
+};
 
 // ─── Component ───────────────────────────────────────────────────
 
@@ -96,6 +120,9 @@ export const ActivityEditPage: React.FC = () => {
   const [uebungMarkdown, setUebungMarkdown] = useState<string>("");
   const [uebungLoesungMarkdown, setUebungLoesungMarkdown] =
     useState<string>("");
+  const [initialMarkdownContent, setInitialMarkdownContent] = useState<
+    Record<MarkdownTab, string>
+  >(getEmptyMarkdownContent);
   const [activeMarkdownTab, setActiveMarkdownTab] =
     useState<MarkdownTab>("deckblatt");
 
@@ -138,41 +165,43 @@ export const ActivityEditPage: React.FC = () => {
 
   // ─── Load Activity ──────────────────────────────────────────────
 
-  useEffect(() => {
+  const applyMarkdownContent = useCallback(
+    (markdownContent: Record<MarkdownTab, string>) => {
+      setDeckblattMarkdown(markdownContent.deckblatt);
+      setArtikulationsschemaMarkdown(markdownContent.artikulationsschema);
+      setHintergrundwissenMarkdown(markdownContent.hintergrundwissen);
+      setUebungMarkdown(markdownContent.uebung);
+      setUebungLoesungMarkdown(markdownContent.uebung_loesung);
+    },
+    [],
+  );
+
+  const loadActivity = useCallback(async () => {
     if (!id) return;
+
     setIsLoadingActivity(true);
     setLoadError(null);
-    apiService
-      .getActivity(id)
-      .then((data) => {
-        setActivity(data);
-        const artikulationsMd =
-          data.markdowns?.find((m) => m.type === "artikulationsschema")
-            ?.content || "";
-        setArtikulationsschemaMarkdown(artikulationsMd);
-        const deckblattMd =
-          data.markdowns?.find((m) => m.type === "deckblatt")?.content || "";
-        setDeckblattMarkdown(deckblattMd);
-        const hintergrundwissenMd =
-          data.markdowns?.find((m) => m.type === "hintergrundwissen")
-            ?.content || "";
-        setHintergrundwissenMarkdown(hintergrundwissenMd);
-        setUebungMarkdown(
-          data.markdowns?.find((m) => m.type === "uebung")?.content || "",
-        );
-        setUebungLoesungMarkdown(
-          data.markdowns?.find((m) => m.type === "uebung_loesung")?.content ||
-            "",
-        );
-      })
-      .catch((err) => {
-        logger.error("Failed to load activity", err, "ActivityEditPage");
-        setLoadError(
-          err instanceof Error ? err.message : "Failed to load activity",
-        );
-      })
-      .finally(() => setIsLoadingActivity(false));
-  }, [id]);
+    try {
+      const data = await apiService.getActivity(id);
+      setActivity(data);
+
+      const markdowns = await apiService.getActivityMarkdowns(id);
+      const loadedMarkdownContent = getMarkdownContentByTab(markdowns);
+      applyMarkdownContent(loadedMarkdownContent);
+      setInitialMarkdownContent(loadedMarkdownContent);
+    } catch (err) {
+      logger.error("Failed to load activity", err, "ActivityEditPage");
+      setLoadError(
+        err instanceof Error ? err.message : "Failed to load activity",
+      );
+    } finally {
+      setIsLoadingActivity(false);
+    }
+  }, [applyMarkdownContent, id]);
+
+  useEffect(() => {
+    void loadActivity();
+  }, [loadActivity]);
 
   // ─── Metadata Step Handlers ─────────────────────────────────────
 
@@ -283,7 +312,7 @@ export const ActivityEditPage: React.FC = () => {
     setIsSaving(true);
     setSaveError(null);
     try {
-      await apiService.updateActivity(id, {
+      const updatePayload: UpdateActivityRequest = {
         name: savedMetadata.name,
         description: savedMetadata.description,
         source: savedMetadata.source || undefined,
@@ -299,12 +328,29 @@ export const ActivityEditPage: React.FC = () => {
         mentalLoad: savedMetadata.mentalLoad || undefined,
         physicalEnergy: savedMetadata.physicalEnergy || undefined,
         topics: savedMetadata.topics,
-        artikulationsschemaMarkdown: artikulationsschemaMarkdown || undefined,
-        deckblattMarkdown: deckblattMarkdown || undefined,
-        hintergrundwissenMarkdown: hintergrundwissenMarkdown || undefined,
-        uebungMarkdown: uebungMarkdown || undefined,
-        uebungLoesungMarkdown: uebungLoesungMarkdown || undefined,
-      });
+      };
+
+      if (deckblattMarkdown !== initialMarkdownContent.deckblatt) {
+        updatePayload.deckblattMarkdown = deckblattMarkdown;
+      }
+      if (
+        artikulationsschemaMarkdown !== initialMarkdownContent.artikulationsschema
+      ) {
+        updatePayload.artikulationsschemaMarkdown = artikulationsschemaMarkdown;
+      }
+      if (
+        hintergrundwissenMarkdown !== initialMarkdownContent.hintergrundwissen
+      ) {
+        updatePayload.hintergrundwissenMarkdown = hintergrundwissenMarkdown;
+      }
+      if (uebungMarkdown !== initialMarkdownContent.uebung) {
+        updatePayload.uebungMarkdown = uebungMarkdown;
+      }
+      if (uebungLoesungMarkdown !== initialMarkdownContent.uebung_loesung) {
+        updatePayload.uebungLoesungMarkdown = uebungLoesungMarkdown;
+      }
+
+      await apiService.updateActivity(id, updatePayload);
 
       navigate(`/activity-details/${id}`, {
         state: detailNavigationState,
@@ -353,47 +399,7 @@ export const ActivityEditPage: React.FC = () => {
         <div className="text-center py-12">
           <ErrorDisplay
             error={loadError || t("editActivity.activityNotFound")}
-            onRetry={() => {
-              if (id) {
-                setIsLoadingActivity(true);
-                setLoadError(null);
-                apiService
-                  .getActivity(id)
-                  .then((data) => {
-                    setActivity(data);
-                    setArtikulationsschemaMarkdown(
-                      data.markdowns?.find(
-                        (m) => m.type === "artikulationsschema",
-                      )?.content || "",
-                    );
-                    setDeckblattMarkdown(
-                      data.markdowns?.find((m) => m.type === "deckblatt")
-                        ?.content || "",
-                    );
-                    setHintergrundwissenMarkdown(
-                      data.markdowns?.find(
-                        (m) => m.type === "hintergrundwissen",
-                      )?.content || "",
-                    );
-                    setUebungMarkdown(
-                      data.markdowns?.find((m) => m.type === "uebung")
-                        ?.content || "",
-                    );
-                    setUebungLoesungMarkdown(
-                      data.markdowns?.find((m) => m.type === "uebung_loesung")
-                        ?.content || "",
-                    );
-                  })
-                  .catch((err) =>
-                    setLoadError(
-                      err instanceof Error
-                        ? err.message
-                        : "Failed to load activity",
-                    ),
-                  )
-                  .finally(() => setIsLoadingActivity(false));
-              }
-            }}
+            onRetry={() => void loadActivity()}
           />
           <div className="mt-4">
             <Button

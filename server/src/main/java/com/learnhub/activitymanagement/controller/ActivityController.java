@@ -104,10 +104,11 @@ public class ActivityController {
 				request.name(), request.ageMin(), request.ageMax(), request.format(), request.limit(),
 				request.offset());
 		boolean includeSourcePdf = isAdmin(authentication);
+		UUID userId = CurrentUser.getUserId(authentication);
 		List<ActivityResponse> activities = activityService.getActivitiesWithFilters(request.name(), request.ageMin(),
 				request.ageMax(), request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
 				request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(), request.topics(),
-				request.limit(), request.offset(), includeSourcePdf);
+				request.limit(), request.offset(), includeSourcePdf, userId);
 		ActivitiesListResponse response = new ActivitiesListResponse(
 				activityService.countActivitiesWithFilters(request.name(), request.ageMin(), request.ageMax(),
 						request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
@@ -123,6 +124,15 @@ public class ActivityController {
 		logger.info("GET /api/activities/{} - Get activity by ID called", id);
 		ActivityResponse activity = activityService.getActivityById(id, isAdmin(authentication));
 		return ResponseEntity.ok(activity);
+	}
+
+	@GetMapping("/{id}/markdowns")
+	@PreAuthorize("hasRole('ADMIN')")
+	@SecurityRequirement(name = "BearerAuth")
+	@Operation(summary = "Get activity markdown contents", description = "Get stored markdown contents for editing an activity (admin only)")
+	public ResponseEntity<List<MarkdownResponse>> getActivityMarkdowns(@PathVariable UUID id) {
+		logger.info("GET /api/activities/{}/markdowns - Get activity markdown contents called", id);
+		return ResponseEntity.ok(activityService.getActivityMarkdowns(id));
 	}
 
 	@PostMapping("/create")
@@ -375,7 +385,7 @@ public class ActivityController {
 			@ApiResponse(responseCode = "200", description = "Combined activity PDF", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary")))})
 	public ResponseEntity<byte[]> downloadActivityPdf(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/pdf - Download combined activity PDF", activityId);
-		ActivityResponse activity = activityService.getActivityById(activityId);
+		ActivityResponse activity = activityService.getActivityById(activityId, false, true);
 		List<byte[]> pdfParts = buildOrderedPdfParts(activity);
 
 		if (pdfParts.isEmpty()) {
@@ -395,7 +405,7 @@ public class ActivityController {
 			@ApiResponse(responseCode = "200", description = "Combined activity DOCX", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @Schema(type = "string", format = "binary")))})
 	public ResponseEntity<byte[]> downloadActivityDocx(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/docx - Download combined activity DOCX", activityId);
-		ActivityResponse activity = activityService.getActivityById(activityId);
+		ActivityResponse activity = activityService.getActivityById(activityId, false, true);
 		List<String> markdowns = new ArrayList<>();
 		List<Boolean> landscapes = new ArrayList<>();
 		buildOrderedDocxParts(activity, markdowns, landscapes);

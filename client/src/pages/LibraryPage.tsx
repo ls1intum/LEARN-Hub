@@ -126,10 +126,6 @@ export const LibraryPage: React.FC = () => {
   const [showFilters, setShowFilters] = useState(
     () => searchParams.get("showFilters") === "true",
   );
-  const [favouritedActivityIds, setFavouritedActivityIds] = useState<
-    Set<string>
-  >(new Set());
-
   const scrollToTop = useCallback(() => {
     if (typeof restoreScrollY === "number") return;
     setAppScrollTop(0);
@@ -208,21 +204,6 @@ export const LibraryPage: React.FC = () => {
 
   const activities = activitiesData?.activities || [];
   const total = activitiesData?.total || 0;
-
-  useEffect(() => {
-    const fetchFavourites = async () => {
-      if (!user) return;
-      try {
-        const response = await apiService.getActivityFavourites();
-        setFavouritedActivityIds(
-          new Set(response.favourites.map((fav) => fav.activityId)),
-        );
-      } catch {
-        setFavouritedActivityIds(new Set());
-      }
-    };
-    fetchFavourites();
-  }, [user]);
 
   const handleFilterChange = (
     filterType: keyof FilterFormData,
@@ -766,9 +747,7 @@ export const LibraryPage: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         className="h-7 w-7"
-                        initialIsFavourited={favouritedActivityIds.has(
-                          activity.id,
-                        )}
+                        initialIsFavourited={activity.isFavourited ?? false}
                       />
                     </div>
                   </div>

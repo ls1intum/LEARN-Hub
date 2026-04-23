@@ -10,7 +10,7 @@ export interface ActivityDocument {
 export interface ActivityMarkdown {
   id: string;
   type: string;
-  content: string;
+  content?: string;
   landscape: boolean;
 }
 
@@ -43,6 +43,7 @@ export interface Activity {
   markdowns: ActivityMarkdown[];
   createdAt?: string;
   type: "activity";
+  isFavourited?: boolean;
   // Break that should happen after this activity
   breakAfter?: BreakAfter;
 }

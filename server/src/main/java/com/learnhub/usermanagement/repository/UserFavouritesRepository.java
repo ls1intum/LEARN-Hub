@@ -15,5 +15,8 @@ public interface UserFavouritesRepository extends JpaRepository<UserFavourites, 
 
 	List<UserFavourites> findByUserIdAndFavouriteTypeAndActivityId(UUID userId, String favouriteType, UUID activityId);
 
+	List<UserFavourites> findByUserIdAndFavouriteTypeAndActivityIdIn(UUID userId, String favouriteType,
+			List<UUID> activityIds);
+
 	long deleteByActivityId(UUID activityId);
 }

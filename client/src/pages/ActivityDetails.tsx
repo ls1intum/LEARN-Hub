@@ -459,25 +459,7 @@ export const ActivityDetails: React.FC = () => {
                 <h3 className="font-semibold text-card-foreground">
                   {t("activityDetails.source")}
                 </h3>
-                {(() => {
-                  try {
-                    const url = new URL(activity.source);
-                    return (
-                      <a
-                        href={activity.source}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        {url.hostname}
-                      </a>
-                    );
-                  } catch {
-                    return (
-                      <p className="text-muted-foreground">{activity.source}</p>
-                    );
-                  }
-                })()}
+                <p className="text-muted-foreground">{activity.source}</p>
               </div>
             )}
           </div>

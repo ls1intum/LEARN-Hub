@@ -61,6 +61,7 @@ export class ApiService {
   // --- Activity API ---
   static getActivities = ActivityApi.getActivities;
   static getActivity = ActivityApi.getActivity;
+  static getActivityMarkdowns = ActivityApi.getActivityMarkdowns;
   static getActivitiesByIds = ActivityApi.getActivitiesByIds;
   static getRecommendations = ActivityApi.getRecommendations;
   static createActivity = ActivityApi.createActivity;

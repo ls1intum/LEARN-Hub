@@ -12,6 +12,7 @@ import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.exception.ResourceNotFoundException;
 import com.learnhub.service.SanitizationService;
+import com.learnhub.usermanagement.entity.UserFavourites;
 import com.learnhub.usermanagement.repository.UserFavouritesRepository;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -72,15 +74,43 @@ public class ActivityService {
 			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
 			boolean includeSourcePdf) {
+		return getActivitiesWithFilters(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels,
+				mentalLoad, physicalEnergy, resourcesNeeded, topics, limit, offset, includeSourcePdf, null);
+	}
+
+	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
+			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
+			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
+			boolean includeSourcePdf, UUID userId) {
 		List<Activity> allMatching = getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats,
 				bloomLevels, mentalLoad, physicalEnergy, resourcesNeeded, topics);
 
 		int start = Math.min((offset != null && offset > 0) ? offset : 0, allMatching.size());
 		int pageSize = (limit != null && limit > 0) ? limit : allMatching.size();
 		int end = Math.min(start + pageSize, allMatching.size());
+		List<Activity> page = allMatching.subList(start, end);
+		Set<UUID> favouritedActivityIds = findFavouritedActivityIds(userId, page);
 
-		return allMatching.subList(start, end).stream().map(activity -> mapToResponse(activity, includeSourcePdf))
+		return page.stream().map(activity -> {
+			ActivityResponse response = mapToResponse(activity, includeSourcePdf);
+			response.setFavourited(favouritedActivityIds.contains(activity.getId()));
+			return response;
+		}).collect(Collectors.toList());
+	}
+
+	private Set<UUID> findFavouritedActivityIds(UUID userId, List<Activity> activities) {
+		if (userId == null || activities.isEmpty()) {
+			return Set.of();
+		}
+
+		List<UUID> activityIds = activities.stream().map(Activity::getId).filter(Objects::nonNull)
 				.collect(Collectors.toList());
+		if (activityIds.isEmpty()) {
+			return Set.of();
+		}
+
+		return userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityIdIn(userId, "activity", activityIds)
+				.stream().map(UserFavourites::getActivityId).filter(Objects::nonNull).collect(Collectors.toSet());
 	}
 
 	private List<Activity> getFilteredActivities(String name, Integer ageMin, Integer ageMax, Integer durationMin,
@@ -169,10 +199,21 @@ public class ActivityService {
 	}
 
 	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf) {
+		return getActivityById(id, includeSourcePdf, false);
+	}
+
+	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf, boolean includeMarkdownContent) {
 		logger.debug("Fetching activity by id={}", id);
 		Activity activity = activityRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
-		return mapToResponse(activity, includeSourcePdf);
+		return mapToResponse(activity, includeSourcePdf, includeMarkdownContent);
+	}
+
+	public List<MarkdownResponse> getActivityMarkdowns(UUID id) {
+		logger.debug("Fetching markdowns for activity id={}", id);
+		Activity activity = activityRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
+		return mapLatestMarkdowns(activity, true);
 	}
 
 	public ActivityResponse createActivity(Activity activity) {
@@ -211,7 +252,7 @@ public class ActivityService {
 		updateMarkdownByType(activity, activityUpdate, MarkdownType.UEBUNG);
 		updateMarkdownByType(activity, activityUpdate, MarkdownType.UEBUNG_LOESUNG);
 
-		sanitizeActivity(activity);
+		sanitizeActivityMetadata(activity);
 		Activity saved = activityRepository.save(activity);
 		return mapToResponse(saved, false);
 	}
@@ -220,11 +261,15 @@ public class ActivityService {
 		Optional<ActivityMarkdown> newMarkdown = activityUpdate.getMarkdowns().stream().filter(m -> m.getType() == type)
 				.findFirst();
 		if (newMarkdown.isPresent()) {
-			String newContent = newMarkdown.get().getContent();
+			String newContent = sanitizationService.sanitize(newMarkdown.get().getContent());
 			boolean newLandscape = newMarkdown.get().isLandscape();
 			Optional<ActivityMarkdown> existing = activity.getMarkdowns().stream().filter(m -> m.getType() == type)
 					.findFirst();
 			if (existing.isPresent()) {
+				if (Objects.equals(existing.get().getContent(), newContent)
+						&& existing.get().isLandscape() == newLandscape) {
+					return;
+				}
 				existing.get().setContent(newContent);
 				existing.get().setLandscape(newLandscape);
 			} else {
@@ -244,15 +289,23 @@ public class ActivityService {
 			return;
 		}
 
+		sanitizeActivityMetadata(activity);
+
+		for (ActivityMarkdown markdown : activity.getMarkdowns()) {
+			markdown.setContent(sanitizationService.sanitize(markdown.getContent()));
+		}
+	}
+
+	private void sanitizeActivityMetadata(Activity activity) {
+		if (activity == null) {
+			return;
+		}
+
 		activity.setName(sanitizationService.sanitize(activity.getName()));
 		activity.setDescription(sanitizationService.sanitize(activity.getDescription()));
 		activity.setSource(sanitizationService.sanitize(activity.getSource()));
 		activity.setResourcesNeeded(sanitizationService.sanitizeList(activity.getResourcesNeeded()));
 		activity.setTopics(sanitizationService.sanitizeList(activity.getTopics()));
-
-		for (ActivityMarkdown markdown : activity.getMarkdowns()) {
-			markdown.setContent(sanitizationService.sanitize(markdown.getContent()));
-		}
 	}
 
 	/**
@@ -395,10 +448,20 @@ public class ActivityService {
 	}
 
 	public ActivityResponse convertToResponse(Activity activity, boolean includeSourcePdf) {
-		return mapToResponse(activity, includeSourcePdf);
+		return mapToResponse(activity, includeSourcePdf, false);
+	}
+
+	public ActivityResponse convertToResponse(Activity activity, boolean includeSourcePdf,
+			boolean includeMarkdownContent) {
+		return mapToResponse(activity, includeSourcePdf, includeMarkdownContent);
 	}
 
 	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf) {
+		return mapToResponse(activity, includeSourcePdf, false);
+	}
+
+	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf,
+			boolean includeMarkdownContent) {
 		ActivityResponse response = new ActivityResponse();
 		response.setId(activity.getId());
 		response.setName(activity.getName());
@@ -425,7 +488,12 @@ public class ActivityService {
 				.collect(Collectors.toList());
 		response.setDocuments(docResponses);
 
-		// Map all markdowns to response list
+		response.setMarkdowns(mapLatestMarkdowns(activity, includeMarkdownContent));
+
+		return response;
+	}
+
+	private List<MarkdownResponse> mapLatestMarkdowns(Activity activity, boolean includeContent) {
 		Map<String, ActivityMarkdown> latestMarkdownByType = activity.getMarkdowns().stream()
 				.filter(m -> m.getType() != null)
 				.sorted(Comparator
@@ -433,12 +501,8 @@ public class ActivityService {
 						.reversed())
 				.collect(Collectors.toMap(m -> m.getType().getValue(), m -> m, (existing, ignored) -> existing,
 						LinkedHashMap::new));
-		List<MarkdownResponse> mdResponses = latestMarkdownByType.values().stream()
-				.map(m -> new MarkdownResponse(m.getId(), m.getType().getValue(), m.getContent(), m.isLandscape()))
-				.collect(Collectors.toList());
-		response.setMarkdowns(mdResponses);
-
-		return response;
+		return latestMarkdownByType.values().stream().map(m -> new MarkdownResponse(m.getId(), m.getType().getValue(),
+				includeContent ? m.getContent() : null, m.isLandscape())).collect(Collectors.toList());
 	}
 
 	/**

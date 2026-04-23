@@ -1,6 +1,7 @@
 import { authService } from "./authService";
 import type {
   Activity,
+  ActivityMarkdown,
   ActivitiesResponse,
   ResultsData,
   FieldValues,
@@ -71,6 +72,15 @@ export const ActivityApi = {
    */
   async getActivity(id: string) {
     return ApiRequestMixin.request<Activity>(`/api/activities/${id}`);
+  },
+
+  /**
+   * Get stored markdown contents for editing an activity.
+   */
+  async getActivityMarkdowns(activityId: string) {
+    return ApiRequestMixin.request<ActivityMarkdown[]>(
+      `/api/activities/${activityId}/markdowns`,
+    );
   },
 
   /**

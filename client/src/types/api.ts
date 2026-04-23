@@ -131,7 +131,7 @@ export interface LessonPlanRequest {
       fileSize: number;
       type: string;
     }>;
-    markdowns?: Array<{ id: string; type: string; content: string }>;
+    markdowns?: Array<{ id: string; type: string; content?: string }>;
     createdAt?: string;
     type: "activity";
   }>;

@@ -1,5 +1,6 @@
 package com.learnhub.activitymanagement.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -45,4 +46,7 @@ public class ActivityResponse {
 	private List<MarkdownResponse> markdowns = new ArrayList<>();
 
 	private String type = "activity";
+
+	@JsonProperty("isFavourited")
+	private boolean favourited;
 }
