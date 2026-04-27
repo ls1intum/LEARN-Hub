@@ -22,7 +22,6 @@ export const ROUTES = {
   LOGIN: "/login",
   RECOMMENDATIONS: "/recommendations",
   LIBRARY: "/library",
-  UPLOAD: "/upload",
   USERS: "/users",
   RESULTS: "/results",
   ACTIVITY_DETAILS: "/activity-details",

@@ -1,11 +1,11 @@
 import {
   Home,
   Library,
-  Plus,
   Users,
   History,
   Heart,
   FlaskConical,
+  FilePenLine,
   type LucideIcon,
 } from "lucide-react";
 
@@ -49,10 +49,10 @@ export const NAVIGATION_TABS: NavigationTab[] = [
     roles: ["ADMIN", "TEACHER"],
   },
   {
-    id: "upload",
-    label: "Upload",
-    path: "/upload",
-    icon: Plus,
+    id: "drafts",
+    label: "Drafts",
+    path: "/drafts",
+    icon: FilePenLine,
     roles: ["ADMIN"],
   },
   {

@@ -3,7 +3,7 @@
 Seed and export script for LEARN-Hub activities.
 
 Subcommands:
-    seed    Upload PDFs and create activities from the dataset CSV.
+    seed    Upload PDFs and create draft/published activities from the dataset CSV.
     export  Fetch generated markdowns from the server and write them back into the CSV.
     delete  Delete selected activities from the server.
     delete-all
@@ -106,6 +106,19 @@ def fetch_activities(base_url: str, timeout: int, token: str | None = None) -> l
     return resp.json().get("activities", [])
 
 
+def get_activity(base_url: str, timeout: int, activity_id: str, token: str | None = None) -> dict:
+    """Fetch one activity by ID."""
+    headers = auth_headers(token) if token else None
+    resp = requests.get(
+        f"{base_url}/api/activities/{activity_id}",
+        headers=headers,
+        timeout=timeout,
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(f"Fetch activity failed ({resp.status_code}): {resp.text}")
+    return resp.json()
+
+
 def get_existing_activity_names(base_url: str, timeout: int) -> set[str]:
     """Fetch all existing activity names (no auth required for listing)."""
     resp = requests.get(
@@ -195,13 +208,13 @@ def csv_row_to_markdowns(row: dict) -> dict | None:
     return markdowns
 
 
-def upload_pdf(base_url: str, token: str, pdf_path: Path, timeout: int) -> dict:
-    """Upload a PDF. Returns the API response dict."""
+def upload_pdf(base_url: str, token: str, pdf_path: Path, timeout: int, generate_content: bool) -> dict:
+    """Upload a PDF and create a draft shell. Returns the activity response dict."""
     with open(pdf_path, "rb") as f:
         resp = requests.post(
-            f"{base_url}/api/activities/upload-pdf-draft",
+            f"{base_url}/api/activities/upload-and-create-pending",
             files={"pdf_file": (pdf_path.name, f, "application/pdf")},
-            params={"extractMetadata": "false"},
+            params={"generateContent": str(generate_content).lower()},
             headers={"Authorization": f"Bearer {token}"},
             timeout=timeout,
         )
@@ -215,7 +228,7 @@ def generate_markdowns_api(
 ) -> dict:
     """Generate all three markdowns via the LLM. Returns the API response dict."""
     resp = requests.post(
-        f"{base_url}/api/activities/generate-activity-markdowns",
+        f"{base_url}/api/activities/generate-markdowns",
         json={"documentId": document_id, "metadata": metadata},
         headers={"Authorization": f"Bearer {token}"},
         timeout=timeout,
@@ -225,10 +238,10 @@ def generate_markdowns_api(
     return resp.json()
 
 
-def create_activity(
-    base_url: str, token: str, document_id: str, metadata: dict, markdowns: dict, timeout: int
+def update_activity(
+    base_url: str, token: str, activity_id: str, document_id: str, metadata: dict, markdowns: dict, timeout: int
 ) -> dict:
-    """Create the final activity with metadata and markdowns."""
+    """Update an existing draft activity with CSV metadata and markdowns."""
     payload = {
         "documentId": document_id,
         **metadata,
@@ -236,47 +249,105 @@ def create_activity(
         "artikulationsschemaMarkdown": markdowns.get("artikulationsschemaMarkdown", ""),
         "hintergrundwissenMarkdown": markdowns.get("hintergrundwissenMarkdown", ""),
     }
-    resp = requests.post(
-        f"{base_url}/api/activities/create",
+    resp = requests.put(
+        f"{base_url}/api/activities/{activity_id}",
         json=payload,
         headers={"Authorization": f"Bearer {token}"},
         timeout=timeout,
     )
-    if resp.status_code != 201:
-        raise RuntimeError(f"Activity creation failed ({resp.status_code}): {resp.text}")
+    if resp.status_code != 200:
+        raise RuntimeError(f"Activity update failed ({resp.status_code}): {resp.text}")
     return resp.json()
 
 
+def publish_activity(base_url: str, token: str, activity_id: str, timeout: int) -> dict:
+    """Publish a draft activity."""
+    resp = requests.put(
+        f"{base_url}/api/activities/{activity_id}/publish",
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=timeout,
+    )
+    if resp.status_code != 200:
+        raise RuntimeError(f"Publish failed ({resp.status_code}): {resp.text}")
+    return resp.json()
+
+
+def wait_for_draft_status(base_url: str, token: str, activity_id: str, timeout: int, max_wait: int) -> dict:
+    """Poll until the activity reaches DRAFT or fails generation."""
+    deadline = time.time() + max_wait
+    while True:
+        activity = get_activity(base_url, timeout, activity_id, token)
+        status = activity.get("status")
+        generation_error = activity.get("generationError")
+
+        if status == "DRAFT":
+            return activity
+        if generation_error:
+            raise RuntimeError(f"Background generation failed while waiting for DRAFT: {generation_error}")
+        if time.time() >= deadline:
+            raise RuntimeError(f"Timed out after {max_wait}s waiting for activity to become DRAFT")
+
+        time.sleep(2)
+
+
+def get_source_document_id(activity: dict) -> str:
+    """Extract the source PDF document ID from an activity response."""
+    for document in activity.get("documents", []):
+        if document.get("type") == "source_pdf":
+            return document["id"]
+    raise RuntimeError("Activity response did not include a source_pdf document")
+
+
 def seed_activity(
-    base_url: str, token: str, row: dict, timeout: int, generate_markdown: bool = False
-) -> str:
-    """Run the full seed pipeline for one CSV row. Returns the created activity ID."""
+    base_url: str,
+    token: str,
+    row: dict,
+    timeout: int,
+    generate_markdown: bool = False,
+    target_status: str = "published",
+    wait_timeout: int = 300,
+) -> tuple[str, str]:
+    """Run the seed pipeline for one CSV row. Returns (activity_id, final_status)."""
     filename = row["filename"]
     pdf_path = PDF_DIR / filename
     metadata = csv_row_to_metadata(row)
+    use_background_generation = False
 
-    print(f"  [1/3] Uploading {filename}...")
-    upload_result = upload_pdf(base_url, token, pdf_path, timeout)
-    document_id = upload_result["documentId"]
+    print(f"  [1/4] Uploading {filename}...")
+    activity = upload_pdf(base_url, token, pdf_path, timeout, generate_content=use_background_generation)
+    activity_id = activity["id"]
+    document_id = get_source_document_id(activity)
 
     csv_markdowns = None if generate_markdown else csv_row_to_markdowns(row)
 
     if csv_markdowns:
-        print(f"  [2/3] Using markdowns from CSV")
+        print(f"  [2/4] Using markdowns from CSV")
         markdowns = csv_markdowns
     else:
         if not generate_markdown:
-            print(f"  [2/3] CSV markdowns missing/incomplete, falling back to LLM generation...")
+            print(f"  [2/4] CSV markdowns missing/incomplete, falling back to LLM generation...")
         else:
-            print(f"  [2/3] Generating markdowns via API (this may take a while)...")
+            print(f"  [2/4] Generating markdowns via API (this may take a while)...")
         start = time.time()
         markdowns = generate_markdowns_api(base_url, token, document_id, metadata, timeout)
         elapsed = time.time() - start
         print(f"        Done in {elapsed:.1f}s")
 
-    print(f"  [3/3] Creating activity...")
-    result = create_activity(base_url, token, document_id, metadata, markdowns, timeout)
-    return result.get("activity", {}).get("id", "unknown")
+    print(f"  [3/4] Updating draft metadata and markdowns...")
+    update_activity(base_url, token, activity_id, document_id, metadata, markdowns, timeout)
+
+    if target_status == "published":
+        print(f"  [4/4] Publishing activity...")
+        publish_activity(base_url, token, activity_id, timeout)
+        return activity_id, "PUBLISHED"
+
+    print(f"  [4/4] Leaving activity in drafts")
+    activity = get_activity(base_url, timeout, activity_id, token)
+    final_status = activity.get("status", "DRAFT")
+    if final_status == "PENDING":
+        activity = wait_for_draft_status(base_url, token, activity_id, timeout, wait_timeout)
+        final_status = activity.get("status", "DRAFT")
+    return activity_id, final_status
 
 
 # ---------------------------------------------------------------------------
@@ -358,10 +429,16 @@ def cmd_seed(args):
             continue
 
         try:
-            activity_id = seed_activity(
-                args.base_url, token, row, args.timeout, args.generate_markdown
+            activity_id, final_status = seed_activity(
+                args.base_url,
+                token,
+                row,
+                args.timeout,
+                args.generate_markdown,
+                args.target_status,
+                args.wait_timeout,
             )
-            print(f"  Created: {activity_id}\n")
+            print(f"  Created: {activity_id} ({final_status})\n")
             succeeded += 1
         except Exception as e:
             print(f"  FAILED: {e}\n")
@@ -645,6 +722,18 @@ def main():
         "--generate-markdown",
         action="store_true",
         help="Generate markdowns via LLM API instead of using CSV content (slower)",
+    )
+    seed_parser.add_argument(
+        "--target-status",
+        choices=("draft", "published"),
+        default="published",
+        help="Leave seeded activities in drafts or publish them (default: published)",
+    )
+    seed_parser.add_argument(
+        "--wait-timeout",
+        type=int,
+        default=300,
+        help="Maximum wait time in seconds when polling for draft completion (default: 300)",
     )
 
     # -- export --

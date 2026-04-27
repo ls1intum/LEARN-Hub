@@ -6,6 +6,8 @@ import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.learnhub.service.SanitizationService;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -181,5 +183,50 @@ class MarkdownToPdfServiceTest {
 		try (PdfDocument pdfDocument = new PdfDocument(new PdfReader(new ByteArrayInputStream(retitledPdf)))) {
 			assertThat(pdfDocument.getDocumentInfo().getTitle()).isEqualTo("Retitled Document");
 		}
+	}
+
+	@Test
+	void renderHtmlToPdfRetriesByDroppingProblematicCharacterOnCmapFailure() {
+		FallbackMarkdownToPdfService fallbackService = new FallbackMarkdownToPdfService();
+
+		byte[] result = fallbackService.renderHtmlToPdf("<p>Hello 🚫 world</p>", true, "Retry Test");
+
+		assertThat(result).isEqualTo(FallbackMarkdownToPdfService.FAKE_PDF_BYTES);
+		assertThat(fallbackService.attempts).isEqualTo(2);
+		assertThat(fallbackService.lastRenderedHtml).doesNotContain("🚫");
+	}
+
+	private static final class FallbackMarkdownToPdfService extends MarkdownToPdfService {
+
+		private static final byte[] FAKE_PDF_BYTES = "pdf".getBytes(StandardCharsets.UTF_8);
+
+		private int attempts;
+		private String lastRenderedHtml;
+
+		private FallbackMarkdownToPdfService() {
+			super(createHtmlService());
+		}
+
+		@Override
+		void convertHtmlDocumentToPdfBytes(String html, ByteArrayOutputStream outputStream,
+				com.itextpdf.html2pdf.ConverterProperties converterProperties) {
+			attempts++;
+			lastRenderedHtml = html;
+			if (html.contains("🚫")) {
+				throw new NullPointerException("Cannot invoke \"java.util.Map.size()\" because \"cmap\" is null");
+			}
+			outputStream.writeBytes(FAKE_PDF_BYTES);
+		}
+
+		@Override
+		public byte[] applyDocumentTitle(byte[] pdfBytes, String documentTitle) {
+			return pdfBytes;
+		}
+	}
+
+	private static MarkdownToHtmlService createHtmlService() {
+		MarkdownToHtmlService htmlService = new MarkdownToHtmlService();
+		ReflectionTestUtils.setField(htmlService, "sanitizationService", new SanitizationService());
+		return htmlService;
 	}
 }

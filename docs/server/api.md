@@ -90,11 +90,12 @@ Resources organised by domain:
 - `GET /api/activities/{id}/pdf` - Download activity PDF
 
 **Admin Content Management**:
-- `POST /api/activities/create` - Create activity from previously uploaded PDF
+- `POST /api/activities/upload-and-create-pending` - Upload PDF and create an admin draft; optional `generateContent=false` skips background generation
+- `PUT /api/activities/{id}` - Update draft/activity metadata and markdowns
+- `PUT /api/activities/{id}/publish` - Publish a draft activity
 - `DELETE /api/activities/{id}` - Remove activity
 
 **PDF Document Operations**:
-- `POST /api/activities/upload-pdf-draft` - Upload PDF and extract metadata via LLM
 - `GET /api/documents/{id}` - Retrieve raw PDF
 - `GET /api/documents/{id}/info` - Get document metadata
 

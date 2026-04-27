@@ -119,6 +119,9 @@ public class ActivityService {
 
 		Specification<Activity> spec = Specification.where(null);
 
+		// Only return published activities in normal list/count/recommendation queries
+		spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), ActivityStatus.PUBLISHED));
+
 		if (name != null && !name.isEmpty()) {
 			spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
 		}
@@ -489,6 +492,8 @@ public class ActivityService {
 		response.setDocuments(docResponses);
 
 		response.setMarkdowns(mapLatestMarkdowns(activity, includeMarkdownContent));
+		response.setStatus(activity.getStatus() != null ? activity.getStatus().name() : ActivityStatus.PUBLISHED.name());
+		response.setGenerationError(activity.getGenerationError());
 
 		return response;
 	}
@@ -503,61 +508,6 @@ public class ActivityService {
 						LinkedHashMap::new));
 		return latestMarkdownByType.values().stream().map(m -> new MarkdownResponse(m.getId(), m.getType().getValue(),
 				includeContent ? m.getContent() : null, m.isLandscape())).collect(Collectors.toList());
-	}
-
-	/**
-	 * Create activity with validation
-	 */
-	public ActivityResponse createActivityWithValidation(Map<String, Object> request) {
-		// Validate documentId (used as cache key or existing DB ID)
-		Object documentIdObj = request.get("documentId");
-		if (documentIdObj == null) {
-			throw new IllegalArgumentException("documentId is required");
-		}
-
-		UUID cacheKeyOrDocId;
-		try {
-			cacheKeyOrDocId = UUID.fromString(documentIdObj.toString());
-		} catch (IllegalArgumentException e) {
-			throw new IllegalArgumentException("Invalid documentId format: must be a valid UUID");
-		}
-
-		UUID documentId;
-		// Finalize the cached PDF (persist to filesystem + DB), returns the real DB ID
-		try {
-			documentId = pdfService.finalizePdf(cacheKeyOrDocId);
-		} catch (RuntimeException e) {
-			// PDF was not in the cache – check if it already exists in the database
-			try {
-				byte[] pdfContent = pdfService.getPdfContent(cacheKeyOrDocId);
-				if (pdfContent == null || pdfContent.length == 0) {
-					throw new IllegalArgumentException("PDF document with ID " + cacheKeyOrDocId + " does not exist");
-				}
-				documentId = cacheKeyOrDocId;
-			} catch (IllegalArgumentException ie) {
-				throw ie;
-			} catch (Exception ex) {
-				throw new IllegalArgumentException("PDF document with ID " + cacheKeyOrDocId + " does not exist");
-			}
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to finalize PDF: " + e.getMessage(), e);
-		}
-
-		// Update request with the real documentId (may differ from cache key)
-		request.put("documentId", documentId.toString());
-
-		// Create activity from request
-		Activity activity = createActivityFromMap(request);
-		return createActivity(activity);
-	}
-
-	/**
-	 * Upload PDF, cache it, and extract metadata using LLM. Delegates to
-	 * {@link ActivityExtractionService}.
-	 */
-	public Map<String, Object> uploadPdfAndExtractMetadata(org.springframework.web.multipart.MultipartFile pdfFile,
-			boolean extractMetadata) {
-		return extractionService.uploadPdfAndExtractMetadata(pdfFile, extractMetadata);
 	}
 
 	/**
@@ -592,6 +542,118 @@ public class ActivityService {
 		if (priorityCategories != null)
 			criteria.put("priorityCategories", priorityCategories);
 		return criteria;
+	}
+
+	// ---- Draft / Publish workflow ----
+
+	public List<ActivityResponse> getDraftActivities() {
+		List<Activity> drafts = activityRepository
+				.findByStatusInOrderByCreatedAtDesc(List.of(ActivityStatus.PENDING, ActivityStatus.DRAFT));
+		return drafts.stream().map(a -> mapToResponse(a, true)).collect(Collectors.toList());
+	}
+
+	@Transactional
+	public ActivityResponse publishActivity(UUID id) {
+		Activity activity = activityRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
+		if (activity.getStatus() != ActivityStatus.DRAFT) {
+			throw new IllegalStateException("Only DRAFT activities can be published");
+		}
+		activity.setStatus(ActivityStatus.PUBLISHED);
+		return mapToResponse(activityRepository.save(activity), false);
+	}
+
+	@Transactional
+	public void updateActivityWithMetadata(UUID id, Map<String, Object> extractedData) {
+		Activity activity = activityRepository.findById(id).orElse(null);
+		if (activity == null) return;
+
+		if (extractedData.get("name") != null) activity.setName(extractedData.get("name").toString());
+		if (extractedData.get("description") != null) activity.setDescription(extractedData.get("description").toString());
+		if (extractedData.get("source") != null) activity.setSource(extractedData.get("source").toString());
+		if (extractedData.get("ageMin") != null) activity.setAgeMin(Integer.parseInt(extractedData.get("ageMin").toString()));
+		if (extractedData.get("ageMax") != null) activity.setAgeMax(Integer.parseInt(extractedData.get("ageMax").toString()));
+		if (extractedData.get("format") != null) {
+			try { activity.setFormat(ActivityFormat.fromValue(extractedData.get("format").toString())); } catch (Exception ignored) {}
+		}
+		if (extractedData.get("bloomLevel") != null) {
+			try { activity.setBloomLevel(BloomLevel.fromValue(extractedData.get("bloomLevel").toString())); } catch (Exception ignored) {}
+		}
+		if (extractedData.get("durationMinMinutes") != null) activity.setDurationMinMinutes(Integer.parseInt(extractedData.get("durationMinMinutes").toString()));
+		if (extractedData.get("durationMaxMinutes") != null) activity.setDurationMaxMinutes(Integer.parseInt(extractedData.get("durationMaxMinutes").toString()));
+		if (extractedData.get("mentalLoad") != null) {
+			try { activity.setMentalLoad(EnergyLevel.fromValue(extractedData.get("mentalLoad").toString())); } catch (Exception ignored) {}
+		}
+		if (extractedData.get("physicalEnergy") != null) {
+			try { activity.setPhysicalEnergy(EnergyLevel.fromValue(extractedData.get("physicalEnergy").toString())); } catch (Exception ignored) {}
+		}
+		if (extractedData.get("prepTimeMinutes") != null) activity.setPrepTimeMinutes(Integer.parseInt(extractedData.get("prepTimeMinutes").toString()));
+		if (extractedData.get("cleanupTimeMinutes") != null) activity.setCleanupTimeMinutes(Integer.parseInt(extractedData.get("cleanupTimeMinutes").toString()));
+		if (extractedData.get("resourcesNeeded") instanceof List) {
+			@SuppressWarnings("unchecked") List<String> r = (List<String>) extractedData.get("resourcesNeeded");
+			activity.setResourcesNeeded(r);
+		}
+		if (extractedData.get("topics") instanceof List) {
+			@SuppressWarnings("unchecked") List<String> t = (List<String>) extractedData.get("topics");
+			activity.setTopics(t);
+		}
+
+		sanitizeActivityMetadata(activity);
+		activityRepository.save(activity);
+	}
+
+	@Transactional
+	public void addMarkdownsToActivity(UUID id, Map<String, String> markdownsByType) {
+		Activity activity = activityRepository.findById(id).orElse(null);
+		if (activity == null) return;
+
+		Map<String, Boolean> landscapes = Map.of(
+			"deckblatt", false,
+			"artikulationsschema", true,
+			"hintergrundwissen", false,
+			"uebung", false,
+			"uebung_loesung", false
+		);
+
+		for (Map.Entry<String, String> entry : markdownsByType.entrySet()) {
+			if (entry.getValue() == null) continue;
+			try {
+				MarkdownType type = MarkdownType.fromValue(entry.getKey());
+				boolean landscape = Boolean.TRUE.equals(landscapes.get(entry.getKey()));
+				String content = sanitizationService.sanitize(entry.getValue());
+				Optional<ActivityMarkdown> existing = activity.getMarkdowns().stream()
+						.filter(m -> m.getType() == type).findFirst();
+				if (existing.isPresent()) {
+					existing.get().setContent(content);
+					existing.get().setLandscape(landscape);
+				} else {
+					ActivityMarkdown md = new ActivityMarkdown();
+					md.setActivity(activity);
+					md.setType(type);
+					md.setContent(content);
+					md.setLandscape(landscape);
+					md.setCreatedAt(LocalDateTime.now());
+					activity.getMarkdowns().add(md);
+				}
+			} catch (Exception ignored) {}
+		}
+		activityRepository.save(activity);
+	}
+
+	@Transactional
+	public void setActivityStatus(UUID id, ActivityStatus status) {
+		Activity activity = activityRepository.findById(id).orElse(null);
+		if (activity == null) return;
+		activity.setStatus(status);
+		activityRepository.save(activity);
+	}
+
+	@Transactional
+	public void setActivityGenerationError(UUID id, String error) {
+		Activity activity = activityRepository.findById(id).orElse(null);
+		if (activity == null) return;
+		activity.setGenerationError(error);
+		activityRepository.save(activity);
 	}
 
 	/**

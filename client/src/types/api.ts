@@ -5,16 +5,12 @@ export interface FormFieldData {
   [key: string]: string | number | boolean | string[] | null | undefined;
 }
 
-// Upload PDF draft response (2-step flow)
-export interface UploadPdfDraftResponse {
+// Metadata extraction response used by AI-assisted activity editing.
+export interface MetadataExtractionResponse {
   documentId: string;
   extractedData: FormFieldData;
   extractionConfidence: number;
   extractionQuality: string;
-}
-
-export interface UploadPdfDraftOptions {
-  extractMetadata?: boolean;
 }
 
 // Activity markdowns generation response (all three types)
@@ -22,31 +18,6 @@ export interface ActivityMarkdownsResponse {
   documentId: string;
   deckblattMarkdown?: string;
   artikulationsschemaMarkdown?: string;
-  hintergrundwissenMarkdown?: string;
-  uebungMarkdown?: string;
-  uebungLoesungMarkdown?: string;
-}
-
-// Activity creation request
-export interface CreateActivityRequest {
-  name: string;
-  description: string;
-  source?: string;
-  ageMin: number;
-  ageMax: number;
-  format: string;
-  resourcesNeeded: string[];
-  bloomLevel: string;
-  durationMinMinutes: number;
-  durationMaxMinutes?: number;
-  prepTimeMinutes?: number;
-  cleanupTimeMinutes?: number;
-  mentalLoad?: string;
-  physicalEnergy?: string;
-  topics: string[];
-  documentId?: number | string;
-  artikulationsschemaMarkdown?: string;
-  deckblattMarkdown?: string;
   hintergrundwissenMarkdown?: string;
   uebungMarkdown?: string;
   uebungLoesungMarkdown?: string;

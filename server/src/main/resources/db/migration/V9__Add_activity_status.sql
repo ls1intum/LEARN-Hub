@@ -1,0 +1,3 @@
+ALTER TABLE activities ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'PUBLISHED';
+ALTER TABLE activities ADD COLUMN IF NOT EXISTS generation_error TEXT;
+CREATE INDEX IF NOT EXISTS ix_activities_status ON activities(status);

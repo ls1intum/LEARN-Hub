@@ -15,11 +15,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
- * Service responsible for PDF upload, metadata extraction via LLM, and data
- * normalization for the 2-step activity creation flow.
+ * Service responsible for metadata extraction via LLM and data normalization
+ * for admin draft editing workflows.
  *
  * <p>
  * Extracted from {@link ActivityService} to keep that class focused on core
@@ -37,42 +36,6 @@ public class ActivityExtractionService {
 
 	@Autowired
 	private LLMService llmService;
-
-	/**
-	 * Upload PDF, cache it, and extract metadata using LLM. Returns document_id
-	 * (cache key) and extracted data for the 2-step creation flow. The PDF is NOT
-	 * persisted yet – call {@link ActivityService#createActivityWithValidation} to
-	 * finalize.
-	 */
-	public Map<String, Object> uploadPdfAndExtractMetadata(MultipartFile pdfFile, boolean extractMetadata) {
-		try {
-			if (pdfFile.isEmpty()) {
-				throw new IllegalArgumentException("No PDF file provided");
-			}
-
-			if (!pdfFile.getOriginalFilename().toLowerCase().endsWith(".pdf")) {
-				throw new IllegalArgumentException("File must be a PDF");
-			}
-
-			byte[] pdfContent = pdfFile.getBytes();
-			if (pdfContent.length == 0) {
-				throw new IllegalArgumentException("PDF file is empty");
-			}
-
-			UUID cacheKey = pdfService.cachePdf(pdfContent, pdfFile.getOriginalFilename());
-
-			if (!extractMetadata) {
-				pdfService.updatePdfExtractionResults(cacheKey, Map.of(), null, "not_run");
-				return buildExtractionResponse(cacheKey, Map.of(), 0.0, "not_run");
-			}
-
-			return extractMetadataFromDocument(cacheKey);
-		} catch (IllegalArgumentException e) {
-			throw e;
-		} catch (Exception e) {
-			throw new RuntimeException("Failed to upload PDF and extract metadata: " + e.getMessage(), e);
-		}
-	}
 
 	/**
 	 * Extract metadata from a cached or persisted PDF.

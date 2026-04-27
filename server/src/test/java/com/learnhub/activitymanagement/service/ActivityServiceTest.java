@@ -37,7 +37,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class ActivityServiceTest {
@@ -397,24 +396,6 @@ class ActivityServiceTest {
 	}
 
 	@Test
-	void uploadPdfAndExtractMetadataSkipsLlmWhenDisabled() throws Exception {
-		MockMultipartFile pdfFile = new MockMultipartFile("pdf_file", "activity.pdf", "application/pdf",
-				"fake-pdf".getBytes(StandardCharsets.UTF_8));
-		UUID cacheKey = UUID.randomUUID();
-
-		when(pdfService.cachePdf(any(byte[].class), any(String.class))).thenReturn(cacheKey);
-
-		Map<String, Object> result = activityService.uploadPdfAndExtractMetadata(pdfFile, false);
-
-		assertThat(result.get("documentId")).isEqualTo(cacheKey.toString());
-		assertThat(result.get("extractionConfidence")).isEqualTo(0.0);
-		assertThat(result.get("extractionQuality")).isEqualTo("not_run");
-		assertThat(result.get("extractedData")).isInstanceOf(Map.class);
-		verify(llmService, never()).extractActivityData(any(String.class));
-		verify(pdfService).updatePdfExtractionResults(cacheKey, Map.of(), null, "not_run");
-	}
-
-	@Test
 	void extractMetadataFromDocumentUpdatesStoredResults() {
 		UUID documentId = UUID.randomUUID();
 		Map<String, Object> extractedData = new HashMap<>();
@@ -470,45 +451,6 @@ class ActivityServiceTest {
 				any(String.class));
 		assertThat(captor.getValue().get("durationMinMinutes")).isEqualTo(60);
 		assertThat(captor.getValue().get("bloomLevel")).isEqualTo("analyze");
-	}
-
-	@Test
-	void createActivityWithValidationCreatesDocumentRelationship() throws Exception {
-		UUID cacheKey = UUID.randomUUID();
-		UUID finalizedDocId = UUID.randomUUID();
-		PDFDocument finalizedDoc = createTestDocument(finalizedDocId);
-
-		when(pdfService.finalizePdf(cacheKey)).thenReturn(finalizedDocId);
-		when(pdfDocumentRepository.findById(finalizedDocId)).thenReturn(Optional.of(finalizedDoc));
-		when(pdfDocumentRepository.save(any(PDFDocument.class))).thenAnswer(inv -> inv.getArgument(0));
-		when(activityRepository.save(any(Activity.class))).thenAnswer(inv -> {
-			Activity a = inv.getArgument(0);
-			a.setId(UUID.randomUUID());
-			return a;
-		});
-
-		Map<String, Object> request = new HashMap<>();
-		request.put("name", "Test Activity");
-		request.put("description", "A test activity description");
-		request.put("ageMin", 8);
-		request.put("ageMax", 12);
-		request.put("format", "unplugged");
-		request.put("bloomLevel", "apply");
-		request.put("durationMinMinutes", 30);
-		request.put("documentId", cacheKey.toString());
-
-		ActivityResponse response = activityService.createActivityWithValidation(request);
-
-		assertThat(response).isNotNull();
-		assertThat(response.getDocuments()).isEmpty();
-
-		// Verify the saved activity has the document relationship
-		ArgumentCaptor<Activity> captor = ArgumentCaptor.forClass(Activity.class);
-		verify(activityRepository).save(captor.capture());
-		Activity saved = captor.getValue();
-		assertThat(saved.getDocuments()).hasSize(1);
-		assertThat(saved.getDocuments().get(0).getId()).isEqualTo(finalizedDocId);
-		assertThat(saved.getDocuments().get(0).getType()).isEqualTo(DocumentType.SOURCE_PDF);
 	}
 
 	@Test

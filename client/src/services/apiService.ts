@@ -64,7 +64,6 @@ export class ApiService {
   static getActivityMarkdowns = ActivityApi.getActivityMarkdowns;
   static getActivitiesByIds = ActivityApi.getActivitiesByIds;
   static getRecommendations = ActivityApi.getRecommendations;
-  static createActivity = ActivityApi.createActivity;
   static deleteActivity = ActivityApi.deleteActivity;
   static updateActivity = ActivityApi.updateActivity;
   static generateLessonPlan = ActivityApi.generateLessonPlan;
@@ -73,13 +72,15 @@ export class ApiService {
   static getMarkdownDocx = ActivityApi.getMarkdownDocx;
   static getFieldValues = ActivityApi.getFieldValues;
   static getEnvironment = ActivityApi.getEnvironment;
-  static uploadPdfDraft = ActivityApi.uploadPdfDraft;
   static regenerateMetadata = ActivityApi.regenerateMetadata;
   static regenerateImage = ActivityApi.regenerateImage;
   static generateActivityMarkdowns = ActivityApi.generateActivityMarkdowns;
   static downloadActivityPdf = ActivityApi.downloadActivityPdf;
   static downloadActivityDocx = ActivityApi.downloadActivityDocx;
   static previewMarkdownPdf = ActivityApi.previewMarkdownPdf;
+  static uploadAndCreatePending = ActivityApi.uploadAndCreatePending;
+  static getDraftActivities = ActivityApi.getDraftActivities;
+  static publishActivity = ActivityApi.publishActivity;
 
   // --- History API ---
   static getSearchHistory = HistoryApi.getSearchHistory;

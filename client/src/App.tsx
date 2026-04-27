@@ -18,7 +18,7 @@ import { ActivityDetails } from "@/pages/ActivityDetails";
 import { UserManagementPage } from "@/pages/UserManagementPage";
 import { SearchHistoryPage } from "@/pages/SearchHistoryPage";
 import { FavouritesPage } from "@/pages/FavouritesPage";
-import { ActivitySetupPage } from "@/pages/ActivitySetupPage";
+import { DraftsPage } from "@/pages/DraftsPage";
 import { ActivityEditPage } from "@/pages/ActivityEditPage";
 import { AccountDashboardPage } from "@/pages/AccountDashboardPage";
 import { ImpressumPage } from "@/pages/ImpressumPage";
@@ -120,10 +120,10 @@ function App() {
                           }
                         />
                         <Route
-                          path="/upload"
+                          path="/drafts"
                           element={
                             <ProtectedLayout requiredRole="ADMIN">
-                              <ActivitySetupPage />
+                              <DraftsPage />
                             </ProtectedLayout>
                           }
                         />

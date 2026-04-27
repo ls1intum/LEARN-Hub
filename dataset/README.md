@@ -64,11 +64,14 @@ The `seed.py` script has four subcommands: `seed`, `export`, `delete`, and `dele
 
 ### Seeding activities
 
-Uploads PDFs and creates activities from the CSV. By default, markdowns are read from the CSV columns. If the CSV has no markdown content (or you want fresh generation), use `--generate-markdown`.
+Uploads PDFs and creates activities from the CSV. By default, markdowns are read from the CSV columns and activities are published after seeding. If the CSV has no markdown content (or you want fresh generation), use `--generate-markdown`.
 
 ```bash
 # Seed all activities using markdowns from CSV (default, fast)
 python seed.py seed --password <admin-password>
+
+# Seed all activities but keep them in drafts
+python seed.py seed --password <admin-password> --target-status draft
 
 # Regenerate markdowns via LLM API (slower, requires API key on server)
 python seed.py seed --password <admin-password> --generate-markdown

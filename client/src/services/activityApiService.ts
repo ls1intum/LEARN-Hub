@@ -7,10 +7,8 @@ import type {
   FieldValues,
 } from "@/types/activity";
 import type {
-  UploadPdfDraftResponse,
-  UploadPdfDraftOptions,
+  MetadataExtractionResponse,
   ActivityMarkdownsResponse,
-  CreateActivityRequest,
   UpdateActivityRequest,
   LessonPlanRequest,
   SearchCriteria,
@@ -99,17 +97,6 @@ export const ActivityApi = {
     return ApiRequestMixin.request<ResultsData>(
       `/api/activities/recommendations?${params}`,
     );
-  },
-
-  /**
-   * Create activity
-   */
-  async createActivity(data: CreateActivityRequest) {
-    return ApiRequestMixin.request("/api/activities/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
   },
 
   /**
@@ -217,24 +204,36 @@ export const ActivityApi = {
   },
 
   /**
-   * Upload PDF for the 2-step activity creation flow.
+   * Upload a PDF and immediately create a PENDING activity with background generation.
+   * Max file size: 1 MB (validated client-side and server-side).
    */
-  async uploadPdfDraft(file: File, options: UploadPdfDraftOptions = {}) {
+  async uploadAndCreatePending(file: File) {
     const formData = new FormData();
     formData.append("pdf_file", file);
-    formData.append("extractMetadata", String(options.extractMetadata ?? true));
+    return ApiRequestMixin.request<Activity>("/api/activities/upload-and-create-pending", {
+      method: "POST",
+      body: formData,
+    });
+  },
 
-    return ApiRequestMixin.request<UploadPdfDraftResponse>(
-      "/api/activities/upload-pdf-draft",
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
+  /**
+   * Get all PENDING and DRAFT activities (admin only).
+   */
+  async getDraftActivities() {
+    return ApiRequestMixin.request<Activity[]>("/api/activities/drafts");
+  },
+
+  /**
+   * Publish a DRAFT activity so it appears in library and recommendations.
+   */
+  async publishActivity(activityId: string) {
+    return ApiRequestMixin.request<Activity>(`/api/activities/${activityId}/publish`, {
+      method: "PUT",
+    });
   },
 
   async regenerateMetadata(documentId: string) {
-    return ApiRequestMixin.request<UploadPdfDraftResponse>(
+    return ApiRequestMixin.request<MetadataExtractionResponse>(
       "/api/activities/regenerate-metadata",
       {
         method: "POST",

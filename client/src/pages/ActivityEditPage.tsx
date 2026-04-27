@@ -97,6 +97,33 @@ export const ActivityEditPage: React.FC = () => {
     backTo,
     restoreScrollY: navigationState?.restoreScrollY,
   };
+  const handleBack = useCallback(() => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+
+    if (backTo) {
+      navigate(backTo, {
+        replace: true,
+        state:
+          typeof navigationState?.restoreScrollY === "number"
+            ? { restoreScrollY: navigationState.restoreScrollY }
+            : undefined,
+      });
+      return;
+    }
+
+    if (id) {
+      navigate(`/activity-details/${id}`, {
+        replace: true,
+        state: detailNavigationState,
+      });
+      return;
+    }
+
+    navigate("/drafts", { replace: true });
+  }, [backTo, detailNavigationState, id, navigate, navigationState]);
 
   // Loading / error state for initial fetch
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -404,13 +431,7 @@ export const ActivityEditPage: React.FC = () => {
           />
           <div className="mt-4">
             <Button
-              onClick={() =>
-                id
-                  ? navigate(`/activity-details/${id}`, {
-                      state: detailNavigationState,
-                    })
-                  : navigate("/recommendations")
-              }
+              onClick={handleBack}
             >
               {t("editActivity.goBack")}
             </Button>
@@ -433,10 +454,7 @@ export const ActivityEditPage: React.FC = () => {
           currentStepIndex={currentStepIndex}
           onBack={
             currentStep === "metadata"
-              ? () =>
-                  navigate(`/activity-details/${id}`, {
-                    state: detailNavigationState,
-                  })
+              ? () => handleBack()
               : currentStep === "documents"
                 ? () => setCurrentStep("metadata")
                 : undefined
@@ -538,7 +556,7 @@ export const ActivityEditPage: React.FC = () => {
                   } as Partial<ActivityFormData>)
                 }
                 onSubmit={handleMetadataNext}
-                onCancel={() => navigate(`/activity-details/${id}`)}
+                onCancel={handleBack}
                 isLoading={false}
                 hideButtons
                 formId="activity-edit-form"

@@ -2,16 +2,9 @@ import React, { useCallback, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
+import { DeleteActivityDialog } from "@/components/activities/DeleteActivityDialog";
 import { useDataFetch } from "@/hooks/useDataFetch";
 import { useApi } from "@/hooks/useApi";
 import {
@@ -26,7 +19,6 @@ import {
   Edit3,
   Download,
   Trash2,
-  AlertTriangle,
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
@@ -428,43 +420,14 @@ export const ActivityDetails: React.FC = () => {
         </div>
       </div>
 
-      {/* Delete dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              {t("activityDetails.deleteTitle")}
-            </DialogTitle>
-            <DialogDescription>
-              {t("activityDetails.deleteDescription", { name: activity.name })}
-            </DialogDescription>
-          </DialogHeader>
-          <ErrorDisplay error={deleteApi.error} />
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-              disabled={deleteApi.isLoading}
-            >
-              {t("common.cancel")}
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDeleteActivity}
-              disabled={deleteApi.isLoading}
-              className="gap-1.5"
-            >
-              <Trash2 className="h-4 w-4" />
-              {deleteApi.isLoading
-                ? t("activityDetails.deleting")
-                : t("activityDetails.confirmDelete")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteActivityDialog
+        open={deleteDialogOpen}
+        activityName={activity.name}
+        isLoading={deleteApi.isLoading}
+        error={deleteApi.error}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteActivity}
+      />
 
       {/* Body: main content + sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_256px] gap-6">

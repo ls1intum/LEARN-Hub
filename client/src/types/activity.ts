@@ -22,6 +22,8 @@ export interface BreakAfter {
   reasons: string[];
 }
 
+export type ActivityStatus = "PENDING" | "DRAFT" | "PUBLISHED";
+
 export interface Activity {
   id: string;
   name: string;
@@ -44,6 +46,8 @@ export interface Activity {
   createdAt?: string;
   type: "activity";
   isFavourited?: boolean;
+  status?: ActivityStatus;
+  generationError?: string;
   // Break that should happen after this activity
   breakAfter?: BreakAfter;
 }

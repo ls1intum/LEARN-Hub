@@ -9,7 +9,6 @@ import com.learnhub.activitymanagement.dto.request.GenerateMarkdownsRequest;
 import com.learnhub.activitymanagement.dto.request.LessonPlanRequest;
 import com.learnhub.activitymanagement.dto.request.RecommendationRequest;
 import com.learnhub.activitymanagement.dto.response.ActivitiesListResponse;
-import com.learnhub.activitymanagement.dto.response.ActivityMutationResponse;
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
 import com.learnhub.activitymanagement.dto.response.GenerateMarkdownsResponse;
 import com.learnhub.activitymanagement.dto.response.LessonPlanInfoResponse;
@@ -17,6 +16,7 @@ import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.dto.response.MessageResponse;
 import com.learnhub.activitymanagement.dto.response.MetadataExtractionResponse;
 import com.learnhub.activitymanagement.dto.response.RecommendationsResponse;
+import com.learnhub.activitymanagement.service.ActivityDraftService;
 import com.learnhub.activitymanagement.service.ActivityService;
 import com.learnhub.activitymanagement.service.RecommendationService;
 import com.learnhub.documentmanagement.service.LLMService;
@@ -71,6 +71,9 @@ public class ActivityController {
 
 	@Autowired
 	private ActivityService activityService;
+
+	@Autowired
+	private ActivityDraftService activityDraftService;
 
 	@Autowired
 	private PDFService pdfService;
@@ -133,17 +136,6 @@ public class ActivityController {
 	public ResponseEntity<List<MarkdownResponse>> getActivityMarkdowns(@PathVariable UUID id) {
 		logger.info("GET /api/activities/{}/markdowns - Get activity markdown contents called", id);
 		return ResponseEntity.ok(activityService.getActivityMarkdowns(id));
-	}
-
-	@PostMapping("/create")
-	@PreAuthorize("hasRole('ADMIN')")
-	@SecurityRequirement(name = "BearerAuth")
-	@Operation(summary = "Create activity", description = "Create a new activity (admin only)")
-	public ResponseEntity<ActivityMutationResponse> createActivity(@RequestBody ActivityUpsertRequest request) {
-		logger.info("POST /api/activities/create - Create activity called");
-		ActivityResponse saved = activityService.createActivityWithValidation(toMap(request));
-		logger.info("POST /api/activities/create - Activity created with id={}", saved.getId());
-		return ResponseEntity.status(201).body(new ActivityMutationResponse(saved));
 	}
 
 	@DeleteMapping("/{id}")
@@ -225,16 +217,34 @@ public class ActivityController {
 		return buildFileDownloadResponse(lessonPlanPdf, "lesson_plan", ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
-	@PostMapping(value = "/upload-pdf-draft", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	@PostMapping(value = "/upload-and-create-pending", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("hasRole('ADMIN')")
 	@SecurityRequirement(name = "BearerAuth")
-	@Operation(summary = "Upload PDF for draft activity", description = "Upload a PDF and cache it, returning a document_id and extracted metadata for the 2-step creation flow (admin only)")
-	public ResponseEntity<MetadataExtractionResponse> uploadPdfDraft(@RequestParam("pdf_file") MultipartFile pdfFile,
-			@RequestParam(value = "extractMetadata", defaultValue = "true") boolean extractMetadata) {
-		logger.info("POST /api/activities/upload-pdf-draft - Upload PDF draft called with file={}",
-				pdfFile.getOriginalFilename());
-		Map<String, Object> result = activityService.uploadPdfAndExtractMetadata(pdfFile, extractMetadata);
-		return ResponseEntity.status(201).body(toMetadataExtractionResponse(result));
+	@Operation(summary = "Upload PDF and create draft activity", description = "Upload a PDF and create an admin draft. By default the server creates a PENDING activity and starts background metadata/markdown generation. With generateContent=false it creates a DRAFT immediately without background generation. Max file size: 1 MB.")
+	public ResponseEntity<ActivityResponse> uploadAndCreatePending(@RequestParam("pdf_file") MultipartFile pdfFile,
+			@RequestParam(value = "generateContent", defaultValue = "true") boolean generateContent) {
+		logger.info("POST /api/activities/upload-and-create-pending called with file={}, generateContent={}",
+				pdfFile.getOriginalFilename(), generateContent);
+		ActivityResponse response = activityDraftService.initiateDraftCreation(pdfFile, generateContent);
+		return ResponseEntity.status(201).body(response);
+	}
+
+	@GetMapping("/drafts")
+	@PreAuthorize("hasRole('ADMIN')")
+	@SecurityRequirement(name = "BearerAuth")
+	@Operation(summary = "Get draft activities", description = "Get all PENDING and DRAFT activities (admin only)")
+	public ResponseEntity<List<ActivityResponse>> getDraftActivities() {
+		logger.info("GET /api/activities/drafts called");
+		return ResponseEntity.ok(activityService.getDraftActivities());
+	}
+
+	@PutMapping("/{id}/publish")
+	@PreAuthorize("hasRole('ADMIN')")
+	@SecurityRequirement(name = "BearerAuth")
+	@Operation(summary = "Publish draft activity", description = "Publish a DRAFT activity so it becomes visible in library and recommendations (admin only)")
+	public ResponseEntity<ActivityResponse> publishActivity(@PathVariable UUID id) {
+		logger.info("PUT /api/activities/{}/publish called", id);
+		return ResponseEntity.ok(activityService.publishActivity(id));
 	}
 
 	@PostMapping("/regenerate-image")

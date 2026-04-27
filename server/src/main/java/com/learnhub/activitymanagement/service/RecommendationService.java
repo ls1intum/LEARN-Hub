@@ -10,6 +10,7 @@ import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.Break;
 import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.ActivityResource;
+import com.learnhub.activitymanagement.entity.enums.ActivityStatus;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.entity.enums.EnergyLevel;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
@@ -52,8 +53,9 @@ public class RecommendationService {
 			SearchCriteria criteria = convertCriteria(criteriaMap);
 			List<String> priorityCategories = extractPriorityCategories(criteriaMap);
 
-			// Load all activities
-			List<Activity> activities = activityRepository.findAll();
+			// Load only published activities
+			List<Activity> activities = activityRepository
+					.findByStatusInOrderByCreatedAtDesc(List.of(ActivityStatus.PUBLISHED));
 
 			// Filter activities based on hard constraints
 			List<Activity> filteredActivities = filterActivities(activities, criteria);

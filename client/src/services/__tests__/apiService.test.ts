@@ -224,33 +224,6 @@ describe("ApiService", () => {
   });
 
   describe("JSON Body Methods", () => {
-    it("should send JSON body for POST requests", async () => {
-      const mockResponse = { success: true };
-      vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
-        new Response(JSON.stringify(mockResponse), { status: 200 }),
-      );
-
-      const activityData = {
-        name: "Test Activity",
-        description: "Test",
-        format: "unplugged",
-        ageMin: 8,
-        ageMax: 12,
-        resourcesNeeded: ["handouts"],
-        bloomLevel: "apply",
-        durationMinMinutes: 30,
-        topics: ["decomposition"],
-      };
-
-      await ApiService.createActivity(activityData);
-
-      const call = vi.mocked(authService.makeAuthenticatedRequest).mock
-        .calls[0];
-      expect(call[1]?.method).toBe("POST");
-      expect(call[1]?.headers).toEqual({ "Content-Type": "application/json" });
-      expect(call[1]?.body).toBe(JSON.stringify(activityData));
-    });
-
     it("should send JSON body for PUT requests", async () => {
       const mockResponse = { success: true };
       vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
@@ -327,30 +300,7 @@ describe("ApiService", () => {
     });
   });
 
-  describe("Upload draft helpers", () => {
-    it("should include AI extraction flag when uploading a draft PDF", async () => {
-      vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
-        new Response(
-          JSON.stringify({
-            documentId: "doc-1",
-            extractedData: {},
-            extractionConfidence: 0,
-            extractionQuality: "not_run",
-          }),
-          { status: 201 },
-        ),
-      );
-
-      const file = new File(["pdf"], "draft.pdf", { type: "application/pdf" });
-      await ApiService.uploadPdfDraft(file, { extractMetadata: false });
-
-      const [, options] = vi.mocked(authService.makeAuthenticatedRequest).mock
-        .calls[0];
-      expect(options?.method).toBe("POST");
-      expect(options?.body).toBeInstanceOf(FormData);
-      expect((options?.body as FormData).get("extractMetadata")).toBe("false");
-    });
-
+  describe("Draft helpers", () => {
     it("should post document id when regenerating metadata", async () => {
       vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
         new Response(

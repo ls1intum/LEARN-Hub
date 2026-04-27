@@ -1,6 +1,7 @@
 package com.learnhub.activitymanagement.entity;
 
 import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
+import com.learnhub.activitymanagement.entity.enums.ActivityStatus;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.entity.enums.EnergyLevel;
 import com.learnhub.documentmanagement.entity.PDFDocument;
@@ -103,6 +104,13 @@ public class Activity {
 	@ToString.Exclude
 	@EqualsAndHashCode.Exclude
 	private List<ActivityMarkdown> markdowns = new ArrayList<>();
+
+	@Column(nullable = false, length = 20)
+	@Enumerated(EnumType.STRING)
+	private ActivityStatus status = ActivityStatus.PUBLISHED;
+
+	@Column(name = "generation_error", columnDefinition = "TEXT")
+	private String generationError;
 
 	@CreatedDate
 	@Column(name = "created_at", nullable = false, updatable = false)

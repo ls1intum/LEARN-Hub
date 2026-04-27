@@ -2,6 +2,7 @@ package com.learnhub.activitymanagement.repository;
 
 import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
+import com.learnhub.activitymanagement.entity.enums.ActivityStatus;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import java.util.List;
 import java.util.UUID;
@@ -28,4 +29,6 @@ public interface ActivityRepository extends JpaRepository<Activity, UUID>, JpaSp
 			+ "(:ageMin IS NULL OR a.ageMin >= :ageMin) AND " + "(:ageMax IS NULL OR a.ageMax <= :ageMax)")
 	List<Activity> findWithFilters(@Param("name") String name, @Param("ageMin") Integer ageMin,
 			@Param("ageMax") Integer ageMax);
+
+	List<Activity> findByStatusInOrderByCreatedAtDesc(List<ActivityStatus> statuses);
 }

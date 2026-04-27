@@ -49,4 +49,8 @@ public class ActivityResponse {
 
 	@JsonProperty("isFavourited")
 	private boolean favourited;
+
+	private String status;
+
+	private String generationError;
 }

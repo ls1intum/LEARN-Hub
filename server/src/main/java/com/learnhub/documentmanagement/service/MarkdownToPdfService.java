@@ -11,7 +11,10 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -25,6 +28,7 @@ public class MarkdownToPdfService {
 
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToPdfService.class);
 	private static final String WORKSHEET_FONT_FAMILY = "Comic Sans MS";
+	private static final int MAX_CMAP_RETRY_CHARACTERS = 256;
 	private static final List<String> WORKSHEET_FONT_PATHS = List.of(
 			"/usr/share/fonts/truetype/comic-sans/ComicSansMS.ttf",
 			"/usr/share/fonts/truetype/comic-sans/ComicSansMSBold.ttf",
@@ -88,12 +92,20 @@ public class MarkdownToPdfService {
 
 	private byte[] renderHtmlDocumentToPdf(String html, String documentTitle) {
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-			HtmlConverter.convertToPdf(html, baos, createConverterProperties());
+			convertHtmlDocumentToPdfBytes(html, baos, createConverterProperties());
 			return applyDocumentTitle(baos.toByteArray(), documentTitle);
 		} catch (Exception e) {
+			if (isCmapFailure(e)) {
+				return retryRenderWithoutProblematicCharacter(html, documentTitle, e);
+			}
 			logger.error("Failed to render markdown PDF: {}", e.getMessage(), e);
 			throw new RuntimeException("Failed to render markdown PDF: " + e.getMessage(), e);
 		}
+	}
+
+	void convertHtmlDocumentToPdfBytes(String html, ByteArrayOutputStream outputStream,
+			ConverterProperties converterProperties) {
+		HtmlConverter.convertToPdf(html, outputStream, converterProperties);
 	}
 
 	ConverterProperties createConverterProperties() {
@@ -119,6 +131,74 @@ public class MarkdownToPdfService {
 		}
 
 		return new ConverterProperties().setFontProvider(fontProvider);
+	}
+
+	private byte[] retryRenderWithoutProblematicCharacter(String html, String documentTitle, Exception originalException) {
+		Set<Integer> candidateCodePoints = findProblematicCharacterCandidates(html);
+		for (int codePoint : candidateCodePoints) {
+			String sanitizedHtml = removeCodePoint(html, codePoint);
+			if (sanitizedHtml.equals(html)) {
+				continue;
+			}
+
+			try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+				convertHtmlDocumentToPdfBytes(sanitizedHtml, baos, createConverterProperties());
+				logger.warn(
+						"Rendered markdown PDF after removing character {} (U+{}) because iText failed with a null cmap table.",
+						describeCodePoint(codePoint), formatCodePoint(codePoint));
+				return applyDocumentTitle(baos.toByteArray(), documentTitle);
+			} catch (Exception retryException) {
+				logger.debug("Retry after removing character {} (U+{}) still failed: {}", describeCodePoint(codePoint),
+						formatCodePoint(codePoint), retryException.getMessage());
+			}
+		}
+
+		logger.error("Failed to render markdown PDF: {}", originalException.getMessage(), originalException);
+		throw new RuntimeException("Failed to render markdown PDF: " + originalException.getMessage(), originalException);
+	}
+
+	private Set<Integer> findProblematicCharacterCandidates(String html) {
+		Set<Integer> candidates = new LinkedHashSet<>();
+		html.codePoints().filter(this::shouldRetryWithoutCodePoint).limit(MAX_CMAP_RETRY_CHARACTERS).forEach(candidates::add);
+		return candidates;
+	}
+
+	private boolean shouldRetryWithoutCodePoint(int codePoint) {
+		if (Character.isWhitespace(codePoint)) {
+			return false;
+		}
+		if (codePoint >= 0x20 && codePoint <= 0x7E) {
+			return false;
+		}
+		return !Character.isISOControl(codePoint);
+	}
+
+	private String removeCodePoint(String text, int codePoint) {
+		return text.codePoints().filter(current -> current != codePoint)
+				.collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append).toString();
+	}
+
+	private boolean isCmapFailure(Throwable throwable) {
+		Throwable current = throwable;
+		while (current != null) {
+			String message = current.getMessage();
+			if (message != null && message.toLowerCase(Locale.ROOT).contains("cmap")) {
+				return true;
+			}
+			current = current.getCause();
+		}
+		return false;
+	}
+
+	private String describeCodePoint(int codePoint) {
+		if (Character.isSupplementaryCodePoint(codePoint)) {
+			return new String(Character.toChars(codePoint));
+		}
+		return Character.toString((char) codePoint);
+	}
+
+	private String formatCodePoint(int codePoint) {
+		return String.format(Locale.ROOT, "%04X", codePoint);
 	}
 
 	public byte[] applyDocumentTitle(byte[] pdfBytes, String documentTitle) {

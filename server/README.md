@@ -89,8 +89,9 @@ Then start the application. The seeder will create an admin user with auto-gener
 ### Activities
 - `GET /api/activities/` - List activities with filtering
 - `GET /api/activities/{id}` - Get activity by ID
-- `POST /api/activities/create` - Create new activity (admin only)
+- `POST /api/activities/upload-and-create-pending` - Upload PDF and create an admin draft (admin only)
 - `PUT /api/activities/{id}` - Update activity (admin only)
+- `PUT /api/activities/{id}/publish` - Publish draft activity (admin only)
 - `DELETE /api/activities/{id}` - Delete activity (admin only)
 - `GET /api/activities/recommendations` - Get recommendations
 - `POST /api/activities/lesson-plan` - Generate lesson plan
@@ -105,7 +106,6 @@ Then start the application. The seeder will create an admin user with auto-gener
 - `GET /api/history/favourites/lesson-plans` - Get lesson plan favourites
 
 ### Documents
-- `POST /api/activities/upload-pdf-draft` - Upload PDF and extract metadata via LLM
 - `GET /api/documents/{id}` - Download PDF file
 - `GET /api/documents/{id}/info` - Get PDF metadata
 
