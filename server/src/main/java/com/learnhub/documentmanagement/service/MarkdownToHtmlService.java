@@ -95,7 +95,28 @@ public class MarkdownToHtmlService {
 	 *            the activity name shown in the page header
 	 */
 	public String renderMarkdownToHtml(String markdown, boolean landscape, String activityName) {
+		return renderMarkdownToHtml(markdown, landscape, activityName, false);
+	}
+
+	/**
+	 * Convert Markdown to a complete, styled HTML document, optionally applying
+	 * the exercise-sheet layout (outer border with Name / Datum fields at the top).
+	 *
+	 * @param markdown
+	 *            the markdown content
+	 * @param landscape
+	 *            true for landscape, false for portrait
+	 * @param activityName
+	 *            the activity name shown in the page header
+	 * @param exerciseSheet
+	 *            when {@code true} the body is wrapped in an outer border with
+	 *            student Name / Datum fill-in fields at the top
+	 */
+	public String renderMarkdownToHtml(String markdown, boolean landscape, String activityName, boolean exerciseSheet) {
 		String body = renderDecoratedMarkdownBody(markdown);
+		if (exerciseSheet) {
+			body = wrapWithExerciseLayout(body);
+		}
 		return wrapPdfHtmlDocument(body, landscape, activityName);
 	}
 
@@ -190,6 +211,17 @@ public class MarkdownToHtmlService {
 		} catch (IOException e) {
 			throw new IllegalStateException("Failed to load template resource: " + path, e);
 		}
+	}
+
+	private String wrapWithExerciseLayout(String body) {
+		return "<div style=\"border: 1.5pt solid #555555; padding: 10pt 12pt 12pt 12pt;\">"
+				+ "<div style=\"border-bottom: 0.75pt solid #888888; padding-bottom: 6pt; margin-bottom: 10pt; font-size: 10pt;\">"
+				+ "<strong>Name:</strong>&nbsp; ________________________________"
+				+ "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+				+ "<strong>Datum:</strong>&nbsp; ________________"
+				+ "</div>"
+				+ body
+				+ "</div>";
 	}
 
 	private String loadLogoAsDataUri() {

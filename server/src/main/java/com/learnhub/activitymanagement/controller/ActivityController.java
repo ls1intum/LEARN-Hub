@@ -413,19 +413,23 @@ public class ActivityController {
 	@Operation(summary = "Download activity as combined DOCX", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single DOCX")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Combined activity DOCX", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @Schema(type = "string", format = "binary")))})
-	public ResponseEntity<byte[]> downloadActivityDocx(@PathVariable UUID activityId) {
+	public ResponseEntity<?> downloadActivityDocx(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/docx - Download combined activity DOCX", activityId);
+		if (!markdownToDocxService.isAvailable()) {
+			return ResponseEntity.status(503).body("DOCX export is not available: Adobe PDF Services credentials are not configured");
+		}
 		ActivityResponse activity = activityService.getActivityById(activityId, false, true);
 		List<String> markdowns = new ArrayList<>();
 		List<Boolean> landscapes = new ArrayList<>();
-		buildOrderedDocxParts(activity, markdowns, landscapes);
+		List<Boolean> exerciseSheets = new ArrayList<>();
+		buildOrderedDocxParts(activity, markdowns, landscapes, exerciseSheets);
 
 		if (markdowns.isEmpty()) {
 			throw new ResourceNotFoundException("No markdown content available for this activity");
 		}
 
 		String activityName = activity.getName() != null ? activity.getName() : "";
-		byte[] docxBytes = markdownToDocxService.renderMergedDocx(markdowns, landscapes, activityName);
+		byte[] docxBytes = markdownToDocxService.renderMergedDocx(markdowns, landscapes, exerciseSheets, activityName);
 
 		MediaType docxMediaType = MediaType
 				.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
@@ -449,8 +453,9 @@ public class ActivityController {
 		for (String type : MARKDOWN_TYPE_ORDER) {
 			for (MarkdownResponse md : activity.getMarkdowns()) {
 				if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
-					parts.add(
-							markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape(), activityName));
+					boolean exerciseSheet = "uebung".equals(md.getType());
+					parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape(), activityName,
+							exerciseSheet));
 				}
 			}
 		}
@@ -461,7 +466,8 @@ public class ActivityController {
 	 * Build ordered markdown/landscape lists for DOCX merged rendering. Order:
 	 * Deckblatt, Artikulationsschema, Hintergrundwissen.
 	 */
-	private void buildOrderedDocxParts(ActivityResponse activity, List<String> markdowns, List<Boolean> landscapes) {
+	private void buildOrderedDocxParts(ActivityResponse activity, List<String> markdowns, List<Boolean> landscapes,
+			List<Boolean> exerciseSheets) {
 
 		if (activity.getMarkdowns() == null) {
 			return;
@@ -471,6 +477,7 @@ public class ActivityController {
 				if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
 					markdowns.add(md.getContent());
 					landscapes.add(md.isLandscape());
+					exerciseSheets.add("uebung".equals(md.getType()));
 				}
 			}
 		}

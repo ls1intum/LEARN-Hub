@@ -21,12 +21,11 @@ LABEL org.opencontainers.image.title="LEARN-Hub Server"
 LABEL org.opencontainers.image.description="Spring Boot API server for LEARN-Hub application"
 LABEL org.opencontainers.image.vendor="LEARN-Hub Project"
 
-# Install curl for health checks and LibreOffice Writer for PDF-to-DOCX conversion
-RUN apk add --no-cache curl libreoffice-writer font-noto fontconfig
+# Install curl for health checks
+RUN apk add --no-cache curl
 
-# Install Comic Sans MS (bundled in repo — used by LibreOffice for PDF generation)
+# Install Comic Sans MS fonts used by iText for PDF rendering
 COPY fonts/ /usr/share/fonts/truetype/comic-sans/
-RUN fc-cache -fv
 
 # Create app directory
 WORKDIR /app

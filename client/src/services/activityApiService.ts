@@ -204,6 +204,15 @@ export const ActivityApi = {
   },
 
   /**
+   * Get server export capabilities (e.g. whether DOCX is available).
+   */
+  async getServerCapabilities() {
+    return ApiRequestMixin.request<{ docxAvailable: boolean }>(
+      "/api/markdowns/capabilities",
+    );
+  },
+
+  /**
    * Upload a PDF and immediately create a PENDING activity with background generation.
    * Max file size: 1 MB (validated client-side and server-side).
    */

@@ -1,11 +1,13 @@
 package com.learnhub.documentmanagement.controller;
 
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
+import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
 import com.learnhub.documentmanagement.dto.request.MarkdownPreviewRequest;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
 import com.learnhub.dto.response.ErrorResponse;
+import java.util.Map;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -39,6 +41,13 @@ public class MarkdownController {
 	@Autowired
 	private MarkdownToDocxService markdownToDocxService;
 
+	@GetMapping("/capabilities")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Server capabilities", description = "Returns which export features are available based on server configuration")
+	public ResponseEntity<Map<String, Boolean>> getCapabilities() {
+		return ResponseEntity.ok(Map.of("docxAvailable", markdownToDocxService.isAvailable()));
+	}
+
 	@GetMapping("/{markdownId}/pdf")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get markdown as PDF", description = "Render a stored markdown entry as a PDF document")
@@ -58,7 +67,9 @@ public class MarkdownController {
 
 			String activityName = markdown.getActivity() != null ? markdown.getActivity().getName() : "";
 			String documentTitle = buildDocumentTitle(activityName, markdown.getType().getValue());
-			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape(), activityName);
+			boolean exerciseSheet = markdown.getType() == MarkdownType.UEBUNG;
+			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape(), activityName,
+					exerciseSheet);
 			pdfBytes = markdownToPdfService.applyDocumentTitle(pdfBytes, documentTitle);
 
 			String downloadName = sanitizeFilename(documentTitle) + ".pdf";
@@ -82,6 +93,9 @@ public class MarkdownController {
 			@ApiResponse(responseCode = "200", description = "Markdown DOCX", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @Schema(type = "string", format = "binary")))})
 	public ResponseEntity<?> getMarkdownDocx(@PathVariable UUID markdownId) {
 		logger.info("GET /api/markdowns/{}/docx - Render markdown as DOCX", markdownId);
+		if (!markdownToDocxService.isAvailable()) {
+			return ResponseEntity.status(503).body(ErrorResponse.of("DOCX export is not available: Adobe PDF Services credentials are not configured"));
+		}
 		try {
 			ActivityMarkdown markdown = markdownRepository.findWithActivityById(markdownId).orElse(null);
 			if (markdown == null) {
@@ -92,8 +106,9 @@ public class MarkdownController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown content is empty"));
 			}
 
+			boolean exerciseSheet = markdown.getType() == MarkdownType.UEBUNG;
 			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(content, markdown.isLandscape(),
-					markdown.getActivity() != null ? markdown.getActivity().getName() : "");
+					markdown.getActivity() != null ? markdown.getActivity().getName() : "", exerciseSheet);
 
 			String downloadName = sanitizeFilename(markdown.getType().getValue()) + ".docx";
 

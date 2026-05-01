@@ -132,6 +132,10 @@ export const ActivityDetails: React.FC = () => {
   const deleteApi = useApi();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  const fetchCapabilities = useCallback(() => apiService.getServerCapabilities(), []);
+  const { data: serverCapabilities } = useDataFetch({ fetchFn: fetchCapabilities });
+  const docxAvailable = serverCapabilities?.docxAvailable ?? false;
+
   const fetchActivity = useCallback(async () => {
     if (id) {
       const fetchedActivity = await apiService.getActivity(id);
@@ -535,16 +539,18 @@ export const ActivityDetails: React.FC = () => {
                       >
                         PDF
                       </button>
-                      <button
-                        type="button"
-                        disabled={documentApi.isLoading}
-                        onClick={() =>
-                          handleDownloadMarkdownDocx(md.id, md.type)
-                        }
-                        className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50"
-                      >
-                        DOCX
-                      </button>
+                      {docxAvailable && (
+                        <button
+                          type="button"
+                          disabled={documentApi.isLoading}
+                          onClick={() =>
+                            handleDownloadMarkdownDocx(md.id, md.type)
+                          }
+                          className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50"
+                        >
+                          DOCX
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -569,14 +575,16 @@ export const ActivityDetails: React.FC = () => {
                       >
                         PDF
                       </button>
-                      <button
-                        type="button"
-                        disabled={documentApi.isLoading}
-                        onClick={handleOpenActivityDocx}
-                        className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50"
-                      >
-                        DOCX
-                      </button>
+                      {docxAvailable && (
+                        <button
+                          type="button"
+                          disabled={documentApi.isLoading}
+                          onClick={handleOpenActivityDocx}
+                          className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50"
+                        >
+                          DOCX
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}

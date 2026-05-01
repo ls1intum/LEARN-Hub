@@ -73,7 +73,15 @@ public class MarkdownToPdfService {
 	 *            the activity name shown in the page header
 	 */
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName) {
-		String html = markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName);
+		return renderMarkdownToPdf(markdown, landscape, activityName, false);
+	}
+
+	/**
+	 * Render markdown content to PDF bytes, optionally applying the exercise-sheet
+	 * layout (outer border with Name / Datum fields at the top).
+	 */
+	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName, boolean exerciseSheet) {
+		String html = markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName, exerciseSheet);
 		return renderHtmlDocumentToPdf(html, activityName);
 	}
 

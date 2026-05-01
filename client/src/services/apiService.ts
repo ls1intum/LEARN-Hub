@@ -72,6 +72,7 @@ export class ApiService {
   static getMarkdownDocx = ActivityApi.getMarkdownDocx;
   static getFieldValues = ActivityApi.getFieldValues;
   static getEnvironment = ActivityApi.getEnvironment;
+  static getServerCapabilities = ActivityApi.getServerCapabilities;
   static regenerateMetadata = ActivityApi.regenerateMetadata;
   static regenerateImage = ActivityApi.regenerateImage;
   static generateActivityMarkdowns = ActivityApi.generateActivityMarkdowns;
