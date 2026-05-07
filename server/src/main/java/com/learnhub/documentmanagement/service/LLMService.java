@@ -75,30 +75,6 @@ public class LLMService {
 	private final ImageModel exerciseImageModel;
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
-	private static final String DEFAULT_EXERCISE_IMAGE_PROMPT_TEMPLATE = """
-			You generate images for school exercise sheets.
-
-			These images are not decorative. They explain tasks and must be accurate enough that the exercise still makes sense when learners look at the image.
-
-			Follow these rules for every generated image:
-			- Treat the provided description as task-critical context.
-			- Preserve all important factual details from the description exactly.
-			- Make spatial relationships, counts, labels, symbols, paths, positions, and visual distinctions unambiguous.
-			- If the description mentions specific objects, icons, text labels, arrows, routes, grids, numbers, start/goal fields, or left/right/top/bottom placement, include them exactly as described.
-			- Do not invent extra task elements that could confuse the learner.
-			- Do not add hidden hints, extra solutions, teacher-only annotations, or highlighted answers unless the description explicitly asks for them.
-			- Prefer clean, readable composition over artistic flair. Clarity and correctness matter more than style.
-			- Ensure the final image is coherent, classroom-safe, and easy to understand in the context of an exercise sheet.
-
-			Use the following generated exercise and solution text as additional context for factual accuracy. The image must match this generated worksheet content exactly:
-
-			{contextText}
-
-			Use this exact exercise-image specification:
-
-			{description}
-			""";
-
 	@Value("classpath:prompts/ActivityDataExtraction.st")
 	private Resource extractionPromptResource;
 
@@ -116,6 +92,9 @@ public class LLMService {
 
 	@Value("classpath:prompts/ExerciseImageGeneration.st")
 	private Resource exerciseImagePromptResource;
+
+	@Value("classpath:prompts/TafelbildImageGeneration.st")
+	private Resource tafelbildImagePromptResource;
 
 	@Autowired
 	public LLMService(ChatClient chatClient,
@@ -243,6 +222,44 @@ public class LLMService {
 			return extractMarkdownPayload(responseText);
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to generate Hintergrundwissen: " + e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Generate a Tafelbild image from the provided Artikulationsschema using the
+	 * image model. Returns a markdown string containing the embedded image, or null
+	 * if no image model is configured.
+	 *
+	 * @param artikulationsschema
+	 *            previously generated Artikulationsschema markdown
+	 */
+	public String generateTafelbildMarkdown(String artikulationsschema) {
+		if (exerciseImageModel == null) {
+			logger.warn("Skipping Tafelbild generation because no exercise image model is configured");
+			return null;
+		}
+
+		String normalizedSchema = stripEmbeddedImages(artikulationsschema == null ? "" : artikulationsschema.trim());
+		String promptText = new PromptTemplate(tafelbildImagePromptResource)
+				.render(Map.of("artikulationsschema", normalizedSchema));
+
+		try {
+			ImageResponse response = exerciseImageModel.call(new ImagePrompt(promptText));
+			if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
+				throw new IllegalStateException("Image model returned an empty response");
+			}
+
+			Image image = response.getResult().getOutput();
+			String header = "# Tafelbild\n\n";
+			if (StringUtils.hasText(image.getB64Json())) {
+				return header + "![Tafelbild](data:image/png;base64," + image.getB64Json() + ")";
+			}
+			if (StringUtils.hasText(image.getUrl())) {
+				return header + toMarkdownImageFromUrl(image.getUrl(), "Tafelbild");
+			}
+			throw new IllegalStateException("Image model response contained neither base64 image data nor a URL");
+		} catch (Exception e) {
+			throw new RuntimeException("Failed to generate Tafelbild: " + e.getMessage(), e);
 		}
 	}
 
@@ -489,8 +506,10 @@ public class LLMService {
 				stripEmbeddedImages(contextText == null ? "" : contextText.trim()), MAX_IMAGE_CONTEXT_CHARS,
 				"exercise context");
 		if (exerciseImagePromptResource == null) {
-			return DEFAULT_EXERCISE_IMAGE_PROMPT_TEMPLATE.replace("{contextText}", normalizedContextText)
-					.replace("{description}", normalizedDescription);
+			throw new IllegalStateException("Exercise image prompt resource is not configured");
+		}
+		if (!exerciseImagePromptResource.exists() || !exerciseImagePromptResource.isReadable()) {
+			throw new IllegalStateException("Exercise image prompt resource is not readable");
 		}
 		return new PromptTemplate(exerciseImagePromptResource)
 				.render(Map.of("description", normalizedDescription, "contextText", normalizedContextText));

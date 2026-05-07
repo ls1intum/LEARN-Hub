@@ -238,6 +238,7 @@ export const MarkdownEditorWithPreview: React.FC<
   // PDF preview state
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
   const [isRenderingPreview, setIsRenderingPreview] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -299,6 +300,7 @@ export const MarkdownEditorWithPreview: React.FC<
         return;
       }
       setIsRenderingPreview(true);
+      setPreviewError(null);
       try {
         const blob = await renderPreviewFn(markdown);
         const url = URL.createObjectURL(blob);
@@ -312,11 +314,14 @@ export const MarkdownEditorWithPreview: React.FC<
           error,
           "MarkdownEditorWithPreview",
         );
+        setPreviewError(
+          error instanceof Error ? error.message : t("markdownEditor.previewError"),
+        );
       } finally {
         setIsRenderingPreview(false);
       }
     },
-    [renderPreviewFn],
+    [renderPreviewFn, t],
   );
 
   const debouncedRenderPreview = useCallback(
@@ -394,10 +399,12 @@ export const MarkdownEditorWithPreview: React.FC<
     <div className="w-full h-full min-h-[400px] flex items-center justify-center rounded-md border bg-muted/30">
       <div className="text-center text-muted-foreground">
         <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-        <p className="text-sm">
+        <p className={`text-sm ${previewError && !isRenderingPreview ? "text-destructive" : ""}`}>
           {isRenderingPreview
             ? t("markdownEditor.renderingPreview")
-            : t("markdownEditor.editToPreview")}
+            : previewError
+              ? previewError
+              : t("markdownEditor.editToPreview")}
         </p>
       </div>
     </div>

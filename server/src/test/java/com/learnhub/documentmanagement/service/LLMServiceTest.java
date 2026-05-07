@@ -2,6 +2,7 @@ package com.learnhub.documentmanagement.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -11,13 +12,14 @@ import org.springframework.ai.image.ImageGeneration;
 import org.springframework.ai.image.ImageModel;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
+import org.springframework.core.io.ClassPathResource;
 
 class LLMServiceTest {
 
 	@Test
 	void replaceExerciseImagePlaceholdersReusesGeneratedImageAcrossDocuments() {
 		CountingImageModel imageModel = new CountingImageModel("ZmFrZS1pbWFnZQ==");
-		LLMService service = new LLMService(unsupportedChatClient(), imageModel);
+		LLMService service = testService(imageModel);
 
 		Map<String, String> replaced = service.replaceExerciseImagePlaceholders(Map.of("uebung", """
 				# Uebung
@@ -39,7 +41,7 @@ class LLMServiceTest {
 	@Test
 	void replaceExerciseImagePlaceholdersReusesImageAcrossDocumentsById() {
 		CountingImageModel imageModel = new CountingImageModel("ZmFrZS1pbWFnZQ==");
-		LLMService service = new LLMService(unsupportedChatClient(), imageModel);
+		LLMService service = testService(imageModel);
 
 		Map<String, String> replaced = service.replaceExerciseImagePlaceholders(Map.of("uebung", """
 				[[IMAGE_PLACEHOLDER:id=labyrinth-1: Ein 4x4-Labyrinth mit Start unten links und Ziel oben rechts.]]
@@ -57,7 +59,7 @@ class LLMServiceTest {
 	@Test
 	void replaceImagePlaceholdersHandlesBrokenClosingBrackets() {
 		CountingImageModel imageModel = new CountingImageModel("ZmFrZS1pbWFnZQ==");
-		LLMService service = new LLMService(unsupportedChatClient(), imageModel);
+		LLMService service = testService(imageModel);
 
 		String replaced = service.replaceImagePlaceholders(
 				"""
@@ -73,7 +75,7 @@ class LLMServiceTest {
 	@Test
 	void generateImageMarkdownWrapsDescriptionWithSharedExercisePrompt() {
 		CountingImageModel imageModel = new CountingImageModel("ZmFrZS1pbWFnZQ==");
-		LLMService service = new LLMService(unsupportedChatClient(), imageModel);
+		LLMService service = testService(imageModel);
 
 		service.generateImageMarkdown("labyrinth-1", "Ein 4x4-Labyrinth mit Start unten links.",
 				"Im Material geht es um Wege im Raster.");
@@ -85,7 +87,7 @@ class LLMServiceTest {
 
 	@Test
 	void buildExerciseImagePromptStripsEmbeddedBase64ImageDataFromContext() {
-		LLMService service = new LLMService(unsupportedChatClient());
+		LLMService service = testService();
 		String base64 = "A".repeat(50_000);
 
 		String prompt = service.buildExerciseImagePrompt("Ein Labyrinth.", """
@@ -101,7 +103,7 @@ class LLMServiceTest {
 
 	@Test
 	void buildExerciseImagePromptStripsBareBase64DataUris() {
-		LLMService service = new LLMService(unsupportedChatClient());
+		LLMService service = testService();
 		String base64 = "A".repeat(50_000);
 
 		String prompt = service.buildExerciseImagePrompt("Ein Labyrinth.",
@@ -113,7 +115,7 @@ class LLMServiceTest {
 
 	@Test
 	void buildExerciseImagePromptStripsHtmlBase64Images() {
-		LLMService service = new LLMService(unsupportedChatClient());
+		LLMService service = testService();
 		String base64 = "A".repeat(50_000);
 
 		String prompt = service.buildExerciseImagePrompt("Ein Labyrinth.",
@@ -125,7 +127,7 @@ class LLMServiceTest {
 
 	@Test
 	void buildExerciseImagePromptTruncatesOversizedText() {
-		LLMService service = new LLMService(unsupportedChatClient());
+		LLMService service = testService();
 
 		String prompt = service.buildExerciseImagePrompt("D".repeat(20_000), "C".repeat(80_000));
 
@@ -135,7 +137,7 @@ class LLMServiceTest {
 
 	@Test
 	void buildExerciseImageContextUsesGeneratedExerciseAndSolutionText() {
-		LLMService service = new LLMService(unsupportedChatClient());
+		LLMService service = testService();
 
 		String context = service.buildExerciseImageContext(Map.of("uebung", "# Übungsblatt\n\nAufgabe 1 mit Bild.",
 				"uebung_loesung", "# Lösungsblatt\n\nLösung zu Aufgabe 1."));
@@ -146,12 +148,32 @@ class LLMServiceTest {
 
 	@Test
 	void replaceExerciseImagePlaceholdersLeavesMarkerWhenNoImageModelExists() {
-		LLMService service = new LLMService(unsupportedChatClient());
+		LLMService service = testService();
 		String markdown = "[[IMAGE_PLACEHOLDER: einfacher Testprompt]]";
 
 		String replaced = service.replaceImagePlaceholders(markdown, new java.util.HashMap<>(), "PDF Kontext");
 
 		assertThat(replaced).isEqualTo(markdown);
+	}
+
+	private static LLMService testService() {
+		return testService(null);
+	}
+
+	private static LLMService testService(ImageModel imageModel) {
+		LLMService service = new LLMService(unsupportedChatClient(), imageModel);
+		setField(service, "exerciseImagePromptResource", new ClassPathResource("prompts/ExerciseImageGeneration.st"));
+		return service;
+	}
+
+	private static void setField(Object target, String fieldName, Object value) {
+		try {
+			Field field = target.getClass().getDeclaredField(fieldName);
+			field.setAccessible(true);
+			field.set(target, value);
+		} catch (ReflectiveOperationException e) {
+			throw new AssertionError("Failed to set test field: " + fieldName, e);
+		}
 	}
 
 	private static ChatClient unsupportedChatClient() {

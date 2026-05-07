@@ -32,7 +32,7 @@ class MarkdownControllerTest {
 		ReflectionTestUtils.setField(markdownController, "markdownToPdfService", pdfService);
 		// DOCX service is not used by the PDF endpoint tests — provide a no-op instance
 		ReflectionTestUtils.setField(markdownController, "markdownToDocxService",
-				new MarkdownToDocxService(markdownToHtmlService, null, null));
+				new MarkdownToDocxService(pdfService, null));
 	}
 
 	@Test

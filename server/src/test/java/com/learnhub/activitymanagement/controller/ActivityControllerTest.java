@@ -82,7 +82,7 @@ class ActivityControllerTest {
 		ReflectionTestUtils.setField(activityController, "markdownToPdfService",
 				new MarkdownToPdfService(markdownToHtmlService));
 		ReflectionTestUtils.setField(activityController, "markdownToDocxService",
-				new MarkdownToDocxService(markdownToHtmlService, null, null));
+				new MarkdownToDocxService(new MarkdownToPdfService(markdownToHtmlService), null));
 	}
 
 	@Test

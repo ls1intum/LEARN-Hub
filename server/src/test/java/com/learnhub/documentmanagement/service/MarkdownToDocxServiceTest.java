@@ -3,147 +3,137 @@ package com.learnhub.documentmanagement.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.learnhub.service.SanitizationService;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.List;
-import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 
 class MarkdownToDocxServiceTest {
 
 	private MarkdownToDocxService service;
-	private StubConversionService stubConversionService;
+	private StubAdobeService stubAdobeService;
+	private StubPdfService stubPdfService;
 
 	@BeforeEach
 	void setUp() {
-		stubConversionService = new StubConversionService(createMinimalDocx());
-		MarkdownToHtmlService htmlService = new MarkdownToHtmlService();
-		ReflectionTestUtils.setField(htmlService, "sanitizationService", new SanitizationService());
-		service = new MarkdownToDocxService(htmlService, stubConversionService, new DocxPostProcessor());
+		stubAdobeService = new StubAdobeService(new byte[] { 0x50, 0x4B }); // PK zip header
+		stubPdfService = new StubPdfService();
+		service = new MarkdownToDocxService(stubPdfService, stubAdobeService);
 	}
 
 	@Test
-	void renderMarkdownToDocxDelegatesToHtmlThenLibreOffice() {
+	void renderMarkdownToDocxDelegatesToPdfThenAdobe() {
 		byte[] result = service.renderMarkdownToDocx("# Hello", true, "Activity");
 
 		assertThat(result).isNotNull();
-		assertThat(result[0]).isEqualTo((byte) 'P');
-		assertThat(stubConversionService.lastInput).isNotNull();
-		assertThat(new String(stubConversionService.lastInput)).contains("Hello</h1>");
+		assertThat(stubAdobeService.callCount).isEqualTo(1);
+		assertThat(stubPdfService.lastMarkdown).isEqualTo("# Hello");
 	}
 
 	@Test
 	void renderMarkdownToDocxDefaultsToLandscape() {
 		service.renderMarkdownToDocx("text");
 
-		String html = new String(stubConversionService.lastInput);
-		assertThat(html).contains("landscape");
+		assertThat(stubPdfService.lastLandscape).isTrue();
 	}
 
 	@Test
-	void renderMarkdownToDocxUsesComicSansAndLandscapeImageCapInPreparedHtml() {
-		service.renderMarkdownToDocx("# Hello\n\n![Bild](data:image/png;base64,ZmFrZQ==)");
-
-		String html = new String(stubConversionService.lastInput);
-		assertThat(html).contains("font-family: \"Comic Sans MS\", \"Comic Sans\", cursive;");
-		assertThat(html).contains("max-height: 43mm");
-		assertThat(html).doesNotContain("Helvetica, Arial, sans-serif");
-	}
-
-	@Test
-	void renderMarkdownToDocxUsesPortraitImageCapInPreparedHtml() {
-		service.renderMarkdownToDocx("![Bild](data:image/png;base64,ZmFrZQ==)", false, "");
-
-		String html = new String(stubConversionService.lastInput);
-		assertThat(html).contains("max-height: 64mm");
-	}
-
-	@Test
-	void renderMarkdownToDocxAddsHeaderAndFooter() throws Exception {
-		byte[] result = service.renderMarkdownToDocx("# Test", true, "My Activity");
-
-		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(result))) {
-			assertThat(doc.getHeaderList()).isNotEmpty();
-			assertThat(doc.getFooterList()).isNotEmpty();
-			assertThat(doc.getHeaderList().get(0).getText()).contains("My Activity");
-		}
-	}
-
-	@Test
-	void renderMarkdownToDocxSetsOrientation() throws Exception {
-		byte[] result = service.renderMarkdownToDocx("# Test", false, "");
-
-		try (XWPFDocument doc = new XWPFDocument(new ByteArrayInputStream(result))) {
-			var sectPr = doc.getDocument().getBody().getSectPr();
-			assertThat(sectPr.getPgSz().getOrient().toString()).isEqualTo("portrait");
-		}
-	}
-
-	@Test
-	void renderHtmlToDocxDelegatesToLibreOffice() {
+	void renderHtmlToDocxDelegatesToPdfThenAdobe() {
 		byte[] result = service.renderHtmlToDocx("<h1>Test</h1>", true, "Act");
 
 		assertThat(result).isNotNull();
-		assertThat(new String(stubConversionService.lastInput)).contains("Test</h1>");
+		assertThat(stubAdobeService.callCount).isEqualTo(1);
+		assertThat(stubPdfService.lastHtml).contains("Test");
 	}
 
 	@Test
-	void renderMergedDocxConvertsEachSectionIndividually() {
-		byte[] result = service.renderMergedDocx(List.of("# A", "# B"), List.of(false, true), "Test");
+	void renderMergedDocxConvertsEachSectionThenMerges() {
+		byte[] result = service.renderMergedDocx(
+				List.of("# A", "# B"), List.of(false, true), List.of(false, false), "Test");
 
 		assertThat(result).isNotNull();
-		// Each section is converted individually, so the stub should have been called
-		// twice
-		assertThat(stubConversionService.callCount).isEqualTo(2);
+		assertThat(stubPdfService.pdfCallCount).isEqualTo(2);
+		assertThat(stubAdobeService.callCount).isEqualTo(1);
 	}
 
 	@Test
 	void renderMergedDocxRejectsMismatchedLists() {
-		assertThatThrownBy(() -> service.renderMergedDocx(List.of("# A", "# B"), List.of(false), "Test"))
+		assertThatThrownBy(
+				() -> service.renderMergedDocx(List.of("# A", "# B"), List.of(false), List.of(false, false), "Test"))
 				.isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test
 	void renderMarkdownToDocxWrapsConversionException() {
-		stubConversionService.failWith = new IOException("conversion failed");
+		stubAdobeService.failWith = new RuntimeException("conversion failed");
 
 		assertThatThrownBy(() -> service.renderMarkdownToDocx("text")).isInstanceOf(RuntimeException.class)
 				.hasMessageContaining("conversion failed");
 	}
 
-	private static byte[] createMinimalDocx() {
-		try (XWPFDocument doc = new XWPFDocument(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-			doc.createParagraph().createRun().setText("stub");
-			doc.write(out);
-			return out.toByteArray();
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
+	@Test
+	void isAvailableDelegatesToAdobeService() {
+		assertThat(service.isAvailable()).isFalse();
+
+		stubAdobeService.configured = true;
+		assertThat(service.isAvailable()).isTrue();
 	}
 
-	static class StubConversionService extends LibreOfficeConversionService {
+	static class StubAdobeService extends AdobePdfToDocxService {
 
 		private final byte[] output;
-		byte[] lastInput;
 		int callCount;
-		IOException failWith;
+		RuntimeException failWith;
+		boolean configured = false;
 
-		StubConversionService(byte[] output) {
+		StubAdobeService(byte[] output) {
 			this.output = output;
 		}
 
 		@Override
-		public byte[] convertHtmlToDocx(byte[] htmlBytes) throws IOException {
+		public boolean isConfigured() {
+			return configured;
+		}
+
+		@Override
+		public byte[] convertPdfToDocx(byte[] pdfBytes) {
 			if (failWith != null) {
 				throw failWith;
 			}
-			this.lastInput = htmlBytes;
-			this.callCount++;
+			callCount++;
 			return output;
+		}
+	}
+
+	static class StubPdfService extends MarkdownToPdfService {
+
+		String lastMarkdown;
+		boolean lastLandscape;
+		String lastHtml;
+		int pdfCallCount;
+
+		StubPdfService() {
+			super(null);
+		}
+
+		@Override
+		public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName,
+				boolean exerciseSheet) {
+			this.lastMarkdown = markdown;
+			this.lastLandscape = landscape;
+			pdfCallCount++;
+			return new byte[] { 0x25, 0x50, 0x44, 0x46 }; // %PDF
+		}
+
+		@Override
+		public byte[] renderHtmlToPdf(String htmlBody, boolean landscape, String activityName) {
+			this.lastHtml = htmlBody;
+			pdfCallCount++;
+			return new byte[] { 0x25, 0x50, 0x44, 0x46 }; // %PDF
+		}
+
+		@Override
+		public byte[] mergePdfs(List<byte[]> pdfs) {
+			return new byte[] { 0x25, 0x50, 0x44, 0x46 }; // %PDF
 		}
 	}
 }

@@ -86,6 +86,14 @@ public class MarkdownToPdfService {
 	}
 
 	/**
+	 * Render a complete, self-contained HTML document to PDF bytes, applying the
+	 * same cmap-retry logic used by the other render methods.
+	 */
+	public byte[] renderCompleteHtmlToPdf(String completeHtml) {
+		return renderHtmlDocumentToPdf(completeHtml, null);
+	}
+
+	/**
 	 * Render an existing HTML body to PDF bytes with the standard LEARN-Hub PDF
 	 * layout.
 	 */
@@ -143,19 +151,24 @@ public class MarkdownToPdfService {
 
 	private byte[] retryRenderWithoutProblematicCharacter(String html, String documentTitle, Exception originalException) {
 		Set<Integer> candidateCodePoints = findProblematicCharacterCandidates(html);
+		String currentHtml = html;
 		for (int codePoint : candidateCodePoints) {
-			String sanitizedHtml = removeCodePoint(html, codePoint);
-			if (sanitizedHtml.equals(html)) {
+			String sanitizedHtml = removeCodePoint(currentHtml, codePoint);
+			if (sanitizedHtml.equals(currentHtml)) {
 				continue;
 			}
+			currentHtml = sanitizedHtml;
 
 			try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-				convertHtmlDocumentToPdfBytes(sanitizedHtml, baos, createConverterProperties());
+				convertHtmlDocumentToPdfBytes(currentHtml, baos, createConverterProperties());
 				logger.warn(
 						"Rendered markdown PDF after removing character {} (U+{}) because iText failed with a null cmap table.",
 						describeCodePoint(codePoint), formatCodePoint(codePoint));
 				return applyDocumentTitle(baos.toByteArray(), documentTitle);
 			} catch (Exception retryException) {
+				if (!isCmapFailure(retryException)) {
+					break;
+				}
 				logger.debug("Retry after removing character {} (U+{}) still failed: {}", describeCodePoint(codePoint),
 						formatCodePoint(codePoint), retryException.getMessage());
 			}

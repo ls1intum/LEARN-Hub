@@ -66,7 +66,7 @@ public class ActivityController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivityController.class);
 	private static final String[] MARKDOWN_TYPE_ORDER = {"deckblatt", "artikulationsschema", "hintergrundwissen",
-			"uebung", "uebung_loesung"};
+			"tafelbild", "uebung", "uebung_loesung"};
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	@Autowired
@@ -108,10 +108,11 @@ public class ActivityController {
 				request.offset());
 		boolean includeSourcePdf = isAdmin(authentication);
 		UUID userId = CurrentUser.getUserId(authentication);
+		boolean includeTafelbildImage = Boolean.TRUE.equals(request.includeTafelbildImage());
 		List<ActivityResponse> activities = activityService.getActivitiesWithFilters(request.name(), request.ageMin(),
 				request.ageMax(), request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
 				request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(), request.topics(),
-				request.limit(), request.offset(), includeSourcePdf, userId);
+				request.limit(), request.offset(), includeSourcePdf, userId, includeTafelbildImage);
 		ActivitiesListResponse response = new ActivitiesListResponse(
 				activityService.countActivitiesWithFilters(request.name(), request.ageMin(), request.ageMax(),
 						request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
@@ -123,9 +124,12 @@ public class ActivityController {
 	@GetMapping("/{id}")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get activity by ID", description = "Get a single activity by its ID")
-	public ResponseEntity<ActivityResponse> getActivity(@PathVariable UUID id, Authentication authentication) {
+	public ResponseEntity<ActivityResponse> getActivity(@PathVariable UUID id,
+			@RequestParam(required = false, defaultValue = "false") boolean includeTafelbildImage,
+			Authentication authentication) {
 		logger.info("GET /api/activities/{} - Get activity by ID called", id);
-		ActivityResponse activity = activityService.getActivityById(id, isAdmin(authentication));
+		ActivityResponse activity = activityService.getActivityById(id, isAdmin(authentication), false,
+				includeTafelbildImage);
 		return ResponseEntity.ok(activity);
 	}
 
@@ -304,6 +308,19 @@ public class ActivityController {
 		boolean generateAll = types == null || types.isEmpty();
 		boolean useVision = pdfPageImages != null;
 
+		// If only tafelbild is requested and an activity with an existing
+		// Artikulationsschema is provided, reuse it instead of regenerating.
+		String existingArtik = null;
+		if (request.getActivityId() != null && !generateAll && !requestedTypes.contains("artikulationsschema")) {
+			existingArtik = activityService.getActivityMarkdowns(request.getActivityId()).stream()
+					.filter(m -> "artikulationsschema".equals(m.getType()) && m.getContent() != null
+							&& !m.getContent().isBlank())
+					.map(m -> m.getContent())
+					.findFirst()
+					.orElse(null);
+		}
+		final String existingArtikFinal = existingArtik;
+
 		if (useVision) {
 			// Vision mode: non-visual generators run as text-only; Uebung/Loesung
 			// uses the visual model with images. Run sequentially — local models
@@ -312,11 +329,21 @@ public class ActivityController {
 			if (generateAll || requestedTypes.contains("deckblatt")) {
 				response.setDeckblattMarkdown(llmService.generateDeckblatt(pdfText, metadata));
 			}
-			if (generateAll || requestedTypes.contains("artikulationsschema")) {
-				response.setArtikulationsschemaMarkdown(llmService.generateArtikulationsschema(pdfText, metadata));
+			// Tafelbild depends on Artikulationsschema — reuse existing or generate fresh
+			boolean needArtikVision = generateAll || requestedTypes.contains("artikulationsschema")
+					|| requestedTypes.contains("tafelbild");
+			String artikForTafelbild = existingArtikFinal;
+			if (needArtikVision && artikForTafelbild == null) {
+				artikForTafelbild = llmService.generateArtikulationsschema(pdfText, metadata);
+				if (generateAll || requestedTypes.contains("artikulationsschema")) {
+					response.setArtikulationsschemaMarkdown(artikForTafelbild);
+				}
 			}
 			if (generateAll || requestedTypes.contains("hintergrundwissen")) {
 				response.setHintergrundwissenMarkdown(llmService.generateHintergrundwissen(pdfText, metadata));
+			}
+			if ((generateAll || requestedTypes.contains("tafelbild")) && artikForTafelbild != null) {
+				response.setTafelbildMarkdown(llmService.generateTafelbildMarkdown(artikForTafelbild));
 			}
 			if (generateAll || requestedTypes.contains("uebung") || requestedTypes.contains("uebung_loesung")) {
 				Map<String, String> uebungResult = llmService.generateUebungAndLoesung(pdfText, metadata,
@@ -325,14 +352,21 @@ public class ActivityController {
 				response.setUebungLoesungMarkdown(uebungResult.get("uebung_loesung"));
 			}
 		} else {
-			// Text-only mode: run in parallel as before
+			// Text-only mode: run in parallel; Tafelbild chains off Artikulationsschema
 			CompletableFuture<String> deckblattFuture = (generateAll || requestedTypes.contains("deckblatt"))
 					? submitMarkdownGeneration(() -> llmService.generateDeckblatt(pdfText, metadata))
 					: null;
-			CompletableFuture<String> artikulationsschemaFuture = (generateAll
-					|| requestedTypes.contains("artikulationsschema"))
-							? submitMarkdownGeneration(() -> llmService.generateArtikulationsschema(pdfText, metadata))
-							: null;
+			boolean generateTafelbild = generateAll || requestedTypes.contains("tafelbild");
+			boolean needArtik = generateAll || requestedTypes.contains("artikulationsschema") || generateTafelbild;
+			CompletableFuture<String> artikulationsschemaFuture = needArtik
+					? (existingArtikFinal != null
+							? CompletableFuture.completedFuture(existingArtikFinal)
+							: submitMarkdownGeneration(() -> llmService.generateArtikulationsschema(pdfText, metadata)))
+					: null;
+			CompletableFuture<String> tafelbildFuture = generateTafelbild && artikulationsschemaFuture != null
+					? artikulationsschemaFuture.thenApplyAsync(llmService::generateTafelbildMarkdown,
+							markdownGenerationExecutor)
+					: null;
 			CompletableFuture<String> hintergrundwissenFuture = (generateAll
 					|| requestedTypes.contains("hintergrundwissen"))
 							? submitMarkdownGeneration(() -> llmService.generateHintergrundwissen(pdfText, metadata))
@@ -344,7 +378,7 @@ public class ActivityController {
 					: null;
 
 			List<CompletableFuture<?>> futures = filterNonNull(deckblattFuture, artikulationsschemaFuture,
-					hintergrundwissenFuture, uebungFuture);
+					tafelbildFuture, hintergrundwissenFuture, uebungFuture);
 
 			try {
 				CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new)).join();
@@ -356,11 +390,16 @@ public class ActivityController {
 			if (deckblattFuture != null) {
 				response.setDeckblattMarkdown(deckblattFuture.join());
 			}
-			if (artikulationsschemaFuture != null) {
+			// Only return a regenerated Artikulationsschema — never echo back the existing one
+			if (artikulationsschemaFuture != null && existingArtikFinal == null
+					&& (generateAll || requestedTypes.contains("artikulationsschema"))) {
 				response.setArtikulationsschemaMarkdown(artikulationsschemaFuture.join());
 			}
 			if (hintergrundwissenFuture != null) {
 				response.setHintergrundwissenMarkdown(hintergrundwissenFuture.join());
+			}
+			if (tafelbildFuture != null) {
+				response.setTafelbildMarkdown(tafelbildFuture.join());
 			}
 			if (uebungFuture != null) {
 				Map<String, String> uebungResult = uebungFuture.join();

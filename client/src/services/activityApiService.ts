@@ -68,8 +68,11 @@ export const ActivityApi = {
   /**
    * Get activity by ID
    */
-  async getActivity(id: string) {
-    return ApiRequestMixin.request<Activity>(`/api/activities/${id}`);
+  async getActivity(id: string, options: { includeTafelbildImage?: boolean } = {}) {
+    const url = options.includeTafelbildImage
+      ? `/api/activities/${id}?includeTafelbildImage=true`
+      : `/api/activities/${id}`;
+    return ApiRequestMixin.request<Activity>(url);
   },
 
   /**
@@ -84,8 +87,8 @@ export const ActivityApi = {
   /**
    * Get multiple activities by IDs
    */
-  async getActivitiesByIds(ids: string[]) {
-    const promises = ids.map((id) => this.getActivity(id));
+  async getActivitiesByIds(ids: string[], options: { includeTafelbildImage?: boolean } = {}) {
+    const promises = ids.map((id) => this.getActivity(id, options));
     const results = await Promise.all(promises);
     return results;
   },
@@ -286,6 +289,7 @@ export const ActivityApi = {
     documentId: string,
     metadata?: Record<string, unknown>,
     types?: string[],
+    activityId?: string,
   ) {
     return ApiRequestMixin.request<ActivityMarkdownsResponse>(
       "/api/activities/generate-markdowns",
@@ -294,6 +298,7 @@ export const ActivityApi = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           documentId: documentId,
+          activityId: activityId,
           metadata: metadata,
           types: types,
         }),

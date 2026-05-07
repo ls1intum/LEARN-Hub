@@ -180,26 +180,31 @@ public class ActivityDraftService {
         if (pdfPageImages != null) {
             // Vision mode: sequential
             result.put("deckblatt", llmService.generateDeckblatt(pdfText, metadata));
-            result.put("artikulationsschema", llmService.generateArtikulationsschema(pdfText, metadata));
+            String artik = llmService.generateArtikulationsschema(pdfText, metadata);
+            result.put("artikulationsschema", artik);
             result.put("hintergrundwissen", llmService.generateHintergrundwissen(pdfText, metadata));
+            result.put("tafelbild", llmService.generateTafelbildMarkdown(artik));
             Map<String, String> uebung = llmService.generateUebungAndLoesung(pdfText, metadata, pdfPageImages);
             result.put("uebung", uebung.get("uebung"));
             result.put("uebung_loesung", uebung.get("uebung_loesung"));
         } else {
-            // Text-only mode: parallel
+            // Text-only mode: parallel, Tafelbild chains off Artikulationsschema
             CompletableFuture<String> deckblattF = CompletableFuture.supplyAsync(
                     () -> llmService.generateDeckblatt(pdfText, metadata), markdownGenerationExecutor);
             CompletableFuture<String> artikF = CompletableFuture.supplyAsync(
                     () -> llmService.generateArtikulationsschema(pdfText, metadata), markdownGenerationExecutor);
+            CompletableFuture<String> tafelbildF = artikF.thenApplyAsync(
+                    llmService::generateTafelbildMarkdown, markdownGenerationExecutor);
             CompletableFuture<String> hinterF = CompletableFuture.supplyAsync(
                     () -> llmService.generateHintergrundwissen(pdfText, metadata), markdownGenerationExecutor);
             CompletableFuture<Map<String, String>> uebungF = CompletableFuture.supplyAsync(
                     () -> llmService.generateUebungAndLoesung(pdfText, metadata), markdownGenerationExecutor);
 
-            CompletableFuture.allOf(deckblattF, artikF, hinterF, uebungF).join();
+            CompletableFuture.allOf(deckblattF, tafelbildF, hinterF, uebungF).join();
 
             result.put("deckblatt", deckblattF.join());
             result.put("artikulationsschema", artikF.join());
+            result.put("tafelbild", tafelbildF.join());
             result.put("hintergrundwissen", hinterF.join());
             Map<String, String> uebung = uebungF.join();
             result.put("uebung", uebung.get("uebung"));

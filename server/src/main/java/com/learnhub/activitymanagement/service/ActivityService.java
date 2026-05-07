@@ -25,6 +25,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +84,14 @@ public class ActivityService {
 			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
 			boolean includeSourcePdf, UUID userId) {
+		return getActivitiesWithFilters(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels, mentalLoad,
+				physicalEnergy, resourcesNeeded, topics, limit, offset, includeSourcePdf, userId, false);
+	}
+
+	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
+			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
+			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
+			boolean includeSourcePdf, UUID userId, boolean includeTafelbildImage) {
 		List<Activity> allMatching = getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats,
 				bloomLevels, mentalLoad, physicalEnergy, resourcesNeeded, topics);
 
@@ -92,7 +102,7 @@ public class ActivityService {
 		Set<UUID> favouritedActivityIds = findFavouritedActivityIds(userId, page);
 
 		return page.stream().map(activity -> {
-			ActivityResponse response = mapToResponse(activity, includeSourcePdf);
+			ActivityResponse response = mapToResponse(activity, includeSourcePdf, false, includeTafelbildImage);
 			response.setFavourited(favouritedActivityIds.contains(activity.getId()));
 			return response;
 		}).collect(Collectors.toList());
@@ -206,10 +216,15 @@ public class ActivityService {
 	}
 
 	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf, boolean includeMarkdownContent) {
+		return getActivityById(id, includeSourcePdf, includeMarkdownContent, false);
+	}
+
+	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf, boolean includeMarkdownContent,
+			boolean includeTafelbildImage) {
 		logger.debug("Fetching activity by id={}", id);
 		Activity activity = activityRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
-		return mapToResponse(activity, includeSourcePdf, includeMarkdownContent);
+		return mapToResponse(activity, includeSourcePdf, includeMarkdownContent, includeTafelbildImage);
 	}
 
 	public List<MarkdownResponse> getActivityMarkdowns(UUID id) {
@@ -217,6 +232,20 @@ public class ActivityService {
 		Activity activity = activityRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
 		return mapLatestMarkdowns(activity, true);
+	}
+
+	private static final Pattern TAFELBILD_IMAGE_PATTERN = Pattern.compile(
+			"!\\[[^\\]]*\\]\\((data:image/(?:png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=\\r\\n]+)\\)");
+
+	private String extractTafelbildImage(Activity activity) {
+		return activity.getMarkdowns().stream()
+				.filter(m -> m.getType() == MarkdownType.TAFELBILD && m.getContent() != null)
+				.max(Comparator.comparing(ActivityMarkdown::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
+				.map(m -> {
+					Matcher matcher = TAFELBILD_IMAGE_PATTERN.matcher(m.getContent());
+					return matcher.find() ? matcher.group(1).replaceAll("[\\r\\n]", "") : null;
+				})
+				.orElse(null);
 	}
 
 	public ActivityResponse createActivity(Activity activity) {
@@ -249,11 +278,9 @@ public class ActivityService {
 		activity.setTopics(activityUpdate.getTopics());
 
 		// Update markdowns if provided
-		updateMarkdownByType(activity, activityUpdate, MarkdownType.ARTIKULATIONSSCHEMA);
-		updateMarkdownByType(activity, activityUpdate, MarkdownType.DECKBLATT);
-		updateMarkdownByType(activity, activityUpdate, MarkdownType.HINTERGRUNDWISSEN);
-		updateMarkdownByType(activity, activityUpdate, MarkdownType.UEBUNG);
-		updateMarkdownByType(activity, activityUpdate, MarkdownType.UEBUNG_LOESUNG);
+		for (MarkdownType type : MarkdownType.values()) {
+			updateMarkdownByType(activity, activityUpdate, type);
+		}
 
 		sanitizeActivityMetadata(activity);
 		Activity saved = activityRepository.save(activity);
@@ -423,6 +450,16 @@ public class ActivityService {
 			activity.getMarkdowns().add(hintergrundwissenMd);
 		}
 
+		if (data.get("tafelbildMarkdown") != null) {
+			ActivityMarkdown tafelbildMd = new ActivityMarkdown();
+			tafelbildMd.setActivity(activity);
+			tafelbildMd.setType(MarkdownType.TAFELBILD);
+			tafelbildMd.setContent(data.get("tafelbildMarkdown").toString());
+			tafelbildMd.setLandscape(true);
+			tafelbildMd.setCreatedAt(LocalDateTime.now());
+			activity.getMarkdowns().add(tafelbildMd);
+		}
+
 		if (data.get("uebungMarkdown") != null) {
 			ActivityMarkdown uebungMd = new ActivityMarkdown();
 			uebungMd.setActivity(activity);
@@ -460,11 +497,16 @@ public class ActivityService {
 	}
 
 	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf) {
-		return mapToResponse(activity, includeSourcePdf, false);
+		return mapToResponse(activity, includeSourcePdf, false, false);
 	}
 
 	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf,
 			boolean includeMarkdownContent) {
+		return mapToResponse(activity, includeSourcePdf, includeMarkdownContent, false);
+	}
+
+	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf,
+			boolean includeMarkdownContent, boolean includeTafelbildImage) {
 		ActivityResponse response = new ActivityResponse();
 		response.setId(activity.getId());
 		response.setName(activity.getName());
@@ -492,6 +534,9 @@ public class ActivityService {
 		response.setDocuments(docResponses);
 
 		response.setMarkdowns(mapLatestMarkdowns(activity, includeMarkdownContent));
+		if (includeTafelbildImage) {
+			response.setTafelbildImage(extractTafelbildImage(activity));
+		}
 		response.setStatus(activity.getStatus() != null ? activity.getStatus().name() : ActivityStatus.PUBLISHED.name());
 		response.setGenerationError(activity.getGenerationError());
 
@@ -611,6 +656,7 @@ public class ActivityService {
 			"deckblatt", false,
 			"artikulationsschema", true,
 			"hintergrundwissen", false,
+			"tafelbild", true,
 			"uebung", false,
 			"uebung_loesung", false
 		);

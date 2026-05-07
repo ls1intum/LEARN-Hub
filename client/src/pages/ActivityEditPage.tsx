@@ -50,6 +50,7 @@ type MarkdownTab =
   | "deckblatt"
   | "artikulationsschema"
   | "hintergrundwissen"
+  | "tafelbild"
   | "uebung"
   | "uebung_loesung";
 
@@ -57,6 +58,7 @@ const MARKDOWN_TAB_KEYS: MarkdownTab[] = [
   "deckblatt",
   "artikulationsschema",
   "hintergrundwissen",
+  "tafelbild",
   "uebung",
   "uebung_loesung",
 ];
@@ -65,6 +67,7 @@ const EMPTY_MARKDOWN_CONTENT: Record<MarkdownTab, string> = {
   deckblatt: "",
   artikulationsschema: "",
   hintergrundwissen: "",
+  tafelbild: "",
   uebung: "",
   uebung_loesung: "",
 };
@@ -138,12 +141,13 @@ export const ActivityEditPage: React.FC = () => {
     null,
   );
 
-  // Artikulationsschema state
+  // Markdown state
   const [artikulationsschemaMarkdown, setArtikulationsschemaMarkdown] =
     useState<string>("");
   const [deckblattMarkdown, setDeckblattMarkdown] = useState<string>("");
   const [hintergrundwissenMarkdown, setHintergrundwissenMarkdown] =
     useState<string>("");
+  const [tafelbildMarkdown, setTafelbildMarkdown] = useState<string>("");
   const [uebungMarkdown, setUebungMarkdown] = useState<string>("");
   const [uebungLoesungMarkdown, setUebungLoesungMarkdown] =
     useState<string>("");
@@ -187,6 +191,7 @@ export const ActivityEditPage: React.FC = () => {
       !!artikulationsschemaMarkdown) ||
     (activeMarkdownTab === "hintergrundwissen" &&
       !!hintergrundwissenMarkdown) ||
+    (activeMarkdownTab === "tafelbild" && !!tafelbildMarkdown) ||
     (activeMarkdownTab === "uebung" && !!uebungMarkdown) ||
     (activeMarkdownTab === "uebung_loesung" && !!uebungLoesungMarkdown);
 
@@ -197,6 +202,7 @@ export const ActivityEditPage: React.FC = () => {
       setDeckblattMarkdown(markdownContent.deckblatt);
       setArtikulationsschemaMarkdown(markdownContent.artikulationsschema);
       setHintergrundwissenMarkdown(markdownContent.hintergrundwissen);
+      setTafelbildMarkdown(markdownContent.tafelbild);
       setUebungMarkdown(markdownContent.uebung);
       setUebungLoesungMarkdown(markdownContent.uebung_loesung);
     },
@@ -283,6 +289,7 @@ export const ActivityEditPage: React.FC = () => {
         documentId,
         savedMetadata as unknown as Record<string, unknown> | undefined,
         typesToRequest,
+        activity?.id,
       );
       if (result.deckblattMarkdown) {
         setDeckblattMarkdown(result.deckblattMarkdown);
@@ -292,6 +299,9 @@ export const ActivityEditPage: React.FC = () => {
       }
       if (result.hintergrundwissenMarkdown) {
         setHintergrundwissenMarkdown(result.hintergrundwissenMarkdown);
+      }
+      if (result.tafelbildMarkdown) {
+        setTafelbildMarkdown(result.tafelbildMarkdown);
       }
       if (result.uebungMarkdown) {
         setUebungMarkdown(result.uebungMarkdown);
@@ -370,6 +380,9 @@ export const ActivityEditPage: React.FC = () => {
         hintergrundwissenMarkdown !== initialMarkdownContent.hintergrundwissen
       ) {
         updatePayload.hintergrundwissenMarkdown = hintergrundwissenMarkdown;
+      }
+      if (tafelbildMarkdown !== initialMarkdownContent.tafelbild) {
+        updatePayload.tafelbildMarkdown = tafelbildMarkdown;
       }
       if (uebungMarkdown !== initialMarkdownContent.uebung) {
         updatePayload.uebungMarkdown = uebungMarkdown;
@@ -685,6 +698,13 @@ export const ActivityEditPage: React.FC = () => {
                   value={hintergrundwissenMarkdown}
                   onChange={setHintergrundwissenMarkdown}
                   renderPreviewFn={renderPreviewPortrait}
+                />
+              )}
+              {activeMarkdownTab === "tafelbild" && (
+                <MarkdownEditorWithPreview
+                  value={tafelbildMarkdown}
+                  onChange={setTafelbildMarkdown}
+                  renderPreviewFn={renderPreviewLandscape}
                 />
               )}
               {activeMarkdownTab === "uebung" && (

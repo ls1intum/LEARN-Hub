@@ -4,7 +4,8 @@ import java.util.List;
 
 public record ActivityFilterRequest(String name, Integer ageMin, Integer ageMax, Integer durationMin,
 		Integer durationMax, List<String> format, List<String> bloomLevel, String mentalLoad, String physicalEnergy,
-		List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset) {
+		List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
+		Boolean includeTafelbildImage) {
 
 	public ActivityFilterRequest {
 		if (limit == null)

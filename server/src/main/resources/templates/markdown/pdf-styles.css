@@ -66,3 +66,7 @@
 .content-wrapper img {
     max-height: 43mm;
 }
+
+body.tafelbild-render .content-wrapper img {
+    max-height: 150mm;
+}

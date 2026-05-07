@@ -43,6 +43,7 @@ export interface Activity {
   topics: string[];
   documents: ActivityDocument[];
   markdowns: ActivityMarkdown[];
+  tafelbildImage?: string;
   createdAt?: string;
   type: "activity";
   isFavourited?: boolean;

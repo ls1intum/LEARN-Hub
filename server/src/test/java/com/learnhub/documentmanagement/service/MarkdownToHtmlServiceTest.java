@@ -55,6 +55,13 @@ class MarkdownToHtmlServiceTest {
 	}
 
 	@Test
+	void renderMarkdownToHtmlDoublesTafelbildImageHeightLimit() {
+		String html = service.renderMarkdownToHtml("# Tafelbild\n\n![Bild](data:image/png;base64,ZmFrZQ==)");
+		assertThat(html).contains("<body class=\"tafelbild-render\">").contains("<h1>Tafelbild</h1>")
+				.contains("max-height: 86mm");
+	}
+
+	@Test
 	void renderMarkdownToHtmlLimitsPortraitImageHeight() {
 		String html = service.renderMarkdownToHtml("![Bild](data:image/png;base64,ZmFrZQ==)", false);
 		assertThat(html).contains("max-height: 64mm");

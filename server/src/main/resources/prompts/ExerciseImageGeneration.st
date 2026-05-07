@@ -7,6 +7,7 @@ Follow these rules for every generated image:
 - Preserve all important factual details from the description exactly.
 - Make spatial relationships, counts, labels, symbols, paths, positions, and visual distinctions unambiguous.
 - If the description mentions specific objects, icons, text labels, arrows, routes, grids, numbers, start/goal fields, or left/right/top/bottom placement, include them exactly as described.
+- Always use a plain white background.
 - Do not invent extra task elements that could confuse the learner.
 - Do not add hidden hints, extra solutions, teacher-only annotations, or highlighted answers unless the description explicitly asks for them.
 - Prefer clean, readable composition over artistic flair. Clarity and correctness matter more than style.

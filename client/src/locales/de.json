@@ -384,6 +384,7 @@
     "deckblatt": "Deckblatt",
     "artikulationsschema": "Artikulationsschema",
     "hintergrundwissen": "Hintergrundwissen",
+    "tafelbild": "Tafelbild",
     "uebung": "Übungsblatt",
     "uebung_loesung": "Lösungsblatt"
   },
@@ -470,6 +471,7 @@
     "renderingPreview": "Vorschau wird gerendert...",
     "editToPreview": "Bearbeiten Sie das Markdown, um eine PDF-Vorschau zu sehen",
     "previewTitle": "Dokumentvorschau",
+    "previewError": "Vorschau fehlgeschlagen. Bitte erneut versuchen.",
     "regenerateImage": "Bild neu generieren",
     "imagePromptPlaceholder": "Zusätzlicher Prompt (optional)…",
     "imageRegenError": "Bildgenerierung fehlgeschlagen. Bitte erneut versuchen."
@@ -672,6 +674,9 @@
     "typeUebung": "Übungsblatt + Lösungsblatt",
     "typeDeckblatt": "Deckblatt",
     "typeHintergrundwissen": "Hintergrundwissen",
-    "typeArtikulationsschema": "Artikulationsschema"
+    "typeArtikulationsschema": "Artikulationsschema",
+    "typeTafelbild": "Tafelbild",
+    "tabTafelbild": "Tafelbild",
+    "tabArtikulationsschema": "Artikulationsschema"
   }
 }

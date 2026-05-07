@@ -25,7 +25,8 @@ type MarkdownType =
   | "uebung"
   | "deckblatt"
   | "hintergrundwissen"
-  | "artikulationsschema";
+  | "artikulationsschema"
+  | "tafelbild";
 
 interface TestMarkdownResponse {
   uebungMarkdown?: string;
@@ -33,15 +34,17 @@ interface TestMarkdownResponse {
   deckblattMarkdown?: string;
   artikulationsschemaMarkdown?: string;
   hintergrundwissenMarkdown?: string;
+  tafelbildMarkdown?: string;
 }
 
-type ResultTab = "primary" | "secondary";
+type ResultTab = "primary" | "secondary" | "artik";
 
 const MARKDOWN_TYPES: MarkdownType[] = [
   "uebung",
   "deckblatt",
   "hintergrundwissen",
   "artikulationsschema",
+  "tafelbild",
 ];
 
 const TYPE_LABEL_KEYS: Record<MarkdownType, string> = {
@@ -49,6 +52,7 @@ const TYPE_LABEL_KEYS: Record<MarkdownType, string> = {
   deckblatt: "aiTesting.typeDeckblatt",
   hintergrundwissen: "aiTesting.typeHintergrundwissen",
   artikulationsschema: "aiTesting.typeArtikulationsschema",
+  tafelbild: "aiTesting.typeTafelbild",
 };
 
 const ORIENTATION: Record<MarkdownType, "portrait" | "landscape"> = {
@@ -56,6 +60,7 @@ const ORIENTATION: Record<MarkdownType, "portrait" | "landscape"> = {
   deckblatt: "portrait",
   hintergrundwissen: "portrait",
   artikulationsschema: "landscape",
+  tafelbild: "landscape",
 };
 
 export const AITestingPage: React.FC = () => {
@@ -117,11 +122,19 @@ export const AITestingPage: React.FC = () => {
       result.deckblattMarkdown ??
       result.hintergrundwissenMarkdown ??
       result.artikulationsschemaMarkdown ??
+      result.tafelbildMarkdown ??
       "")
     : "";
 
   const secondaryMarkdown = result?.uebungLoesungMarkdown ?? "";
+  const tafelbildArtikMarkdown = result?.artikulationsschemaMarkdown ?? "";
+  // For tafelbild type: primary = tafelbild image, artik tab = source artikulationsschema
+  const isTafelbildType = selectedType === "tafelbild";
+  const primaryTafelbildMarkdown = isTafelbildType
+    ? (result?.tafelbildMarkdown ?? "")
+    : primaryMarkdown;
   const hasSecondary = !!secondaryMarkdown;
+  const hasArtikTab = isTafelbildType && !!tafelbildArtikMarkdown;
 
   const makePrimaryPreviewFn = useCallback(
     (markdown: string) =>
@@ -136,6 +149,12 @@ export const AITestingPage: React.FC = () => {
   const makeSecondaryPreviewFn = useCallback(
     (markdown: string) =>
       apiService.previewMarkdownPdf(markdown, "portrait", selectedFile?.name),
+    [selectedFile],
+  );
+
+  const makeArtikulationsschemaPreviewFn = useCallback(
+    (markdown: string) =>
+      apiService.previewMarkdownPdf(markdown, "landscape", selectedFile?.name),
     [selectedFile],
   );
 
@@ -265,7 +284,7 @@ export const AITestingPage: React.FC = () => {
             <CardTitle className="text-base">
               {t("aiTesting.resultTitle")}
             </CardTitle>
-            {hasSecondary && (
+            {(hasSecondary || hasArtikTab) && (
               <div className="flex gap-2 pt-1">
                 <Button
                   variant={
@@ -274,24 +293,39 @@ export const AITestingPage: React.FC = () => {
                   size="sm"
                   onClick={() => setActiveResultTab("primary")}
                 >
-                  {t("aiTesting.tabUebung")}
+                  {isTafelbildType
+                    ? t("aiTesting.tabTafelbild")
+                    : t("aiTesting.tabUebung")}
                 </Button>
-                <Button
-                  variant={
-                    activeResultTab === "secondary" ? "default" : "outline"
-                  }
-                  size="sm"
-                  onClick={() => setActiveResultTab("secondary")}
-                >
-                  {t("aiTesting.tabLoesung")}
-                </Button>
+                {hasSecondary && (
+                  <Button
+                    variant={
+                      activeResultTab === "secondary" ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() => setActiveResultTab("secondary")}
+                  >
+                    {t("aiTesting.tabLoesung")}
+                  </Button>
+                )}
+                {hasArtikTab && (
+                  <Button
+                    variant={
+                      activeResultTab === "artik" ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() => setActiveResultTab("artik")}
+                  >
+                    {t("aiTesting.tabArtikulationsschema")}
+                  </Button>
+                )}
               </div>
             )}
           </CardHeader>
           <CardContent>
-            {activeResultTab === "primary" && primaryMarkdown && (
+            {activeResultTab === "primary" && primaryTafelbildMarkdown && (
               <MarkdownEditorWithPreview
-                value={primaryMarkdown}
+                value={primaryTafelbildMarkdown}
                 onChange={() => {}}
                 renderPreviewFn={makePrimaryPreviewFn}
               />
@@ -301,6 +335,13 @@ export const AITestingPage: React.FC = () => {
                 value={secondaryMarkdown}
                 onChange={() => {}}
                 renderPreviewFn={makeSecondaryPreviewFn}
+              />
+            )}
+            {activeResultTab === "artik" && tafelbildArtikMarkdown && (
+              <MarkdownEditorWithPreview
+                value={tafelbildArtikMarkdown}
+                onChange={() => {}}
+                renderPreviewFn={makeArtikulationsschemaPreviewFn}
               />
             )}
           </CardContent>

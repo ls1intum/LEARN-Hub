@@ -1,7 +1,6 @@
 package com.learnhub.documentmanagement.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
@@ -584,10 +583,7 @@ public class PDFService {
 				.replace("{{searchCriteriaSection}}", searchCriteriaSection)
 				.replace("{{breaksSection}}", breaksSection);
 
-		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-			HtmlConverter.convertToPdf(html, baos);
-			return baos.toByteArray();
-		}
+		return markdownToPdfService.renderCompleteHtmlToPdf(html);
 	}
 
 	private String loadCoverTemplate() {

@@ -106,9 +106,14 @@ public class DevController {
 					response.setHintergrundwissenMarkdown(llmService.generateHintergrundwissen(pdfText, metadata));
 				case "artikulationsschema" ->
 					response.setArtikulationsschemaMarkdown(llmService.generateArtikulationsschema(pdfText, metadata));
+				case "tafelbild" -> {
+					String artik = llmService.generateArtikulationsschema(pdfText, metadata);
+					response.setArtikulationsschemaMarkdown(artik);
+					response.setTafelbildMarkdown(llmService.generateTafelbildMarkdown(artik));
+				}
 				default -> {
 					return ResponseEntity.badRequest().body(ErrorResponse.of("Unknown type: " + type
-							+ ". Valid values: uebung, deckblatt, hintergrundwissen, artikulationsschema"));
+							+ ". Valid values: uebung, deckblatt, hintergrundwissen, artikulationsschema, tafelbild"));
 				}
 			}
 

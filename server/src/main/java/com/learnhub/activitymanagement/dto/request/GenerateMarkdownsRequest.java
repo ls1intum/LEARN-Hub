@@ -8,6 +8,7 @@ import lombok.Data;
 @Data
 public class GenerateMarkdownsRequest {
 	private UUID documentId;
+	private UUID activityId;
 	private Map<String, Object> metadata;
 	private List<String> types;
 }

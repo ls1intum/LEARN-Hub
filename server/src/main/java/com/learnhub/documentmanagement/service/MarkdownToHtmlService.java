@@ -31,6 +31,10 @@ public class MarkdownToHtmlService {
 	private static final String PDF_CSS_PORTRAIT_TEMPLATE_PATH = "templates/markdown/pdf-styles-portrait.css";
 	private static final String LOGO_PATH = "templates/markdown/header-logo.png";
 	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+	private static final Pattern TAFELBILD_TITLE_PATTERN = Pattern.compile("^\\s*#\\s+Tafelbild\\b",
+			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+	private static final Pattern TAFELBILD_HTML_TITLE_PATTERN = Pattern.compile("<h1[^>]*>\\s*Tafelbild\\s*</h1>",
+			Pattern.CASE_INSENSITIVE);
 	private static final Pattern ARTIKULATIONSSCHEMA_TITLE_PATTERN = Pattern.compile("^\\s*#\\s+Artikulationsschema\\b",
 			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 	private static final Pattern ARTIKULATIONSSCHEMA_HTML_TITLE_PATTERN = Pattern
@@ -113,11 +117,12 @@ public class MarkdownToHtmlService {
 	 *            student Name / Datum fill-in fields at the top
 	 */
 	public String renderMarkdownToHtml(String markdown, boolean landscape, String activityName, boolean exerciseSheet) {
-		String body = renderDecoratedMarkdownBody(markdown);
+		String normalizedMarkdown = normalizeMarkdown(markdown);
+		String body = renderDecoratedMarkdownBody(normalizedMarkdown);
 		if (exerciseSheet) {
 			body = wrapWithExerciseLayout(body);
 		}
-		return wrapPdfHtmlDocument(body, landscape, activityName);
+		return wrapPdfHtmlDocument(body, landscape, activityName, detectDocumentBodyClass(normalizedMarkdown, body));
 	}
 
 	/**
@@ -125,7 +130,7 @@ public class MarkdownToHtmlService {
 	 */
 	public String renderHtmlBodyToHtmlDocument(String htmlBody, boolean landscape, String activityName) {
 		String body = decorateHtmlBody(htmlBody);
-		return wrapPdfHtmlDocument(body, landscape, activityName);
+		return wrapPdfHtmlDocument(body, landscape, activityName, detectDocumentBodyClass("", body));
 	}
 
 	/**
@@ -143,19 +148,21 @@ public class MarkdownToHtmlService {
 		return parser.parse(normalizeMarkdown(markdown));
 	}
 
-	private String wrapPdfHtmlDocument(String body, boolean landscape, String activityName) {
+	private String wrapPdfHtmlDocument(String body, boolean landscape, String activityName, String bodyClass) {
 		String css = (landscape ? pdfCssTemplate : pdfCssPortraitTemplate) + "\n\n" + commonCssTemplate;
 		String name = activityName != null ? activityName : "";
 		String downloadDate = LocalDateTime.now().format(DATE_FORMATTER);
+		String normalizedBodyClass = bodyClass == null ? "" : bodyClass.trim();
+		String bodyClassAttribute = normalizedBodyClass.isEmpty() ? "" : " class=\"" + normalizedBodyClass + "\"";
 		return htmlTemplate.replace("{{styles}}", css).replace("{{body}}", body).replace("{{activityName}}", name)
-				.replace("{{logoDataUri}}", logoDataUri).replace("{{downloadDate}}", downloadDate);
+				.replace("{{logoDataUri}}", logoDataUri).replace("{{downloadDate}}", downloadDate)
+				.replace("{{bodyClassAttribute}}", bodyClassAttribute);
 	}
 
 	private String renderDecoratedMarkdownBody(String markdown) {
-		String normalizedMarkdown = normalizeMarkdown(markdown);
-		Node document = parser.parse(normalizedMarkdown);
+		Node document = parser.parse(markdown);
 		String body = renderer.render(document);
-		if (!ARTIKULATIONSSCHEMA_TITLE_PATTERN.matcher(normalizedMarkdown).find()) {
+		if (!ARTIKULATIONSSCHEMA_TITLE_PATTERN.matcher(markdown).find()) {
 			return body;
 		}
 		return addArtikulationsschemaTableClass(body);
@@ -171,6 +178,14 @@ public class MarkdownToHtmlService {
 			return normalizedHtml;
 		}
 		return addArtikulationsschemaTableClass(normalizedHtml);
+	}
+
+	private String detectDocumentBodyClass(String markdown, String htmlBody) {
+		if ((markdown != null && TAFELBILD_TITLE_PATTERN.matcher(markdown).find())
+				|| (htmlBody != null && TAFELBILD_HTML_TITLE_PATTERN.matcher(htmlBody).find())) {
+			return "tafelbild-render";
+		}
+		return "";
 	}
 
 	private String addArtikulationsschemaTableClass(String body) {

@@ -44,12 +44,22 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const bloomKey = activity.bloomLevel?.toLowerCase() ?? "";
   const bloomIndex = BLOOM_ORDER.indexOf(bloomKey);
   const bloomColor = BLOOM_COLORS[bloomKey] ?? "bg-primary";
-
   return (
     <div
-      className="border border-border rounded-lg p-3.5 hover:shadow-md hover:border-border/60 transition-all cursor-pointer bg-card flex flex-col gap-2.5 h-full"
+      className="border border-border rounded-lg overflow-hidden hover:shadow-md hover:border-border/60 transition-all cursor-pointer bg-card flex flex-col gap-2.5 h-full"
       onClick={onClick}
     >
+      {/* Hero image */}
+      {activity.tafelbildImage && (
+        <div className="w-full h-36 bg-muted overflow-hidden shrink-0">
+          <img
+            src={activity.tafelbildImage}
+            alt=""
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+      <div className="flex flex-col gap-2.5 p-3.5 flex-1">
       {/* Title + action */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
@@ -155,46 +165,50 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           </Badge>
         </div>
       </div>
+      </div>
     </div>
   );
 };
 
 export const ActivityCardSkeleton: React.FC = () => (
-  <div className="border border-border rounded-lg p-3.5 bg-card flex flex-col gap-2.5 h-full min-h-[188px]">
-    <div className="flex items-start justify-between gap-2">
-      <div className="min-w-0 flex-1 space-y-2">
-        <Skeleton className="h-4 w-5/6" />
-        <Skeleton className="h-3 w-1/2" />
+  <div className="border border-border rounded-lg overflow-hidden bg-card flex flex-col gap-2.5 h-full min-h-[272px]">
+    <Skeleton className="w-full h-36 rounded-none shrink-0" />
+    <div className="p-3.5 flex flex-col gap-2.5 flex-1">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1 space-y-2">
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-3 w-1/2" />
+        </div>
+        <Skeleton className="h-7 w-7 rounded" />
       </div>
-      <Skeleton className="h-7 w-7 rounded" />
-    </div>
 
-    <div className="space-y-1.5">
-      <Skeleton className="h-3 w-full" />
-      <Skeleton className="h-3 w-2/3" />
-    </div>
-
-    <div className="flex flex-wrap gap-1">
-      <Skeleton className="h-5 w-16 rounded-full" />
-      <Skeleton className="h-5 w-20 rounded-full" />
-      <Skeleton className="h-5 w-14 rounded-full" />
-    </div>
-
-    <div className="flex-1" />
-
-    <div className="flex items-center gap-1.5">
-      <div className="flex items-center gap-0.5">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-2 w-2 rounded-full" />
-        ))}
+      <div className="space-y-1.5">
+        <Skeleton className="h-3 w-full" />
+        <Skeleton className="h-3 w-2/3" />
       </div>
-      <Skeleton className="h-3 w-20" />
-    </div>
 
-    <div className="flex items-center gap-2 pt-1.5 border-t border-border/50">
-      <Skeleton className="h-3 w-10" />
-      <Skeleton className="h-3 w-14" />
-      <Skeleton className="h-5 w-16 rounded-full ml-auto" />
+      <div className="flex flex-wrap gap-1">
+        <Skeleton className="h-5 w-16 rounded-full" />
+        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-5 w-14 rounded-full" />
+      </div>
+
+      <div className="flex-1" />
+
+      <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-0.5">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton key={i} className="h-2 w-2 rounded-full" />
+          ))}
+        </div>
+        <Skeleton className="h-3 w-20" />
+      </div>
+
+      <div className="flex items-center gap-2 pt-1.5 border-t border-border/50">
+        <Skeleton className="h-3 w-10" />
+        <Skeleton className="h-3 w-14" />
+        <Skeleton className="h-5 w-16 rounded-full ml-auto" />
+      </div>
     </div>
   </div>
 );

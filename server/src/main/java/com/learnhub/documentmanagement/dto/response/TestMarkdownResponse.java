@@ -17,4 +17,5 @@ public class TestMarkdownResponse {
 	private String deckblattMarkdown;
 	private String artikulationsschemaMarkdown;
 	private String hintergrundwissenMarkdown;
+	private String tafelbildMarkdown;
 }

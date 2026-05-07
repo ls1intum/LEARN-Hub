@@ -13,8 +13,508 @@ import {
   Brain,
   Search,
   Star,
+  Filter,
+  Clock,
+  Heart,
+  LayoutList,
+  LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  LANDING_MOCK_ACTIVITIES,
+  LANDING_MOCK_RECOMMENDATIONS,
+} from "@/data/landingPageMockData";
+
+/* ─────────────────────────────────────────────
+   Browser Mockup Components — exact UI replicas
+   scaled via CSS transform (scale 0.5, width 200%)
+───────────────────────────────────────────── */
+
+const MOCK_SCALE = 0.5;
+
+const BrowserChrome: React.FC<{ url: string }> = ({ url }) => (
+  <div className="flex items-center gap-2 px-3 py-[7px] bg-muted/60 border-b border-border shrink-0">
+    <div className="flex gap-1.5 shrink-0">
+      <span className="w-3 h-3 rounded-full bg-red-400/80 block" />
+      <span className="w-3 h-3 rounded-full bg-yellow-400/80 block" />
+      <span className="w-3 h-3 rounded-full bg-green-400/80 block" />
+    </div>
+    <div className="flex-1 bg-background/80 rounded px-2 py-[3px] text-xs text-muted-foreground border border-border/50 truncate">
+      {url}
+    </div>
+  </div>
+);
+
+const BLOOM_ORDER_MOCK = [
+  "remember",
+  "understand",
+  "apply",
+  "analyze",
+  "evaluate",
+  "create",
+];
+
+type MockActivity = (typeof LANDING_MOCK_ACTIVITIES)[number];
+type MockRec = (typeof LANDING_MOCK_RECOMMENDATIONS)[number];
+
+const MockActivityCard: React.FC<{ activity: MockActivity }> = ({
+  activity,
+}) => (
+  <div className="border border-border rounded-lg overflow-hidden bg-card flex flex-col gap-2.5 h-full">
+    <img
+      src={activity.imageUrl}
+      alt=""
+      className="w-full h-36 object-cover shrink-0"
+    />
+    <div className="flex flex-col gap-2.5 p-3.5 flex-1">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
+            {activity.name}
+          </h3>
+          <p className="text-xs text-muted-foreground truncate mt-0.5">
+            {activity.source}
+          </p>
+        </div>
+        <div className="shrink-0 h-7 w-7 flex items-center justify-center rounded-md text-muted-foreground">
+          <Heart className="h-3.5 w-3.5" />
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+        {activity.description}
+      </p>
+
+      <div className="flex flex-wrap gap-1">
+        {activity.topicLabels.slice(0, 3).map((topic) => (
+          <span
+            key={topic}
+            className="inline-flex items-center rounded-full border border-border bg-secondary px-1.5 py-0 text-[11px] font-normal text-secondary-foreground"
+          >
+            {topic}
+          </span>
+        ))}
+      </div>
+
+      <div className="flex-1" />
+
+      <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-0.5">
+          {BLOOM_ORDER_MOCK.map((_, i) => (
+            <div
+              key={i}
+              className={`w-2 h-2 rounded-full ${i <= activity.bloomIndex ? activity.bloomColor : "bg-muted"}`}
+            />
+          ))}
+        </div>
+        <span className="text-[11px] text-muted-foreground">
+          {activity.bloomLabel}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1.5 border-t border-border/50">
+        <span className="flex items-center gap-0.5">
+          <Users className="h-3 w-3 shrink-0" />
+          {activity.ageMin}–{activity.ageMax}
+        </span>
+        <span className="flex items-center gap-0.5">
+          <Clock className="h-3 w-3 shrink-0" />
+          {activity.durationMin}–{activity.durationMax}m
+        </span>
+        <div className="ml-auto">
+          <span className="inline-flex items-center rounded-full border border-border bg-secondary px-1.5 py-0 text-[11px] font-normal">
+            {activity.formatLabel}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+const MockRecommendationCard: React.FC<{ rec: MockRec }> = ({ rec }) => (
+  <div className="border border-border rounded-lg p-3.5 bg-card flex flex-col gap-3 h-full">
+    <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1.5">
+        <div className={`w-2 h-2 rounded-full shrink-0 ${rec.scoreColor}`} />
+        <span className="text-sm font-semibold tabular-nums">
+          {Math.round(rec.score)}%
+        </span>
+      </div>
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground ml-auto">
+        <span className="flex items-center gap-0.5">
+          <Clock className="h-3 w-3 shrink-0" />
+          <span className="tabular-nums">{rec.duration}m</span>
+        </span>
+        <span className="flex items-center gap-0.5">
+          <Users className="h-3 w-3 shrink-0" />
+          {rec.ageMin}–{rec.ageMax}
+        </span>
+      </div>
+    </div>
+
+    <div className="flex flex-col gap-1 flex-1">
+      {rec.activityNames.map((name, idx) => (
+        <div
+          key={idx}
+          className="flex items-center gap-2 rounded px-1.5 py-1"
+        >
+          <div className="w-4 h-4 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+            <span className="text-[9px] font-semibold text-primary tabular-nums">
+              {idx + 1}
+            </span>
+          </div>
+          <span className="text-xs text-foreground truncate">{name}</span>
+        </div>
+      ))}
+    </div>
+
+    <div className="flex items-center gap-1.5 pt-2 border-t border-border/50">
+      <span className="inline-flex items-center rounded-full border border-border bg-secondary px-1.5 py-0 text-[11px] font-normal">
+        {rec.formatLabel}
+      </span>
+      <div className="ml-auto flex items-center gap-1.5">
+        <div className="h-7 w-7 border border-border rounded-md flex items-center justify-center">
+          <Heart className="h-3.5 w-3.5 text-muted-foreground" />
+        </div>
+        <div className="h-7 px-2 bg-primary rounded-md flex items-center gap-1 text-primary-foreground">
+          <Sparkles className="h-3 w-3" />
+          <span className="text-xs">Auswählen</span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+/* Library page in grid/card mode — used in the hero */
+const LibraryCardMockup: React.FC = () => (
+  <div className="rounded-xl overflow-hidden border border-border shadow-2xl bg-background select-none">
+    <BrowserChrome url="learn-hub.app/library" />
+    {/* paddingBottom creates the visible height: ~90% gives enough room for the grid */}
+    <div className="relative overflow-hidden" style={{ paddingBottom: "90%" }}>
+      <div
+        className="absolute top-0 left-0 bg-background origin-top-left"
+        style={{
+          transform: `scale(${MOCK_SCALE})`,
+          width: `${100 / MOCK_SCALE}%`,
+        }}
+      >
+        <div className="w-full space-y-4 py-6 px-6">
+          {/* Page header */}
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Aktivitätsbibliothek
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Entdecke und filtere Aktivitäten für deinen Unterricht
+            </p>
+          </div>
+
+          {/* Toolbar */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <div className="pl-8 h-8 border border-border rounded-md flex items-center text-sm text-muted-foreground bg-background">
+                Aktivitäten suchen…
+              </div>
+            </div>
+            <div className="h-8 px-3 border border-border rounded-md flex items-center gap-1.5 bg-background text-sm shrink-0">
+              <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+              Filter
+            </div>
+            <div className="h-8 px-3 text-muted-foreground text-sm shrink-0 opacity-40 flex items-center">
+              Filter löschen
+            </div>
+          </div>
+
+          {/* Count + ViewToggle */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground tabular-nums">
+              6 Aktivitäten
+            </p>
+            <div className="flex items-center rounded-md border border-border overflow-hidden shrink-0">
+              <div className="h-7 w-7 rounded-none border-r border-border flex items-center justify-center text-muted-foreground">
+                <LayoutList className="h-3.5 w-3.5" />
+              </div>
+              <div className="h-7 w-7 bg-muted text-foreground flex items-center justify-center">
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Activity grid — 3 columns matching the real LibraryPage */}
+          <div className="grid grid-cols-3 gap-3">
+            {LANDING_MOCK_ACTIVITIES.map((act) => (
+              <MockActivityCard key={act.id} activity={act} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+/* Recommendations results page — used in feature row 1 */
+const RecommendationsMockup: React.FC = () => (
+  <div className="flex flex-col h-full bg-background">
+    <BrowserChrome url="learn-hub.app/recommendations" />
+    <div className="flex-1 relative overflow-hidden">
+      <div
+        className="absolute top-0 left-0 bg-background origin-top-left"
+        style={{
+          transform: `scale(${MOCK_SCALE})`,
+          width: `${100 / MOCK_SCALE}%`,
+        }}
+      >
+        <div className="py-6 px-6">
+          <div className="space-y-8">
+            {/* Page header */}
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                Aktivitätsempfehlungen
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1.5">
+                KI-gestützte Empfehlungen passend für deine Klasse
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {/* ListFilterToolbar replica */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 min-w-0">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <div className="pl-8 h-8 border border-border rounded-md flex items-center text-sm text-muted-foreground bg-background">
+                    Empfehlungen suchen…
+                  </div>
+                </div>
+                <div className="h-8 px-3 border border-border rounded-md flex items-center gap-1.5 bg-background text-sm shrink-0">
+                  <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+                  Filter
+                </div>
+                <div className="h-8 px-3 text-muted-foreground text-sm shrink-0 opacity-40 flex items-center">
+                  Filter löschen
+                </div>
+              </div>
+
+              {/* Count + ViewToggle */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground tabular-nums">
+                  4 von 4 Empfehlungen
+                </p>
+                <div className="flex items-center rounded-md border border-border overflow-hidden shrink-0">
+                  <div className="h-7 w-7 rounded-none border-r border-border flex items-center justify-center text-muted-foreground">
+                    <LayoutList className="h-3.5 w-3.5" />
+                  </div>
+                  <div className="h-7 w-7 bg-muted text-foreground flex items-center justify-center">
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Recommendation cards — 2 columns matching real ResultsDisplay grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {LANDING_MOCK_RECOMMENDATIONS.map((rec, i) => (
+                  <MockRecommendationCard key={i} rec={rec} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+/* Library page with filter panel open — used in feature row 2 */
+const LibraryWithFiltersMockup: React.FC = () => (
+  <div className="flex flex-col h-full bg-background">
+    <BrowserChrome url="learn-hub.app/library" />
+    <div className="flex-1 relative overflow-hidden">
+      <div
+        className="absolute top-0 left-0 bg-background origin-top-left"
+        style={{
+          transform: `scale(${MOCK_SCALE})`,
+          width: `${100 / MOCK_SCALE}%`,
+        }}
+      >
+        <div className="w-full space-y-4 py-6 px-6">
+          {/* Page header */}
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Aktivitätsbibliothek
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Entdecke und filtere Aktivitäten für deinen Unterricht
+            </p>
+          </div>
+
+          {/* Toolbar — "2 active filters" indicator */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <div className="pl-8 h-8 border border-border rounded-md flex items-center text-sm text-muted-foreground bg-background">
+                Aktivitäten suchen…
+              </div>
+            </div>
+            <div className="h-8 px-3 border border-border rounded-md flex items-center gap-1.5 bg-background text-sm shrink-0">
+              <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+              Filter ausblenden
+              <span className="inline-flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-semibold w-4 h-4">
+                2
+              </span>
+            </div>
+            <div className="h-8 px-3 text-muted-foreground text-sm shrink-0 flex items-center">
+              Filter löschen
+            </div>
+          </div>
+
+          {/* Filter panel — open */}
+          <div className="border border-border rounded-lg p-4 space-y-5 bg-muted/20">
+            {/* Range sliders row */}
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-sm font-medium">Altersbereich</span>
+                  </div>
+                  <span className="text-sm font-semibold text-primary tabular-nums">
+                    8–14
+                  </span>
+                </div>
+                <div className="relative h-2 bg-muted rounded-full">
+                  <div className="absolute left-[25%] right-[30%] top-0 bottom-0 bg-primary rounded-full" />
+                  <div className="absolute left-[25%] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-primary bg-background shadow" />
+                  <div className="absolute right-[30%] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-primary bg-background shadow" />
+                </div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-sm font-medium">Dauer</span>
+                  </div>
+                  <span className="text-sm font-semibold text-primary tabular-nums">
+                    15–45m
+                  </span>
+                </div>
+                <div className="relative h-2 bg-muted rounded-full">
+                  <div className="absolute left-[10%] right-[40%] top-0 bottom-0 bg-primary rounded-full" />
+                  <div className="absolute left-[10%] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-primary bg-background shadow" />
+                  <div className="absolute right-[40%] top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2 border-primary bg-background shadow" />
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border" />
+
+            {/* Characteristic filters */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Aktivitätsmerkmale
+              </p>
+              <div className="grid grid-cols-4 gap-4">
+                <div className="space-y-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Format
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["Draußen", "Drinnen", "Kreativ"].map((f, i) => (
+                      <span
+                        key={f}
+                        className={cn(
+                          "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium cursor-pointer border",
+                          i === 0
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-transparent border-border text-foreground",
+                        )}
+                      >
+                        {f}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Bloom-Stufe
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["Erinnern", "Verstehen", "Anwenden", "Analysieren"].map(
+                      (b, i) => (
+                        <span
+                          key={b}
+                          className={cn(
+                            "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium cursor-pointer border",
+                            i === 2
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-transparent border-border text-foreground",
+                          )}
+                        >
+                          {b}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Ressourcen
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["Keine", "Material", "Digital"].map((r) => (
+                      <span
+                        key={r}
+                        className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium cursor-pointer border border-border text-foreground"
+                      >
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Themen
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["Bewegung", "Vertrauen", "Kreativität"].map((t) => (
+                      <span
+                        key={t}
+                        className="inline-flex items-center rounded-full px-3 py-1 text-xs font-medium cursor-pointer border border-border text-foreground"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Count + ViewToggle */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground tabular-nums">
+              4 Aktivitäten
+            </p>
+            <div className="flex items-center rounded-md border border-border overflow-hidden shrink-0">
+              <div className="h-7 w-7 rounded-none border-r border-border flex items-center justify-center text-muted-foreground">
+                <LayoutList className="h-3.5 w-3.5" />
+              </div>
+              <div className="h-7 w-7 bg-muted text-foreground flex items-center justify-center">
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </div>
+            </div>
+          </div>
+
+          {/* Filtered activity grid */}
+          <div className="grid grid-cols-3 gap-3">
+            {LANDING_MOCK_ACTIVITIES.slice(0, 3).map((act) => (
+              <MockActivityCard key={act.id} activity={act} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 /* ─────────────────────────────────────────────
    Hero Section
@@ -94,11 +594,7 @@ const HeroSection: React.FC = () => {
               className="absolute -inset-4 bg-gradient-to-tr from-primary/10 to-primary/5 rounded-2xl blur-2xl"
             />
             <div className="relative">
-              <img
-                src="/hero-image.png"
-                alt={t("landingPage.hero.imageAlt")}
-                className="w-full rounded-xl"
-              />
+              <LibraryCardMockup />
             </div>
           </div>
         </div>
@@ -294,13 +790,7 @@ const FeatureImageSection: React.FC = () => {
             label: t("landingPage.imageRows.recommendations.cta"),
             path: "/recommendations",
           }}
-          imageContent={
-            <img
-              src="/screenshot-recommendations.png"
-              alt={t("landingPage.imageRows.recommendations.imageAlt")}
-              className="w-full h-full object-cover object-top"
-            />
-          }
+          imageContent={<RecommendationsMockup />}
         />
         <FeatureImageRow
           reverse
@@ -310,13 +800,7 @@ const FeatureImageSection: React.FC = () => {
             label: t("landingPage.imageRows.library.cta"),
             path: "/library",
           }}
-          imageContent={
-            <img
-              src="/screenshot-library.png"
-              alt={t("landingPage.imageRows.library.imageAlt")}
-              className="w-full h-full object-cover object-top"
-            />
-          }
+          imageContent={<LibraryWithFiltersMockup />}
         />
       </div>
     </section>

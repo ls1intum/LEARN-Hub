@@ -19,6 +19,7 @@ export interface ActivityMarkdownsResponse {
   deckblattMarkdown?: string;
   artikulationsschemaMarkdown?: string;
   hintergrundwissenMarkdown?: string;
+  tafelbildMarkdown?: string;
   uebungMarkdown?: string;
   uebungLoesungMarkdown?: string;
 }
@@ -43,6 +44,7 @@ export interface UpdateActivityRequest {
   artikulationsschemaMarkdown?: string;
   deckblattMarkdown?: string;
   hintergrundwissenMarkdown?: string;
+  tafelbildMarkdown?: string;
   uebungMarkdown?: string;
   uebungLoesungMarkdown?: string;
 }
@@ -133,6 +135,7 @@ export interface SearchCriteria {
   priorityCategories?: string[];
   limit?: number;
   offset?: number;
+  includeTafelbildImage?: boolean;
 }
 
 // Activity favorites response

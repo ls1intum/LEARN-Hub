@@ -63,7 +63,7 @@ export const ActivityFavouritesTab: React.FC = () => {
       const activityIds = response.favourites.map((fav) => fav.activityId);
       if (activityIds.length > 0) {
         const activityDetails =
-          await apiService.getActivitiesByIds(activityIds);
+          await apiService.getActivitiesByIds(activityIds, { includeTafelbildImage: true });
         setActivities(activityDetails);
       }
     } catch (err) {

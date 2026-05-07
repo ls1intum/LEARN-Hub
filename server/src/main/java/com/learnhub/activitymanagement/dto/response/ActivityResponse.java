@@ -45,6 +45,8 @@ public class ActivityResponse {
 
 	private List<MarkdownResponse> markdowns = new ArrayList<>();
 
+	private String tafelbildImage;
+
 	private String type = "activity";
 
 	@JsonProperty("isFavourited")
