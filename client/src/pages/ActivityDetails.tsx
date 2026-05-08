@@ -302,22 +302,28 @@ export const ActivityDetails: React.FC = () => {
 
   const ageRange =
     activity.ageMin && activity.ageMax
-      ? `${activity.ageMin}-${activity.ageMax}`
+      ? activity.ageMin === activity.ageMax
+        ? `${activity.ageMin}`
+        : `${activity.ageMin}-${activity.ageMax}`
       : activity.ageMin
         ? `${activity.ageMin}+`
         : "";
 
-  const durationRange =
+  const durationBase =
     activity.durationMinMinutes && activity.durationMaxMinutes
-      ? `${activity.durationMinMinutes}-${activity.durationMaxMinutes} ${t("common.minutes")}`
+      ? activity.durationMinMinutes === activity.durationMaxMinutes
+        ? `${activity.durationMinMinutes}`
+        : `${activity.durationMinMinutes}-${activity.durationMaxMinutes}`
       : activity.durationMinMinutes
-        ? `${activity.durationMinMinutes}+ ${t("common.minutes")}`
+        ? `${activity.durationMinMinutes}+`
         : "";
 
-  const totalTime =
-    (activity.durationMinMinutes || 0) +
-    (activity.prepTimeMinutes || 0) +
-    (activity.cleanupTimeMinutes || 0);
+  const extraTime =
+    (activity.prepTimeMinutes || 0) + (activity.cleanupTimeMinutes || 0);
+
+  const durationChipText = durationBase
+    ? `${durationBase}${extraTime > 0 ? ` (+${extraTime})` : ""} ${t("common.minutes")}`
+    : "";
   const hasDownloads =
     (activity.documents && activity.documents.length > 0) ||
     (activity.markdowns && activity.markdowns.length > 0);
@@ -381,27 +387,12 @@ export const ActivityDetails: React.FC = () => {
           {activity.name}
         </h1>
 
-        {/* Topic badges */}
-        {activity.topics && activity.topics.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {activity.topics.map((topic) => (
-              <Badge
-                key={topic}
-                variant="secondary"
-                className="text-xs font-medium px-2.5 py-0.5"
-              >
-                {translateEnum("topics", topic)}
-              </Badge>
-            ))}
-          </div>
-        )}
-
         {/* Meta chips */}
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-          {durationRange && (
+          {durationChipText && (
             <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60">
               <Clock className="h-3 w-3" />
-              {durationRange}
+              {durationChipText}
             </span>
           )}
           {ageRange && (
@@ -463,13 +454,12 @@ export const ActivityDetails: React.FC = () => {
                   return (
                     <span
                       key={level}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                        isActive
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : isPast
-                            ? "bg-primary/10 text-primary border-primary/20"
-                            : "bg-muted text-muted-foreground border-border"
-                      }`}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${isActive
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : isPast
+                          ? "bg-primary/10 text-primary border-primary/20"
+                          : "bg-muted text-muted-foreground border-border"
+                        }`}
                     >
                       {translateEnum("bloomLevel", level)}
                     </span>
@@ -513,7 +503,12 @@ export const ActivityDetails: React.FC = () => {
                   </div>
                 ))}
 
-                {activity.markdowns?.map((md) => (
+                {activity.markdowns?.slice().sort((a, b) => {
+                  const order = ["deckblatt", "artikulationsschema", "uebung", "uebung_loesung", "hintergrundwissen", "tafelbild"];
+                  const ai = order.indexOf(a.type ?? "");
+                  const bi = order.indexOf(b.type ?? "");
+                  return (ai === -1 ? order.length : ai) - (bi === -1 ? order.length : bi);
+                }).map((md) => (
                   <div
                     key={md.id}
                     className="flex items-center gap-3 px-4 py-3"
@@ -522,7 +517,7 @@ export const ActivityDetails: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">
                         {activity.name}
-                        {md.type ? ` — ${md.type}` : ""}
+                        {md.type ? ` — ${md.type.charAt(0).toUpperCase() + md.type.slice(1)}` : ""}
                       </p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -595,42 +590,22 @@ export const ActivityDetails: React.FC = () => {
 
         {/* Sidebar */}
         <aside className="space-y-2.5">
-          {ageRange && (
+          {activity.topics && activity.topics.length > 0 && (
             <div className="border border-border rounded-lg px-4 py-3">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                {t("activityDetails.ageRange")}
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                {t("activityDetails.topics")}
               </p>
-              <p className="text-sm font-medium text-foreground">{ageRange}</p>
-            </div>
-          )}
-          {activity.format && (
-            <div className="border border-border rounded-lg px-4 py-3">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                {t("activityDetails.format")}
-              </p>
-              <p className="text-sm font-medium text-foreground">
-                {translateEnum("format", activity.format)}
-              </p>
-            </div>
-          )}
-          {durationRange && (
-            <div className="border border-border rounded-lg px-4 py-3">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                {t("activityDetails.duration")}
-              </p>
-              <p className="text-sm font-medium text-foreground">
-                {durationRange}
-              </p>
-            </div>
-          )}
-          {totalTime > 0 && (
-            <div className="border border-border rounded-lg px-4 py-3">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                {t("activityDetails.totalTime")}
-              </p>
-              <p className="text-sm font-medium text-foreground">
-                {totalTime} {t("common.minutes")}
-              </p>
+              <div className="flex flex-wrap gap-1">
+                {activity.topics.map((topic) => (
+                  <Badge
+                    key={topic}
+                    variant="secondary"
+                    className="text-xs font-medium px-2 py-0.5"
+                  >
+                    {translateEnum("topics", topic)}
+                  </Badge>
+                ))}
+              </div>
             </div>
           )}
           {activity.mentalLoad && (

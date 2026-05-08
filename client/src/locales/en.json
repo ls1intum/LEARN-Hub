@@ -414,7 +414,7 @@
     "downloadPdf": "PDF",
     "downloadDocx": "DOCX",
     "downloadActivity": "Download Activity",
-    "combinedDocument": "Combined document (Deckblatt + Artikulationsschema + Hintergrundwissen)",
+    "combinedDocument": "Combined document",
     "loading": "Loading activity details...",
     "goBack": "Go Back"
   },

@@ -43,7 +43,9 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
 
   const getAgeRange = (activity: Activity) => {
     if (activity.ageMin && activity.ageMax) {
-      return `${activity.ageMin}-${activity.ageMax}`;
+      return activity.ageMin === activity.ageMax
+        ? `${activity.ageMin}`
+        : `${activity.ageMin}-${activity.ageMax}`;
     }
     return t("timeline.allAges");
   };

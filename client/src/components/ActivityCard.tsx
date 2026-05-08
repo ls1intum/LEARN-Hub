@@ -148,12 +148,12 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1.5 border-t border-border/50">
         <span className="flex items-center gap-0.5">
           <Users className="h-3 w-3 shrink-0" />
-          {activity.ageMin}–{activity.ageMax}
+          {activity.ageMin}{activity.ageMax && activity.ageMax !== activity.ageMin ? `–${activity.ageMax}` : ""}
         </span>
         <span className="flex items-center gap-0.5">
           <Clock className="h-3 w-3 shrink-0" />
           {activity.durationMinMinutes}
-          {activity.durationMaxMinutes ? `–${activity.durationMaxMinutes}` : ""}
+          {activity.durationMaxMinutes && activity.durationMaxMinutes !== activity.durationMinMinutes ? `–${activity.durationMaxMinutes}` : ""}
           m
         </span>
         <div className="ml-auto">
