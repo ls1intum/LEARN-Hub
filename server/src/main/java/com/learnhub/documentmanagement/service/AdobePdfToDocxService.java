@@ -1,5 +1,6 @@
 package com.learnhub.documentmanagement.service;
 
+import jakarta.annotation.PostConstruct;
 import java.net.URI;
 import java.time.Instant;
 import java.util.Map;
@@ -44,6 +45,15 @@ public class AdobePdfToDocxService {
 	private record CachedToken(String token, Instant expiresAt) {
 		boolean isValid() {
 			return Instant.now().isBefore(expiresAt.minusSeconds(60));
+		}
+	}
+
+	@PostConstruct
+	void logConfigurationStatus() {
+		if (isConfigured()) {
+			logger.info("Adobe PDF Services configured — DOCX export is available");
+		} else {
+			logger.warn("Adobe PDF Services credentials not provided (ADOBE_PDF_SERVICES_CLIENT_ID / ADOBE_PDF_SERVICES_CLIENT_SECRET). DOCX export will be unavailable.");
 		}
 	}
 
