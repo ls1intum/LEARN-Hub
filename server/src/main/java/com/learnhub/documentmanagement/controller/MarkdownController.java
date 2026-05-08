@@ -144,7 +144,7 @@ public class MarkdownController {
 			boolean landscape = orientation == null || !"portrait".equalsIgnoreCase(orientation);
 			String activityName = request.getActivityName();
 			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown, landscape,
-					activityName != null ? activityName : "");
+					activityName != null ? activityName : "", request.isExerciseSheet());
 			String documentTitle = (activityName == null || activityName.isBlank())
 					? "Markdown Preview"
 					: activityName.trim() + " Preview";

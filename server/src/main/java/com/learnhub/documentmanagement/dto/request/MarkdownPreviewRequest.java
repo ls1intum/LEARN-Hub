@@ -7,4 +7,5 @@ public class MarkdownPreviewRequest {
 	private String markdown;
 	private String orientation;
 	private String activityName;
+	private boolean exerciseSheet;
 }

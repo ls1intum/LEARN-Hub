@@ -3,12 +3,23 @@ package com.learnhub.documentmanagement.service;
 import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
+import com.itextpdf.kernel.colors.DeviceRgb;
+import com.itextpdf.kernel.events.Event;
+import com.itextpdf.kernel.events.IEventHandler;
+import com.itextpdf.kernel.events.PdfDocumentEvent;
+import com.itextpdf.kernel.font.PdfFont;
+import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfPage;
 import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
 import com.itextpdf.kernel.utils.PdfMerger;
+import com.itextpdf.io.font.constants.StandardFonts;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
@@ -78,11 +89,12 @@ public class MarkdownToPdfService {
 
 	/**
 	 * Render markdown content to PDF bytes, optionally applying the exercise-sheet
-	 * layout (outer border with Name / Datum fields at the top).
+	 * layout (outer border with Name / Datum fields repeated at the top of every page).
 	 */
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName, boolean exerciseSheet) {
 		String html = markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName, exerciseSheet);
-		return renderHtmlDocumentToPdf(html, activityName);
+		IEventHandler eventHandler = exerciseSheet ? new ExerciseSheetEventHandler() : null;
+		return renderHtmlDocumentToPdf(html, activityName, eventHandler);
 	}
 
 	/**
@@ -103,16 +115,20 @@ public class MarkdownToPdfService {
 	}
 
 	private byte[] renderHtmlDocumentToPdf(String html) {
-		return renderHtmlDocumentToPdf(html, null);
+		return renderHtmlDocumentToPdf(html, null, null);
 	}
 
 	private byte[] renderHtmlDocumentToPdf(String html, String documentTitle) {
+		return renderHtmlDocumentToPdf(html, documentTitle, null);
+	}
+
+	private byte[] renderHtmlDocumentToPdf(String html, String documentTitle, IEventHandler eventHandler) {
 		try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-			convertHtmlDocumentToPdfBytes(html, baos, createConverterProperties());
+			convertHtmlDocumentToPdfBytes(html, baos, createConverterProperties(), eventHandler);
 			return applyDocumentTitle(baos.toByteArray(), documentTitle);
 		} catch (Exception e) {
 			if (isCmapFailure(e)) {
-				return retryRenderWithoutProblematicCharacter(html, documentTitle, e);
+				return retryRenderWithoutProblematicCharacter(html, documentTitle, e, eventHandler);
 			}
 			logger.error("Failed to render markdown PDF: {}", e.getMessage(), e);
 			throw new RuntimeException("Failed to render markdown PDF: " + e.getMessage(), e);
@@ -122,6 +138,18 @@ public class MarkdownToPdfService {
 	void convertHtmlDocumentToPdfBytes(String html, ByteArrayOutputStream outputStream,
 			ConverterProperties converterProperties) {
 		HtmlConverter.convertToPdf(html, outputStream, converterProperties);
+	}
+
+	void convertHtmlDocumentToPdfBytes(String html, ByteArrayOutputStream outputStream,
+			ConverterProperties converterProperties, IEventHandler eventHandler) {
+		if (eventHandler == null) {
+			convertHtmlDocumentToPdfBytes(html, outputStream, converterProperties);
+			return;
+		}
+		try (PdfDocument pdfDoc = new PdfDocument(new PdfWriter(outputStream))) {
+			pdfDoc.addEventHandler(PdfDocumentEvent.END_PAGE, eventHandler);
+			HtmlConverter.convertToPdf(html, pdfDoc, converterProperties);
+		}
 	}
 
 	ConverterProperties createConverterProperties() {
@@ -149,7 +177,13 @@ public class MarkdownToPdfService {
 		return new ConverterProperties().setFontProvider(fontProvider);
 	}
 
-	private byte[] retryRenderWithoutProblematicCharacter(String html, String documentTitle, Exception originalException) {
+	private byte[] retryRenderWithoutProblematicCharacter(String html, String documentTitle,
+			Exception originalException) {
+		return retryRenderWithoutProblematicCharacter(html, documentTitle, originalException, null);
+	}
+
+	private byte[] retryRenderWithoutProblematicCharacter(String html, String documentTitle,
+			Exception originalException, IEventHandler eventHandler) {
 		Set<Integer> candidateCodePoints = findProblematicCharacterCandidates(html);
 		String currentHtml = html;
 		for (int codePoint : candidateCodePoints) {
@@ -160,7 +194,7 @@ public class MarkdownToPdfService {
 			currentHtml = sanitizedHtml;
 
 			try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-				convertHtmlDocumentToPdfBytes(currentHtml, baos, createConverterProperties());
+				convertHtmlDocumentToPdfBytes(currentHtml, baos, createConverterProperties(), eventHandler);
 				logger.warn(
 						"Rendered markdown PDF after removing character {} (U+{}) because iText failed with a null cmap table.",
 						describeCodePoint(codePoint), formatCodePoint(codePoint));
@@ -273,5 +307,107 @@ public class MarkdownToPdfService {
 
 		String normalized = title.trim();
 		return normalized.isEmpty() ? null : normalized;
+	}
+
+	/**
+	 * Draws the exercise-sheet decoration onto each rendered page:
+	 * <ul>
+	 * <li>An outer border rectangle on every page.</li>
+	 * <li>A Name / Datum fill-in row (with separator line) on every <em>odd</em>
+	 * page.</li>
+	 * </ul>
+	 * The CSS for exercise sheets adds {@code EXERCISE_EXTRA_TOP_MARGIN_PT} to the
+	 * standard top margin, creating blank space at the top of each page where the
+	 * Name/Datum row is drawn on odd pages.
+	 */
+	private static final class ExerciseSheetEventHandler implements IEventHandler {
+
+		// Must match MarkdownToHtmlService.EXERCISE_SHEET_EXTRA_TOP_MARGIN_PT
+		private static final float EXTRA_TOP_MARGIN = 22f;
+		private static final float STANDARD_TOP_MARGIN = 55f;
+		// Must match MarkdownToHtmlService.EXERCISE_BORDER_TOP_INSET_PT
+		private static final float BORDER_TOP_INSET = 4f;
+
+		private final PdfFont boldFont;
+		private final PdfFont regularFont;
+
+		ExerciseSheetEventHandler() {
+			try {
+				this.boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+				this.regularFont = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+			} catch (IOException e) {
+				throw new RuntimeException("Failed to load fonts for exercise sheet header", e);
+			}
+		}
+
+		@Override
+		public void handleEvent(Event event) {
+			PdfDocumentEvent docEvent = (PdfDocumentEvent) event;
+			PdfDocument pdfDoc = docEvent.getDocument();
+			PdfPage page = docEvent.getPage();
+			int pageNumber = pdfDoc.getPageNumber(page);
+			Rectangle pageSize = page.getPageSize();
+
+			boolean landscape = pageSize.getWidth() > pageSize.getHeight();
+			float marginLeft = landscape ? 30f : 35f;
+			float marginRight = landscape ? 30f : 35f;
+			float marginBottom = landscape ? 50f : 55f;
+
+			float borderLeft = marginLeft;
+			float borderRight = pageSize.getWidth() - marginRight;
+			float borderBottom = marginBottom;
+			float borderTop = pageSize.getHeight() - STANDARD_TOP_MARGIN - BORDER_TOP_INSET;
+			float nameRowBottom = borderTop - EXTRA_TOP_MARGIN;
+
+			PdfCanvas canvas = new PdfCanvas(page.newContentStreamAfter(), page.getResources(), pdfDoc);
+
+			// Outer border on every page
+			canvas.saveState()
+					.setStrokeColor(new DeviceRgb(0x55, 0x55, 0x55))
+					.setLineWidth(1.5f)
+					.rectangle(borderLeft, borderBottom, borderRight - borderLeft, borderTop - borderBottom)
+					.stroke()
+					.restoreState();
+
+			if (pageNumber % 2 == 1) {
+				// Separator line between Name/Datum row and content
+				canvas.saveState()
+						.setStrokeColor(new DeviceRgb(0x88, 0x88, 0x88))
+						.setLineWidth(0.75f)
+						.moveTo(borderLeft, nameRowBottom)
+						.lineTo(borderRight, nameRowBottom)
+						.stroke()
+						.restoreState();
+
+				float textY = nameRowBottom + 7f;
+				float nameX = borderLeft + 10f;
+				float datumX = borderLeft + (borderRight - borderLeft) * 0.55f;
+
+				canvas.setFillColor(new DeviceRgb(0x22, 0x22, 0x22));
+
+				canvas.beginText()
+						.setFontAndSize(boldFont, 10f)
+						.moveText(nameX, textY)
+						.showText("Name:")
+						.endText()
+						.beginText()
+						.setFontAndSize(regularFont, 10f)
+						.moveText(nameX + boldFont.getWidth("Name:", 10f) + 4f, textY)
+						.showText("________________________________")
+						.endText()
+						.beginText()
+						.setFontAndSize(boldFont, 10f)
+						.moveText(datumX, textY)
+						.showText("Datum:")
+						.endText()
+						.beginText()
+						.setFontAndSize(regularFont, 10f)
+						.moveText(datumX + boldFont.getWidth("Datum:", 10f) + 4f, textY)
+						.showText("________________")
+						.endText();
+			}
+
+			canvas.release();
+		}
 	}
 }

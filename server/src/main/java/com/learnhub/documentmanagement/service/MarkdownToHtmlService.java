@@ -31,6 +31,7 @@ public class MarkdownToHtmlService {
 	private static final String PDF_CSS_PORTRAIT_TEMPLATE_PATH = "templates/markdown/pdf-styles-portrait.css";
 	private static final String LOGO_PATH = "templates/markdown/header-logo.png";
 	private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+
 	private static final Pattern TAFELBILD_TITLE_PATTERN = Pattern.compile("^\\s*#\\s+Tafelbild\\b",
 			Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
 	private static final Pattern TAFELBILD_HTML_TITLE_PATTERN = Pattern.compile("<h1[^>]*>\\s*Tafelbild\\s*</h1>",
@@ -119,10 +120,8 @@ public class MarkdownToHtmlService {
 	public String renderMarkdownToHtml(String markdown, boolean landscape, String activityName, boolean exerciseSheet) {
 		String normalizedMarkdown = normalizeMarkdown(markdown);
 		String body = renderDecoratedMarkdownBody(normalizedMarkdown);
-		if (exerciseSheet) {
-			body = wrapWithExerciseLayout(body);
-		}
-		return wrapPdfHtmlDocument(body, landscape, activityName, detectDocumentBodyClass(normalizedMarkdown, body));
+		return wrapPdfHtmlDocument(body, landscape, activityName, detectDocumentBodyClass(normalizedMarkdown, body),
+				exerciseSheet);
 	}
 
 	/**
@@ -148,8 +147,38 @@ public class MarkdownToHtmlService {
 		return parser.parse(normalizeMarkdown(markdown));
 	}
 
+	// Height (pt) of the Name/Datum fill-in row drawn by the iText event handler.
+	// Must stay in sync with ExerciseSheetEventHandler.EXTRA_TOP_MARGIN.
+	static final float EXERCISE_SHEET_EXTRA_TOP_MARGIN_PT = 22f;
+	// Gap (pt) between the LEARN-Hub logo area and the top edge of the border rectangle.
+	// Must stay in sync with ExerciseSheetEventHandler.BORDER_TOP_INSET.
+	private static final float EXERCISE_BORDER_TOP_INSET_PT = 4f;
+	// Gap (pt) between the Name/Datum separator line and the first content line.
+	private static final float EXERCISE_CONTENT_TOP_GAP_PT = 5f;
+	// Extra padding (pt) inside the border on the left, right, and bottom.
+	private static final float EXERCISE_INNER_PADDING_PT = 6f;
+	private static final float STANDARD_TOP_MARGIN_PT = 55f;
+
 	private String wrapPdfHtmlDocument(String body, boolean landscape, String activityName, String bodyClass) {
-		String css = (landscape ? pdfCssTemplate : pdfCssPortraitTemplate) + "\n\n" + commonCssTemplate;
+		return wrapPdfHtmlDocument(body, landscape, activityName, bodyClass, false);
+	}
+
+	private String wrapPdfHtmlDocument(String body, boolean landscape, String activityName, String bodyClass,
+			boolean exerciseSheet) {
+		String pageMargins;
+		if (exerciseSheet) {
+			int top = Math.round(STANDARD_TOP_MARGIN_PT + EXERCISE_BORDER_TOP_INSET_PT
+					+ EXERCISE_SHEET_EXTRA_TOP_MARGIN_PT + EXERCISE_CONTENT_TOP_GAP_PT);
+			float baseSide = landscape ? 30f : 35f;
+			float baseBottom = landscape ? 50f : 55f;
+			int side = Math.round(baseSide + EXERCISE_INNER_PADDING_PT);
+			int bottom = Math.round(baseBottom + EXERCISE_INNER_PADDING_PT);
+			pageMargins = top + "pt " + side + "pt " + bottom + "pt " + side + "pt";
+		} else {
+			pageMargins = landscape ? "55pt 30pt 50pt 30pt" : "55pt 35pt 55pt 35pt";
+		}
+		String css = (landscape ? pdfCssTemplate : pdfCssPortraitTemplate).replace("{{page_margins}}", pageMargins)
+				+ "\n\n" + commonCssTemplate;
 		String name = activityName != null ? activityName : "";
 		String downloadDate = LocalDateTime.now().format(DATE_FORMATTER);
 		String normalizedBodyClass = bodyClass == null ? "" : bodyClass.trim();
@@ -226,17 +255,6 @@ public class MarkdownToHtmlService {
 		} catch (IOException e) {
 			throw new IllegalStateException("Failed to load template resource: " + path, e);
 		}
-	}
-
-	private String wrapWithExerciseLayout(String body) {
-		return "<div style=\"border: 1.5pt solid #555555; padding: 10pt 12pt 12pt 12pt;\">"
-				+ "<div style=\"border-bottom: 0.75pt solid #888888; padding-bottom: 6pt; margin-bottom: 10pt; font-size: 10pt;\">"
-				+ "<strong>Name:</strong>&nbsp; ________________________________"
-				+ "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-				+ "<strong>Datum:</strong>&nbsp; ________________"
-				+ "</div>"
-				+ body
-				+ "</div>";
 	}
 
 	private String loadLogoAsDataUri() {

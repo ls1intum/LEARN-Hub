@@ -343,13 +343,14 @@ export const ActivityApi = {
     markdown: string,
     orientation?: "portrait" | "landscape",
     activityName?: string,
+    exerciseSheet?: boolean,
   ) {
     const response = await authService.makeAuthenticatedRequest(
       "/api/markdowns/preview-pdf",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markdown, orientation, activityName }),
+        body: JSON.stringify({ markdown, orientation, activityName, exerciseSheet }),
       },
     );
 

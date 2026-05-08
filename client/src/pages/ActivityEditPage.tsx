@@ -341,6 +341,17 @@ export const ActivityEditPage: React.FC = () => {
     [activity?.name, savedMetadata?.name],
   );
 
+  const renderPreviewExercise = useCallback(
+    (markdown: string) =>
+      apiService.previewMarkdownPdf(
+        markdown,
+        "portrait",
+        savedMetadata?.name || activity?.name || "",
+        true,
+      ),
+    [activity?.name, savedMetadata?.name],
+  );
+
   // ─── Save ───────────────────────────────────────────────────────
 
   const handleSave = async () => {
@@ -711,7 +722,7 @@ export const ActivityEditPage: React.FC = () => {
                 <MarkdownEditorWithPreview
                   value={uebungMarkdown}
                   onChange={setUebungMarkdown}
-                  renderPreviewFn={renderPreviewPortrait}
+                  renderPreviewFn={renderPreviewExercise}
                   onRegenerateImage={handleRegenerateImage}
                 />
               )}

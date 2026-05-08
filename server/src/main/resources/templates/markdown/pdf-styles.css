@@ -1,6 +1,6 @@
 @page {
     size: A4 landscape;
-    margin: 55pt 30pt 50pt 30pt;
+    margin: {{page_margins}};
 
     @top-left {
         content: element(page-header);

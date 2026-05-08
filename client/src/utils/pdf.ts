@@ -22,6 +22,10 @@ export const ensurePdfFilename = (name?: string) => {
     : `${trimmedName}${PDF_EXTENSION}`;
 };
 
+const isMobile = () =>
+  /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ||
+  (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+
 export const openPdfInNewTab = (blob: Blob, title?: string) => {
   const filename = ensurePdfFilename(title);
   const pdfFile =
@@ -31,6 +35,20 @@ export const openPdfInNewTab = (blob: Blob, title?: string) => {
           type: blob.type || "application/pdf",
         });
   const pdfUrl = URL.createObjectURL(pdfFile);
+
+  // On mobile, iframes with blob URLs don't render PDFs. Trigger a download
+  // instead so the OS opens the file in the native PDF viewer.
+  if (isMobile()) {
+    const a = document.createElement("a");
+    a.href = pdfUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(pdfUrl), 5000);
+    return;
+  }
+
   const popup = window.open("", "_blank");
 
   if (!popup) {

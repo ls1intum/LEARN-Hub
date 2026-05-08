@@ -142,6 +142,7 @@ export const AITestingPage: React.FC = () => {
         markdown,
         ORIENTATION[selectedType],
         selectedFile?.name,
+        selectedType === "uebung",
       ),
     [selectedType, selectedFile],
   );
