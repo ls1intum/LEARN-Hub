@@ -74,6 +74,14 @@ function App() {
                           }
                         />
                         <Route
+                          path="/recommendations/:id"
+                          element={
+                            <MainLayout>
+                              <ActivityDetails />
+                            </MainLayout>
+                          }
+                        />
+                        <Route
                           path="/library"
                           element={
                             <MainLayout>
@@ -81,6 +89,15 @@ function App() {
                             </MainLayout>
                           }
                         />
+                        <Route
+                          path="/library/:id"
+                          element={
+                            <MainLayout>
+                              <ActivityDetails />
+                            </MainLayout>
+                          }
+                        />
+                        {/* Legacy route kept for backward compatibility */}
                         <Route
                           path="/activity-details/:id"
                           element={
@@ -110,6 +127,14 @@ function App() {
                           }
                         />
                         <Route
+                          path="/favourites/:id"
+                          element={
+                            <MainLayout>
+                              <ActivityDetails />
+                            </MainLayout>
+                          }
+                        />
+                        <Route
                           path="/history"
                           element={
                             <ProtectedLayout
@@ -128,13 +153,29 @@ function App() {
                           }
                         />
                         <Route
-                          path="/activity-edit/:id"
+                          path="/drafts/:id"
                           element={
                             <ProtectedLayout requiredRole="ADMIN">
-                              <ActivityEditPage />
+                              <ActivityDetails />
                             </ProtectedLayout>
                           }
                         />
+                        {[
+                          "/library/:id/edit",
+                          "/recommendations/:id/edit",
+                          "/favourites/:id/edit",
+                          "/drafts/:id/edit",
+                        ].map((path) => (
+                          <Route
+                            key={path}
+                            path={path}
+                            element={
+                              <ProtectedLayout requiredRole="ADMIN">
+                                <ActivityEditPage />
+                              </ProtectedLayout>
+                            }
+                          />
+                        ))}
                         <Route
                           path="/users"
                           element={

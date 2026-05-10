@@ -146,7 +146,7 @@ export const LessonPlanFavouritesTab: React.FC = () => {
 
   const handleViewActivityDetails = (activity: Activity) => {
     if (activity.id && activity.type === "activity") {
-      navigate(`/activity-details/${activity.id}`, {
+      navigate(`/favourites/${activity.id}`, {
         state: {
           activity,
           backTo: `${location.pathname}${location.search}`,

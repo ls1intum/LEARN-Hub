@@ -177,6 +177,9 @@ public class ActivityController {
 		Map<String, Object> criteria = activityService.buildRecommendationCriteria(request.name(), request.targetAge(),
 				request.format(), request.bloomLevels(), request.targetDuration(), request.availableResources(),
 				request.preferredTopics(), request.priorityCategories());
+		// Include replay-relevant params not part of the filtering criteria
+		criteria.put("maxActivityCount", request.maxActivityCount());
+		criteria.put("includeBreaks", request.includeBreaks());
 
 		// Save search history if user is authenticated
 		UUID userId = CurrentUser.getUserId(authentication);

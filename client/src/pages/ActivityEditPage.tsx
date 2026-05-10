@@ -96,6 +96,7 @@ export const ActivityEditPage: React.FC = () => {
   const { t } = useTranslation();
   const navigationState = location.state as ActivityNavigationState | null;
   const backTo = getActivityBackTarget(navigationState?.backTo);
+  const detailPath = navigationState?.detailPath ?? (id ? `/activity-details/${id}` : undefined);
   const detailNavigationState: ActivityNavigationState = {
     backTo,
     restoreScrollY: navigationState?.restoreScrollY,
@@ -117,8 +118,8 @@ export const ActivityEditPage: React.FC = () => {
       return;
     }
 
-    if (id) {
-      navigate(`/activity-details/${id}`, {
+    if (detailPath) {
+      navigate(detailPath, {
         replace: true,
         state: detailNavigationState,
       });
@@ -126,7 +127,7 @@ export const ActivityEditPage: React.FC = () => {
     }
 
     navigate("/drafts", { replace: true });
-  }, [backTo, detailNavigationState, id, navigate, navigationState]);
+  }, [backTo, detailNavigationState, detailPath, navigate, navigationState]);
 
   // Loading / error state for initial fetch
   const [activity, setActivity] = useState<Activity | null>(null);
@@ -404,7 +405,7 @@ export const ActivityEditPage: React.FC = () => {
 
       await apiService.updateActivity(id, updatePayload);
 
-      navigate(`/activity-details/${id}`, {
+      navigate(detailPath ?? `/activity-details/${id}`, {
         state: detailNavigationState,
       });
     } catch (error) {

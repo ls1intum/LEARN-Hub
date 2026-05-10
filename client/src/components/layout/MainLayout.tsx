@@ -9,6 +9,7 @@ import { NavigationMenu } from "./NavigationMenu";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useTranslation } from "react-i18next";
 import { APP_SCROLL_CONTAINER_ID } from "@/utils/scroll";
+import type { AuthRedirectState } from "@/utils/authRedirect";
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -53,6 +54,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const detailNavigationState = location.state as DetailNavigationState | null;
 
   const activePath = useMemo(() => {
+    // For legacy /activity-details route, use backTo state to determine active tab
     if (
       location.pathname.startsWith("/activity-details/") &&
       detailNavigationState?.backTo
@@ -67,19 +69,40 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const visibleTabs = useMemo(
     () =>
       NAVIGATION_TABS.filter((tab) => {
-        if (
-          !tab.roles.includes(
-            (user?.role as "ADMIN" | "TEACHER" | "GUEST") || "GUEST",
-          )
-        )
-          return false;
         if (tab.devOnly && environment === "production") return false;
-        return true;
+        // Show auth-required tabs to unauthenticated users (redirect to login on click)
+        if (!user && tab.requiresAuth) return true;
+        return tab.roles.includes(
+          (user?.role as "ADMIN" | "TEACHER" | "GUEST") || "GUEST",
+        );
       }),
-    [user?.role, environment],
+    [user, environment],
+  );
+
+  const authGatedPaths = useMemo(
+    () =>
+      new Set(
+        NAVIGATION_TABS.filter((tab) => tab.requiresAuth && !user).map(
+          (tab) => tab.path,
+        ),
+      ),
+    [user],
   );
 
   const handleNavigation = (path: string) => {
+    if (!user) {
+      const tab = NAVIGATION_TABS.find((t) => t.path === path);
+      if (tab?.requiresAuth) {
+        navigate("/login", {
+          state: {
+            from: { pathname: path, search: "", hash: "" },
+            message: t("nav.loginRequiredMessage"),
+          } satisfies AuthRedirectState,
+        });
+        closeMobile();
+        return;
+      }
+    }
     navigate(path);
     closeMobile();
   };
@@ -100,6 +123,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             currentTab={currentTab}
             onNavigation={handleNavigation}
             collapsed={isCollapsed}
+            authGatedPaths={authGatedPaths}
           />
         </div>
 
@@ -174,6 +198,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             currentTab={currentTab}
             onNavigation={handleNavigation}
             collapsed={false}
+            authGatedPaths={authGatedPaths}
           />
         </div>
       </div>

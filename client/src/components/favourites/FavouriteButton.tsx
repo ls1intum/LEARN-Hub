@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import { logger } from "@/services/logger";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import type { AuthRedirectState } from "@/utils/authRedirect";
 
 interface FavouriteButtonProps {
   activityId: string;
@@ -29,6 +32,9 @@ export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
   initialIsFavourited,
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { t } = useTranslation();
   const [isFavourited, setIsFavourited] = useState(
     initialIsFavourited ?? false,
   );
@@ -85,9 +91,30 @@ export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
     checkFavouriteStatus();
   }, [checkFavouriteStatus, initialIsFavourited]);
 
-  // Don't render if user is not logged in
+  // Show unauthenticated users the button, but redirect to login on click
   if (!user) {
-    return null;
+    return (
+      <Button
+        variant={variant}
+        size={size}
+        onClick={() => {
+          navigate("/login", {
+            state: {
+              from: {
+                pathname: location.pathname,
+                search: location.search,
+                hash: location.hash,
+              },
+              message: t("favourites.loginRequired"),
+            } satisfies AuthRedirectState,
+          });
+        }}
+        className={`text-muted-foreground hover:text-red-500 ${className}`}
+        title={t("favourites.loginRequired")}
+      >
+        <Heart className="h-4 w-4" />
+      </Button>
+    );
   }
 
   // Don't render while checking status

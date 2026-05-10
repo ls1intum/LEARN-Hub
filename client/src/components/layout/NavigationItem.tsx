@@ -1,4 +1,5 @@
 import React from "react";
+import { Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import {
@@ -13,10 +14,13 @@ interface NavigationItemProps {
     label: string;
     path: string;
     icon: React.ComponentType<{ className?: string }>;
+    requiresAuth?: boolean;
   };
   isActive: boolean;
   onClick: (path: string) => void;
   collapsed?: boolean;
+  /** If true, shows a lock icon indicating login is required */
+  isAuthGated?: boolean;
   className?: string;
 }
 
@@ -25,6 +29,7 @@ export const NavigationItem: React.FC<NavigationItemProps> = ({
   isActive,
   onClick,
   collapsed = false,
+  isAuthGated = false,
   className = "",
 }) => {
   const { t } = useTranslation();
@@ -53,8 +58,11 @@ export const NavigationItem: React.FC<NavigationItemProps> = ({
         )}
         aria-hidden="true"
       />
-      {!collapsed && <span>{t(`nav.${tab.id}`)}</span>}
-      {!collapsed && isActive && (
+      {!collapsed && <span className="flex-1 text-left">{t(`nav.${tab.id}`)}</span>}
+      {!collapsed && isAuthGated && (
+        <Lock className="h-3 w-3 shrink-0 opacity-50" aria-hidden="true" />
+      )}
+      {!collapsed && isActive && !isAuthGated && (
         <div className="absolute right-3 w-1.5 h-1.5 bg-primary-foreground/70 rounded-full" />
       )}
     </button>

@@ -116,7 +116,7 @@ export const ResultsDisplay: React.FC<ResultsDisplayProps> = ({
     activity: Recommendation["activities"][0],
   ) => {
     if (activity.id && activity.type === "activity") {
-      navigate(`/activity-details/${activity.id}`, {
+      navigate(`/recommendations/${activity.id}`, {
         state: {
           activity,
           backTo: `${location.pathname}${location.search}`,

@@ -8,7 +8,8 @@
     "drafts": "Entwürfe",
     "users": "Benutzer",
     "account": "Konto",
-    "ai-testing": "KI-Testen"
+    "ai-testing": "KI-Testen",
+    "loginRequiredMessage": "Bitte erstelle ein Konto, um auf diese Funktion zugreifen zu können."
   },
   "userHeader": {
     "adminPanel": "Admin-Bereich",
@@ -104,7 +105,8 @@
     "title": "Favoriten",
     "subtitle": "Verwalten Sie Ihre Lieblingsaktivitäten und Unterrichtspläne",
     "activities": "Aktivitäten",
-    "lessonPlans": "Unterrichtspläne"
+    "lessonPlans": "Unterrichtspläne",
+    "loginRequired": "Bitte erstelle ein Konto, um Favoriten zu speichern."
   },
   "history": {
     "title": "Suchverlauf",
@@ -132,7 +134,10 @@
     "bloomLevel": "Bloom-Niveau: {{value}}",
     "format": "Format: {{value}}",
     "topics": "Themen: {{value}}",
-    "resources": "Ressourcen: {{value}}"
+    "resources": "Ressourcen: {{value}}",
+    "priorities": "Priorität: {{value}}",
+    "lessonPlans": "Unterrichtspläne (max. {{value}})",
+    "includeBreaks": "Mit Pausen"
   },
   "account": {
     "title": "Mein Konto",

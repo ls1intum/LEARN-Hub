@@ -101,7 +101,7 @@ export const ActivityFavouritesTab: React.FC = () => {
   };
 
   const handleViewDetails = (activity: Activity) => {
-    navigate(`/activity-details/${activity.id}`, {
+    navigate(`/favourites/${activity.id}`, {
       state: {
         activity,
         backTo: `${location.pathname}${location.search}`,

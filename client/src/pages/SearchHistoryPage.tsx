@@ -86,29 +86,22 @@ export const SearchHistoryPage: React.FC = () => {
   ): string[] => {
     const formatted: string[] = [];
 
-    if (criteria.target_age) {
-      formatted.push(t("history.age", { value: criteria.target_age }));
+    if (criteria.targetAge) {
+      formatted.push(t("history.age", { value: criteria.targetAge }));
     }
-    if (criteria.target_duration) {
+    if (criteria.targetDuration) {
       formatted.push(
-        t("history.duration", { value: criteria.target_duration }),
-      );
-    }
-    if (criteria.bloomLevel && criteria.bloomLevel !== "any") {
-      formatted.push(
-        t("history.bloomLevel", {
-          value: translateEnum("bloomLevel", criteria.bloomLevel as string),
-        }),
+        t("history.duration", { value: criteria.targetDuration }),
       );
     }
     if (
-      criteria.bloom_levels &&
-      Array.isArray(criteria.bloom_levels) &&
-      criteria.bloom_levels.length > 0
+      criteria.bloomLevels &&
+      Array.isArray(criteria.bloomLevels) &&
+      criteria.bloomLevels.length > 0
     ) {
       formatted.push(
         t("history.bloomLevel", {
-          value: (criteria.bloom_levels as string[])
+          value: (criteria.bloomLevels as string[])
             .map((v) => translateEnum("bloomLevel", v))
             .join(", "),
         }),
@@ -128,30 +121,49 @@ export const SearchHistoryPage: React.FC = () => {
       );
     }
     if (
-      criteria.topics &&
-      Array.isArray(criteria.topics) &&
-      criteria.topics.length > 0
+      criteria.preferredTopics &&
+      Array.isArray(criteria.preferredTopics) &&
+      criteria.preferredTopics.length > 0
     ) {
       formatted.push(
         t("history.topics", {
-          value: (criteria.topics as string[])
+          value: (criteria.preferredTopics as string[])
             .map((v) => translateEnum("topics", v))
             .join(", "),
         }),
       );
     }
     if (
-      criteria.resourcesNeeded &&
-      Array.isArray(criteria.resourcesNeeded) &&
-      criteria.resourcesNeeded.length > 0
+      criteria.availableResources &&
+      Array.isArray(criteria.availableResources) &&
+      criteria.availableResources.length > 0
     ) {
       formatted.push(
         t("history.resources", {
-          value: (criteria.resourcesNeeded as string[])
+          value: (criteria.availableResources as string[])
             .map((v) => translateEnum("resources", v))
             .join(", "),
         }),
       );
+    }
+    if (
+      criteria.priorityCategories &&
+      Array.isArray(criteria.priorityCategories) &&
+      criteria.priorityCategories.length > 0
+    ) {
+      formatted.push(
+        t("history.priorities", {
+          value: (criteria.priorityCategories as string[])
+            .map((v) => t(`recommendationForm.${v}`, v))
+            .join(", "),
+        }),
+      );
+    }
+    if (typeof criteria.maxActivityCount === "number" && criteria.maxActivityCount > 1) {
+      formatted.push(t("history.lessonPlans", { value: criteria.maxActivityCount }));
+    }
+    if (criteria.includeBreaks === true) {
+      formatted.push(t("history.includeBreaks"));
     }
 
     return formatted.length > 0 ? formatted : [t("history.noSpecificCriteria")];

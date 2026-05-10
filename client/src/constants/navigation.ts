@@ -17,6 +17,8 @@ export interface NavigationTab {
   roles: ("ADMIN" | "TEACHER" | "GUEST")[];
   /** If true, hidden in production environments */
   devOnly?: boolean;
+  /** If true, unauthenticated users see this tab but are redirected to login on click */
+  requiresAuth?: boolean;
 }
 
 export const NAVIGATION_TABS: NavigationTab[] = [
@@ -40,6 +42,7 @@ export const NAVIGATION_TABS: NavigationTab[] = [
     path: "/favourites",
     icon: Heart,
     roles: ["ADMIN", "TEACHER"],
+    requiresAuth: true,
   },
   {
     id: "history",
@@ -47,6 +50,7 @@ export const NAVIGATION_TABS: NavigationTab[] = [
     path: "/history",
     icon: History,
     roles: ["ADMIN", "TEACHER"],
+    requiresAuth: true,
   },
   {
     id: "drafts",
@@ -75,5 +79,10 @@ export const NAVIGATION_TABS: NavigationTab[] = [
 export const getCurrentTab = (path: string): string => {
   const normalizedPath = path.split("?")[0].split("#")[0];
   const tab = NAVIGATION_TABS.find((tab) => tab.path === normalizedPath);
-  return tab?.id || "";
+  if (tab) return tab.id;
+  // Match nested routes by prefix, e.g., /library/123 → library tab
+  const prefixTab = NAVIGATION_TABS.find((tab) =>
+    normalizedPath.startsWith(tab.path + "/"),
+  );
+  return prefixTab?.id || "";
 };

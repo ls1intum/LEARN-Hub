@@ -696,7 +696,7 @@ export const LibraryPage: React.FC = () => {
                     key={activity.id}
                     activity={activity}
                     onClick={() =>
-                      navigate(`/activity-details/${activity.id}`, {
+                      navigate(`/library/${activity.id}`, {
                         state: {
                           activity,
                           backTo: `${location.pathname}${location.search}`,

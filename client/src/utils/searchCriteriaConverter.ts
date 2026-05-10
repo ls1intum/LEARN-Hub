@@ -19,26 +19,23 @@ export function convertSearchCriteriaToFormData(
 ): Partial<FormData> {
   const formData: Partial<FormData> = {};
 
-  // Convert basic fields
-  if (searchCriteria.targetAge !== undefined) {
+  // Convert basic fields (handle both camelCase and snake_case from server)
+  const rawAge =
+    searchCriteria.targetAge !== undefined
+      ? searchCriteria.targetAge
+      : searchCriteria.target_age;
+  if (rawAge !== undefined) {
     formData.targetAge =
-      typeof searchCriteria.targetAge === "number"
-        ? searchCriteria.targetAge
-        : parseInt(String(searchCriteria.targetAge), 10);
+      typeof rawAge === "number" ? rawAge : parseInt(String(rawAge), 10);
   }
 
-  if (searchCriteria.targetDuration !== undefined) {
+  const rawDuration =
+    searchCriteria.targetDuration !== undefined
+      ? searchCriteria.targetDuration
+      : searchCriteria.target_duration;
+  if (rawDuration !== undefined) {
     formData.targetDuration =
-      typeof searchCriteria.targetDuration === "number"
-        ? searchCriteria.targetDuration
-        : parseInt(String(searchCriteria.targetDuration), 10);
-  }
-
-  if (searchCriteria.allowLessonPlans !== undefined) {
-    formData.allowLessonPlans =
-      typeof searchCriteria.allowLessonPlans === "boolean"
-        ? searchCriteria.allowLessonPlans
-        : String(searchCriteria.allowLessonPlans).toLowerCase() === "true";
+      typeof rawDuration === "number" ? rawDuration : parseInt(String(rawDuration), 10);
   }
 
   if (searchCriteria.maxActivityCount !== undefined) {
@@ -53,6 +50,16 @@ export function convertSearchCriteriaToFormData(
       typeof searchCriteria.includeBreaks === "boolean"
         ? searchCriteria.includeBreaks
         : String(searchCriteria.includeBreaks).toLowerCase() === "true";
+  }
+
+  if (searchCriteria.allowLessonPlans !== undefined) {
+    formData.allowLessonPlans =
+      typeof searchCriteria.allowLessonPlans === "boolean"
+        ? searchCriteria.allowLessonPlans
+        : String(searchCriteria.allowLessonPlans).toLowerCase() === "true";
+  } else if (formData.maxActivityCount !== undefined) {
+    // Derive allowLessonPlans from maxActivityCount: >1 means lesson plans were enabled
+    formData.allowLessonPlans = formData.maxActivityCount > 1;
   }
 
   // Convert array fields (handle both arrays and single strings)
@@ -87,16 +94,23 @@ export function convertSearchCriteriaToFormData(
     }
   }
 
-  if (searchCriteria.bloomLevels) {
-    if (Array.isArray(searchCriteria.bloomLevels)) {
-      formData.bloomLevels = searchCriteria.bloomLevels.map(String);
-    } else if (typeof searchCriteria.bloomLevels === "string") {
-      // Handle comma-separated values from URL parameters
-      formData.bloomLevels = searchCriteria.bloomLevels
+  // Handle both camelCase (bloomLevels) and snake_case (bloom_levels) from server
+  const rawBloomLevels =
+    searchCriteria.bloomLevels !== undefined
+      ? searchCriteria.bloomLevels
+      : searchCriteria.bloom_levels;
+  if (rawBloomLevels) {
+    if (Array.isArray(rawBloomLevels)) {
+      formData.bloomLevels = rawBloomLevels.map(String);
+    } else if (typeof rawBloomLevels === "string") {
+      formData.bloomLevels = rawBloomLevels
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
     }
+  } else if (searchCriteria.bloomLevel && searchCriteria.bloomLevel !== "any") {
+    // Handle singular bloomLevel field
+    formData.bloomLevels = [String(searchCriteria.bloomLevel)];
   }
 
   if (searchCriteria.preferredTopics) {

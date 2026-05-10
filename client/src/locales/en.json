@@ -8,7 +8,8 @@
     "drafts": "Drafts",
     "users": "Users",
     "account": "Account",
-    "ai-testing": "AI Testing"
+    "ai-testing": "AI Testing",
+    "loginRequiredMessage": "Please create an account to access this feature."
   },
   "userHeader": {
     "adminPanel": "Admin Panel",
@@ -104,7 +105,8 @@
     "title": "Favourites",
     "subtitle": "Manage your favourite activities and lesson plans",
     "activities": "Activities",
-    "lessonPlans": "Lesson Plans"
+    "lessonPlans": "Lesson Plans",
+    "loginRequired": "Please create an account to save favourites."
   },
   "history": {
     "title": "Search History",
@@ -132,7 +134,10 @@
     "bloomLevel": "Bloom Level: {{value}}",
     "format": "Format: {{value}}",
     "topics": "Topics: {{value}}",
-    "resources": "Resources: {{value}}"
+    "resources": "Resources: {{value}}",
+    "priorities": "Priority: {{value}}",
+    "lessonPlans": "Lesson Plans (max {{value}})",
+    "includeBreaks": "With Breaks"
   },
   "account": {
     "title": "My Account",

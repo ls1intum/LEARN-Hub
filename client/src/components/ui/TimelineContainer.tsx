@@ -148,7 +148,7 @@ export const TimelineItem: React.FC<TimelineItemProps> = ({
                   size="sm"
                   onClick={() => {
                     // Open activity details in new tab
-                    window.open(`/activity-details/${activity.id}`, "_blank");
+                    window.open(`/recommendations/${activity.id}`, "_blank");
                   }}
                 >
                   <ExternalLink className="h-3 w-3 mr-1" />

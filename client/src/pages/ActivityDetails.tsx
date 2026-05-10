@@ -352,13 +352,25 @@ export const ActivityDetails: React.FC = () => {
             {isAdmin && (
               <>
                 <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="h-8 w-8 cursor-pointer text-muted-foreground hover:text-destructive"
+                  title={t("activityDetails.delete")}
+                  aria-label={t("activityDetails.delete")}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+                <Button
                   size="sm"
                   variant="outline"
                   onClick={() =>
-                    navigate(`/activity-edit/${activity.id}`, {
+                    navigate(`${location.pathname}/edit`, {
                       state: {
                         backTo,
                         restoreScrollY,
+                        detailPath: location.pathname,
                       } satisfies ActivityNavigationState,
                     })
                   }
@@ -366,16 +378,6 @@ export const ActivityDetails: React.FC = () => {
                 >
                   <Edit3 className="h-3.5 w-3.5" />
                   {t("activityDetails.edit")}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => setDeleteDialogOpen(true)}
-                  className="h-8 gap-1.5"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  {t("activityDetails.delete")}
                 </Button>
               </>
             )}

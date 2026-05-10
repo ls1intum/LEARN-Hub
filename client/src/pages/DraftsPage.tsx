@@ -311,11 +311,20 @@ const DraftCard: React.FC<DraftCardProps> = ({
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+          onClick={() => onDelete(activity.id)}
+          title="Löschen"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+        <Button
           variant="outline"
           size="sm"
           className="gap-1.5"
           onClick={() =>
-            navigate(`/activity-edit/${activity.id}`, {
+            navigate(`/drafts/${activity.id}/edit`, {
               state: detailNavigationState,
             })
           }
@@ -335,15 +344,6 @@ const DraftCard: React.FC<DraftCardProps> = ({
             <Send className="h-3.5 w-3.5" />
           )}
           Veröffentlichen
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-          onClick={() => onDelete(activity.id)}
-          title="Löschen"
-        >
-          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
     </div>

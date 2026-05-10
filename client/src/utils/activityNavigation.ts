@@ -1,11 +1,15 @@
 export interface ActivityNavigationState {
   backTo?: string;
   restoreScrollY?: number;
+  /** Full path to return to the activity detail page (e.g., /library/123) */
+  detailPath?: string;
 }
 
 const ACTIVITY_ROUTE_PATTERNS = [
-  /^\/activity-details\/[^/]+$/,
-  /^\/activity-edit\/[^/]+$/,
+  /^\/library\/[^/]+(\/edit)?$/,
+  /^\/recommendations\/[^/]+(\/edit)?$/,
+  /^\/favourites\/[^/]+(\/edit)?$/,
+  /^\/drafts\/[^/]+(\/edit)?$/,
 ];
 
 export const isActivityRoute = (path?: string): boolean =>
