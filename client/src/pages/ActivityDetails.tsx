@@ -5,13 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { DeleteActivityDialog } from "@/components/activities/DeleteActivityDialog";
+import { Breadcrumb, type BreadcrumbItem } from "@/components/ui/Breadcrumb";
 import { useDataFetch } from "@/hooks/useDataFetch";
 import { useApi } from "@/hooks/useApi";
 import {
   Brain,
   Activity as ActivityIcon,
   FileText,
-  ChevronLeft,
   Clock,
   Users,
   Monitor,
@@ -333,21 +333,65 @@ export const ActivityDetails: React.FC = () => {
     bloomKey as (typeof BLOOM_ORDER)[number],
   );
 
+  const source = location.pathname.startsWith("/library/")
+    ? "library"
+    : location.pathname.startsWith("/recommendations/")
+      ? "recommendations"
+      : location.pathname.startsWith("/favourites/")
+        ? "favourites"
+        : location.pathname.startsWith("/drafts/")
+          ? "drafts"
+          : null;
+
+  const scrollState =
+    typeof restoreScrollY === "number" ? { restoreScrollY } : undefined;
+
+  const breadcrumbItems: BreadcrumbItem[] = [];
+  if (source === "recommendations") {
+    breadcrumbItems.push({
+      label: t("nav.recommendations"),
+      href: "/recommendations",
+    });
+    if (backTo) {
+      breadcrumbItems.push({
+        label: t("recommendations.results"),
+        href: backTo,
+        state: scrollState,
+      });
+    }
+  } else if (source === "library") {
+    breadcrumbItems.push({
+      label: t("nav.library"),
+      href: backTo ?? "/library",
+      state: scrollState,
+    });
+  } else if (source === "favourites") {
+    breadcrumbItems.push({
+      label: t("nav.favourites"),
+      href: backTo ?? "/favourites",
+      state: scrollState,
+    });
+  } else if (source === "drafts") {
+    breadcrumbItems.push({
+      label: t("nav.drafts"),
+      href: backTo ?? "/drafts",
+      state: scrollState,
+    });
+  }
+  breadcrumbItems.push({ label: activity.name });
+
   return (
     <div className="py-6 space-y-6">
+      <Breadcrumb items={breadcrumbItems} />
+
       {/* Hero header */}
       <div className="rounded-xl bg-primary/5 border border-primary/10 px-5 py-5 space-y-4">
-        {/* Back + admin actions row */}
-        <div className="flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            {t("activityDetails.goBack")}
-          </button>
-          <div className="flex items-center gap-2">
+        {/* Title + actions row */}
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            {activity.name}
+          </h1>
+          <div className="flex items-center gap-2 shrink-0">
             <FavouriteButton activityId={activity.id} size="sm" />
             {isAdmin && (
               <>
@@ -383,11 +427,6 @@ export const ActivityDetails: React.FC = () => {
             )}
           </div>
         </div>
-
-        {/* Title */}
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-          {activity.name}
-        </h1>
 
         {/* Meta chips */}
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">

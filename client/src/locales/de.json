@@ -34,7 +34,8 @@
   "recommendations": {
     "title": "Aktivitätsempfehlungen",
     "subtitle": "Erhalten Sie personalisierte Aktivitätsempfehlungen für Ihren Unterricht",
-    "backToForm": "Zurück zum Formular"
+    "backToForm": "Zurück zum Formular",
+    "results": "Ergebnisse"
   },
   "resultsDisplay": {
     "noRecommendations": "Keine Empfehlungen gefunden",

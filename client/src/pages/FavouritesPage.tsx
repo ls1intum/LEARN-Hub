@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ActivityFavouritesTab } from "@/components/favourites/ActivityFavouritesTab";
 import { LessonPlanFavouritesTab } from "@/components/favourites/LessonPlanFavouritesTab";
 import { useTranslation } from "react-i18next";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 export const FavouritesPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,6 +22,7 @@ export const FavouritesPage: React.FC = () => {
 
   return (
     <div className="py-6">
+      <Breadcrumb items={[{ label: t("nav.favourites") }]} className="mb-4" />
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
           {t("favourites.title")}

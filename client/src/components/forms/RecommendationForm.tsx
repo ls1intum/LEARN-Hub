@@ -398,7 +398,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
             {step.category}
           </p>
-          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-4">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-4">
             {step.question}
           </h2>
           <p className="text-muted-foreground leading-relaxed mb-8 max-w-xl">

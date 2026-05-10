@@ -1,18 +1,16 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { RecommendationForm } from "@/components/forms/RecommendationForm";
 import { ResultsDisplay } from "@/components/results/ResultsDisplay";
 import { RecommendationCardSkeleton } from "@/components/results/RecommendationCard";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { useDataFetch } from "@/hooks/useDataFetch";
 import { useForm } from "@/hooks/useForm";
 import { apiService } from "@/services/apiService";
 import { convertSearchCriteriaToFormData } from "@/utils/searchCriteriaConverter";
-import { ArrowLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { ResultsData } from "@/types/activity";
 import { useTranslation } from "react-i18next";
 import { useRestoreScroll } from "@/hooks/useRestoreScroll";
@@ -227,28 +225,24 @@ export const RecommendationsPage: React.FC = () => {
       <div className="space-y-8">
         <div className="flex items-start gap-4 sm:gap-6">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3">
-              {showResults && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleBackToForm}
-                  aria-label={t("recommendations.backToForm")}
-                  className="h-9 w-9 flex-shrink-0"
-                >
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              )}
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                {t("recommendations.title")}
-              </h1>
-            </div>
-            <p
-              className={cn(
-                "text-muted-foreground mt-1.5 text-sm sm:text-base",
-                showResults && "ml-12",
-              )}
-            >
+            <Breadcrumb
+              items={
+                showResults
+                  ? [
+                      {
+                        label: t("nav.recommendations"),
+                        onClick: handleBackToForm,
+                      },
+                      { label: t("recommendations.results") },
+                    ]
+                  : [{ label: t("nav.recommendations") }]
+              }
+              className="mb-4"
+            />
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              {t("recommendations.title")}
+            </h1>
+            <p className="text-muted-foreground mt-1.5 text-sm sm:text-base">
               {t("recommendations.subtitle")}
             </p>
           </div>

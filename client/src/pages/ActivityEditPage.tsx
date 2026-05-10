@@ -25,6 +25,7 @@ import { LoadingState, SkeletonGrid } from "@/components/ui/LoadingState";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { StepIndicator } from "@/components/ui/StepIndicator";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Breadcrumb, type BreadcrumbItem } from "@/components/ui/Breadcrumb";
 import {
   MarkdownEditorWithPreview,
   type RegenerateImageParams,
@@ -466,8 +467,66 @@ export const ActivityEditPage: React.FC = () => {
     );
   }
 
+  const source = location.pathname.startsWith("/library/")
+    ? "library"
+    : location.pathname.startsWith("/recommendations/")
+      ? "recommendations"
+      : location.pathname.startsWith("/favourites/")
+        ? "favourites"
+        : location.pathname.startsWith("/drafts/")
+          ? "drafts"
+          : null;
+
+  const scrollState =
+    typeof navigationState?.restoreScrollY === "number"
+      ? { restoreScrollY: navigationState.restoreScrollY }
+      : undefined;
+
+  const breadcrumbItems: BreadcrumbItem[] = [];
+  if (source === "recommendations") {
+    breadcrumbItems.push({
+      label: t("nav.recommendations"),
+      href: "/recommendations",
+    });
+    if (backTo) {
+      breadcrumbItems.push({
+        label: t("recommendations.results"),
+        href: backTo,
+        state: scrollState,
+      });
+    }
+  } else if (source === "library") {
+    breadcrumbItems.push({
+      label: t("nav.library"),
+      href: backTo ?? "/library",
+      state: scrollState,
+    });
+  } else if (source === "favourites") {
+    breadcrumbItems.push({
+      label: t("nav.favourites"),
+      href: backTo ?? "/favourites",
+      state: scrollState,
+    });
+  } else if (source === "drafts") {
+    breadcrumbItems.push({
+      label: t("nav.drafts"),
+      href: backTo ?? "/drafts",
+      state: scrollState,
+    });
+  }
+  if (detailPath) {
+    breadcrumbItems.push({
+      label: activity.name,
+      href: detailPath,
+      state: detailNavigationState,
+    });
+  }
+  breadcrumbItems.push({ label: t("common.edit") });
+
   return (
     <div className="py-6">
+      <Breadcrumb items={breadcrumbItems} className="mb-6" />
+
       {/* Page Header & Step Indicator */}
       <div className="space-y-6 mb-8">
         <PageHeader

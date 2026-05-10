@@ -20,6 +20,7 @@ import { MarkdownEditorWithPreview } from "@/components/ui/MarkdownEditorWithPre
 import { apiService } from "@/services/apiService";
 import { authService } from "@/services/authService";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 type MarkdownType =
   | "uebung"
@@ -161,10 +162,13 @@ export const AITestingPage: React.FC = () => {
 
   return (
     <div className="py-6 space-y-6">
-      <PageHeader
-        title={t("aiTesting.title")}
-        description={t("aiTesting.description")}
-      />
+      <div>
+        <Breadcrumb items={[{ label: t("nav.ai-testing") }]} className="mb-3" />
+        <PageHeader
+          title={t("aiTesting.title")}
+          description={t("aiTesting.description")}
+        />
+      </div>
 
       {/* Configuration */}
       <Card>

@@ -10,6 +10,7 @@ import { logger } from "@/services/logger";
 import { useTranslation } from "react-i18next";
 import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 import { PaginationBar } from "@/components/ui/PaginationBar";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 export const SearchHistoryPage: React.FC = () => {
   const navigate = useNavigate();
@@ -171,6 +172,7 @@ export const SearchHistoryPage: React.FC = () => {
 
   return (
     <div className="py-6">
+      <Breadcrumb items={[{ label: t("nav.history") }]} className="mb-4" />
       <div className="mb-6">
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-1.5">
           {t("history.title")}

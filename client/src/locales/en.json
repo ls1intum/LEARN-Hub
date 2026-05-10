@@ -34,7 +34,8 @@
   "recommendations": {
     "title": "Activity Recommendations",
     "subtitle": "Get personalized activity recommendations for your teaching needs",
-    "backToForm": "Back to form"
+    "backToForm": "Back to form",
+    "results": "Results"
   },
   "resultsDisplay": {
     "noRecommendations": "No recommendations found",

@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -414,6 +416,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
 // ─── Main Page ─────────────────────────────────────────────────────────────
 
 export const DraftsPage: React.FC = () => {
+  const { t } = useTranslation();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -508,13 +511,16 @@ export const DraftsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-8">
-      <PageHeader title="Entwürfe" description="PDF hochladen, generieren und veröffentlichen">
+    <div className="py-6 space-y-8">
+      <div>
+        <Breadcrumb items={[{ label: t("nav.drafts") }]} className="mb-3" />
+        <PageHeader title="Entwürfe" description="PDF hochladen, generieren und veröffentlichen">
         <Button onClick={() => setUploadOpen(true)} className="gap-2">
           <Plus className="h-4 w-4" />
           Neu
         </Button>
-      </PageHeader>
+        </PageHeader>
+      </div>
 
       <UploadModal
         open={uploadOpen}

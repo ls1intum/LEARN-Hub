@@ -41,6 +41,7 @@ import { useTranslation } from "react-i18next";
 import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 import { useRestoreScroll } from "@/hooks/useRestoreScroll";
 import { getAppScrollTop, setAppScrollTop } from "@/utils/scroll";
+import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 interface LibraryLocationState {
   restoreScrollY?: number;
@@ -351,13 +352,14 @@ export const LibraryPage: React.FC = () => {
 
   return (
     <div className="w-full space-y-4 py-6">
+      <Breadcrumb items={[{ label: t("nav.library") }]} className="mb-4" />
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
             {t("library.title")}
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+          <p className="text-sm sm:text-base text-muted-foreground mt-1.5">
             {t("library.subtitle")}
           </p>
         </div>
@@ -738,7 +740,7 @@ export const LibraryPage: React.FC = () => {
                       key={activity.id}
                       className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/40 transition-colors cursor-pointer"
                       onClick={() =>
-                        navigate(`/activity-details/${activity.id}`, {
+                        navigate(`/library/${activity.id}`, {
                           state: {
                             activity,
                             backTo: `${location.pathname}${location.search}`,
