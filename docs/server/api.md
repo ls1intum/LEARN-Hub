@@ -26,7 +26,7 @@ RESTful API providing activity recommendations with transparent scoring, lesson 
 - Automatic OpenAPI 3.0 specification generation via SpringDoc annotations
 - Type-safe request/response validation with Jakarta Bean Validation
 - Interactive Swagger UI at `/api/openapi/swagger`
-- JWT authentication with Spring Security
+- Session-based authentication with Spring Security
 
 ### Request/Response Naming Convention
 

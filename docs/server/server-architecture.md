@@ -33,7 +33,7 @@ The code is organised into three main domains:
 
 ## Technology Rationale
 
-**Spring Boot**: Enterprise-grade framework with extensive ecosystem. Spring AI provides LLM integration; Spring Security handles JWT authentication; Spring Data JPA manages persistence with Hibernate ORM.
+**Spring Boot**: Enterprise-grade framework with extensive ecosystem. Spring AI provides LLM integration; Spring Security and Spring Session handle cookie-based authentication; Spring Data JPA manages persistence with Hibernate ORM.
 
 **PostgreSQL**: Production-ready relational database with ACID compliance, supporting concurrent access and complex relationships between activities, topics, and user preferences.
 
@@ -41,13 +41,13 @@ The code is organised into three main domains:
 
 ## Authentication Architecture
 
-The system implements JWT-based authentication:
+The system implements Spring Security session-based authentication:
 
-**All Users**: Email/password authentication returns JWT access tokens and refresh tokens. Access tokens (short-lived) limit exposure; refresh tokens maintain sessions.
+**All Users**: Successful login creates a server-side session persisted via Spring Session JDBC and identified by an `HttpOnly` session cookie. The SPA fetches a CSRF token and sends it on mutating requests.
 
 **Teacher Registration**: Email verification codes (6-digit, 10-minute expiry, 3-attempt limit) reduce onboarding friction.
 
-**Spring Security**: Configures endpoint access rules, JWT filter chain, and role-based authorisation (`TEACHER` and `ADMIN` roles).
+**Spring Security**: Configures endpoint access rules, session management, CSRF protection, and role-based authorisation (`TEACHER` and `ADMIN` roles).
 
 ## Service Architecture
 
@@ -57,7 +57,7 @@ The service layer implements business logic through specialised services:
 - **ScoringEngineService**: Implements category-based scoring algorithm
 - **ActivityService**: Handles activity CRUD operations and PDF upload workflow
 - **PDFService**: Manages document storage, retrieval, and lesson plan generation
-- **AuthService**: Handles user authentication, registration, and JWT token management
+- **AuthService**: Handles user authentication, registration, and account lifecycle operations
 - **EmailService**: Manages email delivery for verification codes
 - **UserSearchHistoryService & UserFavouritesService**: Track user preferences and interactions
 
@@ -92,4 +92,4 @@ All JSON request and response fields follow **camelCase** convention (REST API b
 
 ## Configuration
 
-Spring Boot's `application.properties` maps environment variables to configuration beans. Key settings include database connection, JWT secret, LLM integration, email service, CORS allowed origins, and PDF storage path.
+Spring Boot's `application.properties` maps environment variables to configuration beans. Key settings include database connection, session lifetime, LLM integration, email service, CORS allowed origins, and PDF storage path.

@@ -1,10 +1,8 @@
 package com.learnhub.usermanagement.service;
 
-import com.learnhub.security.JwtTokenService;
 import com.learnhub.usermanagement.dto.request.LoginRequest;
 import com.learnhub.usermanagement.dto.request.TeacherRegistrationRequest;
 import com.learnhub.usermanagement.dto.request.VerifyCodeRequest;
-import com.learnhub.usermanagement.dto.response.LoginResponse;
 import com.learnhub.usermanagement.dto.response.UserResponse;
 import com.learnhub.usermanagement.entity.User;
 import com.learnhub.usermanagement.entity.VerificationCode;
@@ -37,9 +35,6 @@ public class AuthService {
 	private PasswordEncoder passwordEncoder;
 
 	@Autowired
-	private JwtTokenService jwtTokenService;
-
-	@Autowired
 	private EmailService emailService;
 
 	public UserResponse registerTeacher(TeacherRegistrationRequest request) {
@@ -62,7 +57,7 @@ public class AuthService {
 		return mapToUserResponse(user);
 	}
 
-	public LoginResponse login(LoginRequest request) {
+	public User login(LoginRequest request) {
 		User user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(() -> new RuntimeException("User not found"));
 
@@ -76,17 +71,13 @@ public class AuthService {
 
 		// For admin users with password
 		if (request.getPassword() != null && passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-			String accessToken = jwtTokenService.generateAccessToken(user.getEmail(), user.getId(),
-					user.getRole().name());
-			String refreshToken = jwtTokenService.generateRefreshToken(user.getEmail(), user.getId(),
-					user.getRole().name());
-			return new LoginResponse(accessToken, refreshToken, mapToUserResponse(user));
+			return user;
 		}
 
 		throw new RuntimeException("Invalid credentials");
 	}
 
-	public LoginResponse verifyCode(VerifyCodeRequest request) {
+	public User verifyCode(VerifyCodeRequest request) {
 		User user = userRepository.findByEmail(request.getEmail())
 				.orElseThrow(() -> new RuntimeException("User not found"));
 		ensureEmailCodeLoginAllowed(user);
@@ -99,11 +90,7 @@ public class AuthService {
 		verificationCode.setUsed("Y");
 		verificationCodeRepository.save(verificationCode);
 
-		// Generate JWT tokens
-		String accessToken = jwtTokenService.generateAccessToken(user.getEmail(), user.getId(), user.getRole().name());
-		String refreshToken = jwtTokenService.generateRefreshToken(user.getEmail(), user.getId(),
-				user.getRole().name());
-		return new LoginResponse(accessToken, refreshToken, mapToUserResponse(user));
+		return user;
 	}
 
 	public void requestVerificationCode(String email) {
@@ -286,27 +273,6 @@ public class AuthService {
 
 		userRepository.delete(user);
 		return true;
-	}
-
-	public LoginResponse refreshToken(String refreshToken) {
-		// Validate refresh token
-		if (!jwtTokenService.validateRefreshToken(refreshToken)) {
-			throw new RuntimeException("Invalid or expired refresh token");
-		}
-
-		// Extract user information from refresh token
-		UUID userId = jwtTokenService.extractUserId(refreshToken);
-		String email = jwtTokenService.extractUsername(refreshToken);
-		String role = jwtTokenService.extractRole(refreshToken);
-
-		// Verify user still exists
-		User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
-
-		// Generate new tokens
-		String newAccessToken = jwtTokenService.generateAccessToken(email, userId, role);
-		String newRefreshToken = jwtTokenService.generateRefreshToken(email, userId, role);
-
-		return new LoginResponse(newAccessToken, newRefreshToken, mapToUserResponse(user));
 	}
 
 	public void resetPassword(String email) {

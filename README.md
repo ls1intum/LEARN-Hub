@@ -14,7 +14,7 @@ The recommendation engine implements content-based filtering with category-based
 
 The system implements a three-tier containerised web application architecture following the System Design Document approach:
 
-**Client Subsystem**: A React single-page application provides an interactive user interface for teachers and administrators. The client implements role-based access control, supports both light and dark themes, and maintains session-based authentication using sessionStorage for enhanced security on shared school computers.
+**Client Subsystem**: A React single-page application provides an interactive user interface for teachers and administrators. The client implements role-based access control, supports both light and dark themes, and uses Spring Security session cookies with CSRF protection for authentication.
 
 **Server Subsystem**: A Spring Boot REST API server orchestrates the core application logic through specialised internal systems. The Recommendation System encapsulates the algorithmic intelligence. The User System manages identity through user, history, and favourites services. The Document System oversees content ingestion via PDF processing and LLM-assisted metadata extraction using Spring AI.
 
@@ -83,7 +83,9 @@ cp example.env .env
 
 Key configuration variables:
 - `LLM_API_KEY` - API key for automated content processing
-- `JWT_SECRET_KEY` - JWT token signing
+- `SESSION_TIMEOUT` - Optional override for server-side session lifetime
+- `SESSION_COOKIE_MAX_AGE` - Optional override for persistent login cookie lifetime
+- `CLIENT_ALLOWED_ORIGINS` - Optional override for cross-origin client URLs
 - `POSTGRES_DB_URI` - PostgreSQL JDBC connection string
 - `EMAIL_*` - Email service configuration for teacher verification
 
@@ -119,7 +121,7 @@ See `example.env` for a complete list of configurable variables.
 - **Flyway** for database migrations
 - **PostgreSQL 17+** for relational data persistence
 - **Spring AI** with Ollama for LLM integration
-- **Spring Security** with JWT authentication
+- **Spring Security** with server-side session authentication
 - Maven for dependency management
 
 **Client**:

@@ -4,16 +4,14 @@ import com.learnhub.dto.request.EmailRequest;
 import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.dto.response.MessageResponse;
 import com.learnhub.security.CurrentUser;
+import com.learnhub.security.SessionAuthenticationService;
 import com.learnhub.usermanagement.dto.request.CreateUserRequest;
 import com.learnhub.usermanagement.dto.request.LoginRequest;
 import com.learnhub.usermanagement.dto.request.PasswordResetRequest;
-import com.learnhub.usermanagement.dto.request.RefreshTokenRequest;
 import com.learnhub.usermanagement.dto.request.TeacherRegistrationRequest;
 import com.learnhub.usermanagement.dto.request.UpdateProfileRequest;
 import com.learnhub.usermanagement.dto.request.UpdateUserRequest;
 import com.learnhub.usermanagement.dto.request.VerifyCodeRequest;
-import com.learnhub.usermanagement.dto.response.LoginResponse;
-import com.learnhub.usermanagement.dto.response.RefreshTokenResponse;
 import com.learnhub.usermanagement.dto.response.UserEnvelopeResponse;
 import com.learnhub.usermanagement.dto.response.UserMessageResponse;
 import com.learnhub.usermanagement.dto.response.UserResponse;
@@ -27,7 +25,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.web.authentication.RememberMeServices;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -46,6 +49,12 @@ public class AuthController {
 
 	@Autowired
 	private AuthService authService;
+
+	@Autowired
+	private SessionAuthenticationService sessionAuthenticationService;
+
+	@Autowired
+	private RememberMeServices rememberMeServices;
 
 	@PostMapping("/register-teacher")
 	@PreAuthorize("permitAll()")
@@ -84,15 +93,19 @@ public class AuthController {
 
 	@PostMapping("/verify")
 	@PreAuthorize("permitAll()")
-	@Operation(summary = "Verify code and login", description = "Verify the code and complete login process")
+	@Operation(summary = "Verify code and login", description = "Verify the code and create a server-side session")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Login result", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class)))})
-	public ResponseEntity<?> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
+			@ApiResponse(responseCode = "200", description = "Login result", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelopeResponse.class)))})
+	public ResponseEntity<?> verifyCode(@Valid @RequestBody VerifyCodeRequest request, HttpServletRequest httpRequest,
+			HttpServletResponse httpResponse) {
 		logger.info("POST /api/auth/verify - Verify code called for email={}", request.getEmail());
 		try {
-			LoginResponse response = authService.verifyCode(request);
+			var user = authService.verifyCode(request);
+			Authentication authentication = sessionAuthenticationService.createAuthentication(user);
+			rememberMeServices.loginSuccess(httpRequest, httpResponse, authentication);
+			sessionAuthenticationService.signIn(user, httpRequest, httpResponse);
 			logger.info("POST /api/auth/verify - Verification successful for email={}", request.getEmail());
-			return ResponseEntity.ok(response);
+			return ResponseEntity.ok(new UserEnvelopeResponse(authService.getUserById(user.getId())));
 		} catch (Exception e) {
 			logger.error("POST /api/auth/verify - Verification failed for email={}: {}", request.getEmail(),
 					e.getMessage());
@@ -102,15 +115,19 @@ public class AuthController {
 
 	@PostMapping("/login")
 	@PreAuthorize("permitAll()")
-	@Operation(summary = "Login with password", description = "Login with email and password (admin or teacher)")
+	@Operation(summary = "Login with password", description = "Login with email and password and create a server-side session")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Login result", content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class)))})
-	public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+			@ApiResponse(responseCode = "200", description = "Login result", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserEnvelopeResponse.class)))})
+	public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest,
+			HttpServletResponse httpResponse) {
 		logger.info("POST /api/auth/login - Login called for email={}", request.getEmail());
 		try {
-			LoginResponse response = authService.login(request);
+			var user = authService.login(request);
+			Authentication authentication = sessionAuthenticationService.createAuthentication(user);
+			rememberMeServices.loginSuccess(httpRequest, httpResponse, authentication);
+			sessionAuthenticationService.signIn(user, httpRequest, httpResponse);
 			logger.info("POST /api/auth/login - Login successful for email={}", request.getEmail());
-			return ResponseEntity.ok(response);
+			return ResponseEntity.ok(new UserEnvelopeResponse(authService.getUserById(user.getId())));
 		} catch (Exception e) {
 			logger.error("POST /api/auth/login - Login failed for email={}: {}", request.getEmail(), e.getMessage());
 			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
@@ -143,36 +160,11 @@ public class AuthController {
 		}
 	}
 
-	@PostMapping("/refresh")
+	@GetMapping("/csrf")
 	@PreAuthorize("permitAll()")
-	@Operation(summary = "Refresh token", description = "Refresh the JWT access token using refresh token")
-	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Refreshed tokens", content = @Content(mediaType = "application/json", schema = @Schema(implementation = RefreshTokenResponse.class)))})
-	public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest request) {
-		logger.info("POST /api/auth/refresh - Token refresh called");
-		try {
-			LoginResponse response = authService.refreshToken(request.getRefreshToken());
-			return ResponseEntity.ok(new RefreshTokenResponse(response.getAccessToken(), response.getRefreshToken()));
-		} catch (Exception e) {
-			logger.error("POST /api/auth/refresh - Token refresh failed: {}", e.getMessage());
-			return ResponseEntity.status(401).body(ErrorResponse.of(e.getMessage()));
-		}
-	}
-
-	@PostMapping("/logout")
-	@PreAuthorize("isAuthenticated()")
-	@SecurityRequirement(name = "BearerAuth")
-	@Operation(summary = "Logout", description = "Logout current user")
-	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Logout confirmation", content = @Content(mediaType = "application/json", schema = @Schema(implementation = MessageResponse.class)))})
-	public ResponseEntity<?> logout() {
-		logger.info("POST /api/auth/logout - Logout called");
-		try {
-			return ResponseEntity.ok(MessageResponse.of("Logged out successfully"));
-		} catch (Exception e) {
-			logger.error("POST /api/auth/logout - Logout failed: {}", e.getMessage());
-			return ResponseEntity.badRequest().body(ErrorResponse.of(e.getMessage()));
-		}
+	@Operation(summary = "Get CSRF token", description = "Get the CSRF token used for cookie-based session authentication")
+	public ResponseEntity<?> csrf(CsrfToken csrfToken) {
+		return ResponseEntity.ok(Map.of("token", csrfToken.getToken()));
 	}
 
 	@PostMapping("/reset-password")

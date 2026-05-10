@@ -38,7 +38,7 @@ export const UserApi = {
   /**
    * Update user (admin only)
    */
-  async updateUser(userId: number, data: UserRequest) {
+  async updateUser(userId: string, data: UserRequest) {
     return ApiRequestMixin.request(`/api/auth/users/${userId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -49,7 +49,7 @@ export const UserApi = {
   /**
    * Delete user (admin only)
    */
-  async deleteUser(userId: number) {
+  async deleteUser(userId: string) {
     return ApiRequestMixin.request(`/api/auth/users/${userId}`, {
       method: "DELETE",
     });

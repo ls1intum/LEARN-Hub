@@ -22,18 +22,18 @@ The application uses **React Context** for global state management rather than R
 
 ## Authentication and Security
 
-### Token Storage Strategy
+### Session Strategy
 
-JWT tokens stored in `sessionStorage` with tokens sent via `Authorization` headers:
-- **CSRF Immune**: Browsers do not automatically attach sessionStorage tokens to cross-site requests
-- **Automatic Cleanup**: Session ends when browser closes, preventing token inheritance on shared devices
-- **Educational Context**: Aligns with shared lab computer usage patterns in classrooms
+Authentication uses a server-side Spring Security session identified by an `HttpOnly` cookie:
+- **Server Authority**: Authentication state stays on the backend, simplifying logout and revocation
+- **Persistent Login**: Session cookies can survive app/browser restarts when configured with a max age
+- **CSRF Protection**: The client fetches a CSRF token cookie and sends it on mutating requests
 
-Implementation: The `secureStorage` utility abstracts storage operations, handles errors gracefully, and isolates implementation details for easy future changes.
+Implementation: `authService` automatically includes `credentials: "include"` on API requests and attaches the `X-XSRF-TOKEN` header when needed.
 
 ### Authentication Flow
 
-Token-based pattern: credentials exchanged for access/refresh tokens → stored in `sessionStorage` → included in API `Authorization` headers → automatic token refresh on 401 responses → cleared on logout. This eliminates server-side session management.
+Session pattern: credentials exchanged for a server-side session → browser stores the session cookie → client rehydrates user state via `/api/auth/me` → logout invalidates the server-side session.
 
 ## Data Synchronization
 
@@ -45,7 +45,7 @@ The client defines default field values in `src/constants/fieldValues.ts` for in
 
 ### API Integration
 
-The `apiService` centralises server communication with automatic token management, standardised error handling, and type-safe request/response processing. This abstracts HTTP communication from UI components.
+The `apiService` centralises server communication with session-aware requests, CSRF handling, standardised error handling, and type-safe request/response processing. This abstracts HTTP communication from UI components.
 
 ## Component Architecture
 
@@ -65,7 +65,7 @@ Custom form components (`BadgeSelector`, `PriorityToggle`, `RangeSlider`) abstra
 
 **Error Boundary**: Top-level component catches unhandled React errors, displays user-friendly messages, and logs to console.
 
-**API Errors**: Automatic token refresh retry for 401 responses; manual retry via UI buttons for other failures. Client-side validation provides immediate feedback.
+**API Errors**: Session expiry resolves to a 401 and the UI falls back to the login flow; manual retry via UI buttons handles other failures. Client-side validation provides immediate feedback.
 
 ## Styling and Theming
 
@@ -90,7 +90,7 @@ The application prioritises simplicity over premature optimisation. Key optimisa
 
 **Type Safety**: TypeScript catches errors at compile time and enables confident refactoring.
 
-**Security**: Technical decisions consider security implications (sessionStorage for tokens, client-side validation).
+**Security**: Technical decisions consider security implications (HttpOnly cookies, CSRF protection, client-side validation).
 
 **Error Handling**: Error boundaries catch unhandled React errors with graceful degradation.
 

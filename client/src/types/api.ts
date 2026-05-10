@@ -170,7 +170,7 @@ export interface LessonPlanFavoritesResponse {
 // Users response
 export interface UsersResponse {
   users: Array<{
-    id: number;
+    id: string;
     email: string;
     name?: string;
     role: string;

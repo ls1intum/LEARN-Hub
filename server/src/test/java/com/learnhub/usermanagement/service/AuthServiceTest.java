@@ -15,6 +15,7 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -24,13 +25,18 @@ class AuthServiceTest {
 	private UserRepository userRepository;
 	private VerificationCodeRepository verificationCodeRepository;
 	private EmailService emailService;
+	private JavaMailSender mailSender;
 
 	@BeforeEach
 	void setUp() {
 		authService = new AuthService();
 		userRepository = mock(UserRepository.class);
 		verificationCodeRepository = mock(VerificationCodeRepository.class);
-		emailService = mock(EmailService.class);
+		mailSender = mock(JavaMailSender.class);
+		emailService = new EmailService();
+		ReflectionTestUtils.setField(emailService, "mailSender", mailSender);
+		ReflectionTestUtils.setField(emailService, "fromAddress", "test@example.com");
+		ReflectionTestUtils.setField(emailService, "fromName", "LEARN-Hub");
 
 		ReflectionTestUtils.setField(authService, "userRepository", userRepository);
 		ReflectionTestUtils.setField(authService, "verificationCodeRepository", verificationCodeRepository);
@@ -47,8 +53,7 @@ class AuthServiceTest {
 				.isInstanceOf(RuntimeException.class).hasMessage("Admins must log in with password");
 
 		verify(verificationCodeRepository, never()).save(org.mockito.ArgumentMatchers.any());
-		verify(emailService, never()).sendVerificationCode(org.mockito.ArgumentMatchers.anyString(),
-				org.mockito.ArgumentMatchers.anyString(), org.mockito.ArgumentMatchers.anyString());
+		verify(mailSender, never()).send(org.mockito.ArgumentMatchers.any(org.springframework.mail.SimpleMailMessage.class));
 	}
 
 	@Test

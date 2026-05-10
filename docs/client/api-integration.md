@@ -2,21 +2,20 @@
 
 ## Overview
 
-Client-side API service layer implementing type-safe communication with the server, handling token management, error resilience, and optimised data loading patterns.
+Client-side API service layer implementing type-safe communication with the server, handling session authentication, error resilience, and optimised data loading patterns.
 
 ## Service Architecture
 
-- **`authService`** - JWT token management with sessionStorage integration
-- **`apiService`** - Standardised request handling with automatic token refresh
+- **`authService`** - Session-aware authentication and CSRF bootstrap
+- **`apiService`** - Standardised request handling with credentialed fetch calls
 - **`logger`** - Environment-aware logging for development debugging
-- **`secureStorage`** - Session-based token storage with automatic cleanup
 
 ## Authentication Flow
 
 1. **Login** - Admin password or teacher verification code authentication
-2. **Token Storage** - Access/refresh tokens in sessionStorage via `secureStorage`
-3. **Auto-refresh** - Automatic token refresh on 401 responses
-4. **Session Management** - Automatic token cleanup when browser session ends
+2. **Session Creation** - Spring Security creates a server-side session and sets the `LEARNHUBSESSION` cookie
+3. **CSRF Bootstrap** - Client fetches `/api/auth/csrf` and sends `X-XSRF-TOKEN` on mutating requests
+4. **Session Rehydration** - Client restores user state via `/api/auth/me` on app start
 
 ## API Service Patterns
 
@@ -46,19 +45,19 @@ ApiService.deleteProfile() -> Confirmation
 
 ## Authentication Strategy
 
-### Token Storage
+### Session Cookies
 
-JWT tokens stored in `sessionStorage` with tokens sent via `Authorization` headers:
-- **CSRF Immune**: Browsers do not automatically attach sessionStorage tokens to cross-site requests
-- **Automatic Cleanup**: Session ends when browser closes, preventing token inheritance on shared devices
-- **Tab Isolation**: Tokens not shared across browser tabs
-- **Educational Context**: Aligns with shared lab computer usage patterns in classrooms
+Spring Security stores authentication server-side and the browser sends an `HttpOnly` session cookie:
+- **Reduced Client Exposure**: No access or refresh tokens are stored in JavaScript-accessible storage
+- **Persistent Login**: Cookie max-age allows app users to stay logged in across restarts
+- **CSRF Protection**: Mutating requests include the `X-XSRF-TOKEN` header sourced from the CSRF cookie
+- **Educational Context**: Session lifetime remains configurable for shared-device environments
 
 ### Error Resilience
 
 - **Connection Timeout** - Handles network connectivity issues
 - **Manual Retry** - Users can retry failed requests via UI buttons
-- **Authentication Errors** - Automatic token refresh on 401; redirect to login on refresh failure
+- **Authentication Errors** - Expired sessions return 401; the UI redirects users back through login
 - **PDF Upload Error Recovery** - Users can skip AI extraction while running and enter data manually; failed extractions can be retried
 
 ## Field Values Synchronisation
@@ -99,19 +98,7 @@ Runtime environment fetched from `/api/meta/environment` endpoint:
 
 ## Error Handling
 
-**Automatic token refresh** on 401 with transparent session maintenance. **Clear error messages** guide user recovery. **API errors** logged with context for debugging. **Graceful degradation** when services unavailable.
-
-## Utilities
-
-### Secure Storage
-
-```typescript
-secureStorage.getAccessToken(): string | null
-secureStorage.setTokens(accessToken, refreshToken): void
-secureStorage.clearTokens(): void
-```
-
-Session-based storage with error resilience for private browsing mode.
+**Session-aware requests** keep authentication logic in one place. **Clear error messages** guide user recovery. **API errors** are logged with context for debugging. **Graceful degradation** applies when services are unavailable.
 
 ### Logging Service
 
@@ -126,7 +113,6 @@ Environment-aware: debug/info only in development; warn/error always logged.
 
 ## Testing Strategy
 
-**Authentication Service** - Token management, API calls, error handling  
+**Authentication Service** - Session management, API calls, error handling  
 **Custom Hooks** - Form state management and validation  
-**Utility Functions** - SessionStorage operations and error resilience  
 **Focus**: Critical business logic and error paths, not UI rendering

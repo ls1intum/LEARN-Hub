@@ -52,23 +52,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      if (authService.isAuthenticated()) {
-        try {
-          const currentUser = await authService.getCurrentUser();
-          if (currentUser) {
-            setUser(currentUser);
-          } else {
-            // If we can't get user info, clear tokens
-            authService.clearTokens();
-            setUser(null);
-          }
-        } catch (error) {
-          logger.error("Error getting current user", error, "AuthContext");
-          // Clear invalid tokens
-          authService.clearTokens();
+      try {
+        const currentUser = await authService.getCurrentUser();
+        if (currentUser) {
+          setUser(currentUser);
+        } else {
           setUser(null);
         }
-      } else {
+      } catch (error) {
+        logger.error("Error getting current user", error, "AuthContext");
         setUser(null);
       }
       setIsLoading(false);
@@ -115,24 +107,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const refreshUser = async () => {
-    if (!authService.isAuthenticated()) {
-      setUser(null);
-      return;
-    }
-
     try {
       const currentUser = await authService.getCurrentUser();
       if (currentUser) {
         setUser(currentUser);
       } else {
-        // If we can't get user info, clear tokens
-        authService.clearTokens();
         setUser(null);
       }
     } catch (error) {
       logger.error("Error refreshing user", error, "AuthContext");
-      // Clear invalid tokens
-      authService.clearTokens();
       setUser(null);
     }
   };
@@ -161,8 +144,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await apiService.deleteProfile();
 
-      // Clear tokens and user state
-      authService.clearTokens();
       setUser(null);
 
       return { success: true, message: "Account deleted successfully" };

@@ -87,7 +87,8 @@ Spring Boot maps environment variables to configuration properties:
 
 **Required Variables**:
 - `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL_NAME` - Ollama LLM service
-- `JWT_SECRET_KEY` - Security key for JWT token signing
+- `SESSION_TIMEOUT` - optional server-side session timeout override
+- `SESSION_COOKIE_MAX_AGE` - optional persistent session cookie lifetime override
 - `POSTGRES_DB_URI` - PostgreSQL JDBC connection string
 - `EMAIL_*` - Email service configuration
 - `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` - Bootstrap admin (optional)

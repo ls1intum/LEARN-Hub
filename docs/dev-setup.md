@@ -52,7 +52,8 @@ You must update:
 - `EMAIL_PASSWORD` - your TUM password
 - `PDF_PATH` - where pdfs will be stored on your machine
 - `LLM_API_KEY` - LLM-assisted activity creation, chair's infra
-- `JWT_SECRET_KEY` - Secret key for JWT token signing
+- `SESSION_TIMEOUT` - optional server-side session timeout override
+- `SESSION_COOKIE_MAX_AGE` - optional persistent session cookie lifetime override
 
 ## Setup
 

@@ -48,7 +48,7 @@ export const UserManagementPage: React.FC = () => {
   const [users, setUsers] = useState<UserType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
-  const [isEditing, setIsEditing] = useState<number | null>(null);
+  const [isEditing, setIsEditing] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserType | null>(null);
@@ -126,7 +126,7 @@ export const UserManagementPage: React.FC = () => {
     }
   };
 
-  const handleEditUser = async (userId: number, e: React.FormEvent) => {
+  const handleEditUser = async (userId: string, e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
     setError(null);

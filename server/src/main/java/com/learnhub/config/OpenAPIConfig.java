@@ -21,8 +21,8 @@ public class OpenAPIConfig {
 				.servers(List.of(new Server().url("http://localhost:5001").description("Development local server"),
 						new Server().url("https://learnhub-test.aet.cit.tum.de").description("Test server")))
 				.components(new Components().addSecuritySchemes("BearerAuth", new SecurityScheme()
-						.type(SecurityScheme.Type.HTTP).scheme("bearer").bearerFormat("JWT").description(
-								"JWT token for authentication. Include 'Bearer ' prefix in Authorization header.")))
+						.type(SecurityScheme.Type.APIKEY).in(SecurityScheme.In.COOKIE).name("LEARNHUBSESSION")
+						.description("Session cookie authentication. Use the login endpoints to establish a session.")))
 				.addSecurityItem(new SecurityRequirement().addList("BearerAuth"));
 	}
 }

@@ -9,7 +9,7 @@ Spring Boot REST API server for educational activity recommendations.
 - PostgreSQL 17+ for data persistence
 - Flyway for database migrations
 - Spring AI with Ollama for LLM integration
-- Spring Security with JWT authentication
+- Spring Security with server-side session authentication
 - Maven for dependency management
 
 ## Quick Start
@@ -78,11 +78,12 @@ Then start the application. The seeder will create an admin user with auto-gener
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/register` - Register new teacher
+- `GET /api/auth/csrf` - Get CSRF token for cookie-authenticated requests
+- `POST /api/auth/register-teacher` - Register new teacher
 - `POST /api/auth/login` - Login with email/password
-- `POST /api/auth/verify-code` - Verify email code and get JWT token
-- `POST /api/auth/request-verification-code` - Request new verification code
-- `POST /api/auth/refresh` - Refresh JWT token
+- `POST /api/auth/verify` - Verify email code and create session
+- `POST /api/auth/verification-code` - Request new verification code
+- `POST /api/auth/logout` - Logout and invalidate session
 - `GET /api/auth/me` - Get current user profile
 - `PUT /api/auth/me` - Update current user profile
 
@@ -121,7 +122,10 @@ Key environment variables (see `example.env` for full list):
 | Variable | Description |
 |----------|-------------|
 | `POSTGRES_DB_URI` | PostgreSQL JDBC connection string |
-| `JWT_SECRET_KEY` | JWT token signing key |
+| `SESSION_TIMEOUT` | Optional override for server-side session timeout |
+| `SESSION_COOKIE_MAX_AGE` | Optional override for persistent session cookie lifetime |
+| `SESSION_COOKIE_SECURE` | Optional override to force secure cookies |
+| `CLIENT_ALLOWED_ORIGINS` | Optional override for credentialed cross-origin requests |
 | `LLM_BASE_URL` | Ollama API base URL |
 | `LLM_API_KEY` | Ollama API key |
 | `LLM_MODEL_NAME` | LLM model name |

@@ -23,9 +23,7 @@ afterAll(() => server.close());
 // Mock authService
 vi.mock("@/services/authService", () => ({
   authService: {
-    isAuthenticated: vi.fn(),
     getCurrentUser: vi.fn(),
-    clearTokens: vi.fn(),
     login: vi.fn(),
     verificationCodeLogin: vi.fn(),
     requestVerificationCode: vi.fn(),
@@ -65,11 +63,10 @@ describe("AuthContext", () => {
   describe("Initialization", () => {
     it("should load user from storage when authenticated", async () => {
       const mockUser = {
-        id: 1,
+        id: "1",
         email: "test@example.com",
         role: "TEACHER" as const,
       };
-      vi.mocked(authService.isAuthenticated).mockReturnValue(true);
       vi.mocked(authService.getCurrentUser).mockResolvedValue(mockUser);
 
       const { result } = renderHook(() => React.useContext(AuthContext), {
@@ -85,8 +82,7 @@ describe("AuthContext", () => {
       expect(authService.getCurrentUser).toHaveBeenCalledTimes(1);
     });
 
-    it("should clear invalid tokens when getCurrentUser fails", async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(true);
+    it("should clear the user when getCurrentUser returns null", async () => {
       vi.mocked(authService.getCurrentUser).mockResolvedValue(null);
 
       const { result } = renderHook(() => React.useContext(AuthContext), {
@@ -99,11 +95,9 @@ describe("AuthContext", () => {
 
       expect(result.current?.user).toBeNull();
       expect(result.current?.isAuthenticated).toBe(false);
-      expect(authService.clearTokens).toHaveBeenCalled();
     });
 
     it("should handle errors during initialization", async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(true);
       vi.mocked(authService.getCurrentUser).mockRejectedValue(
         new Error("Network error"),
       );
@@ -118,11 +112,10 @@ describe("AuthContext", () => {
 
       expect(result.current?.user).toBeNull();
       expect(result.current?.isAuthenticated).toBe(false);
-      expect(authService.clearTokens).toHaveBeenCalled();
     });
 
-    it("should set user to null when not authenticated", async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(false);
+    it("should set user to null when no session exists", async () => {
+      vi.mocked(authService.getCurrentUser).mockResolvedValue(null);
 
       const { result } = renderHook(() => React.useContext(AuthContext), {
         wrapper,
@@ -134,18 +127,18 @@ describe("AuthContext", () => {
 
       expect(result.current?.user).toBeNull();
       expect(result.current?.isAuthenticated).toBe(false);
-      expect(authService.getCurrentUser).not.toHaveBeenCalled();
+      expect(authService.getCurrentUser).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("Login Operations", () => {
     it("should update user state on successful password login", async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(false);
       const mockUser = {
-        id: 1,
+        id: "1",
         email: "teacher@example.com",
         role: "TEACHER" as const,
       };
+      vi.mocked(authService.getCurrentUser).mockResolvedValue(null);
       vi.mocked(authService.login).mockResolvedValue({
         success: true,
         user: mockUser,
@@ -173,7 +166,7 @@ describe("AuthContext", () => {
     });
 
     it("should not update user state on failed login", async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(false);
+      vi.mocked(authService.getCurrentUser).mockResolvedValue(null);
       vi.mocked(authService.login).mockResolvedValue({
         success: false,
         message: "Invalid credentials",
@@ -198,12 +191,12 @@ describe("AuthContext", () => {
     });
 
     it("should handle admin password login", async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(false);
       const mockUser = {
-        id: 1,
+        id: "1",
         email: "admin@example.com",
         role: "ADMIN" as const,
       };
+      vi.mocked(authService.getCurrentUser).mockResolvedValue(null);
       vi.mocked(authService.login).mockResolvedValue({
         success: true,
         user: mockUser,
@@ -226,12 +219,12 @@ describe("AuthContext", () => {
     });
 
     it("should handle verification code login", async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(false);
       const mockUser = {
-        id: 1,
+        id: "1",
         email: "teacher@example.com",
         role: "TEACHER" as const,
       };
+      vi.mocked(authService.getCurrentUser).mockResolvedValue(null);
       vi.mocked(authService.verificationCodeLogin).mockResolvedValue({
         success: true,
         user: mockUser,
@@ -260,11 +253,10 @@ describe("AuthContext", () => {
   describe("Logout", () => {
     it("should clear user state on logout", async () => {
       const mockUser = {
-        id: 1,
+        id: "1",
         email: "test@example.com",
         role: "TEACHER" as const,
       };
-      vi.mocked(authService.isAuthenticated).mockReturnValue(true);
       vi.mocked(authService.getCurrentUser).mockResolvedValue(mockUser);
       vi.mocked(authService.logout).mockResolvedValue();
 
@@ -289,20 +281,17 @@ describe("AuthContext", () => {
   describe("Refresh User", () => {
     it("should refresh user data when authenticated", async () => {
       const initialUser = {
-        id: 1,
+        id: "1",
         email: "test@example.com",
         role: "TEACHER" as const,
       };
       const updatedUser = {
-        id: 1,
+        id: "1",
         email: "test@example.com",
         role: "TEACHER" as const,
         firstName: "John",
       };
 
-      vi.mocked(authService.isAuthenticated)
-        .mockReturnValueOnce(true)
-        .mockReturnValueOnce(true);
       vi.mocked(authService.getCurrentUser)
         .mockResolvedValueOnce(initialUser)
         .mockResolvedValueOnce(updatedUser);
@@ -322,16 +311,15 @@ describe("AuthContext", () => {
       expect(result.current?.user).toEqual(updatedUser);
     });
 
-    it("should clear user when not authenticated during refresh", async () => {
+    it("should clear user when refresh returns no session", async () => {
       const mockUser = {
-        id: 1,
+        id: "1",
         email: "test@example.com",
         role: "TEACHER" as const,
       };
-      vi.mocked(authService.isAuthenticated)
-        .mockReturnValueOnce(true)
-        .mockReturnValueOnce(false);
-      vi.mocked(authService.getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(authService.getCurrentUser)
+        .mockResolvedValueOnce(mockUser)
+        .mockResolvedValueOnce(null);
 
       const { result } = renderHook(() => React.useContext(AuthContext), {
         wrapper,
@@ -349,15 +337,12 @@ describe("AuthContext", () => {
       expect(result.current?.isAuthenticated).toBe(false);
     });
 
-    it("should clear tokens on refresh error", async () => {
+    it("should clear user on refresh error", async () => {
       const mockUser = {
-        id: 1,
+        id: "1",
         email: "test@example.com",
         role: "TEACHER" as const,
       };
-      vi.mocked(authService.isAuthenticated)
-        .mockReturnValueOnce(true)
-        .mockReturnValueOnce(true);
       vi.mocked(authService.getCurrentUser)
         .mockResolvedValueOnce(mockUser)
         .mockRejectedValueOnce(new Error("Network error"));
@@ -375,13 +360,12 @@ describe("AuthContext", () => {
       });
 
       expect(result.current?.user).toBeNull();
-      expect(authService.clearTokens).toHaveBeenCalled();
     });
   });
 
   describe("Registration and Password Operations", () => {
     it("should forward request verification code to authService", async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(false);
+      vi.mocked(authService.getCurrentUser).mockResolvedValue(null);
       vi.mocked(authService.requestVerificationCode).mockResolvedValue({
         success: true,
         message: "Code sent",
@@ -408,7 +392,7 @@ describe("AuthContext", () => {
     });
 
     it("should forward register teacher to authService", async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(false);
+      vi.mocked(authService.getCurrentUser).mockResolvedValue(null);
       vi.mocked(authService.registerTeacher).mockResolvedValue({
         success: true,
         message: "Teacher registered",
@@ -440,7 +424,7 @@ describe("AuthContext", () => {
     });
 
     it("should forward reset password to authService", async () => {
-      vi.mocked(authService.isAuthenticated).mockReturnValue(false);
+      vi.mocked(authService.getCurrentUser).mockResolvedValue(null);
       vi.mocked(authService.resetPassword).mockResolvedValue({
         success: true,
         message: "Password reset email sent",
