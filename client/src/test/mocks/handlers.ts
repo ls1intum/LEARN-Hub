@@ -12,11 +12,14 @@ export const resetMockSession = () => {
 
 export const handlers = [
   http.get("/api/auth/csrf", () => {
-    return HttpResponse.json({ message: "csrf-token" }, {
-      headers: {
-        "Set-Cookie": "XSRF-TOKEN=csrf-token; Path=/",
+    return HttpResponse.json(
+      { message: "csrf-token" },
+      {
+        headers: {
+          "Set-Cookie": "XSRF-TOKEN=csrf-token; Path=/",
+        },
       },
-    });
+    );
   }),
 
   // Authentication endpoints

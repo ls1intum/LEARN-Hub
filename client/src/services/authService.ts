@@ -58,7 +58,9 @@ export class AuthService {
     await this.csrfRequest;
   }
 
-  private async createHeaders(options: RequestInit): Promise<Record<string, string>> {
+  private async createHeaders(
+    options: RequestInit,
+  ): Promise<Record<string, string>> {
     const headers: Record<string, string> = {
       ...(options.headers as Record<string, string> | undefined),
     };

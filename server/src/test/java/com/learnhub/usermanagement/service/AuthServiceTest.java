@@ -53,7 +53,8 @@ class AuthServiceTest {
 				.isInstanceOf(RuntimeException.class).hasMessage("Admins must log in with password");
 
 		verify(verificationCodeRepository, never()).save(org.mockito.ArgumentMatchers.any());
-		verify(mailSender, never()).send(org.mockito.ArgumentMatchers.any(org.springframework.mail.SimpleMailMessage.class));
+		verify(mailSender, never())
+				.send(org.mockito.ArgumentMatchers.any(org.springframework.mail.SimpleMailMessage.class));
 	}
 
 	@Test

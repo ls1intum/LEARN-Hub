@@ -1,9 +1,9 @@
 package com.learnhub.config;
 
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -13,17 +13,17 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
-import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.authentication.RememberMeServices;
+import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.authentication.session.ChangeSessionIdAuthenticationStrategy;
 import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
@@ -33,8 +33,7 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource,
-			RememberMeServices rememberMeServices)
-			throws Exception {
+			RememberMeServices rememberMeServices) throws Exception {
 		CsrfTokenRequestAttributeHandler csrfTokenRequestHandler = new CsrfTokenRequestAttributeHandler();
 		csrfTokenRequestHandler.setCsrfRequestAttributeName("_csrf");
 
@@ -53,12 +52,13 @@ public class SecurityConfig {
 						// Using permitAll here to allow method-level security annotations to take
 						// effect
 						.anyRequest().permitAll())
-				.securityContext(securityContext -> securityContext
-						.securityContextRepository(securityContextRepository()))
+				.securityContext(
+						securityContext -> securityContext.securityContextRepository(securityContextRepository()))
 				.sessionManagement(session -> session.sessionAuthenticationStrategy(sessionAuthenticationStrategy()))
 				.rememberMe(rememberMe -> rememberMe.rememberMeServices(rememberMeServices))
-				.exceptionHandling(exceptionHandling -> exceptionHandling.authenticationEntryPoint(authenticationEntryPoint())
-						.accessDeniedHandler(accessDeniedHandler()))
+				.exceptionHandling(
+						exceptionHandling -> exceptionHandling.authenticationEntryPoint(authenticationEntryPoint())
+								.accessDeniedHandler(accessDeniedHandler()))
 				.logout(logout -> logout.logoutUrl("/api/auth/logout").deleteCookies("LEARNHUBSESSION", "XSRF-TOKEN")
 						.invalidateHttpSession(true).clearAuthentication(true)
 						.logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK)));
