@@ -41,7 +41,6 @@ export const openPdfInNewTab = (blob: Blob, title?: string) => {
   if (isMobile()) {
     const a = document.createElement("a");
     a.href = pdfUrl;
-    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
