@@ -224,15 +224,20 @@ public class ActivityController {
 		return buildFileDownloadResponse(lessonPlanPdf, "lesson_plan", ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
+	private static final List<String> ALL_MARKDOWN_TYPES = List.of(
+			"deckblatt", "artikulationsschema", "hintergrundwissen", "tafelbild", "uebung", "uebung_loesung");
+
 	@PostMapping(value = "/upload-and-create-pending", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("hasRole('ADMIN')")
 	@SecurityRequirement(name = "BearerAuth")
-	@Operation(summary = "Upload PDF and create draft activity", description = "Upload a PDF and create an admin draft. By default the server creates a PENDING activity and starts background metadata/markdown generation. With generateContent=false it creates a DRAFT immediately without background generation. Max file size: 1 MB.")
+	@Operation(summary = "Upload PDF and create draft activity", description = "Upload a PDF and create an admin draft. generateMetadata controls LLM metadata extraction. markdownTypes is a list of markdown documents to generate (deckblatt, artikulationsschema, hintergrundwissen, tafelbild, uebung, uebung_loesung); defaults to all. Max file size: 1 MB.")
 	public ResponseEntity<ActivityResponse> uploadAndCreatePending(@RequestParam("pdf_file") MultipartFile pdfFile,
-			@RequestParam(value = "generateContent", defaultValue = "true") boolean generateContent) {
-		logger.info("POST /api/activities/upload-and-create-pending called with file={}, generateContent={}",
-				pdfFile.getOriginalFilename(), generateContent);
-		ActivityResponse response = activityDraftService.initiateDraftCreation(pdfFile, generateContent);
+			@RequestParam(value = "generateMetadata", defaultValue = "true") boolean generateMetadata,
+			@RequestParam(value = "markdownTypes", required = false) List<String> markdownTypes) {
+		List<String> resolvedTypes = (markdownTypes == null || markdownTypes.isEmpty()) ? ALL_MARKDOWN_TYPES : markdownTypes;
+		logger.info("POST /api/activities/upload-and-create-pending called with file={}, generateMetadata={}, markdownTypes={}",
+				pdfFile.getOriginalFilename(), generateMetadata, resolvedTypes);
+		ActivityResponse response = activityDraftService.initiateDraftCreation(pdfFile, generateMetadata, resolvedTypes);
 		return ResponseEntity.status(201).body(response);
 	}
 

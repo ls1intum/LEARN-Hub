@@ -9,6 +9,7 @@ import { NavigationMenu } from "./NavigationMenu";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useTranslation } from "react-i18next";
 import { APP_SCROLL_CONTAINER_ID } from "@/utils/scroll";
+import { Footer } from "@/components/layout/Footer";
 import type { AuthRedirectState } from "@/utils/authRedirect";
 
 interface MainLayoutProps {
@@ -215,6 +216,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           )}
         >
           {children}
+        </div>
+        <div className="lg:hidden">
+          <Footer />
         </div>
       </main>
     </div>

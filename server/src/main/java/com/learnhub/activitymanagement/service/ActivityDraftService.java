@@ -14,8 +14,10 @@ import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -59,11 +61,12 @@ public class ActivityDraftService {
 
     /**
      * Validates and persists the PDF, then creates either:
-     * - a PENDING activity with background generation, or
-     * - a DRAFT activity immediately when generation is skipped.
+     * - a PENDING activity with background generation (when at least one step is enabled), or
+     * - a DRAFT activity immediately when both steps are skipped.
      */
     @Transactional
-    public ActivityResponse initiateDraftCreation(MultipartFile pdfFile, boolean generateContent) {
+    public ActivityResponse initiateDraftCreation(MultipartFile pdfFile, boolean generateMetadata, List<String> markdownTypes) {
+        boolean generateContent = generateMetadata || !markdownTypes.isEmpty();
         if (pdfFile == null || pdfFile.isEmpty()) {
             throw new IllegalArgumentException("No PDF file provided");
         }
@@ -127,11 +130,14 @@ public class ActivityDraftService {
             // Schedule background generation to start AFTER the transaction commits so
             // the PDFDocument and Activity rows are visible to the background thread.
             final UUID bgDocumentId = documentId;
+            final boolean bgGenerateMetadata = generateMetadata;
+            final Set<String> bgMarkdownTypes = new HashSet<>(markdownTypes);
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
                     CompletableFuture.runAsync(
-                            () -> generateActivityContent(activityId, bgDocumentId), markdownGenerationExecutor);
+                            () -> generateActivityContent(activityId, bgDocumentId, bgGenerateMetadata, bgMarkdownTypes),
+                            markdownGenerationExecutor);
                 }
             });
         }
@@ -139,32 +145,35 @@ public class ActivityDraftService {
         return activityService.convertToResponse(saved, true);
     }
 
-    private void generateActivityContent(UUID activityId, UUID documentId) {
-        logger.info("Background generation started for activity {}", activityId);
+    private void generateActivityContent(UUID activityId, UUID documentId, boolean generateMetadata, Set<String> markdownTypes) {
+        logger.info("Background generation started for activity {} (metadata={}, markdownTypes={})", activityId, generateMetadata, markdownTypes);
         try {
-            // Step 1: extract metadata
-            Map<String, Object> extractionResult = extractionService.extractMetadataFromDocument(documentId);
-            @SuppressWarnings("unchecked")
-            Map<String, Object> extractedData = extractionResult.get("extractedData") instanceof Map
-                    ? (Map<String, Object>) extractionResult.get("extractedData")
-                    : Map.of();
-            Map<String, Object> withDefaults = extractionService.applyActivityDefaults(new HashMap<>(extractedData));
-            activityService.updateActivityWithMetadata(activityId, withDefaults);
+            Map<String, Object> withDefaults = new HashMap<>();
 
-            // Step 2: generate markdowns
-            String pdfText = pdfService.extractTextFromPdf(documentId);
-            if (pdfText == null || pdfText.trim().length() < 10) {
-                throw new IllegalStateException("PDF does not contain sufficient text for markdown generation");
+            if (generateMetadata) {
+                Map<String, Object> extractionResult = extractionService.extractMetadataFromDocument(documentId);
+                @SuppressWarnings("unchecked")
+                Map<String, Object> extractedData = extractionResult.get("extractedData") instanceof Map
+                        ? (Map<String, Object>) extractionResult.get("extractedData")
+                        : Map.of();
+                withDefaults = extractionService.applyActivityDefaults(new HashMap<>(extractedData));
+                activityService.updateActivityWithMetadata(activityId, withDefaults);
             }
 
-            List<byte[]> pdfPageImages = llmService.isVisionEnabled()
-                    ? pdfService.renderPdfPagesAsImages(documentId)
-                    : null;
+            if (!markdownTypes.isEmpty()) {
+                String pdfText = pdfService.extractTextFromPdf(documentId);
+                if (pdfText == null || pdfText.trim().length() < 10) {
+                    throw new IllegalStateException("PDF does not contain sufficient text for markdown generation");
+                }
 
-            Map<String, String> markdowns = generateAllMarkdowns(pdfText, withDefaults, pdfPageImages);
-            activityService.addMarkdownsToActivity(activityId, markdowns);
+                List<byte[]> pdfPageImages = llmService.isVisionEnabled()
+                        ? pdfService.renderPdfPagesAsImages(documentId)
+                        : null;
 
-            // Step 3: mark as DRAFT
+                Map<String, String> markdowns = generateSelectedMarkdowns(pdfText, withDefaults, pdfPageImages, markdownTypes);
+                activityService.addMarkdownsToActivity(activityId, markdowns);
+            }
+
             activityService.setActivityStatus(activityId, ActivityStatus.DRAFT);
             logger.info("Background generation finished for activity {} → DRAFT", activityId);
         } catch (Exception e) {
@@ -173,42 +182,59 @@ public class ActivityDraftService {
         }
     }
 
-    private Map<String, String> generateAllMarkdowns(String pdfText, Map<String, Object> metadata,
-            List<byte[]> pdfPageImages) {
+    private Map<String, String> generateSelectedMarkdowns(String pdfText, Map<String, Object> metadata,
+            List<byte[]> pdfPageImages, Set<String> types) {
+
+        // tafelbild requires artikulationsschema as intermediate input even if artik is not stored
+        boolean needArtik = types.contains("artikulationsschema") || types.contains("tafelbild");
+        boolean needUebung = types.contains("uebung") || types.contains("uebung_loesung");
 
         Map<String, String> result = new HashMap<>();
         if (pdfPageImages != null) {
             // Vision mode: sequential
-            result.put("deckblatt", llmService.generateDeckblatt(pdfText, metadata));
-            String artik = llmService.generateArtikulationsschema(pdfText, metadata);
-            result.put("artikulationsschema", artik);
-            result.put("hintergrundwissen", llmService.generateHintergrundwissen(pdfText, metadata));
-            result.put("tafelbild", llmService.generateTafelbildMarkdown(artik));
-            Map<String, String> uebung = llmService.generateUebungAndLoesung(pdfText, metadata, pdfPageImages);
-            result.put("uebung", uebung.get("uebung"));
-            result.put("uebung_loesung", uebung.get("uebung_loesung"));
+            if (types.contains("deckblatt"))
+                result.put("deckblatt", llmService.generateDeckblatt(pdfText, metadata));
+            if (needArtik) {
+                String artik = llmService.generateArtikulationsschema(pdfText, metadata);
+                if (types.contains("artikulationsschema")) result.put("artikulationsschema", artik);
+                if (types.contains("tafelbild")) result.put("tafelbild", llmService.generateTafelbildMarkdown(artik));
+            }
+            if (types.contains("hintergrundwissen"))
+                result.put("hintergrundwissen", llmService.generateHintergrundwissen(pdfText, metadata));
+            if (needUebung) {
+                Map<String, String> uebung = llmService.generateUebungAndLoesung(pdfText, metadata, pdfPageImages);
+                if (types.contains("uebung")) result.put("uebung", uebung.get("uebung"));
+                if (types.contains("uebung_loesung")) result.put("uebung_loesung", uebung.get("uebung_loesung"));
+            }
         } else {
-            // Text-only mode: parallel, Tafelbild chains off Artikulationsschema
-            CompletableFuture<String> deckblattF = CompletableFuture.supplyAsync(
-                    () -> llmService.generateDeckblatt(pdfText, metadata), markdownGenerationExecutor);
-            CompletableFuture<String> artikF = CompletableFuture.supplyAsync(
-                    () -> llmService.generateArtikulationsschema(pdfText, metadata), markdownGenerationExecutor);
-            CompletableFuture<String> tafelbildF = artikF.thenApplyAsync(
-                    llmService::generateTafelbildMarkdown, markdownGenerationExecutor);
-            CompletableFuture<String> hinterF = CompletableFuture.supplyAsync(
-                    () -> llmService.generateHintergrundwissen(pdfText, metadata), markdownGenerationExecutor);
-            CompletableFuture<Map<String, String>> uebungF = CompletableFuture.supplyAsync(
-                    () -> llmService.generateUebungAndLoesung(pdfText, metadata), markdownGenerationExecutor);
+            // Text-only mode: parallel, tafelbild chains off artikulationsschema
+            CompletableFuture<String> deckblattF = types.contains("deckblatt")
+                    ? CompletableFuture.supplyAsync(() -> llmService.generateDeckblatt(pdfText, metadata), markdownGenerationExecutor)
+                    : CompletableFuture.completedFuture(null);
+            CompletableFuture<String> artikF = needArtik
+                    ? CompletableFuture.supplyAsync(() -> llmService.generateArtikulationsschema(pdfText, metadata), markdownGenerationExecutor)
+                    : CompletableFuture.completedFuture(null);
+            CompletableFuture<String> tafelbildF = types.contains("tafelbild")
+                    ? artikF.thenApplyAsync(llmService::generateTafelbildMarkdown, markdownGenerationExecutor)
+                    : CompletableFuture.completedFuture(null);
+            CompletableFuture<String> hinterF = types.contains("hintergrundwissen")
+                    ? CompletableFuture.supplyAsync(() -> llmService.generateHintergrundwissen(pdfText, metadata), markdownGenerationExecutor)
+                    : CompletableFuture.completedFuture(null);
+            CompletableFuture<Map<String, String>> uebungF = needUebung
+                    ? CompletableFuture.supplyAsync(() -> llmService.generateUebungAndLoesung(pdfText, metadata), markdownGenerationExecutor)
+                    : CompletableFuture.completedFuture(null);
 
             CompletableFuture.allOf(deckblattF, tafelbildF, hinterF, uebungF).join();
 
-            result.put("deckblatt", deckblattF.join());
-            result.put("artikulationsschema", artikF.join());
-            result.put("tafelbild", tafelbildF.join());
-            result.put("hintergrundwissen", hinterF.join());
-            Map<String, String> uebung = uebungF.join();
-            result.put("uebung", uebung.get("uebung"));
-            result.put("uebung_loesung", uebung.get("uebung_loesung"));
+            if (types.contains("deckblatt") && deckblattF.join() != null) result.put("deckblatt", deckblattF.join());
+            if (types.contains("artikulationsschema") && artikF.join() != null) result.put("artikulationsschema", artikF.join());
+            if (types.contains("tafelbild") && tafelbildF.join() != null) result.put("tafelbild", tafelbildF.join());
+            if (types.contains("hintergrundwissen") && hinterF.join() != null) result.put("hintergrundwissen", hinterF.join());
+            if (needUebung && uebungF.join() != null) {
+                Map<String, String> uebung = uebungF.join();
+                if (types.contains("uebung")) result.put("uebung", uebung.get("uebung"));
+                if (types.contains("uebung_loesung")) result.put("uebung_loesung", uebung.get("uebung_loesung"));
+            }
         }
         return result;
     }

@@ -70,6 +70,34 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  button,
+  [role="button"],
+  [type="button"],
+  [type="reset"],
+  [type="submit"],
+  a,
+  label[for],
+  select,
+  summary {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"],
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    cursor: not-allowed;
+  }
+  /* Force pointer on every descendant of a cursor-pointer container so
+     browsers don't fall back to I-beam over text nodes inside div/span/badge. */
+  .cursor-pointer * {
+    cursor: pointer;
+  }
+  .cursor-pointer input,
+  .cursor-pointer textarea,
+  .cursor-pointer [contenteditable] {
+    cursor: text;
+  }
 }
 
 @layer components {

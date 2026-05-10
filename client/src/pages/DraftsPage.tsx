@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,17 @@ import type { ActivityNavigationState } from "@/utils/activityNavigation";
 const MAX_FILE_SIZE_BYTES = 1024 * 1024; // 1 MB
 const POLL_INTERVAL_MS = 5000;
 
+const MARKDOWN_TYPES = [
+  { key: "deckblatt",          label: "Deckblatt" },
+  { key: "artikulationsschema", label: "Artikulationsschema" },
+  { key: "hintergrundwissen",  label: "Hintergrundwissen" },
+  { key: "tafelbild",          label: "Tafelbild" },
+  { key: "uebung",             label: "Übung" },
+  { key: "uebung_loesung",     label: "Übungslösung" },
+] as const;
+type MarkdownKey = typeof MARKDOWN_TYPES[number]["key"];
+const ALL_MARKDOWN_KEYS = MARKDOWN_TYPES.map((t) => t.key) as MarkdownKey[];
+
 // ─── Upload Modal ──────────────────────────────────────────────────────────
 
 interface UploadModalProps {
@@ -47,6 +59,10 @@ const UploadModal: React.FC<UploadModalProps> = ({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [generateMetadata, setGenerateMetadata] = useState(true);
+  const [markdownTypes, setMarkdownTypes] = useState<Set<MarkdownKey>>(
+    new Set(ALL_MARKDOWN_KEYS),
+  );
   const inputRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -54,6 +70,22 @@ const UploadModal: React.FC<UploadModalProps> = ({
     setFileError(null);
     setUploadError(null);
     setUploading(false);
+    setGenerateMetadata(true);
+    setMarkdownTypes(new Set(ALL_MARKDOWN_KEYS));
+  };
+
+  const toggleMarkdownType = (key: MarkdownKey, checked: boolean) => {
+    setMarkdownTypes((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(key);
+        if (key === "tafelbild") next.add("artikulationsschema");
+      } else {
+        next.delete(key);
+        if (key === "artikulationsschema") next.delete("tafelbild");
+      }
+      return next;
+    });
   };
 
   const handleClose = () => {
@@ -94,7 +126,10 @@ const UploadModal: React.FC<UploadModalProps> = ({
     setUploading(true);
     setUploadError(null);
     try {
-      const activity = await apiService.uploadAndCreatePending(file);
+      const activity = await apiService.uploadAndCreatePending(file, {
+        generateMetadata,
+        markdownTypes: Array.from(markdownTypes),
+      });
       reset();
       onCreated(activity);
       onClose();
@@ -175,6 +210,32 @@ const UploadModal: React.FC<UploadModalProps> = ({
               <span>{uploadError}</span>
             </div>
           )}
+
+          {/* LLM generation options */}
+          <div className="rounded-md border border-border p-3 space-y-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">KI-Generierung</p>
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <Checkbox
+                checked={generateMetadata}
+                onCheckedChange={(v) => setGenerateMetadata(v === true)}
+                disabled={uploading}
+              />
+              <span className="text-sm">Metadaten extrahieren</span>
+            </label>
+            <div className="space-y-1.5 pl-1">
+              <p className="text-xs text-muted-foreground font-medium">Markdowns</p>
+              {MARKDOWN_TYPES.map(({ key, label }) => (
+                <label key={key} className="flex items-center gap-2 cursor-pointer select-none">
+                  <Checkbox
+                    checked={markdownTypes.has(key)}
+                    onCheckedChange={(v) => toggleMarkdownType(key, v === true)}
+                    disabled={uploading}
+                  />
+                  <span className="text-sm">{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
 
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={handleClose} disabled={uploading}>

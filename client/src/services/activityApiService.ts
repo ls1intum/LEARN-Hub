@@ -219,9 +219,16 @@ export const ActivityApi = {
    * Upload a PDF and immediately create a PENDING activity with background generation.
    * Max file size: 1 MB (validated client-side and server-side).
    */
-  async uploadAndCreatePending(file: File) {
+  async uploadAndCreatePending(
+    file: File,
+    options: { generateMetadata?: boolean; markdownTypes?: string[] } = {},
+  ) {
+    const { generateMetadata = true, markdownTypes } = options;
     const formData = new FormData();
     formData.append("pdf_file", file);
+    formData.append("generateMetadata", String(generateMetadata));
+    const types = markdownTypes ?? ["deckblatt", "artikulationsschema", "hintergrundwissen", "tafelbild", "uebung", "uebung_loesung"];
+    types.forEach((t) => formData.append("markdownTypes", t));
     return ApiRequestMixin.request<Activity>("/api/activities/upload-and-create-pending", {
       method: "POST",
       body: formData,

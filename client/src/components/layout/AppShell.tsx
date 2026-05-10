@@ -248,7 +248,11 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({
 
       {/* Footer is always visible on app routes (sidebar layout).
           The landing page manages its own footer below the fold. */}
-      {hasSidebar && <Footer />}
+      {hasSidebar && (
+        <div className="hidden lg:block">
+          <Footer />
+        </div>
+      )}
     </div>
   );
 };
