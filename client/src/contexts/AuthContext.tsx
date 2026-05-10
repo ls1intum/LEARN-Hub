@@ -144,6 +144,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await apiService.deleteProfile();
 
+      authService.clearTokens();
       setUser(null);
 
       return { success: true, message: "Account deleted successfully" };

@@ -18,9 +18,22 @@ export interface AuthResponse {
 export class AuthService {
   private baseURL: string;
   private csrfRequest: Promise<void> | null = null;
+  private static readonly SESSION_FLAG = "learnhub.hasSession";
 
   constructor() {
     this.baseURL = import.meta.env.VITE_API_SERVER || "";
+  }
+
+  private markSessionActive(): void {
+    localStorage.setItem(AuthService.SESSION_FLAG, "1");
+  }
+
+  private clearSessionFlag(): void {
+    localStorage.removeItem(AuthService.SESSION_FLAG);
+  }
+
+  hasSession(): boolean {
+    return localStorage.getItem(AuthService.SESSION_FLAG) === "1";
   }
 
   private getCookie(name: string): string | null {
@@ -85,7 +98,7 @@ export class AuthService {
   }
 
   clearTokens(): void {
-    // Cookie-based sessions are cleared server-side on logout.
+    this.clearSessionFlag();
   }
 
   async makeAuthenticatedRequest(
@@ -117,6 +130,7 @@ export class AuthService {
 
       if (response.ok) {
         const responseData = await response.json();
+        this.markSessionActive();
         return { success: true, user: responseData.user ?? responseData };
       } else {
         const errorData = await response.json();
@@ -223,6 +237,7 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
+    this.clearSessionFlag();
     try {
       await this.makeAuthenticatedRequest("/api/auth/logout", {
         method: "POST",
@@ -233,12 +248,17 @@ export class AuthService {
   }
 
   async getCurrentUser(): Promise<User | null> {
+    if (!this.hasSession()) {
+      return null;
+    }
     try {
       const response = await this.makeAuthenticatedRequest("/api/auth/me");
       if (response.ok) {
         const responseData = await response.json();
         return responseData;
       }
+      // Session expired or invalid server-side — clear the local flag
+      this.clearSessionFlag();
       return null;
     } catch (error) {
       logger.error("Error getting current user", error, "AuthService");

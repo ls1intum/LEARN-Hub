@@ -155,7 +155,8 @@ public class AuthController {
 			}
 			return ResponseEntity.ok(user);
 		} catch (Exception e) {
-			// Any exception here means the session references a user that can no longer be loaded
+			// Any exception here means the session references a user that can no longer be
+			// loaded
 			logger.warn("GET /api/auth/me - Could not load user from session: {}", e.getMessage());
 			return ResponseEntity.status(401).body(ErrorResponse.of("Session invalid"));
 		}
