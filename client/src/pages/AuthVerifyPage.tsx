@@ -64,7 +64,7 @@ export const AuthVerifyPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen app-gradient text-foreground flex items-center justify-center p-4">
+    <div className="mobile-viewport-shell app-gradient text-foreground flex items-center justify-center p-4">
       <div className="max-w-md w-full panel p-6 sm:p-8">
         <h1 className="text-2xl sm:text-3xl font-semibold text-center mb-2">
           {t("authVerify.title")}

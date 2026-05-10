@@ -93,6 +93,8 @@
   }
   #root {
     min-height: 100vh;
+    min-height: 100svh;
+    min-height: 100dvh;
     overflow-x: clip;
   }
   ::selection {
@@ -186,6 +188,13 @@
     background-color: #0b2f63;
     border-bottom: 1px solid hsl(0 0% 100% / 0.1);
     box-shadow: 0 14px 28px -26px rgb(11 47 99 / 0.85);
+  }
+
+  .mobile-viewport-shell {
+    min-height: 100vh;
+    min-height: 100svh;
+    height: 100vh;
+    height: 100dvh;
   }
 
   .dark .app-header {

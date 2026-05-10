@@ -244,7 +244,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({
   const { hasSidebar } = useSidebar();
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="mobile-viewport-shell flex flex-col overflow-hidden">
       <SharedHeader />
 
       {/* Routes render here — each route controls its own scroll */}
