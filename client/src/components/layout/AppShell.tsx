@@ -55,7 +55,7 @@ function getUserDisplayName(
    Round avatar placeholder
 ───────────────────────────────────────────── */
 const AvatarCircle: React.FC<{ initials: string }> = ({ initials }) => (
-  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-foreground/20 text-primary-foreground text-xs font-semibold ring-2 ring-primary-foreground/30">
+  <div className="control-chrome flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-primary-foreground">
     {initials}
   </div>
 );
@@ -87,7 +87,7 @@ const UserAvatarDropdown: React.FC<UserAvatarDropdownProps> = ({
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button
-          className="rounded-full hover:ring-2 hover:ring-primary-foreground/40 transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/50"
+          className="rounded-full transition-all outline-none focus-visible:ring-2 focus-visible:ring-primary-foreground/50"
           aria-label={t("header.userMenu")}
         >
           <AvatarCircle initials={initials} />
@@ -143,13 +143,13 @@ const SharedHeader: React.FC = () => {
   };
 
   return (
-    <header className="h-[3.75rem] bg-primary text-primary-foreground shadow-sm shrink-0 z-50 relative">
-      <div className="h-full px-3 sm:px-4 flex items-center gap-2">
+    <header className="app-header h-[3.75rem] shrink-0 text-primary-foreground z-50 relative">
+      <div className="mx-auto flex h-full items-center gap-2 px-3 sm:px-4">
         {/* Burger — mobile only, only when a sidebar route is active */}
         {hasSidebar && (
           <button
             onClick={toggleMobile}
-            className="lg:hidden p-1.5 rounded-md hover:bg-primary-foreground/10 transition-colors"
+            className="control-chrome rounded-full p-1.5 lg:hidden"
             aria-label={t("header.toggleNav")}
           >
             <Menu className="h-5 w-5" />
@@ -159,9 +159,13 @@ const SharedHeader: React.FC = () => {
         {/* Logo — always links back to landing */}
         <Link
           to="/"
-          className="flex items-center gap-2 hover:opacity-90 transition-opacity shrink-0"
+          className="flex items-center gap-2 rounded-full px-1 py-1 transition-opacity hover:opacity-90 shrink-0"
         >
-          <img src="/logo.png" alt="LEARN-Hub" className="h-7 w-7 rounded-md" />
+          <img
+            src="/logo.png"
+            alt="LEARN-Hub"
+            className="h-7 w-7 rounded-lg border border-white/20 bg-white/10 p-0.5"
+          />
           <span className="font-bold text-sm sm:text-base tracking-tight leading-none">
             LEARN-Hub
           </span>
@@ -178,13 +182,13 @@ const SharedHeader: React.FC = () => {
         >
           <Link
             to="/library"
-            className="px-3 py-1.5 text-sm font-medium rounded-md hover:bg-primary-foreground/10 transition-colors text-primary-foreground/90 hover:text-primary-foreground"
+            className="rounded-full px-3 py-1.5 text-sm font-medium text-primary-foreground/90 transition-colors hover:bg-white/10 hover:text-primary-foreground"
           >
             {t("nav.library")}
           </Link>
           <Link
             to="/impressum"
-            className="px-3 py-1.5 text-sm font-medium rounded-md hover:bg-primary-foreground/10 transition-colors text-primary-foreground/90 hover:text-primary-foreground"
+            className="rounded-full px-3 py-1.5 text-sm font-medium text-primary-foreground/90 transition-colors hover:bg-white/10 hover:text-primary-foreground"
           >
             {t("header.about")}
           </Link>
@@ -195,8 +199,8 @@ const SharedHeader: React.FC = () => {
 
         {/* Controls */}
         <div className="flex items-center gap-1">
-          <LanguageSwitcher />
-          <ThemeToggle />
+          <LanguageSwitcher className="rounded-full text-primary-foreground hover:bg-white/10 hover:text-primary-foreground" />
+          <ThemeToggle className="rounded-full text-primary-foreground hover:bg-white/10 hover:text-primary-foreground" />
 
           {isGuest ? (
             <Button
@@ -206,7 +210,7 @@ const SharedHeader: React.FC = () => {
                   state: getLoginRedirectState(location),
                 })
               }
-              className="ml-1 bg-primary-foreground text-primary hover:bg-primary-foreground/90 h-8 px-3 text-sm font-medium"
+              className="ml-1 h-8 rounded-full border border-white/25 bg-white text-primary hover:bg-white/92"
             >
               <LogIn className="h-3.5 w-3.5 mr-1.5" />
               {t("login.loginButton")}

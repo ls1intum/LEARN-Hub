@@ -50,7 +50,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
   const MAX_VISIBLE = 4;
 
   return (
-    <div className="border border-border rounded-lg p-3.5 bg-card flex flex-col gap-3 h-full">
+    <div className="soft-card flex h-full flex-col gap-3 rounded-[1.25rem] p-3.5">
       {/* Score + meta row */}
       <div className="flex items-center gap-2 flex-wrap">
         <TooltipProvider>
@@ -164,7 +164,7 @@ export const RecommendationCard: React.FC<RecommendationCardProps> = ({
 };
 
 export const RecommendationCardSkeleton: React.FC = () => (
-  <div className="border border-border rounded-lg p-3.5 bg-card flex flex-col gap-3 h-full min-h-[176px]">
+  <div className="soft-card flex h-full min-h-[176px] flex-col gap-3 rounded-[1.25rem] p-3.5">
     <div className="flex items-center gap-2">
       <Skeleton className="h-2 w-2 rounded-full" />
       <Skeleton className="h-4 w-10" />

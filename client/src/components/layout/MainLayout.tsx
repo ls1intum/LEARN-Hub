@@ -113,7 +113,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       {/* ── Desktop Sidebar ── */}
       <aside
         className={cn(
-          "hidden lg:flex flex-col border-r border-border bg-card shrink-0",
+          "app-sidebar hidden shrink-0 border-r border-border/70 lg:flex lg:flex-col",
           "transition-[width] duration-200 ease-in-out overflow-hidden",
           isCollapsed ? "w-[3.5rem]" : "w-56",
         )}
@@ -133,7 +133,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           <button
             onClick={toggleCollapsed}
             className={cn(
-              "flex w-full items-center gap-2 rounded-md p-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors",
+              "flex w-full items-center gap-2 rounded-xl p-2 text-sm text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground",
               isCollapsed && "justify-center",
             )}
             aria-label={
@@ -165,13 +165,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       {/* ── Mobile Drawer ── */}
       <div
         className={cn(
-          "fixed top-0 left-0 h-full w-64 bg-card border-r border-border shadow-2xl z-50",
+          "app-sidebar fixed left-0 top-0 z-50 h-full w-64 border-r border-border/70 shadow-2xl",
           "transform transition-transform duration-300 ease-in-out lg:hidden flex flex-col",
           isMobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         {/* Drawer header — matches AppShell header style */}
-        <div className="h-[3.75rem] bg-primary text-primary-foreground flex items-center justify-between px-4 shrink-0">
+        <div className="app-header flex h-[3.75rem] shrink-0 items-center justify-between px-4 text-primary-foreground">
           <Link
             to="/"
             className="flex items-center gap-2 hover:opacity-90 transition-opacity"
@@ -180,13 +180,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <img
               src="/logo.png"
               alt="LEARN-Hub"
-              className="h-7 w-7 rounded-md bg-primary-foreground/10 p-0.5"
+              className="h-7 w-7 rounded-lg border border-white/20 bg-white/10 p-0.5"
             />
             <span className="font-bold text-sm tracking-tight">LEARN-Hub</span>
           </Link>
           <button
             onClick={closeMobile}
-            className="p-1.5 rounded-md hover:bg-primary-foreground/10 transition-colors"
+            className="control-chrome rounded-full p-1.5"
             aria-label={t("header.closeNav")}
           >
             <X className="h-5 w-5" />
@@ -207,7 +207,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       {/* ── Main Content ── */}
       <main
         id={APP_SCROLL_CONTAINER_ID}
-        className="flex-1 flex flex-col overflow-x-hidden overflow-y-auto min-w-0"
+        className="app-gradient flex min-w-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"
       >
         <div
           className={cn(

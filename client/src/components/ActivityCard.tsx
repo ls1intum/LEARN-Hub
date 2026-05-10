@@ -46,7 +46,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const bloomColor = BLOOM_COLORS[bloomKey] ?? "bg-primary";
   return (
     <div
-      className="border border-border rounded-lg overflow-hidden hover:shadow-md hover:border-border/60 transition-all cursor-pointer bg-card flex flex-col gap-2.5 h-full"
+      className="soft-card group flex h-full cursor-pointer flex-col gap-2.5 overflow-hidden rounded-[1.25rem] transition-all hover:-translate-y-0.5 hover:border-primary/15 hover:shadow-[0_22px_50px_-34px_rgba(15,23,42,0.45)]"
       onClick={onClick}
     >
       {/* Hero image */}
@@ -55,7 +55,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           <img
             src={activity.tafelbildImage}
             alt=""
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           />
         </div>
       )}
@@ -171,7 +171,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
 };
 
 export const ActivityCardSkeleton: React.FC = () => (
-  <div className="border border-border rounded-lg overflow-hidden bg-card flex flex-col gap-2.5 h-full min-h-[272px]">
+  <div className="soft-card flex h-full min-h-[272px] flex-col gap-2.5 overflow-hidden rounded-[1.25rem]">
     <Skeleton className="w-full h-36 rounded-none shrink-0" />
     <div className="p-3.5 flex flex-col gap-2.5 flex-1">
       <div className="flex items-start justify-between gap-2">

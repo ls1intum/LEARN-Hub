@@ -21,7 +21,7 @@ const EXTERNAL_LINKS = [
 export const Footer: React.FC = () => {
   const { t } = useTranslation();
   return (
-    <footer className="mt-auto border-t border-border bg-card/50 px-4 py-3 text-xs text-muted-foreground">
+    <footer className="mt-auto border-t border-border/70 bg-card/65 px-4 py-3 text-xs text-muted-foreground backdrop-blur supports-[backdrop-filter]:bg-card/55">
       <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-4">
         {/* Impressum internal link */}
         <Link

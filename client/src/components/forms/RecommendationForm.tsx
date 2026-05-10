@@ -427,7 +427,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
             <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-5">
               {t("recommendationFormGuided.yourAnswers")}
             </p>
-            <ol className="space-y-3">
+            <ol className="space-y-1">
               {steps.map((s, idx) => (
                 <li
                   key={idx}
@@ -443,31 +443,31 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
                       "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5 transition-all",
                       idx < currentStep && "bg-primary text-primary-foreground",
                       idx === currentStep &&
-                        "bg-primary text-primary-foreground ring-2 ring-primary/25 ring-offset-1 ring-offset-card",
+                      "bg-primary text-primary-foreground ring-2 ring-primary/25 ring-offset-1 ring-offset-card",
                       idx > currentStep && "bg-muted text-muted-foreground border border-border"
                     )}
                   >
                     {idx < currentStep ? <CheckCircle className="h-3.5 w-3.5" /> : idx + 1}
                   </div>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 min-h-[2rem]">
                     <p
                       className={cn(
-                        "text-sm font-medium leading-tight",
+                        "line-clamp-2 text-sm font-medium leading-tight",
                         idx === currentStep ? "text-foreground" : "text-muted-foreground"
                       )}
                     >
                       {s.sidebar}
                     </p>
-                    {idx < currentStep && (
-                      <p className="text-xs text-primary font-medium mt-0.5 truncate">
-                        {getAnswerSummary(idx)}
-                      </p>
-                    )}
-                    {idx === currentStep && (
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                        {getAnswerSummary(idx)}
-                      </p>
-                    )}
+                    <p
+                      className={cn(
+                        "mt-0.5 min-h-[1rem] line-clamp-1 text-xs",
+                        idx < currentStep && "font-medium text-primary",
+                        idx === currentStep && "text-muted-foreground",
+                        idx > currentStep && "invisible"
+                      )}
+                    >
+                      {idx <= currentStep ? getAnswerSummary(idx) : "—"}
+                    </p>
                   </div>
                 </li>
               ))}
@@ -503,8 +503,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           disabled={isLoading}
           className={cn(
             "gap-2 min-w-[140px]",
-            isLastStep &&
-              "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-md hover:shadow-lg transition-all duration-300"
+            isLastStep && "shadow-md hover:shadow-lg transition-all duration-300"
           )}
         >
           {isLoading ? (
