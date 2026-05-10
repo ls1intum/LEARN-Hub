@@ -5,9 +5,7 @@ import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.ActivityStatus;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -34,7 +32,4 @@ public interface ActivityRepository extends JpaRepository<Activity, UUID>, JpaSp
 			@Param("ageMax") Integer ageMax);
 
 	List<Activity> findByStatusInOrderByCreatedAtDesc(List<ActivityStatus> statuses);
-
-	@EntityGraph(attributePaths = "documents")
-	Optional<Activity> findWithDocumentsById(UUID id);
 }

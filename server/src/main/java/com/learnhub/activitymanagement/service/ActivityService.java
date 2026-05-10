@@ -7,7 +7,6 @@ import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.*;
-import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
 import com.learnhub.activitymanagement.repository.ActivityQueryResult;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
@@ -47,9 +46,6 @@ public class ActivityService {
 
 	@Autowired
 	private PDFDocumentRepository pdfDocumentRepository;
-
-	@Autowired
-	private ActivityMarkdownRepository activityMarkdownRepository;
 
 	@Autowired
 	private PDFService pdfService;
@@ -185,30 +181,34 @@ public class ActivityService {
 		}
 	}
 
+	@Transactional(readOnly = true)
 	public ActivityResponse getActivityById(UUID id) {
 		return getActivityById(id, false);
 	}
 
+	@Transactional(readOnly = true)
 	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf) {
 		return getActivityById(id, includeSourcePdf, false);
 	}
 
+	@Transactional(readOnly = true)
 	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf, boolean includeMarkdownContent) {
 		return getActivityById(id, includeSourcePdf, includeMarkdownContent, false);
 	}
 
+	@Transactional(readOnly = true)
 	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf, boolean includeMarkdownContent,
 			boolean includeTafelbildImage) {
 		return getActivityById(id, includeSourcePdf, includeMarkdownContent, includeTafelbildImage, null);
 	}
 
+	@Transactional(readOnly = true)
 	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf, boolean includeMarkdownContent,
 			boolean includeTafelbildImage, UUID userId) {
 		logger.debug("Fetching activity by id={}", id);
-		Activity activity = activityRepository.findWithDocumentsById(id)
+		Activity activity = activityRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
-		List<ActivityMarkdown> markdowns = activityMarkdownRepository.findByActivityId(id);
-		ActivityResponse response = mapToResponse(activity, markdowns, includeSourcePdf, includeMarkdownContent,
+		ActivityResponse response = mapToResponse(activity, includeSourcePdf, includeMarkdownContent,
 				includeTafelbildImage);
 		if (userId != null) {
 			response.setFavourited(isActivityFavourited(userId, activity.getId()));
@@ -216,23 +216,19 @@ public class ActivityService {
 		return response;
 	}
 
+	@Transactional(readOnly = true)
 	public List<MarkdownResponse> getActivityMarkdowns(UUID id) {
 		logger.debug("Fetching markdowns for activity id={}", id);
-		if (!activityRepository.existsById(id)) {
-			throw new ResourceNotFoundException("Activity not found");
-		}
-		return mapLatestMarkdowns(activityMarkdownRepository.findByActivityId(id), true);
+		Activity activity = activityRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
+		return mapLatestMarkdowns(activity, true);
 	}
 
 	private static final Pattern TAFELBILD_IMAGE_PATTERN = Pattern.compile(
 			"!\\[[^\\]]*\\]\\((data:image/(?:png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=\\r\\n]+)\\)");
 
 	private String extractTafelbildImage(Activity activity) {
-		return extractTafelbildImage(activity.getMarkdowns());
-	}
-
-	private String extractTafelbildImage(List<ActivityMarkdown> markdowns) {
-		return markdowns.stream()
+		return activity.getMarkdowns().stream()
 				.filter(m -> m.getType() == MarkdownType.TAFELBILD && m.getContent() != null)
 				.max(Comparator.comparing(ActivityMarkdown::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
 				.map(m -> {
@@ -501,12 +497,6 @@ public class ActivityService {
 
 	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf,
 			boolean includeMarkdownContent, boolean includeTafelbildImage) {
-		return mapToResponse(activity, activity.getMarkdowns(), includeSourcePdf, includeMarkdownContent,
-				includeTafelbildImage);
-	}
-
-	private ActivityResponse mapToResponse(Activity activity, List<ActivityMarkdown> markdowns, boolean includeSourcePdf,
-			boolean includeMarkdownContent, boolean includeTafelbildImage) {
 		ActivityResponse response = new ActivityResponse();
 		response.setId(activity.getId());
 		response.setName(activity.getName());
@@ -533,9 +523,9 @@ public class ActivityService {
 				.collect(Collectors.toList());
 		response.setDocuments(docResponses);
 
-		response.setMarkdowns(mapLatestMarkdowns(markdowns, includeMarkdownContent));
+		response.setMarkdowns(mapLatestMarkdowns(activity, includeMarkdownContent));
 		if (includeTafelbildImage) {
-			response.setTafelbildImage(extractTafelbildImage(markdowns));
+			response.setTafelbildImage(extractTafelbildImage(activity));
 		}
 		response.setStatus(activity.getStatus() != null ? activity.getStatus().name() : ActivityStatus.PUBLISHED.name());
 		response.setGenerationError(activity.getGenerationError());
@@ -584,11 +574,7 @@ public class ActivityService {
 	}
 
 	private List<MarkdownResponse> mapLatestMarkdowns(Activity activity, boolean includeContent) {
-		return mapLatestMarkdowns(activity.getMarkdowns(), includeContent);
-	}
-
-	private List<MarkdownResponse> mapLatestMarkdowns(List<ActivityMarkdown> markdowns, boolean includeContent) {
-		Map<String, ActivityMarkdown> latestMarkdownByType = markdowns.stream()
+		Map<String, ActivityMarkdown> latestMarkdownByType = activity.getMarkdowns().stream()
 				.filter(m -> m.getType() != null)
 				.sorted(Comparator
 						.comparing(ActivityMarkdown::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder()))

@@ -17,7 +17,6 @@ import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.entity.enums.DocumentType;
 import com.learnhub.activitymanagement.entity.enums.MarkdownType;
-import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
 import com.learnhub.activitymanagement.repository.ActivityQueryResult;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
@@ -39,13 +38,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 class ActivityServiceTest {
 
 	private ActivityService activityService;
 	private ActivityExtractionService extractionService;
 	private ActivityRepository activityRepository;
-	private ActivityMarkdownRepository activityMarkdownRepository;
 	private PDFDocumentRepository pdfDocumentRepository;
 	private PDFService pdfService;
 	private LLMService llmService;
@@ -56,14 +55,12 @@ class ActivityServiceTest {
 		activityService = new ActivityService();
 		extractionService = new ActivityExtractionService();
 		activityRepository = mock(ActivityRepository.class);
-		activityMarkdownRepository = mock(ActivityMarkdownRepository.class);
 		pdfDocumentRepository = mock(PDFDocumentRepository.class);
 		pdfService = mock(PDFService.class);
 		llmService = mock(LLMService.class);
 		userFavouritesRepository = mock(UserFavouritesRepository.class);
 
 		ReflectionTestUtils.setField(activityService, "activityRepository", activityRepository);
-		ReflectionTestUtils.setField(activityService, "activityMarkdownRepository", activityMarkdownRepository);
 		ReflectionTestUtils.setField(activityService, "pdfDocumentRepository", pdfDocumentRepository);
 		ReflectionTestUtils.setField(activityService, "pdfService", pdfService);
 		ReflectionTestUtils.setField(activityService, "extractionService", extractionService);
@@ -234,31 +231,13 @@ class ActivityServiceTest {
 	}
 
 	@Test
-	void getActivityByIdWithMarkdownContentUsesRepositoryMethodThatPrefetchesCollections() {
-		Activity activity = createTestActivity();
-		when(activityRepository.findWithDocumentsById(activity.getId())).thenReturn(Optional.of(activity));
-		when(activityMarkdownRepository.findByActivityId(activity.getId())).thenReturn(List.of());
+	void getActivityByIdCombinedPdfOverloadIsTransactional() throws NoSuchMethodException {
+		var method = ActivityService.class.getMethod("getActivityById", UUID.class, boolean.class, boolean.class);
 
-		ActivityResponse response = activityService.getActivityById(activity.getId(), false, true);
+		Transactional transactional = method.getAnnotation(Transactional.class);
 
-		assertThat(response.getId()).isEqualTo(activity.getId());
-		verify(activityRepository).findWithDocumentsById(activity.getId());
-		verify(activityMarkdownRepository).findByActivityId(activity.getId());
-		verify(activityRepository, never()).findById(activity.getId());
-	}
-
-	@Test
-	void getActivityByIdWithoutMarkdownContentUsesRepositoryMethodThatPrefetchesCollections() {
-		Activity activity = createTestActivity();
-		when(activityRepository.findWithDocumentsById(activity.getId())).thenReturn(Optional.of(activity));
-		when(activityMarkdownRepository.findByActivityId(activity.getId())).thenReturn(List.of());
-
-		ActivityResponse response = activityService.getActivityById(activity.getId(), false, false, false, null);
-
-		assertThat(response.getId()).isEqualTo(activity.getId());
-		verify(activityRepository).findWithDocumentsById(activity.getId());
-		verify(activityMarkdownRepository).findByActivityId(activity.getId());
-		verify(activityRepository, never()).findById(activity.getId());
+		assertThat(transactional).isNotNull();
+		assertThat(transactional.readOnly()).isTrue();
 	}
 
 	@Test
@@ -340,8 +319,7 @@ class ActivityServiceTest {
 	void getActivityByIdMarksAuthenticatedUserFavourite() {
 		UUID userId = UUID.randomUUID();
 		Activity activity = createTestActivity();
-		when(activityRepository.findWithDocumentsById(activity.getId())).thenReturn(Optional.of(activity));
-		when(activityMarkdownRepository.findByActivityId(activity.getId())).thenReturn(List.of());
+		when(activityRepository.findById(activity.getId())).thenReturn(Optional.of(activity));
 		when(userFavouritesRepository.existsByUserIdAndFavouriteTypeAndActivityId(userId, "activity", activity.getId()))
 				.thenReturn(true);
 
