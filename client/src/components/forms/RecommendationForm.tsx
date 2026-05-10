@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Target, BookOpen, Settings } from "lucide-react";
+import { Sparkles, ArrowLeft, ArrowRight, Info, CheckCircle } from "lucide-react";
 import { useFieldValues } from "@/hooks/useFieldValues";
 import { BadgeSelector } from "@/components/ui/BadgeSelector";
-import { FormSection } from "@/components/ui/FormSection";
 import { RangeSlider } from "@/components/ui/RangeSlider";
 import { PriorityToggle } from "@/components/ui/PriorityToggle";
 import { useTranslation } from "react-i18next";
 import { useTranslateEnum } from "@/hooks/useTranslateEnum";
+import { cn } from "@/lib/utils";
 
 interface FormData {
   targetAge: number;
@@ -21,7 +20,7 @@ interface FormData {
   allowLessonPlans: boolean;
   maxActivityCount: number;
   includeBreaks: boolean;
-  priorityCategories: string[]; // Categories to prioritize in scoring
+  priorityCategories: string[];
 }
 
 interface RecommendationFormProps {
@@ -30,8 +29,7 @@ interface RecommendationFormProps {
   initialValues?: Partial<FormData>;
 }
 
-// Note: defaultFormData would be used when fully integrating useForm hook
-// const defaultFormData: FormData = { ... };
+const TOTAL_STEPS = 7;
 
 export const RecommendationForm: React.FC<RecommendationFormProps> = ({
   onSubmit,
@@ -40,14 +38,12 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 }) => {
   const { fieldValues } = useFieldValues();
   const { t } = useTranslation();
-
   const translateEnum = useTranslateEnum();
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Note: This form is still using the old state management approach
-  // The useForm hook is imported but not yet fully integrated
-  // This is a complex form that would benefit from gradual refactoring
+  const [currentStep, setCurrentStep] = useState(0);
+  const [isMaxActivityCountManuallyTouched, setIsMaxActivityCountManuallyTouched] = useState(false);
 
-  // Initialize form data with default values
   const [formData, setFormData] = useState<FormData>({
     targetAge: initialValues?.targetAge ?? 10,
     format: initialValues?.format ?? [],
@@ -61,297 +57,474 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
     priorityCategories: initialValues?.priorityCategories ?? [],
   });
 
-  // Track if maxActivityCount has been manually touched
-  const [
-    isMaxActivityCountManuallyTouched,
-    setIsMaxActivityCountManuallyTouched,
-  ] = useState(false);
-
-  // Calculate initial maxActivityCount based on duration if not provided
   const initialMaxActivityCount =
     initialValues?.maxActivityCount ??
     Math.max(1, Math.floor((initialValues?.targetDuration ?? 60) / 30));
 
-  // Update formData to use calculated initial value
   useEffect(() => {
     if (!initialValues?.maxActivityCount) {
-      setFormData((prev) => ({
-        ...prev,
-        maxActivityCount: initialMaxActivityCount,
-      }));
+      setFormData((prev) => ({ ...prev, maxActivityCount: initialMaxActivityCount }));
     }
   }, [initialMaxActivityCount, initialValues?.maxActivityCount]);
 
-  // Initialize multi-select fields with all options when fieldValues are available
   useEffect(() => {
     if (fieldValues) {
       setFormData((prev) => ({
         ...prev,
         format: prev.format.length > 0 ? prev.format : fieldValues.format || [],
         resourcesNeeded:
-          prev.resourcesNeeded.length > 0
-            ? prev.resourcesNeeded
-            : fieldValues.resourcesAvailable || [],
+          prev.resourcesNeeded.length > 0 ? prev.resourcesNeeded : fieldValues.resourcesAvailable || [],
         bloomLevels:
-          prev.bloomLevels.length > 0
-            ? prev.bloomLevels
-            : fieldValues.bloomLevel || [],
+          prev.bloomLevels.length > 0 ? prev.bloomLevels : fieldValues.bloomLevel || [],
         topics: prev.topics.length > 0 ? prev.topics : fieldValues.topics || [],
       }));
     }
   }, [fieldValues]);
 
-  // Get all available options to display - always show all options regardless of selection
   const actualFormat = fieldValues?.format || [];
   const actualResources = fieldValues?.resourcesAvailable || [];
   const actualBloomLevels = fieldValues?.bloomLevel || [];
   const actualTopics = fieldValues?.topics || [];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
   const updateFormData = (updates: Partial<FormData>) => {
     setFormData((prev) => {
       const newData = { ...prev, ...updates };
-
-      // If duration is being updated and maxActivityCount hasn't been manually touched,
-      // automatically calculate maxActivityCount using the formula: duration // 30
-      if (
-        updates.targetDuration !== undefined &&
-        !isMaxActivityCountManuallyTouched
-      ) {
-        newData.maxActivityCount = Math.max(
-          1,
-          Math.floor(updates.targetDuration / 30),
-        );
+      if (updates.targetDuration !== undefined && !isMaxActivityCountManuallyTouched) {
+        newData.maxActivityCount = Math.max(1, Math.floor(updates.targetDuration / 30));
       }
-
       return newData;
     });
   };
 
   const toggleArrayValue = (field: keyof FormData, value: string) => {
     const currentArray = formData[field] as string[];
-
-    // Check if this is a multi-select field that requires at least one selection
-    const multiSelectFields = [
-      "format",
-      "resourcesNeeded",
-      "bloomLevels",
-      "topics",
-    ];
-    const isMultiSelectField = multiSelectFields.includes(field);
-
+    const multiSelectFields = ["format", "resourcesNeeded", "bloomLevels", "topics"];
     if (currentArray.includes(value)) {
-      // Trying to deselect - check if this would leave the array empty
-      if (isMultiSelectField && currentArray.length === 1) {
-        // Don't allow deselecting the last item
-        return;
-      }
-      const newArray = currentArray.filter((item) => item !== value);
-      updateFormData({ [field]: newArray });
+      if (multiSelectFields.includes(field) && currentArray.length === 1) return;
+      updateFormData({ [field]: currentArray.filter((item) => item !== value) });
     } else {
-      // Adding a new selection
-      const newArray = [...currentArray, value];
-      updateFormData({ [field]: newArray });
+      updateFormData({ [field]: [...currentArray, value] });
     }
   };
 
-  const handleMaxActivityCountChange = (value: number) => {
-    setIsMaxActivityCountManuallyTouched(true);
-    updateFormData({ maxActivityCount: value });
-  };
-
   const togglePriorityCategory = (category: string) => {
-    const currentCategories = formData.priorityCategories;
-    const newCategories = currentCategories.includes(category)
-      ? currentCategories.filter((c) => c !== category)
-      : [...currentCategories, category];
-    updateFormData({ priorityCategories: newCategories });
+    const current = formData.priorityCategories;
+    updateFormData({
+      priorityCategories: current.includes(category)
+        ? current.filter((c) => c !== category)
+        : [...current, category],
+    });
   };
 
-  const isPriorityCategory = (category: string) => {
-    return formData.priorityCategories.includes(category);
+  const isPriorityCategory = (category: string) => formData.priorityCategories.includes(category);
+
+  const isLastStep = currentStep === TOTAL_STEPS - 1;
+
+  const handleNext = useCallback(() => {
+    if (isLastStep) {
+      onSubmit(formData);
+    } else {
+      setCurrentStep((s) => Math.min(s + 1, TOTAL_STEPS - 1));
+    }
+  }, [isLastStep, formData, onSubmit]);
+
+  const handleBack = () => setCurrentStep((s) => Math.max(s - 1, 0));
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === "Enter" &&
+        !(e.target as HTMLElement).closest('button, input[type="checkbox"]')
+      ) {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleNext]);
+
+  const getAnswerSummary = (stepIndex: number): string => {
+    const summarizeArray = (items: string[], all: string[], translateFn: (v: string) => string) => {
+      if (all.length > 0 && items.length === all.length) return t("recommendationFormGuided.allSelected");
+      return items.map(translateFn).join(", ") || "—";
+    };
+    switch (stepIndex) {
+      case 0:
+        return `${formData.targetAge}${t("recommendationForm.unitYears")}`;
+      case 1:
+        return `${formData.targetDuration}${t("recommendationForm.unitMinutes")}`;
+      case 2:
+        return summarizeArray(formData.format, actualFormat, (v) => translateEnum("format", v));
+      case 3:
+        return summarizeArray(formData.resourcesNeeded, actualResources, (v) => translateEnum("resources", v));
+      case 4:
+        return summarizeArray(formData.bloomLevels, actualBloomLevels, (v) => translateEnum("bloomLevel", v));
+      case 5:
+        return summarizeArray(formData.topics, actualTopics, (v) => translateEnum("topics", v));
+      case 6:
+        return formData.allowLessonPlans
+          ? t("recommendationFormGuided.lessonPlanEnabled")
+          : t("recommendationFormGuided.singleActivity");
+      default:
+        return "—";
+    }
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Basic Requirements */}
-      <FormSection
-        title={t("recommendationForm.basicRequirements")}
-        icon={Target}
-      >
-        {/* Target Age */}
-        <RangeSlider
-          label={t("recommendationForm.ageAppropriateness")}
-          value={formData.targetAge}
-          min={6}
-          max={15}
-          step={1}
-          onChange={(value) => updateFormData({ targetAge: value })}
-          unit={t("recommendationForm.unitYears")}
-          priorityToggle={
-            <PriorityToggle
-              category="age_appropriateness"
-              isPriority={isPriorityCategory("age_appropriateness")}
-              onToggle={togglePriorityCategory}
-            />
-          }
-        />
+  const steps = [
+    {
+      category: t("recommendationFormGuided.step1Category"),
+      question: t("recommendationFormGuided.step1Question"),
+      description: t("recommendationFormGuided.step1Description"),
+      tip: t("recommendationFormGuided.step1Tip"),
+      sidebar: t("recommendationFormGuided.step1Sidebar"),
+    },
+    {
+      category: t("recommendationFormGuided.step2Category"),
+      question: t("recommendationFormGuided.step2Question"),
+      description: t("recommendationFormGuided.step2Description"),
+      tip: "",
+      sidebar: t("recommendationFormGuided.step2Sidebar"),
+    },
+    {
+      category: t("recommendationFormGuided.step3Category"),
+      question: t("recommendationFormGuided.step3Question"),
+      description: t("recommendationFormGuided.step3Description"),
+      tip: "",
+      sidebar: t("recommendationFormGuided.step3Sidebar"),
+    },
+    {
+      category: t("recommendationFormGuided.step4Category"),
+      question: t("recommendationFormGuided.step4Question"),
+      description: t("recommendationFormGuided.step4Description"),
+      tip: t("recommendationFormGuided.step4Tip"),
+      sidebar: t("recommendationFormGuided.step4Sidebar"),
+    },
+    {
+      category: t("recommendationFormGuided.step5Category"),
+      question: t("recommendationFormGuided.step5Question"),
+      description: t("recommendationFormGuided.step5Description"),
+      tip: "",
+      sidebar: t("recommendationFormGuided.step5Sidebar"),
+    },
+    {
+      category: t("recommendationFormGuided.step6Category"),
+      question: t("recommendationFormGuided.step6Question"),
+      description: t("recommendationFormGuided.step6Description"),
+      tip: t("recommendationFormGuided.step6Tip"),
+      sidebar: t("recommendationFormGuided.step6Sidebar"),
+    },
+    {
+      category: t("recommendationFormGuided.step7Category"),
+      question: t("recommendationFormGuided.step7Question"),
+      description: t("recommendationFormGuided.step7Description"),
+      tip: "",
+      sidebar: t("recommendationFormGuided.step7Sidebar"),
+    },
+  ];
 
-        {/* Target Duration */}
-        <RangeSlider
-          label={t("recommendationForm.durationFit")}
-          value={formData.targetDuration}
-          min={15}
-          max={180}
-          step={15}
-          onChange={(value) => updateFormData({ targetDuration: value })}
-          unit={t("recommendationForm.unitMinutes")}
-          priorityToggle={
-            <PriorityToggle
-              category="duration_fit"
-              isPriority={isPriorityCategory("duration_fit")}
-              onToggle={togglePriorityCategory}
-            />
-          }
-        />
+  const step = steps[currentStep];
 
-        {/* Format Selection */}
-        <BadgeSelector
-          label={t("recommendationForm.activityFormat")}
-          options={actualFormat}
-          selectedValues={formData.format}
-          onToggle={(value) => toggleArrayValue("format", value)}
-          labelFn={(value) => translateEnum("format", value)}
-        />
-
-        {/* Resources Needed */}
-        <BadgeSelector
-          label={t("recommendationForm.resourcesAvailable")}
-          options={actualResources}
-          selectedValues={formData.resourcesNeeded}
-          onToggle={(value) => toggleArrayValue("resourcesNeeded", value)}
-          labelFn={(value) => translateEnum("resources", value)}
-        />
-      </FormSection>
-
-      {/* Learning Objectives */}
-      <FormSection
-        title={t("recommendationForm.learningObjectives")}
-        icon={BookOpen}
-      >
-        {/* Bloom's Taxonomy Levels */}
-        <BadgeSelector
-          label={t("recommendationForm.bloomLevelMatch")}
-          options={actualBloomLevels}
-          selectedValues={formData.bloomLevels}
-          onToggle={(value) => toggleArrayValue("bloomLevels", value)}
-          labelFn={(value) => translateEnum("bloomLevel", value)}
-          priorityToggle={
-            <PriorityToggle
-              category="bloom_level_match"
-              isPriority={isPriorityCategory("bloom_level_match")}
-              onToggle={togglePriorityCategory}
-            />
-          }
-        />
-
-        {/* Topics */}
-        <BadgeSelector
-          label={t("recommendationForm.topicRelevance")}
-          options={actualTopics}
-          selectedValues={formData.topics}
-          onToggle={(value) => toggleArrayValue("topics", value)}
-          labelFn={(value) => translateEnum("topics", value)}
-          priorityToggle={
-            <PriorityToggle
-              category="topic_relevance"
-              isPriority={isPriorityCategory("topic_relevance")}
-              onToggle={togglePriorityCategory}
-            />
-          }
-        />
-      </FormSection>
-
-      {/* Advanced Options */}
-      <FormSection
-        title={t("recommendationForm.advancedOptions")}
-        icon={Settings}
-      >
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label className="text-base font-medium">
-              {t("recommendationForm.allowLessonPlans")}
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              {t("recommendationForm.allowLessonPlansDesc")}
-            </p>
-          </div>
-          <input
-            type="checkbox"
-            checked={formData.allowLessonPlans}
-            onChange={(e) =>
-              updateFormData({ allowLessonPlans: e.target.checked })
+  const renderStepInput = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <RangeSlider
+            label={t("recommendationForm.ageAppropriateness")}
+            value={formData.targetAge}
+            min={6}
+            max={15}
+            step={1}
+            onChange={(value) => updateFormData({ targetAge: value })}
+            unit={t("recommendationForm.unitYears")}
+            priorityToggle={
+              <PriorityToggle
+                category="age_appropriateness"
+                isPriority={isPriorityCategory("age_appropriateness")}
+                onToggle={togglePriorityCategory}
+              />
             }
           />
-        </div>
-
-        {formData.allowLessonPlans && (
-          <>
-            <RangeSlider
-              label={t("recommendationForm.maxActivities")}
-              value={formData.maxActivityCount}
-              min={1}
-              max={5}
-              step={1}
-              onChange={handleMaxActivityCountChange}
-            />
-
-            <div className="flex items-center justify-between">
+        );
+      case 1:
+        return (
+          <RangeSlider
+            label={t("recommendationForm.durationFit")}
+            value={formData.targetDuration}
+            min={15}
+            max={180}
+            step={15}
+            onChange={(value) => updateFormData({ targetDuration: value })}
+            unit={t("recommendationForm.unitMinutes")}
+            priorityToggle={
+              <PriorityToggle
+                category="duration_fit"
+                isPriority={isPriorityCategory("duration_fit")}
+                onToggle={togglePriorityCategory}
+              />
+            }
+          />
+        );
+      case 2:
+        return (
+          <BadgeSelector
+            label={t("recommendationForm.activityFormat")}
+            options={actualFormat}
+            selectedValues={formData.format}
+            onToggle={(value) => toggleArrayValue("format", value)}
+            labelFn={(value) => translateEnum("format", value)}
+          />
+        );
+      case 3:
+        return (
+          <BadgeSelector
+            label={t("recommendationForm.resourcesAvailable")}
+            options={actualResources}
+            selectedValues={formData.resourcesNeeded}
+            onToggle={(value) => toggleArrayValue("resourcesNeeded", value)}
+            labelFn={(value) => translateEnum("resources", value)}
+          />
+        );
+      case 4:
+        return (
+          <BadgeSelector
+            label={t("recommendationForm.bloomLevelMatch")}
+            options={actualBloomLevels}
+            selectedValues={formData.bloomLevels}
+            onToggle={(value) => toggleArrayValue("bloomLevels", value)}
+            labelFn={(value) => translateEnum("bloomLevel", value)}
+            priorityToggle={
+              <PriorityToggle
+                category="bloom_level_match"
+                isPriority={isPriorityCategory("bloom_level_match")}
+                onToggle={togglePriorityCategory}
+              />
+            }
+          />
+        );
+      case 5:
+        return (
+          <BadgeSelector
+            label={t("recommendationForm.topicRelevance")}
+            options={actualTopics}
+            selectedValues={formData.topics}
+            onToggle={(value) => toggleArrayValue("topics", value)}
+            labelFn={(value) => translateEnum("topics", value)}
+            priorityToggle={
+              <PriorityToggle
+                category="topic_relevance"
+                isPriority={isPriorityCategory("topic_relevance")}
+                onToggle={togglePriorityCategory}
+              />
+            }
+          />
+        );
+      case 6:
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg border bg-card p-4">
               <div className="space-y-0.5">
                 <Label className="text-base font-medium">
-                  {t("recommendationForm.includeBreaks")}
+                  {t("recommendationForm.allowLessonPlans")}
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  {t("recommendationForm.includeBreaksDesc")}
+                  {t("recommendationForm.allowLessonPlansDesc")}
                 </p>
               </div>
               <input
                 type="checkbox"
-                checked={formData.includeBreaks}
-                onChange={(e) =>
-                  updateFormData({ includeBreaks: e.target.checked })
-                }
+                checked={formData.allowLessonPlans}
+                onChange={(e) => updateFormData({ allowLessonPlans: e.target.checked })}
+                className="h-5 w-5 accent-primary"
               />
             </div>
-          </>
-        )}
-      </FormSection>
+            {formData.allowLessonPlans && (
+              <>
+                <RangeSlider
+                  label={t("recommendationForm.maxActivities")}
+                  value={formData.maxActivityCount}
+                  min={1}
+                  max={5}
+                  step={1}
+                  onChange={(value) => {
+                    setIsMaxActivityCountManuallyTouched(true);
+                    updateFormData({ maxActivityCount: value });
+                  }}
+                />
+                <div className="flex items-center justify-between rounded-lg border bg-card p-4">
+                  <div className="space-y-0.5">
+                    <Label className="text-base font-medium">
+                      {t("recommendationForm.includeBreaks")}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t("recommendationForm.includeBreaksDesc")}
+                    </p>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={formData.includeBreaks}
+                    onChange={(e) => updateFormData({ includeBreaks: e.target.checked })}
+                    className="h-5 w-5 accent-primary"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
 
-      <Separator className="my-6" />
+  return (
+    <div ref={containerRef} className="min-h-[480px]">
+      {/* Mobile step counter */}
+      <div className="lg:hidden mb-6 flex items-center gap-3">
+        <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-300"
+            style={{ width: `${((currentStep + 1) / TOTAL_STEPS) * 100}%` }}
+          />
+        </div>
+        <span className="text-sm text-muted-foreground flex-shrink-0">
+          {currentStep + 1} / {TOTAL_STEPS}
+        </span>
+      </div>
 
-      <div className="flex justify-end">
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 lg:gap-14">
+        {/* Main content */}
+        <div className="flex flex-col">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary mb-3">
+            {step.category}
+          </p>
+          <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-4">
+            {step.question}
+          </h2>
+          <p className="text-muted-foreground leading-relaxed mb-8 max-w-xl">
+            {step.description}
+          </p>
+
+          <div className="flex-1">{renderStepInput()}</div>
+
+          {step.tip && (
+            <div className="mt-6 flex items-start gap-2.5 text-sm text-muted-foreground">
+              <Info className="h-4 w-4 text-primary/70 mt-0.5 flex-shrink-0" />
+              <span>
+                <span className="font-semibold text-foreground">
+                  {t("recommendationFormGuided.tip")}
+                </span>
+                {" · "}
+                {step.tip}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Answers sidebar */}
+        <div className="hidden lg:block">
+          <div className="rounded-xl border bg-card p-5 sticky top-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-5">
+              {t("recommendationFormGuided.yourAnswers")}
+            </p>
+            <ol className="space-y-3">
+              {steps.map((s, idx) => (
+                <li
+                  key={idx}
+                  className={cn(
+                    "flex items-start gap-3 rounded-lg px-2 py-1.5 -mx-2 transition-colors",
+                    idx <= currentStep && "cursor-pointer hover:bg-muted/50",
+                    idx > currentStep && "opacity-40 cursor-default"
+                  )}
+                  onClick={() => idx <= currentStep && setCurrentStep(idx)}
+                >
+                  <div
+                    className={cn(
+                      "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5 transition-all",
+                      idx < currentStep && "bg-primary text-primary-foreground",
+                      idx === currentStep &&
+                        "bg-primary text-primary-foreground ring-2 ring-primary/25 ring-offset-1 ring-offset-card",
+                      idx > currentStep && "bg-muted text-muted-foreground border border-border"
+                    )}
+                  >
+                    {idx < currentStep ? <CheckCircle className="h-3.5 w-3.5" /> : idx + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p
+                      className={cn(
+                        "text-sm font-medium leading-tight",
+                        idx === currentStep ? "text-foreground" : "text-muted-foreground"
+                      )}
+                    >
+                      {s.sidebar}
+                    </p>
+                    {idx < currentStep && (
+                      <p className="text-xs text-primary font-medium mt-0.5 truncate">
+                        {getAnswerSummary(idx)}
+                      </p>
+                    )}
+                    {idx === currentStep && (
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {getAnswerSummary(idx)}
+                      </p>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="mt-10 pt-6 border-t flex items-center justify-between gap-4">
         <Button
-          type="submit"
+          type="button"
+          variant="ghost"
+          onClick={handleBack}
+          disabled={currentStep === 0}
+          className="gap-1.5"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {t("recommendationFormGuided.back")}
+        </Button>
+
+        <p className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground select-none">
+          {t("recommendationFormGuided.pressEnterPrefix")}
+          <kbd className="inline-flex items-center rounded border border-border bg-muted px-1.5 py-0.5 font-mono text-xs">
+            Enter
+          </kbd>
+          {t("recommendationFormGuided.pressEnterSuffix")}
+        </p>
+
+        <Button
+          type="button"
+          onClick={handleNext}
           disabled={isLoading}
-          className="min-w-[140px] bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-md hover:shadow-lg transition-all duration-300"
+          className={cn(
+            "gap-2 min-w-[140px]",
+            isLastStep &&
+              "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-md hover:shadow-lg transition-all duration-300"
+          )}
         >
           {isLoading ? (
             <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
               {t("recommendationForm.generating")}
+            </>
+          ) : isLastStep ? (
+            <>
+              <Sparkles className="h-4 w-4" />
+              {t("recommendationForm.getRecommendations")}
             </>
           ) : (
             <>
-              <Sparkles className="h-4 w-4 mr-2" />
-              {t("recommendationForm.getRecommendations")}
+              {t("recommendationFormGuided.continue")}
+              <ArrowRight className="h-4 w-4" />
             </>
           )}
         </Button>
       </div>
-    </form>
+    </div>
   );
 };
