@@ -17,6 +17,7 @@ import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.entity.enums.DocumentType;
 import com.learnhub.activitymanagement.entity.enums.MarkdownType;
+import com.learnhub.activitymanagement.repository.ActivityQueryResult;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
@@ -36,7 +37,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class ActivityServiceTest {
@@ -275,8 +275,9 @@ class ActivityServiceTest {
 		UserFavourites favourite = new UserFavourites();
 		favourite.setActivityId(favouriteActivity.getId());
 
-		when(activityRepository.findAll(any(Specification.class)))
-				.thenReturn(List.of(favouriteActivity, otherActivity));
+		when(activityRepository.findPublishedActivitiesWithFilters(any(), any(), any(), any(), any(), any(), any(), any(),
+				any(), any(), any(), any(), any()))
+				.thenReturn(new ActivityQueryResult(List.of(favouriteActivity, otherActivity), 2));
 		when(userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityIdIn(eq(userId), eq("activity"), any()))
 				.thenReturn(List.of(favourite));
 
@@ -291,7 +292,9 @@ class ActivityServiceTest {
 	@Test
 	void getActivitiesWithFiltersDoesNotLoadFavouritesForAnonymousUsers() {
 		Activity activity = createTestActivity();
-		when(activityRepository.findAll(any(Specification.class))).thenReturn(List.of(activity));
+		when(activityRepository.findPublishedActivitiesWithFilters(any(), any(), any(), any(), any(), any(), any(), any(),
+				any(), any(), any(), any(), any()))
+				.thenReturn(new ActivityQueryResult(List.of(activity), 1));
 
 		List<ActivityResponse> responses = activityService.getActivitiesWithFilters(null, null, null, null, null, null,
 				null, null, null, null, null, null, null, false, null);
@@ -299,6 +302,19 @@ class ActivityServiceTest {
 		assertThat(responses).hasSize(1);
 		assertThat(responses.get(0).isFavourited()).isFalse();
 		verify(userFavouritesRepository, never()).findByUserIdAndFavouriteTypeAndActivityIdIn(any(), any(), any());
+	}
+
+	@Test
+	void getActivityByIdMarksAuthenticatedUserFavourite() {
+		UUID userId = UUID.randomUUID();
+		Activity activity = createTestActivity();
+		when(activityRepository.findById(activity.getId())).thenReturn(Optional.of(activity));
+		when(userFavouritesRepository.existsByUserIdAndFavouriteTypeAndActivityId(userId, "activity", activity.getId()))
+				.thenReturn(true);
+
+		ActivityResponse response = activityService.getActivityById(activity.getId(), false, false, false, userId);
+
+		assertThat(response.isFavourited()).isTrue();
 	}
 
 	@Test

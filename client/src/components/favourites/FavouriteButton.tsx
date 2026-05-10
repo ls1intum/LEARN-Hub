@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiService } from "@/services/apiService";
@@ -39,26 +39,6 @@ export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
     initialIsFavourited ?? false,
   );
   const [loading, setLoading] = useState(false);
-  const [checkingStatus, setCheckingStatus] = useState(
-    initialIsFavourited === undefined,
-  );
-
-  const checkFavouriteStatus = useCallback(async () => {
-    if (!user) {
-      setCheckingStatus(false);
-      return;
-    }
-
-    try {
-      const response =
-        await apiService.checkActivityFavouriteStatus(activityId);
-      setIsFavourited(response.isFavourited);
-    } catch (err) {
-      logger.error("Failed to check favourite status", err, "FavouriteButton");
-    } finally {
-      setCheckingStatus(false);
-    }
-  }, [user, activityId]);
 
   const toggleFavourite = async () => {
     if (!user || loading) return;
@@ -83,13 +63,8 @@ export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
   };
 
   useEffect(() => {
-    // If initialIsFavourited is provided, don't make an API call
-    if (initialIsFavourited !== undefined) {
-      setCheckingStatus(false);
-      return;
-    }
-    checkFavouriteStatus();
-  }, [checkFavouriteStatus, initialIsFavourited]);
+    setIsFavourited(initialIsFavourited ?? false);
+  }, [initialIsFavourited]);
 
   // Show unauthenticated users the button, but redirect to login on click
   if (!user) {
@@ -111,20 +86,6 @@ export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
         }}
         className={`text-muted-foreground hover:text-red-500 ${className}`}
         title={t("favourites.loginRequired")}
-      >
-        <Heart className="h-4 w-4" />
-      </Button>
-    );
-  }
-
-  // Don't render while checking status
-  if (checkingStatus) {
-    return (
-      <Button
-        variant={variant}
-        size={size}
-        className={`opacity-50 ${className}`}
-        disabled
       >
         <Heart className="h-4 w-4" />
       </Button>

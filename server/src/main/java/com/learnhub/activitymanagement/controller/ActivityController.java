@@ -109,16 +109,10 @@ public class ActivityController {
 		boolean includeSourcePdf = isAdmin(authentication);
 		UUID userId = CurrentUser.getUserId(authentication);
 		boolean includeTafelbildImage = Boolean.TRUE.equals(request.includeTafelbildImage());
-		List<ActivityResponse> activities = activityService.getActivitiesWithFilters(request.name(), request.ageMin(),
-				request.ageMax(), request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
+		return ResponseEntity.ok(activityService.getActivitiesPage(request.name(), request.ageMin(), request.ageMax(),
+				request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
 				request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(), request.topics(),
-				request.limit(), request.offset(), includeSourcePdf, userId, includeTafelbildImage);
-		ActivitiesListResponse response = new ActivitiesListResponse(
-				activityService.countActivitiesWithFilters(request.name(), request.ageMin(), request.ageMax(),
-						request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
-						request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(), request.topics()),
-				activities, request.limit(), request.offset());
-		return ResponseEntity.ok(response);
+				request.limit(), request.offset(), includeSourcePdf, userId, includeTafelbildImage));
 	}
 
 	@GetMapping("/{id}")
@@ -129,7 +123,7 @@ public class ActivityController {
 			Authentication authentication) {
 		logger.info("GET /api/activities/{} - Get activity by ID called", id);
 		ActivityResponse activity = activityService.getActivityById(id, isAdmin(authentication), false,
-				includeTafelbildImage);
+				includeTafelbildImage, CurrentUser.getUserId(authentication));
 		return ResponseEntity.ok(activity);
 	}
 

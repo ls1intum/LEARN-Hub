@@ -392,7 +392,11 @@ export const ActivityDetails: React.FC = () => {
             {activity.name}
           </h1>
           <div className="flex items-center gap-2 shrink-0">
-            <FavouriteButton activityId={activity.id} size="sm" />
+            <FavouriteButton
+              activityId={activity.id}
+              size="sm"
+              initialIsFavourited={activity.isFavourited ?? false}
+            />
             {isAdmin && (
               <>
                 <Button

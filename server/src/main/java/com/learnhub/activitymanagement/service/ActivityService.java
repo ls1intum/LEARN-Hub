@@ -1,11 +1,13 @@
 package com.learnhub.activitymanagement.service;
 
+import com.learnhub.activitymanagement.dto.response.ActivitiesListResponse;
 import com.learnhub.activitymanagement.dto.response.ActivityResponse;
 import com.learnhub.activitymanagement.dto.response.DocumentResponse;
 import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.*;
+import com.learnhub.activitymanagement.repository.ActivityQueryResult;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
@@ -31,7 +33,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,10 +62,27 @@ public class ActivityService {
 	public long countActivitiesWithFilters(String name, Integer ageMin, Integer ageMax, Integer durationMin,
 			Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics) {
-		return getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels,
-				toSingleValueList(mentalLoad), toSingleValueList(physicalEnergy), resourcesNeeded, topics, null).size();
+		return activityRepository.findPublishedActivitiesWithFilters(name, ageMin, ageMax, durationMin, durationMax,
+				formats, bloomLevels, toSingleValueList(mentalLoad), toSingleValueList(physicalEnergy), resourcesNeeded,
+				topics, 1, 0).total();
 	}
 
+	@Transactional(readOnly = true)
+	public ActivitiesListResponse getActivitiesPage(String name, Integer ageMin, Integer ageMax, Integer durationMin,
+			Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
+			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
+			boolean includeSourcePdf, UUID userId, boolean includeTafelbildImage) {
+		ActivityQueryResult page = activityRepository.findPublishedActivitiesWithFilters(name, ageMin, ageMax,
+				durationMin, durationMax, formats, bloomLevels, toSingleValueList(mentalLoad),
+				toSingleValueList(physicalEnergy), resourcesNeeded, topics, limit, offset);
+		Set<UUID> favouritedActivityIds = findFavouritedActivityIds(userId, page.activities());
+		List<ActivityResponse> activities = page.activities().stream()
+				.map(activity -> mapToSummaryResponse(activity, includeTafelbildImage, favouritedActivityIds))
+				.collect(Collectors.toList());
+		return new ActivitiesListResponse(page.total(), activities, defaultLimit(limit), defaultOffset(offset));
+	}
+
+	@Transactional(readOnly = true)
 	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
 			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset) {
@@ -88,25 +106,17 @@ public class ActivityService {
 				physicalEnergy, resourcesNeeded, topics, limit, offset, includeSourcePdf, userId, false);
 	}
 
+	@Transactional(readOnly = true)
 	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
 			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
 			boolean includeSourcePdf, UUID userId, boolean includeTafelbildImage) {
-		List<Activity> allMatching = getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats,
-				bloomLevels, toSingleValueList(mentalLoad), toSingleValueList(physicalEnergy), resourcesNeeded, topics,
-				null);
-
-		int start = Math.min((offset != null && offset > 0) ? offset : 0, allMatching.size());
-		int pageSize = (limit != null && limit > 0) ? limit : allMatching.size();
-		int end = Math.min(start + pageSize, allMatching.size());
-		List<Activity> page = allMatching.subList(start, end);
-		Set<UUID> favouritedActivityIds = findFavouritedActivityIds(userId, page);
-
-		return page.stream().map(activity -> {
-			ActivityResponse response = mapToResponse(activity, includeSourcePdf, false, includeTafelbildImage);
-			response.setFavourited(favouritedActivityIds.contains(activity.getId()));
-			return response;
-		}).collect(Collectors.toList());
+		ActivityQueryResult page = activityRepository.findPublishedActivitiesWithFilters(name, ageMin, ageMax,
+				durationMin, durationMax, formats, bloomLevels, toSingleValueList(mentalLoad),
+				toSingleValueList(physicalEnergy), resourcesNeeded, topics, limit, offset);
+		Set<UUID> favouritedActivityIds = findFavouritedActivityIds(userId, page.activities());
+		return page.activities().stream().map(activity -> mapToSummaryResponse(activity, includeTafelbildImage,
+				favouritedActivityIds)).collect(Collectors.toList());
 	}
 
 	private Set<UUID> findFavouritedActivityIds(UUID userId, List<Activity> activities) {
@@ -124,17 +134,15 @@ public class ActivityService {
 				.stream().map(UserFavourites::getActivityId).filter(Objects::nonNull).collect(Collectors.toSet());
 	}
 
+	@Transactional(readOnly = true)
 	public List<ActivityResponse> getActivitiesByIdList(List<UUID> ids, boolean includeTafelbildImage, UUID userId) {
 		if (ids == null || ids.isEmpty()) return List.of();
 		List<Activity> activities = activityRepository.findAllById(ids).stream()
 				.filter(a -> a.getStatus() == ActivityStatus.PUBLISHED).collect(Collectors.toList());
 		Map<UUID, Activity> activityMap = activities.stream().collect(Collectors.toMap(Activity::getId, a -> a));
 		Set<UUID> favouritedIds = findFavouritedActivityIds(userId, activities);
-		return ids.stream().map(activityMap::get).filter(Objects::nonNull).map(a -> {
-			ActivityResponse r = mapToResponse(a, false, false, includeTafelbildImage);
-			r.setFavourited(favouritedIds.contains(a.getId()));
-			return r;
-		}).collect(Collectors.toList());
+		return ids.stream().map(activityMap::get).filter(Objects::nonNull)
+				.map(a -> mapToSummaryResponse(a, includeTafelbildImage, favouritedIds)).collect(Collectors.toList());
 	}
 
 	public Set<UUID> findActivityIdsByNameFilter(List<UUID> activityIds, String name) {
@@ -147,94 +155,9 @@ public class ActivityService {
 			List<String> mentalLoads, List<String> physicalEnergies, List<String> resourcesNeeded,
 			List<String> topics) {
 		if (activityIds == null || activityIds.isEmpty()) return Set.of();
-		return getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels,
-				mentalLoads, physicalEnergies, resourcesNeeded, topics, activityIds).stream().map(Activity::getId)
+		return activityRepository.findPublishedActivityIdsByFilters(name, ageMin, ageMax, durationMin, durationMax,
+				formats, bloomLevels, mentalLoads, physicalEnergies, resourcesNeeded, topics, activityIds).stream()
 				.collect(Collectors.toSet());
-	}
-
-	private List<Activity> getFilteredActivities(String name, Integer ageMin, Integer ageMax, Integer durationMin,
-			Integer durationMax, List<String> formats, List<String> bloomLevels, List<String> mentalLoads,
-			List<String> physicalEnergies, List<String> resourcesNeeded, List<String> topics,
-			List<UUID> restrictedActivityIds) {
-
-		if (restrictedActivityIds != null && restrictedActivityIds.isEmpty()) {
-			return List.of();
-		}
-
-		Specification<Activity> spec = Specification.where(null);
-
-		// Only return published activities in normal list/count/recommendation queries
-		spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), ActivityStatus.PUBLISHED));
-
-		if (restrictedActivityIds != null) {
-			spec = spec.and((root, query, cb) -> root.get("id").in(restrictedActivityIds));
-		}
-
-		if (name != null && !name.isEmpty()) {
-			spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
-		}
-
-		if (ageMin != null) {
-			spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("ageMin"), ageMin));
-		}
-
-		if (ageMax != null) {
-			spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("ageMax"), ageMax));
-		}
-
-		if (formats != null && !formats.isEmpty()) {
-			List<ActivityFormat> formatEnums = formats.stream().map(ActivityFormat::fromValue)
-					.collect(Collectors.toList());
-			spec = spec.and((root, query, cb) -> root.get("format").in(formatEnums));
-		}
-
-		if (bloomLevels != null && !bloomLevels.isEmpty()) {
-			List<BloomLevel> bloomEnums = bloomLevels.stream().map(BloomLevel::fromValue).collect(Collectors.toList());
-			spec = spec.and((root, query, cb) -> root.get("bloomLevel").in(bloomEnums));
-		}
-
-		if (durationMin != null) {
-			spec = spec.and((root, query, cb) -> cb.greaterThanOrEqualTo(root.get("durationMinMinutes"), durationMin));
-		}
-
-		if (durationMax != null) {
-			spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("durationMaxMinutes"), durationMax));
-		}
-
-		if (mentalLoads != null && !mentalLoads.isEmpty()) {
-			List<EnergyLevel> energyLevels = mentalLoads.stream().filter(Objects::nonNull).filter(v -> !v.isEmpty())
-					.map(this::convertStringToEnergyLevel).collect(Collectors.toList());
-			if (!energyLevels.isEmpty()) {
-				spec = spec.and((root, query, cb) -> root.get("mentalLoad").in(energyLevels));
-			}
-		}
-
-		if (physicalEnergies != null && !physicalEnergies.isEmpty()) {
-			List<EnergyLevel> energyLevels = physicalEnergies.stream().filter(Objects::nonNull)
-					.filter(v -> !v.isEmpty()).map(this::convertStringToEnergyLevel).collect(Collectors.toList());
-			if (!energyLevels.isEmpty()) {
-				spec = spec.and((root, query, cb) -> root.get("physicalEnergy").in(energyLevels));
-			}
-		}
-
-		List<Activity> allMatching = activityRepository.findAll(spec);
-
-		// Apply in-memory filtering for JSONB-backed list fields
-		if (resourcesNeeded != null && !resourcesNeeded.isEmpty()) {
-			Set<String> neededLower = resourcesNeeded.stream().map(String::toLowerCase).collect(Collectors.toSet());
-			allMatching = allMatching.stream()
-					.filter(a -> a.getResourcesNeeded() != null && a.getResourcesNeeded().stream()
-							.filter(r -> r != null).map(String::toLowerCase).anyMatch(neededLower::contains))
-					.collect(Collectors.toList());
-		}
-
-		if (topics != null && !topics.isEmpty()) {
-			Set<String> topicsLower = topics.stream().map(String::toLowerCase).collect(Collectors.toSet());
-			allMatching = allMatching.stream().filter(a -> a.getTopics() != null && a.getTopics().stream()
-					.filter(t -> t != null).map(String::toLowerCase).anyMatch(topicsLower::contains))
-					.collect(Collectors.toList());
-		}
-		return allMatching;
 	}
 
 	private List<String> toSingleValueList(String value) {
@@ -270,14 +193,27 @@ public class ActivityService {
 		return getActivityById(id, includeSourcePdf, includeMarkdownContent, false);
 	}
 
+	@Transactional(readOnly = true)
 	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf, boolean includeMarkdownContent,
 			boolean includeTafelbildImage) {
+		return getActivityById(id, includeSourcePdf, includeMarkdownContent, includeTafelbildImage, null);
+	}
+
+	@Transactional(readOnly = true)
+	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf, boolean includeMarkdownContent,
+			boolean includeTafelbildImage, UUID userId) {
 		logger.debug("Fetching activity by id={}", id);
 		Activity activity = activityRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
-		return mapToResponse(activity, includeSourcePdf, includeMarkdownContent, includeTafelbildImage);
+		ActivityResponse response = mapToResponse(activity, includeSourcePdf, includeMarkdownContent,
+				includeTafelbildImage);
+		if (userId != null) {
+			response.setFavourited(isActivityFavourited(userId, activity.getId()));
+		}
+		return response;
 	}
 
+	@Transactional(readOnly = true)
 	public List<MarkdownResponse> getActivityMarkdowns(UUID id) {
 		logger.debug("Fetching markdowns for activity id={}", id);
 		Activity activity = activityRepository.findById(id)
@@ -594,6 +530,46 @@ public class ActivityService {
 		return response;
 	}
 
+	private ActivityResponse mapToSummaryResponse(Activity activity, boolean includeTafelbildImage,
+			Set<UUID> favouritedActivityIds) {
+		ActivityResponse response = new ActivityResponse();
+		response.setId(activity.getId());
+		response.setName(activity.getName());
+		response.setDescription(activity.getDescription());
+		response.setSource(activity.getSource());
+		response.setAgeMin(activity.getAgeMin());
+		response.setAgeMax(activity.getAgeMax());
+		response.setFormat(activity.getFormat() != null ? activity.getFormat().getValue() : null);
+		response.setBloomLevel(activity.getBloomLevel() != null ? activity.getBloomLevel().getValue() : null);
+		response.setDurationMinMinutes(activity.getDurationMinMinutes());
+		response.setDurationMaxMinutes(activity.getDurationMaxMinutes());
+		response.setMentalLoad(activity.getMentalLoad() != null ? activity.getMentalLoad().getValue() : null);
+		response.setPhysicalEnergy(activity.getPhysicalEnergy() != null ? activity.getPhysicalEnergy().getValue() : null);
+		response.setPrepTimeMinutes(activity.getPrepTimeMinutes());
+		response.setCleanupTimeMinutes(activity.getCleanupTimeMinutes());
+		response.setResourcesNeeded(activity.getResourcesNeeded());
+		response.setTopics(activity.getTopics());
+		if (includeTafelbildImage) {
+			response.setTafelbildImage(extractTafelbildImage(activity));
+		}
+		response.setStatus(activity.getStatus() != null ? activity.getStatus().name() : ActivityStatus.PUBLISHED.name());
+		response.setGenerationError(activity.getGenerationError());
+		response.setFavourited(favouritedActivityIds.contains(activity.getId()));
+		return response;
+	}
+
+	private boolean isActivityFavourited(UUID userId, UUID activityId) {
+		return userFavouritesRepository.existsByUserIdAndFavouriteTypeAndActivityId(userId, "activity", activityId);
+	}
+
+	private int defaultLimit(Integer limit) {
+		return limit == null ? 10 : limit;
+	}
+
+	private int defaultOffset(Integer offset) {
+		return offset == null ? 0 : Math.max(offset, 0);
+	}
+
 	private List<MarkdownResponse> mapLatestMarkdowns(Activity activity, boolean includeContent) {
 		Map<String, ActivityMarkdown> latestMarkdownByType = activity.getMarkdowns().stream()
 				.filter(m -> m.getType() != null)
@@ -642,6 +618,7 @@ public class ActivityService {
 
 	// ---- Draft / Publish workflow ----
 
+	@Transactional(readOnly = true)
 	public List<ActivityResponse> getDraftActivities() {
 		List<Activity> drafts = activityRepository
 				.findByStatusInOrderByCreatedAtDesc(List.of(ActivityStatus.PENDING, ActivityStatus.DRAFT));

@@ -92,7 +92,6 @@ export class ApiService {
   static saveLessonPlanFavourite = HistoryApi.saveLessonPlanFavourite;
   static removeActivityFavourite = HistoryApi.removeActivityFavourite;
   static deleteFavourite = HistoryApi.deleteFavourite;
-  static checkActivityFavouriteStatus = HistoryApi.checkActivityFavouriteStatus;
 
   // --- User API ---
   static getCurrentUser = UserApi.getCurrentUser;

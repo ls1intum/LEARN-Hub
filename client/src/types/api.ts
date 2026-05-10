@@ -167,11 +167,6 @@ export interface LessonPlanFavoritesResponse {
   };
 }
 
-// Favorite status response
-export interface FavoriteStatusResponse {
-  isFavourited: boolean;
-}
-
 // Users response
 export interface UsersResponse {
   users: Array<{

@@ -92,14 +92,14 @@ public class Activity {
 	// Documents relationship: FK and ON DELETE CASCADE managed at DB level.
 	// PDFDocument lifecycle is independent (created by PDFService before Activity
 	// exists).
-	@OneToMany(fetch = FetchType.EAGER)
+	@OneToMany(fetch = FetchType.LAZY)
 	@JoinColumn(name = "activity_id")
 	@Fetch(FetchMode.SUBSELECT)
 	@ToString.Exclude
 	@EqualsAndHashCode.Exclude
 	private List<PDFDocument> documents = new ArrayList<>();
 
-	@OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+	@OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
 	@Fetch(FetchMode.SUBSELECT)
 	@ToString.Exclude
 	@EqualsAndHashCode.Exclude

@@ -13,7 +13,6 @@ import com.learnhub.usermanagement.dto.response.ActivityFavouriteDetailsListResp
 import com.learnhub.usermanagement.dto.response.ActivityFavouriteItemResponse;
 import com.learnhub.usermanagement.dto.response.ActivityFavouritesListResponse;
 import com.learnhub.usermanagement.dto.response.FavouriteSaveResponse;
-import com.learnhub.usermanagement.dto.response.FavouriteStatusResponse;
 import com.learnhub.usermanagement.dto.response.LessonPlanDataResponse;
 import com.learnhub.usermanagement.dto.response.LessonPlanFavouriteItemResponse;
 import com.learnhub.usermanagement.dto.response.LessonPlanFavouritesListResponse;
@@ -159,32 +158,24 @@ public class HistoryController {
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
 			}
 
-			List<UserFavourites> allFavourites = favouritesService.getActivityFavouritesOrdered(userId);
-
-			List<UserFavourites> filteredFavourites;
 			boolean hasFilters = (name != null && !name.isEmpty()) || ageMin != null || ageMax != null
 					|| durationMin != null || durationMax != null || (format != null && !format.isEmpty())
 					|| (bloomLevel != null && !bloomLevel.isEmpty())
 					|| (mentalLoad != null && !mentalLoad.isEmpty())
 					|| (physicalEnergy != null && !physicalEnergy.isEmpty())
 					|| (resourcesNeeded != null && !resourcesNeeded.isEmpty()) || (topics != null && !topics.isEmpty());
+			Page<UserFavourites> favouritesPage;
 			if (hasFilters) {
-				List<UUID> activityIds = allFavourites.stream().map(UserFavourites::getActivityId)
-						.filter(Objects::nonNull).collect(Collectors.toList());
+				List<UUID> activityIds = favouritesService.getActivityFavouriteIds(userId);
 				Set<UUID> matchingIds = activityService.findActivityIdsByFilters(activityIds, name, ageMin, ageMax,
 						durationMin, durationMax, format, bloomLevel, mentalLoad, physicalEnergy, resourcesNeeded,
 						topics);
-				filteredFavourites = allFavourites.stream()
-						.filter(fav -> fav.getActivityId() != null && matchingIds.contains(fav.getActivityId()))
-						.collect(Collectors.toList());
+				favouritesPage = favouritesService.getActivityFavouritesPage(userId, matchingIds, limit, offset);
 			} else {
-				filteredFavourites = allFavourites;
+				favouritesPage = favouritesService.getActivityFavouritesPage(userId, limit, offset);
 			}
 
-			long total = filteredFavourites.size();
-			int start = Math.min(offset, filteredFavourites.size());
-			int end = Math.min(start + limit, filteredFavourites.size());
-			List<UserFavourites> pagedFavourites = filteredFavourites.subList(start, end);
+			List<UserFavourites> pagedFavourites = favouritesPage.getContent();
 
 			List<UUID> pageActivityIds = pagedFavourites.stream().map(UserFavourites::getActivityId)
 					.filter(Objects::nonNull).distinct().collect(Collectors.toList());
@@ -200,7 +191,8 @@ public class HistoryController {
 				return new ActivityFavouriteDetailResponse(fav.getId(), fav.getCreatedAt().toString(), activity);
 			}).filter(Objects::nonNull).collect(Collectors.toList());
 
-			return ResponseEntity.ok(new ActivityFavouriteDetailsListResponse(result, total, limit, offset));
+			return ResponseEntity.ok(new ActivityFavouriteDetailsListResponse(result, favouritesPage.getTotalElements(),
+					limit, offset));
 		} catch (Exception e) {
 			logger.error("GET /api/history/favourites/activities - Failed to retrieve activity favourites: {}",
 					e.getMessage());
@@ -226,7 +218,8 @@ public class HistoryController {
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
 			}
 
-			List<UserFavourites> favourites = favouritesService.getUserFavourites(userId, "lesson_plan");
+			Page<UserFavourites> favouritesPage = favouritesService.getLessonPlanFavouritesPage(userId, limit, offset);
+			List<UserFavourites> favourites = favouritesPage.getContent();
 
 			List<LessonPlanFavouriteItemResponse> favouritesData = favourites.stream().map(fav -> {
 				List<UUID> activityIds = Collections.emptyList();
@@ -247,7 +240,7 @@ public class HistoryController {
 			}).collect(Collectors.toList());
 
 			return ResponseEntity.ok(new LessonPlanFavouritesListResponse(favouritesData,
-					new PaginationResponse(limit, offset, favouritesData.size())));
+					new PaginationResponse(limit, offset, (int) favouritesPage.getTotalElements())));
 		} catch (Exception e) {
 			logger.error("GET /api/history/favourites/lesson-plans - Failed to retrieve lesson plan favourites: {}",
 					e.getMessage());
@@ -391,33 +384,4 @@ public class HistoryController {
 		}
 	}
 
-	@GetMapping("/favourites/activities/{activityId}/status")
-	@PreAuthorize("isAuthenticated()")
-	@Operation(summary = "Check activity favourite status", description = "Check if an activity is favourited by the user")
-	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Favourite status", content = @Content(mediaType = "application/json", schema = @Schema(implementation = FavouriteStatusResponse.class)))})
-	public ResponseEntity<?> checkActivityFavouriteStatus(@PathVariable UUID activityId,
-			Authentication authentication) {
-		logger.info("GET /api/history/favourites/activities/{}/status - Check activity favourite status called",
-				activityId);
-		try {
-			UUID userId = CurrentUser.getUserId(authentication);
-			if (userId == null) {
-				logger.error(
-						"GET /api/history/favourites/activities/{}/status - Unauthorized: userId not found in request",
-						activityId);
-				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
-			}
-
-			boolean isFavourited = favouritesService.isActivityFavourited(userId, activityId);
-
-			return ResponseEntity.ok(new FavouriteStatusResponse(isFavourited));
-		} catch (Exception e) {
-			logger.error(
-					"GET /api/history/favourites/activities/{}/status - Failed to check activity favourite status: {}",
-					activityId, e.getMessage());
-			return ResponseEntity.status(500)
-					.body(ErrorResponse.of("Failed to check activity favourite status: " + e.getMessage()));
-		}
-	}
 }

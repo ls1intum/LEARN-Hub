@@ -3,7 +3,6 @@ import type {
   FavoriteLessonPlanRequest,
   ActivityFavoritesResponse,
   LessonPlanFavoritesResponse,
-  FavoriteStatusResponse,
 } from "@/types/api";
 import type { SearchHistoryResponse } from "@/types/activity";
 import { ApiRequestMixin } from "./apiService";
@@ -116,14 +115,5 @@ export const HistoryApi = {
     return ApiRequestMixin.request(`/api/history/favourites/${favouriteId}`, {
       method: "DELETE",
     });
-  },
-
-  /**
-   * Check if activity is favourited
-   */
-  async checkActivityFavouriteStatus(activityId: string) {
-    return ApiRequestMixin.request<FavoriteStatusResponse>(
-      `/api/history/favourites/activities/${activityId}/status`,
-    );
   },
 };
