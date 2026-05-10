@@ -31,11 +31,38 @@ export const HistoryApi = {
   },
 
   /**
-   * Get activity favourites
+   * Get activity favourites with full activity details and server-side pagination
    */
-  async getActivityFavourites(limit = 50, offset = 0) {
+  async getActivityFavourites(params: {
+    limit?: number;
+    offset?: number;
+    name?: string;
+    ageMin?: number;
+    ageMax?: number;
+    durationMin?: number;
+    durationMax?: number;
+    format?: string[];
+    bloomLevel?: string[];
+    mentalLoad?: string[];
+    physicalEnergy?: string[];
+    resourcesNeeded?: string[];
+    topics?: string[];
+  } = {}) {
+    const { limit = 20, offset = 0, ...filters } = params;
+    const query = new URLSearchParams({
+      limit: String(limit),
+      offset: String(offset),
+    });
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === "") return;
+      if (Array.isArray(value)) {
+        value.forEach((entry) => query.append(key, String(entry)));
+        return;
+      }
+      query.set(key, String(value));
+    });
     return ApiRequestMixin.request<ActivityFavoritesResponse>(
-      `/api/history/favourites/activities?limit=${limit}&offset=${offset}`,
+      `/api/history/favourites/activities?${query}`,
     );
   },
 

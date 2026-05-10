@@ -26,7 +26,18 @@ public class UserFavouritesService {
 		return userFavouritesRepository.findByUserIdAndFavouriteType(userId, type);
 	}
 
+	public List<UserFavourites> getActivityFavouritesOrdered(UUID userId) {
+		return userFavouritesRepository.findByUserIdAndFavouriteTypeOrderByCreatedAtDesc(userId, "activity");
+	}
+
+	@Transactional
 	public UserFavourites saveActivityFavourite(UUID userId, UUID activityId, String name) {
+		List<UserFavourites> existingFavourites = userFavouritesRepository
+				.findByUserIdAndFavouriteTypeAndActivityIdOrderByCreatedAtDesc(userId, "activity", activityId);
+		if (!existingFavourites.isEmpty()) {
+			return existingFavourites.get(0);
+		}
+
 		UserFavourites favourite = new UserFavourites();
 		favourite.setUserId(userId);
 		favourite.setFavouriteType("activity");
@@ -60,14 +71,11 @@ public class UserFavouritesService {
 		}).orElse(false);
 	}
 
+	@Transactional
 	public boolean deleteActivityFavourite(UUID userId, UUID activityId) {
-		List<UserFavourites> favourites = userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityId(userId,
-				"activity", activityId);
-		if (!favourites.isEmpty()) {
-			userFavouritesRepository.delete(favourites.get(0));
-			return true;
-		}
-		return false;
+		long deletedCount = userFavouritesRepository.deleteByUserIdAndFavouriteTypeAndActivityId(userId, "activity",
+				activityId);
+		return deletedCount > 0;
 	}
 
 	public boolean isActivityFavourited(UUID userId, UUID activityId) {

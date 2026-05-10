@@ -13,10 +13,17 @@ public interface UserFavouritesRepository extends JpaRepository<UserFavourites, 
 
 	List<UserFavourites> findByUserIdAndFavouriteType(UUID userId, String favouriteType);
 
+	List<UserFavourites> findByUserIdAndFavouriteTypeOrderByCreatedAtDesc(UUID userId, String favouriteType);
+
 	List<UserFavourites> findByUserIdAndFavouriteTypeAndActivityId(UUID userId, String favouriteType, UUID activityId);
+
+	List<UserFavourites> findByUserIdAndFavouriteTypeAndActivityIdOrderByCreatedAtDesc(UUID userId,
+			String favouriteType, UUID activityId);
 
 	List<UserFavourites> findByUserIdAndFavouriteTypeAndActivityIdIn(UUID userId, String favouriteType,
 			List<UUID> activityIds);
+
+	long deleteByUserIdAndFavouriteTypeAndActivityId(UUID userId, String favouriteType, UUID activityId);
 
 	long deleteByActivityId(UUID activityId);
 }

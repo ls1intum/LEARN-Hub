@@ -138,20 +138,16 @@ export interface SearchCriteria {
   includeTafelbildImage?: boolean;
 }
 
-// Activity favorites response
+// Activity favorites response — server returns full activity details with pagination
 export interface ActivityFavoritesResponse {
   favourites: Array<{
-    id: string;
-    favouriteType: string;
-    activityId: string;
-    name: string | null;
-    createdAt: string;
+    favouriteId: string;
+    favouriteCreatedAt: string;
+    activity: import("./activity").Activity;
   }>;
-  pagination: {
-    limit: number;
-    offset: number;
-    count: number;
-  };
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 // Lesson plan favorites response

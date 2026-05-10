@@ -15,6 +15,7 @@ import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { BadgeSelector } from "@/components/ui/BadgeSelector";
 import { PaginationBar } from "@/components/ui/PaginationBar";
 import { useAuth } from "@/hooks/useAuth";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useDataFetch } from "@/hooks/useDataFetch";
 import { useForm } from "@/hooks/useForm";
 import { apiService } from "@/services/apiService";
@@ -160,6 +161,7 @@ export const LibraryPage: React.FC = () => {
     initialValues: initialFilters,
     onSubmit: async () => {},
   });
+  const debouncedName = useDebouncedValue(filterForm.values.name, 300);
   const [appliedFilters, setAppliedFilters] =
     useState<FilterFormData>(initialFilters);
 
@@ -221,14 +223,15 @@ export const LibraryPage: React.FC = () => {
     value: string | number,
   ) => {
     scrollToTop();
-    const nextFilters = {
-      ...filterForm.values,
-      [filterType]: value,
-    } as FilterFormData;
     filterForm.setValue(
       filterType,
       value as FilterFormData[keyof FilterFormData],
     );
+    if (filterType === "name") return;
+    const nextFilters = {
+      ...filterForm.values,
+      [filterType]: value,
+    } as FilterFormData;
     applyFiltersImmediately(nextFilters);
   };
 
@@ -321,6 +324,12 @@ export const LibraryPage: React.FC = () => {
   useEffect(() => {
     if (currentPage > totalPages && totalPages > 0) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
+
+  useEffect(() => {
+    if (debouncedName === appliedFilters.name) return;
+    setAppliedFilters((prev) => ({ ...prev, name: debouncedName }));
+    setCurrentPage(1);
+  }, [appliedFilters.name, debouncedName]);
 
   useEffect(() => {
     const params = new URLSearchParams();

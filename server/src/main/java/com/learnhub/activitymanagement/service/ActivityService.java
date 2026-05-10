@@ -61,8 +61,8 @@ public class ActivityService {
 	public long countActivitiesWithFilters(String name, Integer ageMin, Integer ageMax, Integer durationMin,
 			Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics) {
-		return getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels, mentalLoad,
-				physicalEnergy, resourcesNeeded, topics).size();
+		return getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels,
+				toSingleValueList(mentalLoad), toSingleValueList(physicalEnergy), resourcesNeeded, topics, null).size();
 	}
 
 	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
@@ -93,7 +93,8 @@ public class ActivityService {
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
 			boolean includeSourcePdf, UUID userId, boolean includeTafelbildImage) {
 		List<Activity> allMatching = getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats,
-				bloomLevels, mentalLoad, physicalEnergy, resourcesNeeded, topics);
+				bloomLevels, toSingleValueList(mentalLoad), toSingleValueList(physicalEnergy), resourcesNeeded, topics,
+				null);
 
 		int start = Math.min((offset != null && offset > 0) ? offset : 0, allMatching.size());
 		int pageSize = (limit != null && limit > 0) ? limit : allMatching.size();
@@ -123,14 +124,51 @@ public class ActivityService {
 				.stream().map(UserFavourites::getActivityId).filter(Objects::nonNull).collect(Collectors.toSet());
 	}
 
+	public List<ActivityResponse> getActivitiesByIdList(List<UUID> ids, boolean includeTafelbildImage, UUID userId) {
+		if (ids == null || ids.isEmpty()) return List.of();
+		List<Activity> activities = activityRepository.findAllById(ids).stream()
+				.filter(a -> a.getStatus() == ActivityStatus.PUBLISHED).collect(Collectors.toList());
+		Map<UUID, Activity> activityMap = activities.stream().collect(Collectors.toMap(Activity::getId, a -> a));
+		Set<UUID> favouritedIds = findFavouritedActivityIds(userId, activities);
+		return ids.stream().map(activityMap::get).filter(Objects::nonNull).map(a -> {
+			ActivityResponse r = mapToResponse(a, false, false, includeTafelbildImage);
+			r.setFavourited(favouritedIds.contains(a.getId()));
+			return r;
+		}).collect(Collectors.toList());
+	}
+
+	public Set<UUID> findActivityIdsByNameFilter(List<UUID> activityIds, String name) {
+		return findActivityIdsByFilters(activityIds, name, null, null, null, null, null, null, null, null, null,
+				null);
+	}
+
+	public Set<UUID> findActivityIdsByFilters(List<UUID> activityIds, String name, Integer ageMin, Integer ageMax,
+			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels,
+			List<String> mentalLoads, List<String> physicalEnergies, List<String> resourcesNeeded,
+			List<String> topics) {
+		if (activityIds == null || activityIds.isEmpty()) return Set.of();
+		return getFilteredActivities(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels,
+				mentalLoads, physicalEnergies, resourcesNeeded, topics, activityIds).stream().map(Activity::getId)
+				.collect(Collectors.toSet());
+	}
+
 	private List<Activity> getFilteredActivities(String name, Integer ageMin, Integer ageMax, Integer durationMin,
-			Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
-			String physicalEnergy, List<String> resourcesNeeded, List<String> topics) {
+			Integer durationMax, List<String> formats, List<String> bloomLevels, List<String> mentalLoads,
+			List<String> physicalEnergies, List<String> resourcesNeeded, List<String> topics,
+			List<UUID> restrictedActivityIds) {
+
+		if (restrictedActivityIds != null && restrictedActivityIds.isEmpty()) {
+			return List.of();
+		}
 
 		Specification<Activity> spec = Specification.where(null);
 
 		// Only return published activities in normal list/count/recommendation queries
 		spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), ActivityStatus.PUBLISHED));
+
+		if (restrictedActivityIds != null) {
+			spec = spec.and((root, query, cb) -> root.get("id").in(restrictedActivityIds));
+		}
 
 		if (name != null && !name.isEmpty()) {
 			spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%"));
@@ -163,14 +201,20 @@ public class ActivityService {
 			spec = spec.and((root, query, cb) -> cb.lessThanOrEqualTo(root.get("durationMaxMinutes"), durationMax));
 		}
 
-		if (mentalLoad != null && !mentalLoad.isEmpty()) {
-			EnergyLevel energyLevel = convertStringToEnergyLevel(mentalLoad);
-			spec = spec.and((root, query, cb) -> cb.equal(root.get("mentalLoad"), energyLevel));
+		if (mentalLoads != null && !mentalLoads.isEmpty()) {
+			List<EnergyLevel> energyLevels = mentalLoads.stream().filter(Objects::nonNull).filter(v -> !v.isEmpty())
+					.map(this::convertStringToEnergyLevel).collect(Collectors.toList());
+			if (!energyLevels.isEmpty()) {
+				spec = spec.and((root, query, cb) -> root.get("mentalLoad").in(energyLevels));
+			}
 		}
 
-		if (physicalEnergy != null && !physicalEnergy.isEmpty()) {
-			EnergyLevel energyLevel = convertStringToEnergyLevel(physicalEnergy);
-			spec = spec.and((root, query, cb) -> cb.equal(root.get("physicalEnergy"), energyLevel));
+		if (physicalEnergies != null && !physicalEnergies.isEmpty()) {
+			List<EnergyLevel> energyLevels = physicalEnergies.stream().filter(Objects::nonNull)
+					.filter(v -> !v.isEmpty()).map(this::convertStringToEnergyLevel).collect(Collectors.toList());
+			if (!energyLevels.isEmpty()) {
+				spec = spec.and((root, query, cb) -> root.get("physicalEnergy").in(energyLevels));
+			}
 		}
 
 		List<Activity> allMatching = activityRepository.findAll(spec);
@@ -191,6 +235,13 @@ public class ActivityService {
 					.collect(Collectors.toList());
 		}
 		return allMatching;
+	}
+
+	private List<String> toSingleValueList(String value) {
+		if (value == null || value.isEmpty()) {
+			return List.of();
+		}
+		return List.of(value);
 	}
 
 	private EnergyLevel convertStringToEnergyLevel(String value) {

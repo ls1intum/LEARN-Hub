@@ -287,13 +287,18 @@ export const LessonPlanFavouritesTab: React.FC = () => {
   if (loading) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-8 flex-1" />
-          <Skeleton className="h-8 w-24 rounded" />
-        </div>
+        <ListFilterToolbar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={t("lessonPlanFavourites.searchPlaceholder")}
+          showFilters={showFilters}
+          onToggleFilters={() => setShowFilters(!showFilters)}
+          activeFilterCount={activeFilterCount}
+          onClearFilters={clearFilters}
+        />
         <div className="flex items-center justify-between">
           <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-8 w-[76px] rounded" />
+          <ViewToggle value={viewMode} onChange={handleViewChange} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[...Array(4)].map((_, i) => (

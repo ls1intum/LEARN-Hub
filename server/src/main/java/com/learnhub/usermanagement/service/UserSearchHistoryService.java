@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +37,7 @@ public class UserSearchHistoryService {
 		}
 	}
 
-	public List<UserSearchHistory> getUserSearchHistory(UUID userId, Integer limit, Integer offset) {
+	public Page<UserSearchHistory> getUserSearchHistory(UUID userId, Integer limit, Integer offset) {
 		org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest
 				.of(offset / limit, limit);
 		return userSearchHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);

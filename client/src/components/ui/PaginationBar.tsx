@@ -21,10 +21,15 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
   onPageChange,
   className,
 }) => {
-  if (totalPages <= 1) return null;
+  if (totalItems <= 0) return null;
 
-  const from = (currentPage - 1) * itemsPerPage + 1;
-  const to = Math.min(currentPage * itemsPerPage, totalItems);
+  const safeTotalPages = Math.max(totalPages, 1);
+  const safeCurrentPage = Math.min(Math.max(currentPage, 1), safeTotalPages);
+  const from = (safeCurrentPage - 1) * itemsPerPage + 1;
+  const to = Math.min(safeCurrentPage * itemsPerPage, totalItems);
+
+  const isPreviousDisabled = safeCurrentPage <= 1;
+  const isNextDisabled = safeCurrentPage >= safeTotalPages;
 
   return (
     <div
@@ -41,20 +46,20 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
           variant="ghost"
           size="icon"
           className="h-7 w-7"
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage <= 1}
+          onClick={() => onPageChange(safeCurrentPage - 1)}
+          disabled={isPreviousDisabled}
         >
           <ChevronLeft className="h-3.5 w-3.5" />
         </Button>
         <span className="text-xs text-muted-foreground tabular-nums px-2 select-none">
-          {currentPage} / {totalPages}
+          {safeCurrentPage} / {safeTotalPages}
         </span>
         <Button
           variant="ghost"
           size="icon"
           className="h-7 w-7"
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage >= totalPages}
+          onClick={() => onPageChange(safeCurrentPage + 1)}
+          disabled={isNextDisabled}
         >
           <ChevronRight className="h-3.5 w-3.5" />
         </Button>

@@ -25,6 +25,13 @@ export const SearchHistoryPage: React.FC = () => {
 
   const ITEMS_PER_PAGE = 20;
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+  const maxPageIndex = Math.max(0, totalPages - 1);
+
+  useEffect(() => {
+    if (currentPage > maxPageIndex) {
+      setCurrentPage(maxPageIndex);
+    }
+  }, [currentPage, maxPageIndex]);
 
   useEffect(() => {
     const fetchSearchHistory = async () => {
@@ -296,7 +303,7 @@ export const SearchHistoryPage: React.FC = () => {
             </div>
           )}
 
-          {!loading && searchHistory.length > 0 && (
+          {!loading && totalCount > 0 && (
             <div className="px-3">
               <PaginationBar
                 currentPage={currentPage + 1}

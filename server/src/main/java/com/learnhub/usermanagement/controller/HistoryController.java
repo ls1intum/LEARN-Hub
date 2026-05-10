@@ -1,11 +1,15 @@
 package com.learnhub.usermanagement.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.learnhub.activitymanagement.dto.response.ActivityResponse;
+import com.learnhub.activitymanagement.service.ActivityService;
 import com.learnhub.dto.response.ErrorResponse;
 import com.learnhub.dto.response.MessageResponse;
 import com.learnhub.security.CurrentUser;
 import com.learnhub.usermanagement.dto.request.ActivityFavouriteRequest;
 import com.learnhub.usermanagement.dto.request.LessonPlanFavouriteRequest;
+import com.learnhub.usermanagement.dto.response.ActivityFavouriteDetailResponse;
+import com.learnhub.usermanagement.dto.response.ActivityFavouriteDetailsListResponse;
 import com.learnhub.usermanagement.dto.response.ActivityFavouriteItemResponse;
 import com.learnhub.usermanagement.dto.response.ActivityFavouritesListResponse;
 import com.learnhub.usermanagement.dto.response.FavouriteSaveResponse;
@@ -30,11 +34,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
@@ -54,6 +61,9 @@ public class HistoryController {
 	@Autowired
 	private UserFavouritesService favouritesService;
 
+	@Autowired
+	private ActivityService activityService;
+
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@GetMapping("/search")
@@ -71,7 +81,8 @@ public class HistoryController {
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
 			}
 
-			List<UserSearchHistory> history = searchHistoryService.getUserSearchHistory(userId, limit, offset);
+			Page<UserSearchHistory> historyPage = searchHistoryService.getUserSearchHistory(userId, limit, offset);
+			List<UserSearchHistory> history = historyPage.getContent();
 
 			List<SearchHistoryEntryResponse> historyData = history.stream().map(entry -> {
 				try {
@@ -85,7 +96,7 @@ public class HistoryController {
 			}).collect(Collectors.toList());
 
 			return ResponseEntity.ok(new SearchHistoryListResponse(historyData,
-					new PaginationResponse(limit, offset, historyData.size())));
+					new PaginationResponse(limit, offset, (int) historyPage.getTotalElements())));
 		} catch (Exception e) {
 			logger.error("GET /api/history/search - Failed to retrieve search history: {}", e.getMessage());
 			return ResponseEntity.status(500)
@@ -125,13 +136,22 @@ public class HistoryController {
 
 	@GetMapping("/favourites/activities")
 	@PreAuthorize("isAuthenticated()")
-	@Operation(summary = "Get activity favourites", description = "Get user's favourite activities")
+	@Operation(summary = "Get activity favourites", description = "Get user's favourite activities with full details and server-side pagination")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Activity favourites", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ActivityFavouritesListResponse.class)))})
-	public ResponseEntity<?> getActivityFavourites(@RequestParam(required = false, defaultValue = "50") Integer limit,
-			@RequestParam(required = false, defaultValue = "0") Integer offset, Authentication authentication) {
-		logger.info("GET /api/history/favourites/activities - Get activity favourites called with limit={}, offset={}",
-				limit, offset);
+			@ApiResponse(responseCode = "200", description = "Activity favourites with details", content = @Content(mediaType = "application/json", schema = @Schema(implementation = ActivityFavouriteDetailsListResponse.class)))})
+	public ResponseEntity<?> getActivityFavourites(@RequestParam(required = false, defaultValue = "20") Integer limit,
+			@RequestParam(required = false, defaultValue = "0") Integer offset,
+			@RequestParam(required = false) String name, @RequestParam(required = false) Integer ageMin,
+			@RequestParam(required = false) Integer ageMax, @RequestParam(required = false) Integer durationMin,
+			@RequestParam(required = false) Integer durationMax, @RequestParam(required = false) List<String> format,
+			@RequestParam(required = false) List<String> bloomLevel,
+			@RequestParam(required = false) List<String> mentalLoad,
+			@RequestParam(required = false) List<String> physicalEnergy,
+			@RequestParam(required = false) List<String> resourcesNeeded,
+			@RequestParam(required = false) List<String> topics, Authentication authentication) {
+		logger.info(
+				"GET /api/history/favourites/activities - Get activity favourites called with limit={}, offset={}, name={}",
+				limit, offset, name);
 		try {
 			UUID userId = CurrentUser.getUserId(authentication);
 			if (userId == null) {
@@ -139,15 +159,48 @@ public class HistoryController {
 				return ResponseEntity.status(401).body(ErrorResponse.of("Unauthorized"));
 			}
 
-			List<UserFavourites> favourites = favouritesService.getUserFavourites(userId, "activity");
+			List<UserFavourites> allFavourites = favouritesService.getActivityFavouritesOrdered(userId);
 
-			List<ActivityFavouriteItemResponse> favouritesData = favourites.stream()
-					.map(fav -> new ActivityFavouriteItemResponse(fav.getId(), fav.getFavouriteType(),
-							fav.getActivityId(), fav.getName(), fav.getCreatedAt().toString()))
-					.collect(Collectors.toList());
+			List<UserFavourites> filteredFavourites;
+			boolean hasFilters = (name != null && !name.isEmpty()) || ageMin != null || ageMax != null
+					|| durationMin != null || durationMax != null || (format != null && !format.isEmpty())
+					|| (bloomLevel != null && !bloomLevel.isEmpty())
+					|| (mentalLoad != null && !mentalLoad.isEmpty())
+					|| (physicalEnergy != null && !physicalEnergy.isEmpty())
+					|| (resourcesNeeded != null && !resourcesNeeded.isEmpty()) || (topics != null && !topics.isEmpty());
+			if (hasFilters) {
+				List<UUID> activityIds = allFavourites.stream().map(UserFavourites::getActivityId)
+						.filter(Objects::nonNull).collect(Collectors.toList());
+				Set<UUID> matchingIds = activityService.findActivityIdsByFilters(activityIds, name, ageMin, ageMax,
+						durationMin, durationMax, format, bloomLevel, mentalLoad, physicalEnergy, resourcesNeeded,
+						topics);
+				filteredFavourites = allFavourites.stream()
+						.filter(fav -> fav.getActivityId() != null && matchingIds.contains(fav.getActivityId()))
+						.collect(Collectors.toList());
+			} else {
+				filteredFavourites = allFavourites;
+			}
 
-			return ResponseEntity.ok(new ActivityFavouritesListResponse(favouritesData,
-					new PaginationResponse(limit, offset, favouritesData.size())));
+			long total = filteredFavourites.size();
+			int start = Math.min(offset, filteredFavourites.size());
+			int end = Math.min(start + limit, filteredFavourites.size());
+			List<UserFavourites> pagedFavourites = filteredFavourites.subList(start, end);
+
+			List<UUID> pageActivityIds = pagedFavourites.stream().map(UserFavourites::getActivityId)
+					.filter(Objects::nonNull).distinct().collect(Collectors.toList());
+
+			Map<UUID, ActivityResponse> activityMap = activityService
+					.getActivitiesByIdList(pageActivityIds, true, userId).stream()
+					.collect(Collectors.toMap(ActivityResponse::getId, a -> a, (left, right) -> left));
+
+			List<ActivityFavouriteDetailResponse> result = pagedFavourites.stream().map(fav -> {
+				if (fav.getActivityId() == null) return null;
+				ActivityResponse activity = activityMap.get(fav.getActivityId());
+				if (activity == null) return null;
+				return new ActivityFavouriteDetailResponse(fav.getId(), fav.getCreatedAt().toString(), activity);
+			}).filter(Objects::nonNull).collect(Collectors.toList());
+
+			return ResponseEntity.ok(new ActivityFavouriteDetailsListResponse(result, total, limit, offset));
 		} catch (Exception e) {
 			logger.error("GET /api/history/favourites/activities - Failed to retrieve activity favourites: {}",
 					e.getMessage());
