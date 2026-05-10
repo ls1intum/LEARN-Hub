@@ -23,6 +23,10 @@ public class CorsConfig {
 				.filter(origin -> !origin.isEmpty()).toList();
 		if (!configuredOrigins.isEmpty()) {
 			configuration.setAllowedOrigins(configuredOrigins);
+		} else {
+			// No specific origins configured — allow all via pattern (required for
+			// allowCredentials=true; setAllowedOrigins("*") does not work with credentials)
+			configuration.setAllowedOriginPatterns(Arrays.asList("*"));
 		}
 		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(Arrays.asList("*"));

@@ -150,13 +150,14 @@ public class AuthController {
 			}
 			UserResponse user = authService.getUserById(userId);
 			if (user == null) {
-				logger.error("GET /api/auth/me - User not found for id={}", userId);
-				return ResponseEntity.status(404).body(ErrorResponse.of("User not found"));
+				logger.warn("GET /api/auth/me - User not found for id={}, session is stale", userId);
+				return ResponseEntity.status(401).body(ErrorResponse.of("Session invalid"));
 			}
 			return ResponseEntity.ok(user);
 		} catch (Exception e) {
-			logger.error("GET /api/auth/me - Failed to retrieve current user: {}", e.getMessage());
-			return ResponseEntity.status(500).body(ErrorResponse.of(e.getMessage()));
+			// Any exception here means the session references a user that can no longer be loaded
+			logger.warn("GET /api/auth/me - Could not load user from session: {}", e.getMessage());
+			return ResponseEntity.status(401).body(ErrorResponse.of("Session invalid"));
 		}
 	}
 
