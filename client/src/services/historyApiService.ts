@@ -32,21 +32,23 @@ export const HistoryApi = {
   /**
    * Get activity favourites with full activity details and server-side pagination
    */
-  async getActivityFavourites(params: {
-    limit?: number;
-    offset?: number;
-    name?: string;
-    ageMin?: number;
-    ageMax?: number;
-    durationMin?: number;
-    durationMax?: number;
-    format?: string[];
-    bloomLevel?: string[];
-    mentalLoad?: string[];
-    physicalEnergy?: string[];
-    resourcesNeeded?: string[];
-    topics?: string[];
-  } = {}) {
+  async getActivityFavourites(
+    params: {
+      limit?: number;
+      offset?: number;
+      name?: string;
+      ageMin?: number;
+      ageMax?: number;
+      durationMin?: number;
+      durationMax?: number;
+      format?: string[];
+      bloomLevel?: string[];
+      mentalLoad?: string[];
+      physicalEnergy?: string[];
+      resourcesNeeded?: string[];
+      topics?: string[];
+    } = {},
+  ) {
     const { limit = 20, offset = 0, ...filters } = params;
     const query = new URLSearchParams({
       limit: String(limit),

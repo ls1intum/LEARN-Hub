@@ -315,7 +315,9 @@ export const MarkdownEditorWithPreview: React.FC<
           "MarkdownEditorWithPreview",
         );
         setPreviewError(
-          error instanceof Error ? error.message : t("markdownEditor.previewError"),
+          error instanceof Error
+            ? error.message
+            : t("markdownEditor.previewError"),
         );
       } finally {
         setIsRenderingPreview(false);
@@ -399,7 +401,9 @@ export const MarkdownEditorWithPreview: React.FC<
     <div className="w-full h-full min-h-[400px] flex items-center justify-center rounded-md border bg-muted/30">
       <div className="text-center text-muted-foreground">
         <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
-        <p className={`text-sm ${previewError && !isRenderingPreview ? "text-destructive" : ""}`}>
+        <p
+          className={`text-sm ${previewError && !isRenderingPreview ? "text-destructive" : ""}`}
+        >
           {isRenderingPreview
             ? t("markdownEditor.renderingPreview")
             : previewError

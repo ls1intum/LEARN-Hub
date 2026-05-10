@@ -35,7 +35,9 @@ export function convertSearchCriteriaToFormData(
       : searchCriteria.target_duration;
   if (rawDuration !== undefined) {
     formData.targetDuration =
-      typeof rawDuration === "number" ? rawDuration : parseInt(String(rawDuration), 10);
+      typeof rawDuration === "number"
+        ? rawDuration
+        : parseInt(String(rawDuration), 10);
   }
 
   if (searchCriteria.maxActivityCount !== undefined) {

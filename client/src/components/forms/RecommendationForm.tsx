@@ -1,7 +1,13 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Sparkles, ArrowLeft, ArrowRight, Info, CheckCircle } from "lucide-react";
+import {
+  Sparkles,
+  ArrowLeft,
+  ArrowRight,
+  Info,
+  CheckCircle,
+} from "lucide-react";
 import { useFieldValues } from "@/hooks/useFieldValues";
 import { BadgeSelector } from "@/components/ui/BadgeSelector";
 import { RangeSlider } from "@/components/ui/RangeSlider";
@@ -42,7 +48,10 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [isMaxActivityCountManuallyTouched, setIsMaxActivityCountManuallyTouched] = useState(false);
+  const [
+    isMaxActivityCountManuallyTouched,
+    setIsMaxActivityCountManuallyTouched,
+  ] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({
     targetAge: initialValues?.targetAge ?? 10,
@@ -63,7 +72,10 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 
   useEffect(() => {
     if (!initialValues?.maxActivityCount) {
-      setFormData((prev) => ({ ...prev, maxActivityCount: initialMaxActivityCount }));
+      setFormData((prev) => ({
+        ...prev,
+        maxActivityCount: initialMaxActivityCount,
+      }));
     }
   }, [initialMaxActivityCount, initialValues?.maxActivityCount]);
 
@@ -73,9 +85,13 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
         ...prev,
         format: prev.format.length > 0 ? prev.format : fieldValues.format || [],
         resourcesNeeded:
-          prev.resourcesNeeded.length > 0 ? prev.resourcesNeeded : fieldValues.resourcesAvailable || [],
+          prev.resourcesNeeded.length > 0
+            ? prev.resourcesNeeded
+            : fieldValues.resourcesAvailable || [],
         bloomLevels:
-          prev.bloomLevels.length > 0 ? prev.bloomLevels : fieldValues.bloomLevel || [],
+          prev.bloomLevels.length > 0
+            ? prev.bloomLevels
+            : fieldValues.bloomLevel || [],
         topics: prev.topics.length > 0 ? prev.topics : fieldValues.topics || [],
       }));
     }
@@ -89,8 +105,14 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
   const updateFormData = (updates: Partial<FormData>) => {
     setFormData((prev) => {
       const newData = { ...prev, ...updates };
-      if (updates.targetDuration !== undefined && !isMaxActivityCountManuallyTouched) {
-        newData.maxActivityCount = Math.max(1, Math.floor(updates.targetDuration / 30));
+      if (
+        updates.targetDuration !== undefined &&
+        !isMaxActivityCountManuallyTouched
+      ) {
+        newData.maxActivityCount = Math.max(
+          1,
+          Math.floor(updates.targetDuration / 30),
+        );
       }
       return newData;
     });
@@ -98,10 +120,18 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
 
   const toggleArrayValue = (field: keyof FormData, value: string) => {
     const currentArray = formData[field] as string[];
-    const multiSelectFields = ["format", "resourcesNeeded", "bloomLevels", "topics"];
+    const multiSelectFields = [
+      "format",
+      "resourcesNeeded",
+      "bloomLevels",
+      "topics",
+    ];
     if (currentArray.includes(value)) {
-      if (multiSelectFields.includes(field) && currentArray.length === 1) return;
-      updateFormData({ [field]: currentArray.filter((item) => item !== value) });
+      if (multiSelectFields.includes(field) && currentArray.length === 1)
+        return;
+      updateFormData({
+        [field]: currentArray.filter((item) => item !== value),
+      });
     } else {
       updateFormData({ [field]: [...currentArray, value] });
     }
@@ -116,7 +146,8 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
     });
   };
 
-  const isPriorityCategory = (category: string) => formData.priorityCategories.includes(category);
+  const isPriorityCategory = (category: string) =>
+    formData.priorityCategories.includes(category);
 
   const isLastStep = currentStep === TOTAL_STEPS - 1;
 
@@ -145,8 +176,13 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
   }, [handleNext]);
 
   const getAnswerSummary = (stepIndex: number): string => {
-    const summarizeArray = (items: string[], all: string[], translateFn: (v: string) => string) => {
-      if (all.length > 0 && items.length === all.length) return t("recommendationFormGuided.allSelected");
+    const summarizeArray = (
+      items: string[],
+      all: string[],
+      translateFn: (v: string) => string,
+    ) => {
+      if (all.length > 0 && items.length === all.length)
+        return t("recommendationFormGuided.allSelected");
       return items.map(translateFn).join(", ") || "—";
     };
     switch (stepIndex) {
@@ -155,13 +191,21 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
       case 1:
         return `${formData.targetDuration}${t("recommendationForm.unitMinutes")}`;
       case 2:
-        return summarizeArray(formData.format, actualFormat, (v) => translateEnum("format", v));
+        return summarizeArray(formData.format, actualFormat, (v) =>
+          translateEnum("format", v),
+        );
       case 3:
-        return summarizeArray(formData.resourcesNeeded, actualResources, (v) => translateEnum("resources", v));
+        return summarizeArray(formData.resourcesNeeded, actualResources, (v) =>
+          translateEnum("resources", v),
+        );
       case 4:
-        return summarizeArray(formData.bloomLevels, actualBloomLevels, (v) => translateEnum("bloomLevel", v));
+        return summarizeArray(formData.bloomLevels, actualBloomLevels, (v) =>
+          translateEnum("bloomLevel", v),
+        );
       case 5:
-        return summarizeArray(formData.topics, actualTopics, (v) => translateEnum("topics", v));
+        return summarizeArray(formData.topics, actualTopics, (v) =>
+          translateEnum("topics", v),
+        );
       case 6:
         return formData.allowLessonPlans
           ? t("recommendationFormGuided.lessonPlanEnabled")
@@ -334,7 +378,9 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
               <input
                 type="checkbox"
                 checked={formData.allowLessonPlans}
-                onChange={(e) => updateFormData({ allowLessonPlans: e.target.checked })}
+                onChange={(e) =>
+                  updateFormData({ allowLessonPlans: e.target.checked })
+                }
                 className="h-5 w-5 accent-primary"
               />
             </div>
@@ -363,7 +409,9 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
                   <input
                     type="checkbox"
                     checked={formData.includeBreaks}
-                    onChange={(e) => updateFormData({ includeBreaks: e.target.checked })}
+                    onChange={(e) =>
+                      updateFormData({ includeBreaks: e.target.checked })
+                    }
                     className="h-5 w-5 accent-primary"
                   />
                 </div>
@@ -434,7 +482,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
                   className={cn(
                     "flex items-start gap-3 rounded-lg px-2 py-1.5 -mx-2 transition-colors",
                     idx <= currentStep && "cursor-pointer hover:bg-muted/50",
-                    idx > currentStep && "opacity-40 cursor-default"
+                    idx > currentStep && "opacity-40 cursor-default",
                   )}
                   onClick={() => idx <= currentStep && setCurrentStep(idx)}
                 >
@@ -443,17 +491,24 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
                       "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5 transition-all",
                       idx < currentStep && "bg-primary text-primary-foreground",
                       idx === currentStep &&
-                      "bg-primary text-primary-foreground ring-2 ring-primary/25 ring-offset-1 ring-offset-card",
-                      idx > currentStep && "bg-muted text-muted-foreground border border-border"
+                        "bg-primary text-primary-foreground ring-2 ring-primary/25 ring-offset-1 ring-offset-card",
+                      idx > currentStep &&
+                        "bg-muted text-muted-foreground border border-border",
                     )}
                   >
-                    {idx < currentStep ? <CheckCircle className="h-3.5 w-3.5" /> : idx + 1}
+                    {idx < currentStep ? (
+                      <CheckCircle className="h-3.5 w-3.5" />
+                    ) : (
+                      idx + 1
+                    )}
                   </div>
                   <div className="min-w-0 flex-1 min-h-[2rem]">
                     <p
                       className={cn(
                         "line-clamp-2 text-sm font-medium leading-tight",
-                        idx === currentStep ? "text-foreground" : "text-muted-foreground"
+                        idx === currentStep
+                          ? "text-foreground"
+                          : "text-muted-foreground",
                       )}
                     >
                       {s.sidebar}
@@ -463,7 +518,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
                         "mt-0.5 min-h-[1rem] line-clamp-1 text-xs",
                         idx < currentStep && "font-medium text-primary",
                         idx === currentStep && "text-muted-foreground",
-                        idx > currentStep && "invisible"
+                        idx > currentStep && "invisible",
                       )}
                     >
                       {idx <= currentStep ? getAnswerSummary(idx) : "—"}
@@ -503,7 +558,8 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           disabled={isLoading}
           className={cn(
             "gap-2 min-w-[140px]",
-            isLastStep && "shadow-md hover:shadow-lg transition-all duration-300"
+            isLastStep &&
+              "shadow-md hover:shadow-lg transition-all duration-300",
           )}
         >
           {isLoading ? (

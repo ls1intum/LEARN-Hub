@@ -204,12 +204,10 @@ export const ActivityFavouritesTab: React.FC = () => {
     });
   }, [currentPage, debouncedSearch, filters]);
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useDataFetch({ fetchFn: fetchFavourites, enabled: !!user });
+  const { data, isLoading, error, refetch } = useDataFetch({
+    fetchFn: fetchFavourites,
+    enabled: !!user,
+  });
 
   const removeFavourite = async (activityId: string) => {
     if (!user) return;
@@ -554,7 +552,9 @@ export const ActivityFavouritesTab: React.FC = () => {
           ) : (
             <div className="border border-border rounded-lg overflow-hidden">
               <div className="flex items-center gap-3 px-3 py-2 bg-muted/40 border-b border-border text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                <span className="flex-1">{t("activityFavourites.nameHeader")}</span>
+                <span className="flex-1">
+                  {t("activityFavourites.nameHeader")}
+                </span>
                 <span className="w-[52px] shrink-0 hidden sm:block">
                   {t("activityFavourites.ageHeader")}
                 </span>
@@ -571,69 +571,71 @@ export const ActivityFavouritesTab: React.FC = () => {
               </div>
 
               <div className="divide-y divide-border">
-                {favourites.map(({ favouriteId, favouriteCreatedAt, activity }) => {
-                  const isRemoving = removingIds.has(activity.id);
-                  return (
-                    <div
-                      key={favouriteId}
-                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer"
-                      onClick={() => handleViewDetails(activity.id, activity)}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {activity.name}
-                        </p>
-                        {activity.source && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {activity.source}
+                {favourites.map(
+                  ({ favouriteId, favouriteCreatedAt, activity }) => {
+                    const isRemoving = removingIds.has(activity.id);
+                    return (
+                      <div
+                        key={favouriteId}
+                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer"
+                        onClick={() => handleViewDetails(activity.id, activity)}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {activity.name}
                           </p>
-                        )}
-                      </div>
+                          {activity.source && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {activity.source}
+                            </p>
+                          )}
+                        </div>
 
-                      <div className="w-[52px] shrink-0 hidden sm:flex items-center gap-0.5 text-xs text-muted-foreground">
-                        <Users className="h-3 w-3 shrink-0" />
-                        {activity.ageMin}–{activity.ageMax}
-                      </div>
+                        <div className="w-[52px] shrink-0 hidden sm:flex items-center gap-0.5 text-xs text-muted-foreground">
+                          <Users className="h-3 w-3 shrink-0" />
+                          {activity.ageMin}–{activity.ageMax}
+                        </div>
 
-                      <div className="w-[68px] shrink-0 hidden sm:flex items-center gap-0.5 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3 shrink-0" />
-                        {activity.durationMinMinutes}
-                        {activity.durationMaxMinutes &&
-                          `–${activity.durationMaxMinutes}`}
-                        &nbsp;min
-                      </div>
+                        <div className="w-[68px] shrink-0 hidden sm:flex items-center gap-0.5 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3 shrink-0" />
+                          {activity.durationMinMinutes}
+                          {activity.durationMaxMinutes &&
+                            `–${activity.durationMaxMinutes}`}
+                          &nbsp;min
+                        </div>
 
-                      <div className="w-[76px] shrink-0">
-                        <Badge
-                          variant="secondary"
-                          className="text-xs px-1.5 py-0 font-normal"
-                        >
-                          {translateEnum("format", activity.format)}
-                        </Badge>
-                      </div>
+                        <div className="w-[76px] shrink-0">
+                          <Badge
+                            variant="secondary"
+                            className="text-xs px-1.5 py-0 font-normal"
+                          >
+                            {translateEnum("format", activity.format)}
+                          </Badge>
+                        </div>
 
-                      <div className="w-[100px] shrink-0 hidden lg:block text-xs text-muted-foreground tabular-nums">
-                        {new Date(favouriteCreatedAt).toLocaleDateString()}
-                      </div>
+                        <div className="w-[100px] shrink-0 hidden lg:block text-xs text-muted-foreground tabular-nums">
+                          {new Date(favouriteCreatedAt).toLocaleDateString()}
+                        </div>
 
-                      <div className="w-[32px] shrink-0 flex justify-end">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeFavourite(activity.id);
-                          }}
-                          disabled={isRemoving}
-                          aria-label="Remove favourite"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                        <div className="w-[32px] shrink-0 flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeFavourite(activity.id);
+                            }}
+                            disabled={isRemoving}
+                            aria-label="Remove favourite"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  },
+                )}
               </div>
 
               <div className="px-3">

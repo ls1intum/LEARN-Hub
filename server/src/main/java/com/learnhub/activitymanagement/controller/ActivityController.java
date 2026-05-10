@@ -218,8 +218,8 @@ public class ActivityController {
 		return buildFileDownloadResponse(lessonPlanPdf, "lesson_plan", ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
-	private static final List<String> ALL_MARKDOWN_TYPES = List.of(
-			"deckblatt", "artikulationsschema", "hintergrundwissen", "tafelbild", "uebung", "uebung_loesung");
+	private static final List<String> ALL_MARKDOWN_TYPES = List.of("deckblatt", "artikulationsschema",
+			"hintergrundwissen", "tafelbild", "uebung", "uebung_loesung");
 
 	@PostMapping(value = "/upload-and-create-pending", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("hasRole('ADMIN')")
@@ -228,10 +228,14 @@ public class ActivityController {
 	public ResponseEntity<ActivityResponse> uploadAndCreatePending(@RequestParam("pdf_file") MultipartFile pdfFile,
 			@RequestParam(value = "generateMetadata", defaultValue = "true") boolean generateMetadata,
 			@RequestParam(value = "markdownTypes", required = false) List<String> markdownTypes) {
-		List<String> resolvedTypes = (markdownTypes == null || markdownTypes.isEmpty()) ? ALL_MARKDOWN_TYPES : markdownTypes;
-		logger.info("POST /api/activities/upload-and-create-pending called with file={}, generateMetadata={}, markdownTypes={}",
+		List<String> resolvedTypes = (markdownTypes == null || markdownTypes.isEmpty())
+				? ALL_MARKDOWN_TYPES
+				: markdownTypes;
+		logger.info(
+				"POST /api/activities/upload-and-create-pending called with file={}, generateMetadata={}, markdownTypes={}",
 				pdfFile.getOriginalFilename(), generateMetadata, resolvedTypes);
-		ActivityResponse response = activityDraftService.initiateDraftCreation(pdfFile, generateMetadata, resolvedTypes);
+		ActivityResponse response = activityDraftService.initiateDraftCreation(pdfFile, generateMetadata,
+				resolvedTypes);
 		return ResponseEntity.status(201).body(response);
 	}
 
@@ -317,9 +321,7 @@ public class ActivityController {
 			existingArtik = activityService.getActivityMarkdowns(request.getActivityId()).stream()
 					.filter(m -> "artikulationsschema".equals(m.getType()) && m.getContent() != null
 							&& !m.getContent().isBlank())
-					.map(m -> m.getContent())
-					.findFirst()
-					.orElse(null);
+					.map(m -> m.getContent()).findFirst().orElse(null);
 		}
 		final String existingArtikFinal = existingArtik;
 
@@ -392,7 +394,8 @@ public class ActivityController {
 			if (deckblattFuture != null) {
 				response.setDeckblattMarkdown(deckblattFuture.join());
 			}
-			// Only return a regenerated Artikulationsschema — never echo back the existing one
+			// Only return a regenerated Artikulationsschema — never echo back the existing
+			// one
 			if (artikulationsschemaFuture != null && existingArtikFinal == null
 					&& (generateAll || requestedTypes.contains("artikulationsschema"))) {
 				response.setArtikulationsschemaMarkdown(artikulationsschemaFuture.join());
@@ -457,7 +460,8 @@ public class ActivityController {
 	public ResponseEntity<?> downloadActivityDocx(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/docx - Download combined activity DOCX", activityId);
 		if (!markdownToDocxService.isAvailable()) {
-			return ResponseEntity.status(503).body("DOCX export is not available: Adobe PDF Services credentials are not configured");
+			return ResponseEntity.status(503)
+					.body("DOCX export is not available: Adobe PDF Services credentials are not configured");
 		}
 		ActivityResponse activity = activityService.getActivityById(activityId, false, true);
 		List<String> markdowns = new ArrayList<>();

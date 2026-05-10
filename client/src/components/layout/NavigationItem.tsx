@@ -58,7 +58,9 @@ export const NavigationItem: React.FC<NavigationItemProps> = ({
         )}
         aria-hidden="true"
       />
-      {!collapsed && <span className="flex-1 text-left">{t(`nav.${tab.id}`)}</span>}
+      {!collapsed && (
+        <span className="flex-1 text-left">{t(`nav.${tab.id}`)}</span>
+      )}
       {!collapsed && isAuthGated && (
         <Lock className="h-3 w-3 shrink-0 opacity-50" aria-hidden="true" />
       )}

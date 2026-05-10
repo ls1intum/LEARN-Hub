@@ -13,8 +13,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ActivityRepository extends JpaRepository<Activity, UUID>, JpaSpecificationExecutor<Activity>,
-		ActivityRepositoryCustom {
+public interface ActivityRepository
+		extends
+			JpaRepository<Activity, UUID>,
+			JpaSpecificationExecutor<Activity>,
+			ActivityRepositoryCustom {
 
 	List<Activity> findByNameContainingIgnoreCase(String name);
 

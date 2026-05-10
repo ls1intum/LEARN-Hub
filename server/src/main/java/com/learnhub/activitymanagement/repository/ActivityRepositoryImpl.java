@@ -42,7 +42,8 @@ public class ActivityRepositoryImpl implements ActivityRepositoryCustom {
 			return new ActivityQueryResult(List.of(), 0);
 		}
 
-		String idsSql = "SELECT a.id FROM activities a" + queryParts.whereClause() + " ORDER BY a.created_at DESC, a.id DESC";
+		String idsSql = "SELECT a.id FROM activities a" + queryParts.whereClause()
+				+ " ORDER BY a.created_at DESC, a.id DESC";
 		Query idsQuery = entityManager.createNativeQuery(idsSql);
 		applyParameters(idsQuery, queryParts.parameters());
 		int resolvedOffset = Math.max(offset != null ? offset : 0, 0);
@@ -83,8 +84,8 @@ public class ActivityRepositoryImpl implements ActivityRepositoryCustom {
 				.createQuery("SELECT DISTINCT a FROM Activity a WHERE a.id IN :ids", Activity.class);
 		activitiesQuery.setParameter("ids", ids);
 
-		Map<UUID, Activity> byId = activitiesQuery.getResultList().stream()
-				.collect(Collectors.toMap(Activity::getId, activity -> activity, (left, right) -> left, LinkedHashMap::new));
+		Map<UUID, Activity> byId = activitiesQuery.getResultList().stream().collect(
+				Collectors.toMap(Activity::getId, activity -> activity, (left, right) -> left, LinkedHashMap::new));
 
 		return ids.stream().map(byId::get).filter(Objects::nonNull).collect(Collectors.toList());
 	}
@@ -126,10 +127,8 @@ public class ActivityRepositoryImpl implements ActivityRepositoryCustom {
 			parameters.put("durationMax", durationMax);
 		}
 
-		appendEnumInClause(whereClause, parameters, "a.format", "format",
-				convertFormats(formats));
-		appendEnumInClause(whereClause, parameters, "a.bloom_level", "bloomLevel",
-				convertBloomLevels(bloomLevels));
+		appendEnumInClause(whereClause, parameters, "a.format", "format", convertFormats(formats));
+		appendEnumInClause(whereClause, parameters, "a.bloom_level", "bloomLevel", convertBloomLevels(bloomLevels));
 		appendEnumInClause(whereClause, parameters, "a.mental_load", "mentalLoad", toEnergyLevelNames(mentalLoads));
 		appendEnumInClause(whereClause, parameters, "a.physical_energy", "physicalEnergy",
 				toEnergyLevelNames(physicalEnergies));
@@ -171,8 +170,8 @@ public class ActivityRepositoryImpl implements ActivityRepositoryCustom {
 			return List.of();
 		}
 
-		return values.stream().filter(Objects::nonNull).filter(value -> !value.isBlank()).map(this::convertToEnergyLevel)
-				.map(Enum::name).collect(Collectors.toList());
+		return values.stream().filter(Objects::nonNull).filter(value -> !value.isBlank())
+				.map(this::convertToEnergyLevel).map(Enum::name).collect(Collectors.toList());
 	}
 
 	private EnergyLevel convertToEnergyLevel(String value) {
@@ -191,13 +190,10 @@ public class ActivityRepositoryImpl implements ActivityRepositoryCustom {
 			return;
 		}
 
-		List<String> normalizedValues = values.stream().filter(Objects::nonNull).map(value -> value.toLowerCase(Locale.ROOT))
-				.collect(Collectors.toList());
-		whereClause.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(")
-				.append(column)
-				.append(") AS ")
-				.append(prefix)
-				.append("(value) WHERE ");
+		List<String> normalizedValues = values.stream().filter(Objects::nonNull)
+				.map(value -> value.toLowerCase(Locale.ROOT)).collect(Collectors.toList());
+		whereClause.append(" AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(").append(column).append(") AS ")
+				.append(prefix).append("(value) WHERE ");
 		appendInClause(whereClause, parameters, "LOWER(" + prefix + ".value)", prefix, normalizedValues, false);
 		whereClause.append(")");
 	}

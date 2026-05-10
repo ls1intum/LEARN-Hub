@@ -286,8 +286,8 @@ class ActivityServiceTest {
 		UserFavourites favourite = new UserFavourites();
 		favourite.setActivityId(favouriteActivity.getId());
 
-		when(activityRepository.findPublishedActivitiesWithFilters(any(), any(), any(), any(), any(), any(), any(), any(),
-				any(), any(), any(), any(), any()))
+		when(activityRepository.findPublishedActivitiesWithFilters(any(), any(), any(), any(), any(), any(), any(),
+				any(), any(), any(), any(), any(), any()))
 				.thenReturn(new ActivityQueryResult(List.of(favouriteActivity, otherActivity), 2));
 		when(userFavouritesRepository.findByUserIdAndFavouriteTypeAndActivityIdIn(eq(userId), eq("activity"), any()))
 				.thenReturn(List.of(favourite));
@@ -303,9 +303,8 @@ class ActivityServiceTest {
 	@Test
 	void getActivitiesWithFiltersDoesNotLoadFavouritesForAnonymousUsers() {
 		Activity activity = createTestActivity();
-		when(activityRepository.findPublishedActivitiesWithFilters(any(), any(), any(), any(), any(), any(), any(), any(),
-				any(), any(), any(), any(), any()))
-				.thenReturn(new ActivityQueryResult(List.of(activity), 1));
+		when(activityRepository.findPublishedActivitiesWithFilters(any(), any(), any(), any(), any(), any(), any(),
+				any(), any(), any(), any(), any(), any())).thenReturn(new ActivityQueryResult(List.of(activity), 1));
 
 		List<ActivityResponse> responses = activityService.getActivitiesWithFilters(null, null, null, null, null, null,
 				null, null, null, null, null, null, null, false, null);

@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 /**
  * Converts Markdown content to DOCX via Adobe PDF Services.
  *
- * Pipeline: Markdown → PDF ({@link MarkdownToPdfService}, which already
- * renders the complete LEARN-Hub layout including running headers, footers, and
- * page numbers via iText) → DOCX ({@link AdobePdfToDocxService}).
+ * Pipeline: Markdown → PDF ({@link MarkdownToPdfService}, which already renders
+ * the complete LEARN-Hub layout including running headers, footers, and page
+ * numbers via iText) → DOCX ({@link AdobePdfToDocxService}).
  *
  * Adobe preserves the PDF page layout — including the header/footer regions —
  * as native DOCX header/footer sections, so no post-processing is needed.
@@ -48,7 +48,8 @@ public class MarkdownToDocxService {
 
 	public byte[] renderMarkdownToDocx(String markdown, boolean landscape, String activityName, boolean exerciseSheet) {
 		try {
-			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown, landscape, activityName, exerciseSheet);
+			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown, landscape, activityName,
+					exerciseSheet);
 			return adobePdfToDocxService.convertPdfToDocx(pdfBytes);
 		} catch (Exception e) {
 			logger.error("Failed to render markdown to DOCX: {}", e.getMessage(), e);
@@ -67,10 +68,10 @@ public class MarkdownToDocxService {
 	}
 
 	/**
-	 * Render multiple markdown sections as a single DOCX. All sections are
-	 * rendered as PDFs, merged into one with iText, then converted in a single
-	 * Adobe API call — this avoids image-relationship corruption that occurs when
-	 * merging DOCX files at the XML level.
+	 * Render multiple markdown sections as a single DOCX. All sections are rendered
+	 * as PDFs, merged into one with iText, then converted in a single Adobe API
+	 * call — this avoids image-relationship corruption that occurs when merging
+	 * DOCX files at the XML level.
 	 *
 	 * @param exerciseSheets
 	 *            per-section flag; {@code true} activates the exercise-sheet border
@@ -80,13 +81,14 @@ public class MarkdownToDocxService {
 	public byte[] renderMergedDocx(List<String> markdowns, List<Boolean> landscapes, List<Boolean> exerciseSheets,
 			String activityName) {
 		if (markdowns.size() != landscapes.size() || markdowns.size() != exerciseSheets.size()) {
-			throw new IllegalArgumentException("markdowns, landscapes, and exerciseSheets lists must have the same size");
+			throw new IllegalArgumentException(
+					"markdowns, landscapes, and exerciseSheets lists must have the same size");
 		}
 		try {
 			List<byte[]> pdfParts = new ArrayList<>();
 			for (int i = 0; i < markdowns.size(); i++) {
-				pdfParts.add(markdownToPdfService.renderMarkdownToPdf(markdowns.get(i), landscapes.get(i),
-						activityName, exerciseSheets.get(i)));
+				pdfParts.add(markdownToPdfService.renderMarkdownToPdf(markdowns.get(i), landscapes.get(i), activityName,
+						exerciseSheets.get(i)));
 			}
 			byte[] mergedPdf = markdownToPdfService.mergePdfs(pdfParts);
 			return adobePdfToDocxService.convertPdfToDocx(mergedPdf);

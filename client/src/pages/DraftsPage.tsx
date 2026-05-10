@@ -33,14 +33,14 @@ const MAX_FILE_SIZE_BYTES = 1024 * 1024; // 1 MB
 const POLL_INTERVAL_MS = 5000;
 
 const MARKDOWN_TYPES = [
-  { key: "deckblatt",          label: "Deckblatt" },
+  { key: "deckblatt", label: "Deckblatt" },
   { key: "artikulationsschema", label: "Artikulationsschema" },
-  { key: "hintergrundwissen",  label: "Hintergrundwissen" },
-  { key: "tafelbild",          label: "Tafelbild" },
-  { key: "uebung",             label: "Übung" },
-  { key: "uebung_loesung",     label: "Übungslösung" },
+  { key: "hintergrundwissen", label: "Hintergrundwissen" },
+  { key: "tafelbild", label: "Tafelbild" },
+  { key: "uebung", label: "Übung" },
+  { key: "uebung_loesung", label: "Übungslösung" },
 ] as const;
-type MarkdownKey = typeof MARKDOWN_TYPES[number]["key"];
+type MarkdownKey = (typeof MARKDOWN_TYPES)[number]["key"];
 const ALL_MARKDOWN_KEYS = MARKDOWN_TYPES.map((t) => t.key) as MarkdownKey[];
 
 // ─── Upload Modal ──────────────────────────────────────────────────────────
@@ -136,8 +136,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
       onCreated(activity);
       onClose();
     } catch (err: unknown) {
-      const msg =
-        err instanceof Error ? err.message : "Fehler beim Hochladen.";
+      const msg = err instanceof Error ? err.message : "Fehler beim Hochladen.";
       setUploadError(msg);
       setUploading(false);
     }
@@ -215,7 +214,9 @@ const UploadModal: React.FC<UploadModalProps> = ({
 
           {/* LLM generation options */}
           <div className="rounded-md border border-border p-3 space-y-3">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">KI-Generierung</p>
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              KI-Generierung
+            </p>
             <label className="flex items-center gap-2 cursor-pointer select-none">
               <Checkbox
                 checked={generateMetadata}
@@ -225,9 +226,14 @@ const UploadModal: React.FC<UploadModalProps> = ({
               <span className="text-sm">Metadaten extrahieren</span>
             </label>
             <div className="space-y-1.5 pl-1">
-              <p className="text-xs text-muted-foreground font-medium">Markdowns</p>
+              <p className="text-xs text-muted-foreground font-medium">
+                Markdowns
+              </p>
               {MARKDOWN_TYPES.map(({ key, label }) => (
-                <label key={key} className="flex items-center gap-2 cursor-pointer select-none">
+                <label
+                  key={key}
+                  className="flex items-center gap-2 cursor-pointer select-none"
+                >
                   <Checkbox
                     checked={markdownTypes.has(key)}
                     onCheckedChange={(v) => toggleMarkdownType(key, v === true)}
@@ -240,7 +246,11 @@ const UploadModal: React.FC<UploadModalProps> = ({
           </div>
 
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={handleClose} disabled={uploading}>
+            <Button
+              variant="outline"
+              onClick={handleClose}
+              disabled={uploading}
+            >
               Abbrechen
             </Button>
             <Button onClick={handleSubmit} disabled={!file || uploading}>
@@ -366,11 +376,12 @@ const DraftCard: React.FC<DraftCardProps> = ({
             </span>
           )}
         </div>
-        {activity.description && activity.description !== "Wird generiert..." && (
-          <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-            {activity.description}
-          </p>
-        )}
+        {activity.description &&
+          activity.description !== "Wird generiert..." && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+              {activity.description}
+            </p>
+          )}
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <Button
@@ -483,9 +494,7 @@ export const DraftsPage: React.FC = () => {
       setActivities((prev) => prev.filter((a) => a.id !== id));
     } catch (err: unknown) {
       alert(
-        err instanceof Error
-          ? err.message
-          : "Fehler beim Veröffentlichen.",
+        err instanceof Error ? err.message : "Fehler beim Veröffentlichen.",
       );
     } finally {
       setPublishingId(null);
@@ -514,11 +523,14 @@ export const DraftsPage: React.FC = () => {
     <div className="py-6 space-y-8">
       <div>
         <Breadcrumb items={[{ label: t("nav.drafts") }]} className="mb-3" />
-        <PageHeader title="Entwürfe" description="PDF hochladen, generieren und veröffentlichen">
-        <Button onClick={() => setUploadOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Neu
-        </Button>
+        <PageHeader
+          title="Entwürfe"
+          description="PDF hochladen, generieren und veröffentlichen"
+        >
+          <Button onClick={() => setUploadOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Neu
+          </Button>
         </PageHeader>
       </div>
 
@@ -637,15 +649,17 @@ export const DraftsPage: React.FC = () => {
           )}
 
           {/* Empty state */}
-          {pending.length === 0 && errored.length === 0 && drafts.length === 0 && (
-            <div className="text-center py-20 space-y-4">
-              <FileUp className="h-12 w-12 text-muted-foreground mx-auto" />
-              <p className="text-muted-foreground text-sm">
-                Noch keine Entwürfe. Klicke auf{" "}
-                <strong>Neu</strong>, um eine PDF hochzuladen.
-              </p>
-            </div>
-          )}
+          {pending.length === 0 &&
+            errored.length === 0 &&
+            drafts.length === 0 && (
+              <div className="text-center py-20 space-y-4">
+                <FileUp className="h-12 w-12 text-muted-foreground mx-auto" />
+                <p className="text-muted-foreground text-sm">
+                  Noch keine Entwürfe. Klicke auf <strong>Neu</strong>, um eine
+                  PDF hochzuladen.
+                </p>
+              </div>
+            )}
         </>
       )}
     </div>

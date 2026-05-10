@@ -20,8 +20,8 @@ import org.springframework.web.client.RestTemplate;
 
 /**
  * Converts PDF bytes to DOCX bytes via the Adobe PDF Services REST API
- * (ExportPDF operation). The PDF is uploaded as a cloud asset, an export job
- * is created, polled until completion, and the resulting DOCX is downloaded.
+ * (ExportPDF operation). The PDF is uploaded as a cloud asset, an export job is
+ * created, polled until completion, and the resulting DOCX is downloaded.
  */
 @Service
 public class AdobePdfToDocxService {
@@ -53,7 +53,8 @@ public class AdobePdfToDocxService {
 		if (isConfigured()) {
 			logger.info("Adobe PDF Services configured — DOCX export is available");
 		} else {
-			logger.warn("Adobe PDF Services credentials not provided (ADOBE_PDF_SERVICES_CLIENT_ID / ADOBE_PDF_SERVICES_CLIENT_SECRET). DOCX export will be unavailable.");
+			logger.warn(
+					"Adobe PDF Services credentials not provided (ADOBE_PDF_SERVICES_CLIENT_ID / ADOBE_PDF_SERVICES_CLIENT_SECRET). DOCX export will be unavailable.");
 		}
 	}
 
@@ -100,8 +101,8 @@ public class AdobePdfToDocxService {
 		body.add("client_secret", clientSecret);
 		body.add("scope", "openid,AdobeID,DCAPI");
 
-		ResponseEntity<Map> response = restTemplate.postForEntity(IMS_TOKEN_URL,
-				new HttpEntity<>(body, headers), Map.class);
+		ResponseEntity<Map> response = restTemplate.postForEntity(IMS_TOKEN_URL, new HttpEntity<>(body, headers),
+				Map.class);
 
 		Map<String, Object> responseBody = (Map<String, Object>) response.getBody();
 		String token = (String) responseBody.get("access_token");
@@ -117,10 +118,8 @@ public class AdobePdfToDocxService {
 		HttpHeaders headers = buildAuthHeaders(accessToken);
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
-		ResponseEntity<Map> createResponse = restTemplate.postForEntity(
-				PDF_SERVICES_BASE_URL + "/assets",
-				new HttpEntity<>(Map.of("mediaType", "application/pdf"), headers),
-				Map.class);
+		ResponseEntity<Map> createResponse = restTemplate.postForEntity(PDF_SERVICES_BASE_URL + "/assets",
+				new HttpEntity<>(Map.of("mediaType", "application/pdf"), headers), Map.class);
 
 		Map<String, Object> createBody = (Map<String, Object>) createResponse.getBody();
 		String uploadUri = (String) createBody.get("uploadUri");
@@ -141,10 +140,8 @@ public class AdobePdfToDocxService {
 		HttpHeaders headers = buildAuthHeaders(accessToken);
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
-		ResponseEntity<Void> response = restTemplate.postForEntity(
-				PDF_SERVICES_BASE_URL + "/operation/exportpdf",
-				new HttpEntity<>(Map.of("assetID", assetId, "targetFormat", "docx"), headers),
-				Void.class);
+		ResponseEntity<Void> response = restTemplate.postForEntity(PDF_SERVICES_BASE_URL + "/operation/exportpdf",
+				new HttpEntity<>(Map.of("assetID", assetId, "targetFormat", "docx"), headers), Void.class);
 
 		String location = response.getHeaders().getFirst("Location");
 		if (location == null) {
@@ -179,8 +176,7 @@ public class AdobePdfToDocxService {
 				throw new RuntimeException("Interrupted while polling Adobe PDF Services", e);
 			}
 		}
-		throw new RuntimeException(
-				"Adobe PDF Services export timed out after " + MAX_POLL_ATTEMPTS + " poll attempts");
+		throw new RuntimeException("Adobe PDF Services export timed out after " + MAX_POLL_ATTEMPTS + " poll attempts");
 	}
 
 	private byte[] downloadResult(String downloadUri) {

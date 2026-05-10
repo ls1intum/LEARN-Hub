@@ -7,7 +7,6 @@ import com.learnhub.documentmanagement.dto.request.MarkdownPreviewRequest;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
 import com.learnhub.dto.response.ErrorResponse;
-import java.util.Map;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -15,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +94,8 @@ public class MarkdownController {
 	public ResponseEntity<?> getMarkdownDocx(@PathVariable UUID markdownId) {
 		logger.info("GET /api/markdowns/{}/docx - Render markdown as DOCX", markdownId);
 		if (!markdownToDocxService.isAvailable()) {
-			return ResponseEntity.status(503).body(ErrorResponse.of("DOCX export is not available: Adobe PDF Services credentials are not configured"));
+			return ResponseEntity.status(503).body(ErrorResponse
+					.of("DOCX export is not available: Adobe PDF Services credentials are not configured"));
 		}
 		try {
 			ActivityMarkdown markdown = markdownRepository.findWithActivityById(markdownId).orElse(null);

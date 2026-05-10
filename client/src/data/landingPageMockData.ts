@@ -2,7 +2,8 @@ export const LANDING_MOCK_ACTIVITIES = [
   {
     id: "m1",
     name: "Die Biene",
-    description: "Lernposter über Bienen: Körperbau, Lebenszyklus und ihre Bedeutung für Bestäubung und Natur.",
+    description:
+      "Lernposter über Bienen: Körperbau, Lebenszyklus und ihre Bedeutung für Bestäubung und Natur.",
     source: "Biologie",
     ageMin: 6,
     ageMax: 12,
@@ -18,7 +19,8 @@ export const LANDING_MOCK_ACTIVITIES = [
   {
     id: "m2",
     name: "Künstliche Intelligenz",
-    description: "Einführung in KI: Was Computer lernen können, wie KI funktioniert und wo sie uns im Alltag begegnet.",
+    description:
+      "Einführung in KI: Was Computer lernen können, wie KI funktioniert und wo sie uns im Alltag begegnet.",
     source: "Informatik",
     ageMin: 10,
     ageMax: 16,
@@ -34,7 +36,8 @@ export const LANDING_MOCK_ACTIVITIES = [
   {
     id: "m3",
     name: "Der Wasserkreislauf",
-    description: "Verdunstung, Kondensation, Niederschlag und Sammlung – der ewige Kreislauf des Wassers verständlich erklärt.",
+    description:
+      "Verdunstung, Kondensation, Niederschlag und Sammlung – der ewige Kreislauf des Wassers verständlich erklärt.",
     source: "Sachkunde",
     ageMin: 8,
     ageMax: 12,
@@ -50,7 +53,8 @@ export const LANDING_MOCK_ACTIVITIES = [
   {
     id: "m4",
     name: "Was ist ein Algorithmus?",
-    description: "Schritt-für-Schritt-Anleitungen zur Problemlösung: von Alltagsbeispielen bis hin zu einfachen Computerprogrammen.",
+    description:
+      "Schritt-für-Schritt-Anleitungen zur Problemlösung: von Alltagsbeispielen bis hin zu einfachen Computerprogrammen.",
     source: "Informatik",
     ageMin: 10,
     ageMax: 16,
@@ -66,7 +70,8 @@ export const LANDING_MOCK_ACTIVITIES = [
   {
     id: "m5",
     name: "Datenstrukturen",
-    description: "Arrays, Listen, Stacks, Queues und Bäume – wie Computer Daten organisieren und warum die richtige Struktur zählt.",
+    description:
+      "Arrays, Listen, Stacks, Queues und Bäume – wie Computer Daten organisieren und warum die richtige Struktur zählt.",
     source: "Informatik",
     ageMin: 12,
     ageMax: 18,
@@ -82,7 +87,8 @@ export const LANDING_MOCK_ACTIVITIES = [
   {
     id: "m6",
     name: "Cyber Security",
-    description: "Schutz im digitalen Alltag: sichere Passwörter, häufige Bedrohungen und Tipps für mehr Datensicherheit.",
+    description:
+      "Schutz im digitalen Alltag: sichere Passwörter, häufige Bedrohungen und Tipps für mehr Datensicherheit.",
     source: "Medienbildung",
     ageMin: 10,
     ageMax: 18,
@@ -105,7 +111,11 @@ export const LANDING_MOCK_RECOMMENDATIONS = [
     ageMin: 8,
     ageMax: 12,
     formatLabel: "Drinnen",
-    activityNames: ["Die Biene", "Der Wasserkreislauf", "Was ist ein Algorithmus?"],
+    activityNames: [
+      "Die Biene",
+      "Der Wasserkreislauf",
+      "Was ist ein Algorithmus?",
+    ],
   },
   {
     score: 87,
@@ -114,7 +124,11 @@ export const LANDING_MOCK_RECOMMENDATIONS = [
     ageMin: 10,
     ageMax: 16,
     formatLabel: "Drinnen",
-    activityNames: ["Künstliche Intelligenz", "Cyber Security", "Datenstrukturen"],
+    activityNames: [
+      "Künstliche Intelligenz",
+      "Cyber Security",
+      "Datenstrukturen",
+    ],
   },
   {
     score: 82,
@@ -132,6 +146,10 @@ export const LANDING_MOCK_RECOMMENDATIONS = [
     ageMin: 12,
     ageMax: 18,
     formatLabel: "Drinnen",
-    activityNames: ["Datenstrukturen", "Künstliche Intelligenz", "Cyber Security"],
+    activityNames: [
+      "Datenstrukturen",
+      "Künstliche Intelligenz",
+      "Cyber Security",
+    ],
   },
 ] as const;

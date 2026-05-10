@@ -68,7 +68,10 @@ export const ActivityApi = {
   /**
    * Get activity by ID
    */
-  async getActivity(id: string, options: { includeTafelbildImage?: boolean } = {}) {
+  async getActivity(
+    id: string,
+    options: { includeTafelbildImage?: boolean } = {},
+  ) {
     const url = options.includeTafelbildImage
       ? `/api/activities/${id}?includeTafelbildImage=true`
       : `/api/activities/${id}`;
@@ -87,7 +90,10 @@ export const ActivityApi = {
   /**
    * Get multiple activities by IDs
    */
-  async getActivitiesByIds(ids: string[], options: { includeTafelbildImage?: boolean } = {}) {
+  async getActivitiesByIds(
+    ids: string[],
+    options: { includeTafelbildImage?: boolean } = {},
+  ) {
     const promises = ids.map((id) => this.getActivity(id, options));
     const results = await Promise.all(promises);
     return results;
@@ -227,12 +233,22 @@ export const ActivityApi = {
     const formData = new FormData();
     formData.append("pdf_file", file);
     formData.append("generateMetadata", String(generateMetadata));
-    const types = markdownTypes ?? ["deckblatt", "artikulationsschema", "hintergrundwissen", "tafelbild", "uebung", "uebung_loesung"];
+    const types = markdownTypes ?? [
+      "deckblatt",
+      "artikulationsschema",
+      "hintergrundwissen",
+      "tafelbild",
+      "uebung",
+      "uebung_loesung",
+    ];
     types.forEach((t) => formData.append("markdownTypes", t));
-    return ApiRequestMixin.request<Activity>("/api/activities/upload-and-create-pending", {
-      method: "POST",
-      body: formData,
-    });
+    return ApiRequestMixin.request<Activity>(
+      "/api/activities/upload-and-create-pending",
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
   },
 
   /**
@@ -246,9 +262,12 @@ export const ActivityApi = {
    * Publish a DRAFT activity so it appears in library and recommendations.
    */
   async publishActivity(activityId: string) {
-    return ApiRequestMixin.request<Activity>(`/api/activities/${activityId}/publish`, {
-      method: "PUT",
-    });
+    return ApiRequestMixin.request<Activity>(
+      `/api/activities/${activityId}/publish`,
+      {
+        method: "PUT",
+      },
+    );
   },
 
   async regenerateMetadata(documentId: string) {
@@ -357,7 +376,12 @@ export const ActivityApi = {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ markdown, orientation, activityName, exerciseSheet }),
+        body: JSON.stringify({
+          markdown,
+          orientation,
+          activityName,
+          exerciseSheet,
+        }),
       },
     );
 

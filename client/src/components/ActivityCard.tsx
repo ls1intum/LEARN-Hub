@@ -60,111 +60,117 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
         </div>
       )}
       <div className="flex flex-col gap-2.5 p-3.5 flex-1">
-      {/* Title + action */}
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
-            {activity.name}
-          </h3>
-          {activity.source && (
-            <p className="text-xs text-muted-foreground truncate mt-0.5">
-              {activity.source}
-            </p>
-          )}
+        {/* Title + action */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-foreground leading-snug line-clamp-2">
+              {activity.name}
+            </h3>
+            {activity.source && (
+              <p className="text-xs text-muted-foreground truncate mt-0.5">
+                {activity.source}
+              </p>
+            )}
+          </div>
+          <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+            {showRemoveButton ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove?.();
+                }}
+                disabled={isRemoving}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            ) : (
+              <FavouriteButton
+                activityId={activity.id}
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                initialIsFavourited={activity.isFavourited ?? false}
+              />
+            )}
+          </div>
         </div>
-        <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-          {showRemoveButton ? (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove?.();
-              }}
-              disabled={isRemoving}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          ) : (
-            <FavouriteButton
-              activityId={activity.id}
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              initialIsFavourited={activity.isFavourited ?? false}
-            />
-          )}
-        </div>
-      </div>
 
-      {/* Description */}
-      {activity.description && (
-        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-          {activity.description}
-        </p>
-      )}
+        {/* Description */}
+        {activity.description && (
+          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+            {activity.description}
+          </p>
+        )}
 
-      {/* Topics */}
-      {activity.topics && activity.topics.length > 0 && (
-        <div className="flex flex-wrap gap-1">
-          {activity.topics.slice(0, 3).map((topic) => (
+        {/* Topics */}
+        {activity.topics && activity.topics.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {activity.topics.slice(0, 3).map((topic) => (
+              <Badge
+                key={topic}
+                variant="secondary"
+                className="text-[11px] px-1.5 py-0 font-normal"
+              >
+                {translateEnum("topics", topic)}
+              </Badge>
+            ))}
+            {activity.topics.length > 3 && (
+              <span className="text-[11px] text-muted-foreground self-center">
+                +{activity.topics.length - 3}
+              </span>
+            )}
+          </div>
+        )}
+
+        <div className="flex-1" />
+
+        {/* Bloom level indicator */}
+        {bloomIndex >= 0 && (
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-0.5">
+              {BLOOM_ORDER.map((_, i) => (
+                <div
+                  key={i}
+                  className={`w-2 h-2 rounded-full transition-colors ${i <= bloomIndex ? bloomColor : "bg-muted"}`}
+                />
+              ))}
+            </div>
+            <span className="text-[11px] text-muted-foreground">
+              {translateEnum("bloomLevel", activity.bloomLevel)}
+            </span>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1.5 border-t border-border/50">
+          <span className="flex items-center gap-0.5">
+            <Users className="h-3 w-3 shrink-0" />
+            {activity.ageMin}
+            {activity.ageMax && activity.ageMax !== activity.ageMin
+              ? `–${activity.ageMax}`
+              : ""}
+          </span>
+          <span className="flex items-center gap-0.5">
+            <Clock className="h-3 w-3 shrink-0" />
+            {activity.durationMinMinutes}
+            {activity.durationMaxMinutes &&
+            activity.durationMaxMinutes !== activity.durationMinMinutes
+              ? `–${activity.durationMaxMinutes}`
+              : ""}
+            m
+          </span>
+          <div className="ml-auto">
             <Badge
-              key={topic}
               variant="secondary"
               className="text-[11px] px-1.5 py-0 font-normal"
             >
-              {translateEnum("topics", topic)}
+              {translateEnum("format", activity.format)}
             </Badge>
-          ))}
-          {activity.topics.length > 3 && (
-            <span className="text-[11px] text-muted-foreground self-center">
-              +{activity.topics.length - 3}
-            </span>
-          )}
-        </div>
-      )}
-
-      <div className="flex-1" />
-
-      {/* Bloom level indicator */}
-      {bloomIndex >= 0 && (
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5">
-            {BLOOM_ORDER.map((_, i) => (
-              <div
-                key={i}
-                className={`w-2 h-2 rounded-full transition-colors ${i <= bloomIndex ? bloomColor : "bg-muted"}`}
-              />
-            ))}
           </div>
-          <span className="text-[11px] text-muted-foreground">
-            {translateEnum("bloomLevel", activity.bloomLevel)}
-          </span>
         </div>
-      )}
-
-      {/* Footer */}
-      <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1.5 border-t border-border/50">
-        <span className="flex items-center gap-0.5">
-          <Users className="h-3 w-3 shrink-0" />
-          {activity.ageMin}{activity.ageMax && activity.ageMax !== activity.ageMin ? `–${activity.ageMax}` : ""}
-        </span>
-        <span className="flex items-center gap-0.5">
-          <Clock className="h-3 w-3 shrink-0" />
-          {activity.durationMinMinutes}
-          {activity.durationMaxMinutes && activity.durationMaxMinutes !== activity.durationMinMinutes ? `–${activity.durationMaxMinutes}` : ""}
-          m
-        </span>
-        <div className="ml-auto">
-          <Badge
-            variant="secondary"
-            className="text-[11px] px-1.5 py-0 font-normal"
-          >
-            {translateEnum("format", activity.format)}
-          </Badge>
-        </div>
-      </div>
       </div>
     </div>
   );

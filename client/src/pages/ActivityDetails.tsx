@@ -132,8 +132,13 @@ export const ActivityDetails: React.FC = () => {
   const deleteApi = useApi();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  const fetchCapabilities = useCallback(() => apiService.getServerCapabilities(), []);
-  const { data: serverCapabilities } = useDataFetch({ fetchFn: fetchCapabilities });
+  const fetchCapabilities = useCallback(
+    () => apiService.getServerCapabilities(),
+    [],
+  );
+  const { data: serverCapabilities } = useDataFetch({
+    fetchFn: fetchCapabilities,
+  });
   const docxAvailable = serverCapabilities?.docxAvailable ?? false;
 
   const fetchActivity = useCallback(async () => {
@@ -499,12 +504,13 @@ export const ActivityDetails: React.FC = () => {
                   return (
                     <span
                       key={level}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${isActive
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : isPast
-                          ? "bg-primary/10 text-primary border-primary/20"
-                          : "bg-muted text-muted-foreground border-border"
-                        }`}
+                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                        isActive
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : isPast
+                            ? "bg-primary/10 text-primary border-primary/20"
+                            : "bg-muted text-muted-foreground border-border"
+                      }`}
                     >
                       {translateEnum("bloomLevel", level)}
                     </span>
@@ -548,52 +554,69 @@ export const ActivityDetails: React.FC = () => {
                   </div>
                 ))}
 
-                {activity.markdowns?.slice().sort((a, b) => {
-                  const order = ["deckblatt", "artikulationsschema", "uebung", "uebung_loesung", "hintergrundwissen", "tafelbild"];
-                  const ai = order.indexOf(a.type ?? "");
-                  const bi = order.indexOf(b.type ?? "");
-                  return (ai === -1 ? order.length : ai) - (bi === -1 ? order.length : bi);
-                }).map((md) => (
-                  <div
-                    key={md.id}
-                    className="flex items-center gap-3 px-4 py-3"
-                  >
-                    <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {activity.name}
-                        {md.type ? ` — ${md.type.charAt(0).toUpperCase() + md.type.slice(1)}` : ""}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        disabled={documentApi.isLoading}
-                        onClick={() =>
-                          handleDownloadMarkdownPdf(
-                            md.id,
-                            [activity.name, md.type].filter(Boolean).join(" "),
-                          )
-                        }
-                        className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50"
-                      >
-                        PDF
-                      </button>
-                      {docxAvailable && (
+                {activity.markdowns
+                  ?.slice()
+                  .sort((a, b) => {
+                    const order = [
+                      "deckblatt",
+                      "artikulationsschema",
+                      "uebung",
+                      "uebung_loesung",
+                      "hintergrundwissen",
+                      "tafelbild",
+                    ];
+                    const ai = order.indexOf(a.type ?? "");
+                    const bi = order.indexOf(b.type ?? "");
+                    return (
+                      (ai === -1 ? order.length : ai) -
+                      (bi === -1 ? order.length : bi)
+                    );
+                  })
+                  .map((md) => (
+                    <div
+                      key={md.id}
+                      className="flex items-center gap-3 px-4 py-3"
+                    >
+                      <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {activity.name}
+                          {md.type
+                            ? ` — ${md.type.charAt(0).toUpperCase() + md.type.slice(1)}`
+                            : ""}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
                           disabled={documentApi.isLoading}
                           onClick={() =>
-                            handleDownloadMarkdownDocx(md.id, md.type)
+                            handleDownloadMarkdownPdf(
+                              md.id,
+                              [activity.name, md.type]
+                                .filter(Boolean)
+                                .join(" "),
+                            )
                           }
-                          className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50"
                         >
-                          DOCX
+                          PDF
                         </button>
-                      )}
+                        {docxAvailable && (
+                          <button
+                            type="button"
+                            disabled={documentApi.isLoading}
+                            onClick={() =>
+                              handleDownloadMarkdownDocx(md.id, md.type)
+                            }
+                            className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50"
+                          >
+                            DOCX
+                          </button>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
 
                 {activity.markdowns && activity.markdowns.length > 0 && (
                   <div className="flex items-center gap-3 px-4 py-3 bg-muted/20">

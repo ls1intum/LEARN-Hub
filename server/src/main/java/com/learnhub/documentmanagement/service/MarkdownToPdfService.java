@@ -3,6 +3,7 @@ package com.learnhub.documentmanagement.service;
 import com.itextpdf.html2pdf.ConverterProperties;
 import com.itextpdf.html2pdf.HtmlConverter;
 import com.itextpdf.html2pdf.resolver.font.DefaultFontProvider;
+import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.events.Event;
 import com.itextpdf.kernel.events.IEventHandler;
@@ -16,7 +17,6 @@ import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.canvas.PdfCanvas;
 import com.itextpdf.kernel.utils.PdfMerger;
-import com.itextpdf.io.font.constants.StandardFonts;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -89,7 +89,8 @@ public class MarkdownToPdfService {
 
 	/**
 	 * Render markdown content to PDF bytes, optionally applying the exercise-sheet
-	 * layout (outer border with Name / Datum fields repeated at the top of every page).
+	 * layout (outer border with Name / Datum fields repeated at the top of every
+	 * page).
 	 */
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName, boolean exerciseSheet) {
 		String html = markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName, exerciseSheet);
@@ -209,12 +210,14 @@ public class MarkdownToPdfService {
 		}
 
 		logger.error("Failed to render markdown PDF: {}", originalException.getMessage(), originalException);
-		throw new RuntimeException("Failed to render markdown PDF: " + originalException.getMessage(), originalException);
+		throw new RuntimeException("Failed to render markdown PDF: " + originalException.getMessage(),
+				originalException);
 	}
 
 	private Set<Integer> findProblematicCharacterCandidates(String html) {
 		Set<Integer> candidates = new LinkedHashSet<>();
-		html.codePoints().filter(this::shouldRetryWithoutCodePoint).limit(MAX_CMAP_RETRY_CHARACTERS).forEach(candidates::add);
+		html.codePoints().filter(this::shouldRetryWithoutCodePoint).limit(MAX_CMAP_RETRY_CHARACTERS)
+				.forEach(candidates::add);
 		return candidates;
 	}
 
@@ -362,22 +365,14 @@ public class MarkdownToPdfService {
 			PdfCanvas canvas = new PdfCanvas(page.newContentStreamAfter(), page.getResources(), pdfDoc);
 
 			// Outer border on every page
-			canvas.saveState()
-					.setStrokeColor(new DeviceRgb(0x55, 0x55, 0x55))
-					.setLineWidth(1.5f)
-					.rectangle(borderLeft, borderBottom, borderRight - borderLeft, borderTop - borderBottom)
-					.stroke()
+			canvas.saveState().setStrokeColor(new DeviceRgb(0x55, 0x55, 0x55)).setLineWidth(1.5f)
+					.rectangle(borderLeft, borderBottom, borderRight - borderLeft, borderTop - borderBottom).stroke()
 					.restoreState();
 
 			if (pageNumber % 2 == 1) {
 				// Separator line between Name/Datum row and content
-				canvas.saveState()
-						.setStrokeColor(new DeviceRgb(0x88, 0x88, 0x88))
-						.setLineWidth(0.75f)
-						.moveTo(borderLeft, nameRowBottom)
-						.lineTo(borderRight, nameRowBottom)
-						.stroke()
-						.restoreState();
+				canvas.saveState().setStrokeColor(new DeviceRgb(0x88, 0x88, 0x88)).setLineWidth(0.75f)
+						.moveTo(borderLeft, nameRowBottom).lineTo(borderRight, nameRowBottom).stroke().restoreState();
 
 				float textY = nameRowBottom + 7f;
 				float nameX = borderLeft + 10f;
@@ -385,25 +380,13 @@ public class MarkdownToPdfService {
 
 				canvas.setFillColor(new DeviceRgb(0x22, 0x22, 0x22));
 
-				canvas.beginText()
-						.setFontAndSize(boldFont, 10f)
-						.moveText(nameX, textY)
-						.showText("Name:")
-						.endText()
-						.beginText()
-						.setFontAndSize(regularFont, 10f)
+				canvas.beginText().setFontAndSize(boldFont, 10f).moveText(nameX, textY).showText("Name:").endText()
+						.beginText().setFontAndSize(regularFont, 10f)
 						.moveText(nameX + boldFont.getWidth("Name:", 10f) + 4f, textY)
-						.showText("________________________________")
-						.endText()
-						.beginText()
-						.setFontAndSize(boldFont, 10f)
-						.moveText(datumX, textY)
-						.showText("Datum:")
-						.endText()
-						.beginText()
+						.showText("________________________________").endText().beginText()
+						.setFontAndSize(boldFont, 10f).moveText(datumX, textY).showText("Datum:").endText().beginText()
 						.setFontAndSize(regularFont, 10f)
-						.moveText(datumX + boldFont.getWidth("Datum:", 10f) + 4f, textY)
-						.showText("________________")
+						.moveText(datumX + boldFont.getWidth("Datum:", 10f) + 4f, textY).showText("________________")
 						.endText();
 			}
 

@@ -154,10 +154,7 @@ const MockRecommendationCard: React.FC<{ rec: MockRec }> = ({ rec }) => (
 
     <div className="flex flex-col gap-1 flex-1">
       {rec.activityNames.map((name, idx) => (
-        <div
-          key={idx}
-          className="flex items-center gap-2 rounded px-1.5 py-1"
-        >
+        <div key={idx} className="flex items-center gap-2 rounded px-1.5 py-1">
           <div className="w-4 h-4 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
             <span className="text-[9px] font-semibold text-primary tabular-nums">
               {idx + 1}

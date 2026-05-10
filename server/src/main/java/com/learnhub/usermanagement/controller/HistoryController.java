@@ -160,8 +160,7 @@ public class HistoryController {
 
 			boolean hasFilters = (name != null && !name.isEmpty()) || ageMin != null || ageMax != null
 					|| durationMin != null || durationMax != null || (format != null && !format.isEmpty())
-					|| (bloomLevel != null && !bloomLevel.isEmpty())
-					|| (mentalLoad != null && !mentalLoad.isEmpty())
+					|| (bloomLevel != null && !bloomLevel.isEmpty()) || (mentalLoad != null && !mentalLoad.isEmpty())
 					|| (physicalEnergy != null && !physicalEnergy.isEmpty())
 					|| (resourcesNeeded != null && !resourcesNeeded.isEmpty()) || (topics != null && !topics.isEmpty());
 			Page<UserFavourites> favouritesPage;
@@ -185,14 +184,16 @@ public class HistoryController {
 					.collect(Collectors.toMap(ActivityResponse::getId, a -> a, (left, right) -> left));
 
 			List<ActivityFavouriteDetailResponse> result = pagedFavourites.stream().map(fav -> {
-				if (fav.getActivityId() == null) return null;
+				if (fav.getActivityId() == null)
+					return null;
 				ActivityResponse activity = activityMap.get(fav.getActivityId());
-				if (activity == null) return null;
+				if (activity == null)
+					return null;
 				return new ActivityFavouriteDetailResponse(fav.getId(), fav.getCreatedAt().toString(), activity);
 			}).filter(Objects::nonNull).collect(Collectors.toList());
 
-			return ResponseEntity.ok(new ActivityFavouriteDetailsListResponse(result, favouritesPage.getTotalElements(),
-					limit, offset));
+			return ResponseEntity.ok(
+					new ActivityFavouriteDetailsListResponse(result, favouritesPage.getTotalElements(), limit, offset));
 		} catch (Exception e) {
 			logger.error("GET /api/history/favourites/activities - Failed to retrieve activity favourites: {}",
 					e.getMessage());

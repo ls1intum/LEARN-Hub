@@ -15,7 +15,7 @@ class MarkdownToDocxServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		stubAdobeService = new StubAdobeService(new byte[] { 0x50, 0x4B }); // PK zip header
+		stubAdobeService = new StubAdobeService(new byte[]{0x50, 0x4B}); // PK zip header
 		stubPdfService = new StubPdfService();
 		service = new MarkdownToDocxService(stubPdfService, stubAdobeService);
 	}
@@ -47,8 +47,8 @@ class MarkdownToDocxServiceTest {
 
 	@Test
 	void renderMergedDocxConvertsEachSectionThenMerges() {
-		byte[] result = service.renderMergedDocx(
-				List.of("# A", "# B"), List.of(false, true), List.of(false, false), "Test");
+		byte[] result = service.renderMergedDocx(List.of("# A", "# B"), List.of(false, true), List.of(false, false),
+				"Test");
 
 		assertThat(result).isNotNull();
 		assertThat(stubPdfService.pdfCallCount).isEqualTo(2);
@@ -121,19 +121,19 @@ class MarkdownToDocxServiceTest {
 			this.lastMarkdown = markdown;
 			this.lastLandscape = landscape;
 			pdfCallCount++;
-			return new byte[] { 0x25, 0x50, 0x44, 0x46 }; // %PDF
+			return new byte[]{0x25, 0x50, 0x44, 0x46}; // %PDF
 		}
 
 		@Override
 		public byte[] renderHtmlToPdf(String htmlBody, boolean landscape, String activityName) {
 			this.lastHtml = htmlBody;
 			pdfCallCount++;
-			return new byte[] { 0x25, 0x50, 0x44, 0x46 }; // %PDF
+			return new byte[]{0x25, 0x50, 0x44, 0x46}; // %PDF
 		}
 
 		@Override
 		public byte[] mergePdfs(List<byte[]> pdfs) {
-			return new byte[] { 0x25, 0x50, 0x44, 0x46 }; // %PDF
+			return new byte[]{0x25, 0x50, 0x44, 0x46}; // %PDF
 		}
 	}
 }

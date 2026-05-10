@@ -104,8 +104,8 @@ public class MarkdownToHtmlService {
 	}
 
 	/**
-	 * Convert Markdown to a complete, styled HTML document, optionally applying
-	 * the exercise-sheet layout (outer border with Name / Datum fields at the top).
+	 * Convert Markdown to a complete, styled HTML document, optionally applying the
+	 * exercise-sheet layout (outer border with Name / Datum fields at the top).
 	 *
 	 * @param markdown
 	 *            the markdown content
@@ -150,7 +150,8 @@ public class MarkdownToHtmlService {
 	// Height (pt) of the Name/Datum fill-in row drawn by the iText event handler.
 	// Must stay in sync with ExerciseSheetEventHandler.EXTRA_TOP_MARGIN.
 	static final float EXERCISE_SHEET_EXTRA_TOP_MARGIN_PT = 22f;
-	// Gap (pt) between the LEARN-Hub logo area and the top edge of the border rectangle.
+	// Gap (pt) between the LEARN-Hub logo area and the top edge of the border
+	// rectangle.
 	// Must stay in sync with ExerciseSheetEventHandler.BORDER_TOP_INSET.
 	private static final float EXERCISE_BORDER_TOP_INSET_PT = 4f;
 	// Gap (pt) between the Name/Datum separator line and the first content line.

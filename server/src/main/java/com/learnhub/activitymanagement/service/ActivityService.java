@@ -102,8 +102,8 @@ public class ActivityService {
 			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
 			boolean includeSourcePdf, UUID userId) {
-		return getActivitiesWithFilters(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels, mentalLoad,
-				physicalEnergy, resourcesNeeded, topics, limit, offset, includeSourcePdf, userId, false);
+		return getActivitiesWithFilters(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels,
+				mentalLoad, physicalEnergy, resourcesNeeded, topics, limit, offset, includeSourcePdf, userId, false);
 	}
 
 	@Transactional(readOnly = true)
@@ -115,8 +115,9 @@ public class ActivityService {
 				durationMin, durationMax, formats, bloomLevels, toSingleValueList(mentalLoad),
 				toSingleValueList(physicalEnergy), resourcesNeeded, topics, limit, offset);
 		Set<UUID> favouritedActivityIds = findFavouritedActivityIds(userId, page.activities());
-		return page.activities().stream().map(activity -> mapToSummaryResponse(activity, includeTafelbildImage,
-				favouritedActivityIds)).collect(Collectors.toList());
+		return page.activities().stream()
+				.map(activity -> mapToSummaryResponse(activity, includeTafelbildImage, favouritedActivityIds))
+				.collect(Collectors.toList());
 	}
 
 	private Set<UUID> findFavouritedActivityIds(UUID userId, List<Activity> activities) {
@@ -136,7 +137,8 @@ public class ActivityService {
 
 	@Transactional(readOnly = true)
 	public List<ActivityResponse> getActivitiesByIdList(List<UUID> ids, boolean includeTafelbildImage, UUID userId) {
-		if (ids == null || ids.isEmpty()) return List.of();
+		if (ids == null || ids.isEmpty())
+			return List.of();
 		List<Activity> activities = activityRepository.findAllById(ids).stream()
 				.filter(a -> a.getStatus() == ActivityStatus.PUBLISHED).collect(Collectors.toList());
 		Map<UUID, Activity> activityMap = activities.stream().collect(Collectors.toMap(Activity::getId, a -> a));
@@ -146,18 +148,19 @@ public class ActivityService {
 	}
 
 	public Set<UUID> findActivityIdsByNameFilter(List<UUID> activityIds, String name) {
-		return findActivityIdsByFilters(activityIds, name, null, null, null, null, null, null, null, null, null,
-				null);
+		return findActivityIdsByFilters(activityIds, name, null, null, null, null, null, null, null, null, null, null);
 	}
 
 	public Set<UUID> findActivityIdsByFilters(List<UUID> activityIds, String name, Integer ageMin, Integer ageMax,
 			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels,
 			List<String> mentalLoads, List<String> physicalEnergies, List<String> resourcesNeeded,
 			List<String> topics) {
-		if (activityIds == null || activityIds.isEmpty()) return Set.of();
-		return activityRepository.findPublishedActivityIdsByFilters(name, ageMin, ageMax, durationMin, durationMax,
-				formats, bloomLevels, mentalLoads, physicalEnergies, resourcesNeeded, topics, activityIds).stream()
-				.collect(Collectors.toSet());
+		if (activityIds == null || activityIds.isEmpty())
+			return Set.of();
+		return activityRepository
+				.findPublishedActivityIdsByFilters(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels,
+						mentalLoads, physicalEnergies, resourcesNeeded, topics, activityIds)
+				.stream().collect(Collectors.toSet());
 	}
 
 	private List<String> toSingleValueList(String value) {
@@ -224,18 +227,17 @@ public class ActivityService {
 		return mapLatestMarkdowns(activity, true);
 	}
 
-	private static final Pattern TAFELBILD_IMAGE_PATTERN = Pattern.compile(
-			"!\\[[^\\]]*\\]\\((data:image/(?:png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=\\r\\n]+)\\)");
+	private static final Pattern TAFELBILD_IMAGE_PATTERN = Pattern
+			.compile("!\\[[^\\]]*\\]\\((data:image/(?:png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=\\r\\n]+)\\)");
 
 	private String extractTafelbildImage(Activity activity) {
 		return activity.getMarkdowns().stream()
-				.filter(m -> m.getType() == MarkdownType.TAFELBILD && m.getContent() != null)
-				.max(Comparator.comparing(ActivityMarkdown::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
+				.filter(m -> m.getType() == MarkdownType.TAFELBILD && m.getContent() != null).max(Comparator
+						.comparing(ActivityMarkdown::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
 				.map(m -> {
 					Matcher matcher = TAFELBILD_IMAGE_PATTERN.matcher(m.getContent());
 					return matcher.find() ? matcher.group(1).replaceAll("[\\r\\n]", "") : null;
-				})
-				.orElse(null);
+				}).orElse(null);
 	}
 
 	public ActivityResponse createActivity(Activity activity) {
@@ -495,8 +497,8 @@ public class ActivityService {
 		return mapToResponse(activity, includeSourcePdf, includeMarkdownContent, false);
 	}
 
-	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf,
-			boolean includeMarkdownContent, boolean includeTafelbildImage) {
+	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf, boolean includeMarkdownContent,
+			boolean includeTafelbildImage) {
 		ActivityResponse response = new ActivityResponse();
 		response.setId(activity.getId());
 		response.setName(activity.getName());
@@ -527,7 +529,8 @@ public class ActivityService {
 		if (includeTafelbildImage) {
 			response.setTafelbildImage(extractTafelbildImage(activity));
 		}
-		response.setStatus(activity.getStatus() != null ? activity.getStatus().name() : ActivityStatus.PUBLISHED.name());
+		response.setStatus(
+				activity.getStatus() != null ? activity.getStatus().name() : ActivityStatus.PUBLISHED.name());
 		response.setGenerationError(activity.getGenerationError());
 
 		return response;
@@ -547,7 +550,8 @@ public class ActivityService {
 		response.setDurationMinMinutes(activity.getDurationMinMinutes());
 		response.setDurationMaxMinutes(activity.getDurationMaxMinutes());
 		response.setMentalLoad(activity.getMentalLoad() != null ? activity.getMentalLoad().getValue() : null);
-		response.setPhysicalEnergy(activity.getPhysicalEnergy() != null ? activity.getPhysicalEnergy().getValue() : null);
+		response.setPhysicalEnergy(
+				activity.getPhysicalEnergy() != null ? activity.getPhysicalEnergy().getValue() : null);
 		response.setPrepTimeMinutes(activity.getPrepTimeMinutes());
 		response.setCleanupTimeMinutes(activity.getCleanupTimeMinutes());
 		response.setResourcesNeeded(activity.getResourcesNeeded());
@@ -555,7 +559,8 @@ public class ActivityService {
 		if (includeTafelbildImage) {
 			response.setTafelbildImage(extractTafelbildImage(activity));
 		}
-		response.setStatus(activity.getStatus() != null ? activity.getStatus().name() : ActivityStatus.PUBLISHED.name());
+		response.setStatus(
+				activity.getStatus() != null ? activity.getStatus().name() : ActivityStatus.PUBLISHED.name());
 		response.setGenerationError(activity.getGenerationError());
 		response.setFavourited(favouritedActivityIds.contains(activity.getId()));
 		return response;
@@ -642,35 +647,59 @@ public class ActivityService {
 	@Transactional
 	public void updateActivityWithMetadata(UUID id, Map<String, Object> extractedData) {
 		Activity activity = activityRepository.findById(id).orElse(null);
-		if (activity == null) return;
+		if (activity == null)
+			return;
 
-		if (extractedData.get("name") != null) activity.setName(extractedData.get("name").toString());
-		if (extractedData.get("description") != null) activity.setDescription(extractedData.get("description").toString());
-		if (extractedData.get("source") != null) activity.setSource(extractedData.get("source").toString());
-		if (extractedData.get("ageMin") != null) activity.setAgeMin(Integer.parseInt(extractedData.get("ageMin").toString()));
-		if (extractedData.get("ageMax") != null) activity.setAgeMax(Integer.parseInt(extractedData.get("ageMax").toString()));
+		if (extractedData.get("name") != null)
+			activity.setName(extractedData.get("name").toString());
+		if (extractedData.get("description") != null)
+			activity.setDescription(extractedData.get("description").toString());
+		if (extractedData.get("source") != null)
+			activity.setSource(extractedData.get("source").toString());
+		if (extractedData.get("ageMin") != null)
+			activity.setAgeMin(Integer.parseInt(extractedData.get("ageMin").toString()));
+		if (extractedData.get("ageMax") != null)
+			activity.setAgeMax(Integer.parseInt(extractedData.get("ageMax").toString()));
 		if (extractedData.get("format") != null) {
-			try { activity.setFormat(ActivityFormat.fromValue(extractedData.get("format").toString())); } catch (Exception ignored) {}
+			try {
+				activity.setFormat(ActivityFormat.fromValue(extractedData.get("format").toString()));
+			} catch (Exception ignored) {
+			}
 		}
 		if (extractedData.get("bloomLevel") != null) {
-			try { activity.setBloomLevel(BloomLevel.fromValue(extractedData.get("bloomLevel").toString())); } catch (Exception ignored) {}
+			try {
+				activity.setBloomLevel(BloomLevel.fromValue(extractedData.get("bloomLevel").toString()));
+			} catch (Exception ignored) {
+			}
 		}
-		if (extractedData.get("durationMinMinutes") != null) activity.setDurationMinMinutes(Integer.parseInt(extractedData.get("durationMinMinutes").toString()));
-		if (extractedData.get("durationMaxMinutes") != null) activity.setDurationMaxMinutes(Integer.parseInt(extractedData.get("durationMaxMinutes").toString()));
+		if (extractedData.get("durationMinMinutes") != null)
+			activity.setDurationMinMinutes(Integer.parseInt(extractedData.get("durationMinMinutes").toString()));
+		if (extractedData.get("durationMaxMinutes") != null)
+			activity.setDurationMaxMinutes(Integer.parseInt(extractedData.get("durationMaxMinutes").toString()));
 		if (extractedData.get("mentalLoad") != null) {
-			try { activity.setMentalLoad(EnergyLevel.fromValue(extractedData.get("mentalLoad").toString())); } catch (Exception ignored) {}
+			try {
+				activity.setMentalLoad(EnergyLevel.fromValue(extractedData.get("mentalLoad").toString()));
+			} catch (Exception ignored) {
+			}
 		}
 		if (extractedData.get("physicalEnergy") != null) {
-			try { activity.setPhysicalEnergy(EnergyLevel.fromValue(extractedData.get("physicalEnergy").toString())); } catch (Exception ignored) {}
+			try {
+				activity.setPhysicalEnergy(EnergyLevel.fromValue(extractedData.get("physicalEnergy").toString()));
+			} catch (Exception ignored) {
+			}
 		}
-		if (extractedData.get("prepTimeMinutes") != null) activity.setPrepTimeMinutes(Integer.parseInt(extractedData.get("prepTimeMinutes").toString()));
-		if (extractedData.get("cleanupTimeMinutes") != null) activity.setCleanupTimeMinutes(Integer.parseInt(extractedData.get("cleanupTimeMinutes").toString()));
+		if (extractedData.get("prepTimeMinutes") != null)
+			activity.setPrepTimeMinutes(Integer.parseInt(extractedData.get("prepTimeMinutes").toString()));
+		if (extractedData.get("cleanupTimeMinutes") != null)
+			activity.setCleanupTimeMinutes(Integer.parseInt(extractedData.get("cleanupTimeMinutes").toString()));
 		if (extractedData.get("resourcesNeeded") instanceof List) {
-			@SuppressWarnings("unchecked") List<String> r = (List<String>) extractedData.get("resourcesNeeded");
+			@SuppressWarnings("unchecked")
+			List<String> r = (List<String>) extractedData.get("resourcesNeeded");
 			activity.setResourcesNeeded(r);
 		}
 		if (extractedData.get("topics") instanceof List) {
-			@SuppressWarnings("unchecked") List<String> t = (List<String>) extractedData.get("topics");
+			@SuppressWarnings("unchecked")
+			List<String> t = (List<String>) extractedData.get("topics");
 			activity.setTopics(t);
 		}
 
@@ -681,25 +710,21 @@ public class ActivityService {
 	@Transactional
 	public void addMarkdownsToActivity(UUID id, Map<String, String> markdownsByType) {
 		Activity activity = activityRepository.findById(id).orElse(null);
-		if (activity == null) return;
+		if (activity == null)
+			return;
 
-		Map<String, Boolean> landscapes = Map.of(
-			"deckblatt", false,
-			"artikulationsschema", true,
-			"hintergrundwissen", false,
-			"tafelbild", true,
-			"uebung", false,
-			"uebung_loesung", false
-		);
+		Map<String, Boolean> landscapes = Map.of("deckblatt", false, "artikulationsschema", true, "hintergrundwissen",
+				false, "tafelbild", true, "uebung", false, "uebung_loesung", false);
 
 		for (Map.Entry<String, String> entry : markdownsByType.entrySet()) {
-			if (entry.getValue() == null) continue;
+			if (entry.getValue() == null)
+				continue;
 			try {
 				MarkdownType type = MarkdownType.fromValue(entry.getKey());
 				boolean landscape = Boolean.TRUE.equals(landscapes.get(entry.getKey()));
 				String content = sanitizationService.sanitize(entry.getValue());
-				Optional<ActivityMarkdown> existing = activity.getMarkdowns().stream()
-						.filter(m -> m.getType() == type).findFirst();
+				Optional<ActivityMarkdown> existing = activity.getMarkdowns().stream().filter(m -> m.getType() == type)
+						.findFirst();
 				if (existing.isPresent()) {
 					existing.get().setContent(content);
 					existing.get().setLandscape(landscape);
@@ -712,7 +737,8 @@ public class ActivityService {
 					md.setCreatedAt(LocalDateTime.now());
 					activity.getMarkdowns().add(md);
 				}
-			} catch (Exception ignored) {}
+			} catch (Exception ignored) {
+			}
 		}
 		activityRepository.save(activity);
 	}
@@ -720,7 +746,8 @@ public class ActivityService {
 	@Transactional
 	public void setActivityStatus(UUID id, ActivityStatus status) {
 		Activity activity = activityRepository.findById(id).orElse(null);
-		if (activity == null) return;
+		if (activity == null)
+			return;
 		activity.setStatus(status);
 		activityRepository.save(activity);
 	}
@@ -728,7 +755,8 @@ public class ActivityService {
 	@Transactional
 	public void setActivityGenerationError(UUID id, String error) {
 		Activity activity = activityRepository.findById(id).orElse(null);
-		if (activity == null) return;
+		if (activity == null)
+			return;
 		activity.setGenerationError(error);
 		activityRepository.save(activity);
 	}

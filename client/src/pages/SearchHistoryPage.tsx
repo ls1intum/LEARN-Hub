@@ -98,9 +98,7 @@ export const SearchHistoryPage: React.FC = () => {
       formatted.push(t("history.age", { value: criteria.targetAge }));
     }
     if (criteria.targetDuration) {
-      formatted.push(
-        t("history.duration", { value: criteria.targetDuration }),
-      );
+      formatted.push(t("history.duration", { value: criteria.targetDuration }));
     }
     if (
       criteria.bloomLevels &&
@@ -167,8 +165,13 @@ export const SearchHistoryPage: React.FC = () => {
         }),
       );
     }
-    if (typeof criteria.maxActivityCount === "number" && criteria.maxActivityCount > 1) {
-      formatted.push(t("history.lessonPlans", { value: criteria.maxActivityCount }));
+    if (
+      typeof criteria.maxActivityCount === "number" &&
+      criteria.maxActivityCount > 1
+    ) {
+      formatted.push(
+        t("history.lessonPlans", { value: criteria.maxActivityCount }),
+      );
     }
     if (criteria.includeBreaks === true) {
       formatted.push(t("history.includeBreaks"));

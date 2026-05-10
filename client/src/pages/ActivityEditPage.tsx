@@ -97,7 +97,8 @@ export const ActivityEditPage: React.FC = () => {
   const { t } = useTranslation();
   const navigationState = location.state as ActivityNavigationState | null;
   const backTo = getActivityBackTarget(navigationState?.backTo);
-  const detailPath = navigationState?.detailPath ?? (id ? `/activity-details/${id}` : undefined);
+  const detailPath =
+    navigationState?.detailPath ?? (id ? `/activity-details/${id}` : undefined);
   const detailNavigationState: ActivityNavigationState = {
     backTo,
     restoreScrollY: navigationState?.restoreScrollY,
@@ -456,11 +457,7 @@ export const ActivityEditPage: React.FC = () => {
             onRetry={() => void loadActivity()}
           />
           <div className="mt-4">
-            <Button
-              onClick={handleBack}
-            >
-              {t("editActivity.goBack")}
-            </Button>
+            <Button onClick={handleBack}>{t("editActivity.goBack")}</Button>
           </div>
         </div>
       </div>
