@@ -18,6 +18,7 @@ import com.learnhub.activitymanagement.dto.response.MetadataExtractionResponse;
 import com.learnhub.activitymanagement.dto.response.RecommendationsResponse;
 import com.learnhub.activitymanagement.service.ActivityDraftService;
 import com.learnhub.activitymanagement.service.ActivityService;
+import com.learnhub.activitymanagement.service.DraftSseService;
 import com.learnhub.activitymanagement.service.RecommendationService;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
@@ -54,6 +55,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -74,6 +76,9 @@ public class ActivityController {
 
 	@Autowired
 	private ActivityDraftService activityDraftService;
+
+	@Autowired
+	private DraftSseService draftSseService;
 
 	@Autowired
 	private PDFService pdfService;
@@ -246,6 +251,14 @@ public class ActivityController {
 	public ResponseEntity<List<ActivityResponse>> getDraftActivities() {
 		logger.info("GET /api/activities/drafts called");
 		return ResponseEntity.ok(activityService.getDraftActivities());
+	}
+
+	@GetMapping(value = "/drafts/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+	@PreAuthorize("hasRole('ADMIN')")
+	@Operation(summary = "Stream draft status updates", description = "SSE stream that emits draft-update events when a PENDING activity transitions to DRAFT or fails (admin only)")
+	public SseEmitter streamDraftEvents() {
+		logger.info("GET /api/activities/drafts/events - SSE connection opened");
+		return draftSseService.createEmitter();
 	}
 
 	@PutMapping("/{id}/publish")

@@ -56,6 +56,9 @@ public class ActivityDraftService {
 	private ActivityService activityService;
 
 	@Autowired
+	private DraftSseService draftSseService;
+
+	@Autowired
 	@Qualifier("markdownGenerationExecutor")
 	private ExecutorService markdownGenerationExecutor;
 
@@ -177,10 +180,12 @@ public class ActivityDraftService {
 			}
 
 			activityService.setActivityStatus(activityId, ActivityStatus.DRAFT);
+			draftSseService.sendDraftUpdate(activityId, ActivityStatus.DRAFT, null);
 			logger.info("Background generation finished for activity {} → DRAFT", activityId);
 		} catch (Exception e) {
 			logger.error("Background generation failed for activity {}: {}", activityId, e.getMessage(), e);
 			activityService.setActivityGenerationError(activityId, e.getMessage());
+			draftSseService.sendDraftUpdate(activityId, ActivityStatus.PENDING, e.getMessage());
 		}
 	}
 

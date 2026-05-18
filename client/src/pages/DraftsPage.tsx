@@ -30,7 +30,6 @@ import type { Activity } from "@/types/activity";
 import type { ActivityNavigationState } from "@/utils/activityNavigation";
 
 const MAX_FILE_SIZE_BYTES = 1024 * 1024; // 1 MB
-const POLL_INTERVAL_MS = 5000;
 
 const MARKDOWN_TYPES = [
   { key: "deckblatt", label: "Deckblatt" },
@@ -438,7 +437,6 @@ export const DraftsPage: React.FC = () => {
   );
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const pending = activities.filter(
     (a) => a.status === "PENDING" && !a.generationError,
@@ -467,21 +465,38 @@ export const DraftsPage: React.FC = () => {
     fetchDrafts();
   }, [fetchDrafts]);
 
-  // Poll while there are actively-generating PENDING activities (not errored)
+  // Stream real-time status updates from the server instead of polling
   useEffect(() => {
-    if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
-    const hasPending = activities.some(
-      (a) => a.status === "PENDING" && !a.generationError,
-    );
-    if (hasPending) {
-      pollTimerRef.current = setTimeout(() => {
-        fetchDrafts();
-      }, POLL_INTERVAL_MS);
-    }
-    return () => {
-      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+    const baseUrl = (import.meta.env.VITE_API_SERVER as string) || "";
+    const es = new EventSource(`${baseUrl}/api/activities/drafts/events`, {
+      withCredentials: true,
+    });
+
+    es.addEventListener("draft-update", (event) => {
+      const update = JSON.parse(event.data) as {
+        id: string;
+        status: Activity["status"];
+        generationError: string;
+      };
+      setActivities((prev) =>
+        prev.map((a) =>
+          a.id === update.id
+            ? {
+                ...a,
+                status: update.status,
+                generationError: update.generationError || undefined,
+              }
+            : a,
+        ),
+      );
+    });
+
+    es.onerror = () => {
+      fetchDrafts();
     };
-  }, [activities, fetchDrafts]);
+
+    return () => es.close();
+  }, [fetchDrafts]);
 
   const handleCreated = (activity: Activity) => {
     setActivities((prev) => [activity, ...prev]);
