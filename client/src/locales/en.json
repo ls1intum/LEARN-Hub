@@ -424,6 +424,18 @@
     "loading": "Loading activity details...",
     "goBack": "Go Back",
     "docxConverting": "Converting to Word...",
+    "pdfWaitingQuotes": [
+      "Rendering your markdown...",
+      "Laying out the page, very carefully...",
+      "Convincing iText to behave...",
+      "Drawing borders and margins...",
+      "Picking the right font (Comic Sans was vetoed)...",
+      "Hyphenating German compound nouns...",
+      "Placing footnotes where they belong...",
+      "Making the PDF printer-friendly...",
+      "Solving the paragraph overflow mystery...",
+      "Adding finishing touches to your PDF..."
+    ],
     "docxWaitingQuotes": [
       "Convincing Adobe we're legitimate...",
       "Teaching your content to speak Word...",

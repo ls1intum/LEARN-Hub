@@ -424,6 +424,18 @@
     "loading": "Aktivitätsdetails werden geladen...",
     "goBack": "Zurück",
     "docxConverting": "Wird zu Word konvertiert...",
+    "pdfWaitingQuotes": [
+      "Dein Markdown wird gerendert...",
+      "Seite wird sorgfältig aufgebaut...",
+      "iText zur Mitarbeit überreden...",
+      "Rahmen und Ränder zeichnen...",
+      "Die richtige Schrift aussuchen (Comic Sans wurde abgelehnt)...",
+      "Deutsche Komposita umbrechen...",
+      "Fußnoten korrekt platzieren...",
+      "PDF druckerfreundlich gestalten...",
+      "Das Absatz-Overflow-Rätsel lösen...",
+      "Letzte Hand an dein PDF anlegen..."
+    ],
     "docxWaitingQuotes": [
       "Adobe überzeugen, dass wir seriös sind...",
       "Deinen Inhalt in Worddeutsch übersetzen...",
