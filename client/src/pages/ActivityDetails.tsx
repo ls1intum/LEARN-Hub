@@ -237,14 +237,12 @@ export const ActivityDetails: React.FC = () => {
     title: string,
   ) => {
     if (pdfLoadingId || docxLoadingId) return;
-    const preWindow = openPdfWindow();
     setPdfLoadingId(markdownId);
     try {
       await documentApi.call(async () => {
         await openBlobInNewTab(
           () => apiService.getMarkdownPdf(markdownId),
           title,
-          preWindow,
         );
       });
     } finally {
@@ -273,14 +271,12 @@ export const ActivityDetails: React.FC = () => {
 
   const handleOpenActivityPdf = async () => {
     if (!activity?.id || pdfLoadingId || docxLoadingId) return;
-    const preWindow = openPdfWindow();
     setPdfLoadingId("activity");
     try {
       await documentApi.call(async () => {
         await openBlobInNewTab(
           () => apiService.downloadActivityPdf(activity.id),
           activity.name,
-          preWindow,
         );
       });
     } finally {
