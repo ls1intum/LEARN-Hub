@@ -52,8 +52,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     };
   }, [setHasSidebar, closeMobile]);
 
-  const detailNavigationState = location.state as DetailNavigationState | null;
-
   const activePath = useMemo(() => {
     return location.pathname;
   }, [location.pathname]);
