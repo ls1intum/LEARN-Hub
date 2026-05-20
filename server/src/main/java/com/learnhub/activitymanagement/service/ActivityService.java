@@ -247,10 +247,8 @@ public class ActivityService {
 	}
 
 	private boolean hasTafelbildImage(Activity activity) {
-		return activity.getMarkdowns().stream()
-				.anyMatch(m -> m.getType() == MarkdownType.TAFELBILD
-						&& m.getContent() != null
-						&& m.getContent().contains("data:image/"));
+		return activity.getMarkdowns().stream().anyMatch(m -> m.getType() == MarkdownType.TAFELBILD
+				&& m.getContent() != null && m.getContent().contains("data:image/"));
 	}
 
 	@Transactional(readOnly = true)
@@ -518,7 +516,6 @@ public class ActivityService {
 			boolean includeMarkdownContent) {
 		return mapToResponse(activity, includeSourcePdf, includeMarkdownContent);
 	}
-
 
 	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf) {
 		return mapToResponse(activity, includeSourcePdf, false);

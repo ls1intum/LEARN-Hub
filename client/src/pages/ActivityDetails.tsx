@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import {
   Edit3,
   Download,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import { apiService } from "@/services/apiService";
@@ -129,8 +130,33 @@ export const ActivityDetails: React.FC = () => {
   const restoreScrollY = navigationState?.restoreScrollY;
 
   const documentApi = useApi();
+  const docxApi = useApi();
   const deleteApi = useApi();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [docxLoadingId, setDocxLoadingId] = useState<string | null>(null);
+
+  const waitingQuotes = t("activityDetails.docxWaitingQuotes", {
+    returnObjects: true,
+  }) as string[];
+  const [quoteIndex, setQuoteIndex] = useState(0);
+  const quoteIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (docxLoadingId !== null) {
+      setQuoteIndex(Math.floor(Math.random() * waitingQuotes.length));
+      quoteIntervalRef.current = setInterval(() => {
+        setQuoteIndex((i) => (i + 1) % waitingQuotes.length);
+      }, 2500);
+    } else {
+      if (quoteIntervalRef.current) {
+        clearInterval(quoteIntervalRef.current);
+        quoteIntervalRef.current = null;
+      }
+    }
+    return () => {
+      if (quoteIntervalRef.current) clearInterval(quoteIntervalRef.current);
+    };
+  }, [docxLoadingId, waitingQuotes.length]);
 
   const fetchCapabilities = useCallback(
     () => apiService.getServerCapabilities(),
@@ -211,15 +237,19 @@ export const ActivityDetails: React.FC = () => {
     markdownId: string,
     markdownType: string,
   ) => {
-    if (!activity?.name) return;
-
-    await documentApi.call(async () => {
-      const filename = `${activity.name || "activity"}_${markdownType}.docx`;
-      await downloadBlob(
-        () => apiService.getMarkdownDocx(markdownId),
-        filename,
-      );
-    });
+    if (!activity?.name || docxLoadingId) return;
+    setDocxLoadingId(markdownId);
+    try {
+      await docxApi.call(async () => {
+        const filename = `${activity.name || "activity"}_${markdownType}.docx`;
+        await downloadBlob(
+          () => apiService.getMarkdownDocx(markdownId),
+          filename,
+        );
+      });
+    } finally {
+      setDocxLoadingId(null);
+    }
   };
 
   const handleOpenActivityPdf = async () => {
@@ -234,15 +264,19 @@ export const ActivityDetails: React.FC = () => {
   };
 
   const handleOpenActivityDocx = async () => {
-    if (!activity?.id) return;
-
-    await documentApi.call(async () => {
-      const filename = `${activity.name || "activity"}.docx`;
-      await downloadBlob(
-        () => apiService.downloadActivityDocx(activity.id),
-        filename,
-      );
-    });
+    if (!activity?.id || docxLoadingId) return;
+    setDocxLoadingId("activity");
+    try {
+      await docxApi.call(async () => {
+        const filename = `${activity.name || "activity"}.docx`;
+        await downloadBlob(
+          () => apiService.downloadActivityDocx(activity.id),
+          filename,
+        );
+      });
+    } finally {
+      setDocxLoadingId(null);
+    }
   };
 
   const handleBack = () => {
@@ -585,11 +619,16 @@ export const ActivityDetails: React.FC = () => {
                             ? ` — ${md.type.charAt(0).toUpperCase() + md.type.slice(1)}`
                             : ""}
                         </p>
+                        {docxLoadingId === md.id && (
+                          <p className="text-xs text-muted-foreground italic animate-pulse mt-0.5">
+                            {waitingQuotes[quoteIndex]}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
-                          disabled={documentApi.isLoading}
+                          disabled={documentApi.isLoading || !!docxLoadingId}
                           onClick={() =>
                             handleDownloadMarkdownPdf(
                               md.id,
@@ -605,13 +644,17 @@ export const ActivityDetails: React.FC = () => {
                         {docxAvailable && (
                           <button
                             type="button"
-                            disabled={documentApi.isLoading}
+                            disabled={documentApi.isLoading || !!docxLoadingId}
                             onClick={() =>
                               handleDownloadMarkdownDocx(md.id, md.type)
                             }
                             className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50"
                           >
-                            DOCX
+                            {docxLoadingId === md.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              "DOCX"
+                            )}
                           </button>
                         )}
                       </div>
@@ -625,14 +668,20 @@ export const ActivityDetails: React.FC = () => {
                       <p className="text-sm font-medium">
                         {t("activityDetails.downloadActivity")}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {t("activityDetails.combinedDocument")}
-                      </p>
+                      {docxLoadingId === "activity" ? (
+                        <p className="text-xs text-muted-foreground italic animate-pulse">
+                          {waitingQuotes[quoteIndex]}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          {t("activityDetails.combinedDocument")}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
-                        disabled={documentApi.isLoading}
+                        disabled={documentApi.isLoading || !!docxLoadingId}
                         onClick={handleOpenActivityPdf}
                         className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50"
                       >
@@ -641,11 +690,15 @@ export const ActivityDetails: React.FC = () => {
                       {docxAvailable && (
                         <button
                           type="button"
-                          disabled={documentApi.isLoading}
+                          disabled={documentApi.isLoading || !!docxLoadingId}
                           onClick={handleOpenActivityDocx}
                           className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50"
                         >
-                          DOCX
+                          {docxLoadingId === "activity" ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            "DOCX"
+                          )}
                         </button>
                       )}
                     </div>

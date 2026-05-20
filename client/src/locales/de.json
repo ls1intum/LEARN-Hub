@@ -422,7 +422,20 @@
     "downloadActivity": "Aktivität herunterladen",
     "combinedDocument": "Kombiniertes Dokument",
     "loading": "Aktivitätsdetails werden geladen...",
-    "goBack": "Zurück"
+    "goBack": "Zurück",
+    "docxConverting": "Wird zu Word konvertiert...",
+    "docxWaitingQuotes": [
+      "Adobe überzeugen, dass wir seriös sind...",
+      "Deinen Inhalt in Worddeutsch übersetzen...",
+      "Mit Absatzformaten verhandeln...",
+      "Deine Datei auf Reise nach Adobe HQ schicken...",
+      "Ränder vorzeigbar machen...",
+      "Markdown-Schönheit in Word-Chaos verwandeln...",
+      "Pixel ausrichten und i-Punkte setzen...",
+      "Höflich in der Cloud anfragen...",
+      "Die Konvertierungswichte bestechen...",
+      "Den DOCX-Geist beschwören..."
+    ]
   },
   "enums": {
     "format": {

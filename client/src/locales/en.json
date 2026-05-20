@@ -422,7 +422,20 @@
     "downloadActivity": "Download Activity",
     "combinedDocument": "Combined document",
     "loading": "Loading activity details...",
-    "goBack": "Go Back"
+    "goBack": "Go Back",
+    "docxConverting": "Converting to Word...",
+    "docxWaitingQuotes": [
+      "Convincing Adobe we're legitimate...",
+      "Teaching your content to speak Word...",
+      "Negotiating with paragraph styles...",
+      "Sending your file on a round trip to Adobe HQ...",
+      "Making margins presentable...",
+      "Converting markdown beauty into Word chaos...",
+      "Aligning the pixels and crossing the t's...",
+      "Asking the cloud nicely (please hold)...",
+      "Bribing the conversion gremlins...",
+      "Summoning the DOCX spirit..."
+    ]
   },
   "enums": {
     "format": {

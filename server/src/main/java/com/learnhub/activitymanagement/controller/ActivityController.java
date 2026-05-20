@@ -16,10 +16,13 @@ import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.dto.response.MessageResponse;
 import com.learnhub.activitymanagement.dto.response.MetadataExtractionResponse;
 import com.learnhub.activitymanagement.dto.response.RecommendationsResponse;
+import com.learnhub.activitymanagement.entity.ActivityMarkdown;
+import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
 import com.learnhub.activitymanagement.service.ActivityDraftService;
 import com.learnhub.activitymanagement.service.ActivityService;
 import com.learnhub.activitymanagement.service.DraftSseService;
 import com.learnhub.activitymanagement.service.RecommendationService;
+import com.learnhub.documentmanagement.service.DocxCacheService;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
@@ -40,6 +43,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -103,6 +107,12 @@ public class ActivityController {
 
 	@Autowired
 	private MarkdownToDocxService markdownToDocxService;
+
+	@Autowired
+	private DocxCacheService docxCacheService;
+
+	@Autowired
+	private ActivityMarkdownRepository markdownRepository;
 
 	@Autowired
 	@Qualifier("markdownGenerationExecutor")
@@ -506,13 +516,22 @@ public class ActivityController {
 			throw new ResourceNotFoundException("No markdown content available for this activity");
 		}
 
-		String activityName = activity.getName() != null ? activity.getName() : "";
-		byte[] docxBytes = markdownToDocxService.renderMergedDocx(markdowns, landscapes, exerciseSheets, activityName);
+		List<LocalDateTime> markdownTimestamps = markdownRepository.findByActivityId(activityId).stream()
+				.map(am -> am.getUpdatedAt() != null ? am.getUpdatedAt() : am.getCreatedAt()).toList();
 
-		MediaType docxMediaType = MediaType
-				.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-		return buildFileDownloadResponse(docxBytes, activityName.isEmpty() ? "activity" : activityName, ".docx",
-				docxMediaType, "attachment");
+		String activityName = activity.getName() != null ? activity.getName() : "";
+		try {
+			byte[] docxBytes = docxCacheService.getOrGenerateMerged(activityId, markdownTimestamps,
+					() -> markdownToDocxService.renderMergedDocx(markdowns, landscapes, exerciseSheets, activityName));
+
+			MediaType docxMediaType = MediaType
+					.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+			return buildFileDownloadResponse(docxBytes, activityName.isEmpty() ? "activity" : activityName, ".docx",
+					docxMediaType, "attachment");
+		} catch (Exception e) {
+			logger.error("GET /api/activities/{}/docx - Failed: {}", activityId, e.getMessage());
+			throw new RuntimeException("Failed to render activity DOCX: " + e.getMessage(), e);
+		}
 	}
 
 	/**

@@ -4,6 +4,7 @@ import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
 import com.learnhub.documentmanagement.dto.request.MarkdownPreviewRequest;
+import com.learnhub.documentmanagement.service.DocxCacheService;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
 import com.learnhub.dto.response.ErrorResponse;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -40,6 +42,9 @@ public class MarkdownController {
 
 	@Autowired
 	private MarkdownToDocxService markdownToDocxService;
+
+	@Autowired
+	private DocxCacheService docxCacheService;
 
 	@GetMapping("/capabilities")
 	@PreAuthorize("permitAll()")
@@ -108,8 +113,14 @@ public class MarkdownController {
 			}
 
 			boolean exerciseSheet = markdown.getType() == MarkdownType.UEBUNG;
-			byte[] docxBytes = markdownToDocxService.renderMarkdownToDocx(content, markdown.isLandscape(),
-					markdown.getActivity() != null ? markdown.getActivity().getName() : "", exerciseSheet);
+			String activityName = markdown.getActivity() != null ? markdown.getActivity().getName() : "";
+			LocalDateTime effectiveTimestamp = markdown.getUpdatedAt() != null
+					? markdown.getUpdatedAt()
+					: markdown.getCreatedAt();
+
+			byte[] docxBytes = docxCacheService.getOrGenerate(markdownId, effectiveTimestamp,
+					() -> markdownToDocxService.renderMarkdownToDocx(content, markdown.isLandscape(), activityName,
+							exerciseSheet));
 
 			String downloadName = sanitizeFilename(markdown.getType().getValue()) + ".docx";
 
