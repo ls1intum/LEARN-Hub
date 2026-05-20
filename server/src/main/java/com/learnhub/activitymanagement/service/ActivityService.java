@@ -19,9 +19,9 @@ import com.learnhub.usermanagement.entity.UserFavourites;
 import com.learnhub.usermanagement.repository.UserFavouritesRepository;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.Base64;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -111,7 +111,6 @@ public class ActivityService {
 		return getActivitiesWithFilters(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels,
 				mentalLoad, physicalEnergy, resourcesNeeded, topics, limit, offset, includeSourcePdf, null);
 	}
-
 
 	@Transactional(readOnly = true)
 	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
