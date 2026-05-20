@@ -24,7 +24,12 @@ export function markdownToTiptapHtml(markdown: string): string {
   const processed = markdown.replace(
     IMAGE_BLOCK_RE,
     (_match, id, prompt, alt, src) => {
-      const lhId = ((id as string | undefined) ?? (alt as string | undefined) ?? "").trim() || "image";
+      const lhId =
+        (
+          (id as string | undefined) ??
+          (alt as string | undefined) ??
+          ""
+        ).trim() || "image";
       const lhPrompt = ((prompt as string | undefined) ?? "").trim();
       return `<img src="${src}" alt="${alt || lhId}" data-lh="true" data-lh-id="${lhId}" data-lh-prompt="${encodeURIComponent(lhPrompt)}">`;
     },
@@ -70,7 +75,9 @@ function buildTurndown(): TurndownService {
       const src = el.getAttribute("src") ?? "";
       const alt = el.getAttribute("alt") ?? "";
       const id = el.getAttribute("data-lh-id") ?? "";
-      const prompt = decodeURIComponent(el.getAttribute("data-lh-prompt") ?? "");
+      const prompt = decodeURIComponent(
+        el.getAttribute("data-lh-prompt") ?? "",
+      );
 
       // User-uploaded images (lhId empty) → plain markdown image
       if (!id) {
@@ -90,7 +97,9 @@ function buildTurndown(): TurndownService {
       const src = el.getAttribute("src") ?? "";
       const alt = el.getAttribute("alt") ?? "";
       const title = el.getAttribute("title");
-      return title ? `\n\n![${alt}](${src} "${title}")\n\n` : `\n\n![${alt}](${src})\n\n`;
+      return title
+        ? `\n\n![${alt}](${src} "${title}")\n\n`
+        : `\n\n![${alt}](${src})\n\n`;
     },
   });
 
