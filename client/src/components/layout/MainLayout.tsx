@@ -17,10 +17,6 @@ interface MainLayoutProps {
   fullWidth?: boolean;
 }
 
-interface DetailNavigationState {
-  backTo?: string;
-}
-
 /* ─────────────────────────────────────────────
    Main Layout
    Provides the sidebar for all app routes.
