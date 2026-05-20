@@ -21,11 +21,9 @@ LABEL org.opencontainers.image.title="LEARN-Hub Server"
 LABEL org.opencontainers.image.description="Spring Boot API server for LEARN-Hub application"
 LABEL org.opencontainers.image.vendor="LEARN-Hub Project"
 
-# Install curl for health checks
-RUN apk add --no-cache curl
-
-# Install Comic Sans MS fonts used by iText for PDF rendering
-COPY fonts/ /usr/share/fonts/truetype/comic-sans/
+# Install curl for health checks and DejaVu fonts for Unicode symbol rendering
+# (arrows U+2190, dingbats U+2700, checkmarks, mathematical symbols, etc.)
+RUN apk add --no-cache curl ttf-dejavu
 
 # Create app directory
 WORKDIR /app

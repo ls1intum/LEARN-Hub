@@ -64,8 +64,7 @@
     border-color: hsl(var(--border));
   }
   html {
-    overflow-y: scroll;
-    overflow-x: clip;
+    overflow: hidden;
   }
   body {
     background-color: hsl(var(--background));
@@ -290,4 +289,46 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
   }
+}
+
+/* ── TipTap rich-text editor ─────────────────────────────────────────────── */
+
+/* Table styles inside the editor */
+.ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.ProseMirror th,
+.ProseMirror td {
+  border: 1px solid hsl(var(--border));
+  padding: 0.4rem 0.6rem;
+  vertical-align: top;
+  min-width: 4rem;
+}
+
+.ProseMirror th {
+  background-color: hsl(var(--muted));
+  font-weight: 600;
+  text-align: left;
+}
+
+/* Selected cells */
+.ProseMirror .selectedCell {
+  background-color: hsl(var(--accent) / 0.15);
+}
+
+/* Focus ring */
+.ProseMirror:focus {
+  outline: none;
+}
+
+/* Placeholder text */
+.ProseMirror p.is-editor-empty:first-child::before {
+  color: hsl(var(--muted-foreground));
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
 }

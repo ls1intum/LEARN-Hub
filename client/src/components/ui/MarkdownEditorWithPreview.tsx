@@ -21,9 +21,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { FileText, Loader2, Eye, Edit3, RefreshCw } from "lucide-react";
+import { FileText, Loader2, Eye, Edit3, RefreshCw, Code2, PenLine } from "lucide-react";
 import { logger } from "@/services/logger";
 import { useTranslation } from "react-i18next";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 
 // ─── Base64 placeholder helpers ──────────────────────────────────
 //
@@ -217,6 +218,8 @@ const ImageRegenerationBar: React.FC<{
 
 // ─── Types ───────────────────────────────────────────────────────
 
+type EditorMode = "rich" | "source";
+
 interface MarkdownEditorWithPreviewProps {
   /** Current markdown content (controlled) */
   value: string;
@@ -224,7 +227,7 @@ interface MarkdownEditorWithPreviewProps {
   onChange: (value: string) => void;
   /** Async function that converts markdown to a PDF blob */
   renderPreviewFn: (markdown: string) => Promise<Blob>;
-  /** When provided, shows the image re-generation toolbar above the editor */
+  /** When provided, enables image re-generation (toolbar in source mode, inline in rich mode) */
   onRegenerateImage?: (params: RegenerateImageParams) => Promise<string>;
 }
 
@@ -234,6 +237,9 @@ export const MarkdownEditorWithPreview: React.FC<
   MarkdownEditorWithPreviewProps
 > = ({ value, onChange, renderPreviewFn, onRegenerateImage }) => {
   const { t } = useTranslation();
+
+  // Editor mode: rich (WYSIWYG) or source (raw markdown textarea)
+  const [editorMode, setEditorMode] = useState<EditorMode>("rich");
 
   // PDF preview state
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
@@ -422,7 +428,8 @@ export const MarkdownEditorWithPreview: React.FC<
 
   return (
     <>
-      {onRegenerateImage && (
+      {/* Image regeneration bar — only shown in source mode (rich mode has inline controls) */}
+      {onRegenerateImage && editorMode === "source" && (
         <ImageRegenerationBar
           value={value}
           onChange={onChange}
@@ -430,24 +437,67 @@ export const MarkdownEditorWithPreview: React.FC<
         />
       )}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-16rem)]">
-        {/* Left: Markdown Editor */}
+        {/* Left: Editor (rich or source) */}
         <Card className="flex flex-col min-h-0">
           <CardHeader className="pb-2 flex-shrink-0">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Edit3 className="h-4 w-4" />
-              {t("markdownEditor.editorTitle")}
+              {editorMode === "rich" ? (
+                <PenLine className="h-4 w-4" />
+              ) : (
+                <Edit3 className="h-4 w-4" />
+              )}
+              <span className="flex-1">
+                {editorMode === "rich"
+                  ? t("markdownEditor.richEditorTitle")
+                  : t("markdownEditor.editorTitle")}
+              </span>
+              {/* Mode toggle */}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 px-2 text-xs ml-auto"
+                onClick={() =>
+                  setEditorMode((m) => (m === "rich" ? "source" : "rich"))
+                }
+                title={
+                  editorMode === "rich"
+                    ? t("markdownEditor.switchToSource")
+                    : t("markdownEditor.switchToRich")
+                }
+              >
+                {editorMode === "rich" ? (
+                  <>
+                    <Code2 className="h-3.5 w-3.5 mr-1" />
+                    {t("markdownEditor.sourceMode")}
+                  </>
+                ) : (
+                  <>
+                    <PenLine className="h-3.5 w-3.5 mr-1" />
+                    {t("markdownEditor.richMode")}
+                  </>
+                )}
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 min-h-0 pb-4">
-            <textarea
-              ref={textareaRef}
-              value={displayValue}
-              onChange={handleMarkdownChange}
-              onCopy={handleMarkdownCopy}
-              onCut={handleMarkdownCut}
-              className="w-full h-full min-h-[400px] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              placeholder="# Artikulationsschema&#10;&#10;**Thema:** ...&#10;&#10;| Zeit | Phase | Handlungsschritte | Sozialform | Kompetenzen | Medien/Material |&#10;|------|-------|-------------------|------------|-------------|-----------------|&#10;| 5 min | Einstieg | ... | Plenum | ... | ... |"
-            />
+            {editorMode === "rich" ? (
+              <RichTextEditor
+                value={value}
+                onChange={onChange}
+                onRegenerateImage={onRegenerateImage}
+              />
+            ) : (
+              <textarea
+                ref={textareaRef}
+                value={displayValue}
+                onChange={handleMarkdownChange}
+                onCopy={handleMarkdownCopy}
+                onCut={handleMarkdownCut}
+                className="w-full h-full min-h-[400px] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm font-mono ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                placeholder="# Artikulationsschema&#10;&#10;**Thema:** ...&#10;&#10;| Zeit | Phase | Handlungsschritte | Sozialform | Kompetenzen | Medien/Material |&#10;|------|-------|-------------------|------------|-------------|-----------------|&#10;| 5 min | Einstieg | ... | Plenum | ... | ... |"
+              />
+            )}
           </CardContent>
         </Card>
 

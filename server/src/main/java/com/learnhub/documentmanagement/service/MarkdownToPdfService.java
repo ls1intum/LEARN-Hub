@@ -20,6 +20,7 @@ import com.itextpdf.kernel.utils.PdfMerger;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
@@ -40,12 +41,32 @@ public class MarkdownToPdfService {
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToPdfService.class);
 	private static final String WORKSHEET_FONT_FAMILY = "Comic Sans MS";
 	private static final int MAX_CMAP_RETRY_CHARACTERS = 256;
+	// Fonts bundled in src/main/resources/fonts/ — single source of truth for all
+	// environments (local dev, Docker). Loaded from classpath at startup.
+	private static final List<String> CLASSPATH_FONT_RESOURCES = List.of(
+			"/fonts/ComicSansMS.ttf",
+			"/fonts/ComicSansMSBold.ttf",
+			"/fonts/NotoEmoji-Regular.ttf");
+
+	// OS-installed fonts tried as additional fallbacks (e.g. DejaVu from Alpine's
+	// ttf-dejavu package for arrows/dingbats). Missing paths are silently skipped.
 	private static final List<String> WORKSHEET_FONT_PATHS = List.of(
-			"/usr/share/fonts/truetype/comic-sans/ComicSansMS.ttf",
-			"/usr/share/fonts/truetype/comic-sans/ComicSansMSBold.ttf",
 			"/System/Library/Fonts/Supplemental/Comic Sans MS.ttf",
-			"/System/Library/Fonts/Supplemental/Comic Sans MS Bold.ttf", "/Library/Fonts/Comic Sans MS.ttf",
-			"/Library/Fonts/Comic Sans MS Bold.ttf", "C:/Windows/Fonts/comic.ttf", "C:/Windows/Fonts/comicbd.ttf");
+			"/System/Library/Fonts/Supplemental/Comic Sans MS Bold.ttf",
+			"/Library/Fonts/Comic Sans MS.ttf",
+			"/Library/Fonts/Comic Sans MS Bold.ttf",
+			"C:/Windows/Fonts/comic.ttf",
+			"C:/Windows/Fonts/comicbd.ttf");
+
+	private static final List<String> SYMBOL_FONT_PATHS = List.of(
+			// DejaVu Sans – arrows, checkmarks, dingbats, mathematical symbols
+			"/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf",
+			"/usr/share/fonts/ttf-dejavu/DejaVuSans.ttf",
+			"/usr/share/fonts/TTF/DejaVuSans.ttf",
+			// macOS – Arial Unicode MS as broad fallback
+			"/Library/Fonts/Arial Unicode MS.ttf",
+			// Windows – Segoe UI Emoji
+			"C:/Windows/Fonts/seguiemj.ttf");
 
 	private final MarkdownToHtmlService markdownToHtmlService;
 
@@ -157,7 +178,18 @@ public class MarkdownToPdfService {
 		// Use iText's bundled/shipped fonts for Unicode fallback instead of
 		// addSystemFonts(), which on macOS/Linux includes Apple-specific fonts with
 		// incomplete cmap tables that cause a NullPointerException during rendering.
-		DefaultFontProvider fontProvider = new DefaultFontProvider(false, false, true, WORKSHEET_FONT_FAMILY);
+		DefaultFontProvider fontProvider = new DefaultFontProvider(false, true, false, WORKSHEET_FONT_FAMILY);
+
+		for (String resource : CLASSPATH_FONT_RESOURCES) {
+			try (InputStream is = MarkdownToPdfService.class.getResourceAsStream(resource)) {
+				if (is != null) {
+					fontProvider.addFont(is.readAllBytes());
+					logger.debug("Registered classpath font: {}", resource);
+				}
+			} catch (IOException e) {
+				logger.debug("Could not load classpath font {}: {}", resource, e.getMessage());
+			}
+		}
 
 		boolean worksheetFontRegistered = false;
 		for (String fontPath : WORKSHEET_FONT_PATHS) {
@@ -173,6 +205,21 @@ public class MarkdownToPdfService {
 			logger.warn(
 					"Worksheet PDF font '{}' was not registered from the known font paths. Falling back to other system fonts.",
 					WORKSHEET_FONT_FAMILY);
+		}
+
+		int symbolFontsRegistered = 0;
+		for (String fontPath : SYMBOL_FONT_PATHS) {
+			if (!Files.exists(Path.of(fontPath))) {
+				continue;
+			}
+			if (fontProvider.addFont(fontPath)) {
+				symbolFontsRegistered++;
+				logger.debug("Registered symbol/emoji fallback font: {}", fontPath);
+			}
+		}
+		if (symbolFontsRegistered == 0) {
+			logger.debug(
+					"No symbol/emoji fallback fonts were found. Characters outside Comic Sans will be dropped on cmap failure.");
 		}
 
 		return new ConverterProperties().setFontProvider(fontProvider);
@@ -242,6 +289,17 @@ public class MarkdownToPdfService {
 			String message = current.getMessage();
 			if (message != null && message.toLowerCase(Locale.ROOT).contains("cmap")) {
 				return true;
+			}
+			// Java 17+ NullPointerExceptions include the field/variable name in their
+			// message (e.g. "…because \"this.toUnicode\" is null"), which does NOT
+			// always contain "cmap" even when the root cause is a missing cmap table.
+			// Treat any NPE whose top stack frame originates from iText's font-encoding
+			// package as a cmap failure so the character-dropping retry is triggered.
+			if (current instanceof NullPointerException) {
+				StackTraceElement[] stack = current.getStackTrace();
+				if (stack.length > 0 && stack[0].getClassName().startsWith("com.itextpdf.io.font")) {
+					return true;
+				}
 			}
 			current = current.getCause();
 		}

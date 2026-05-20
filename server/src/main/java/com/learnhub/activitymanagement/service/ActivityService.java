@@ -248,6 +248,7 @@ public class ActivityService {
 		return mapToResponse(saved, false);
 	}
 
+	@Transactional
 	public ActivityResponse updateActivity(UUID id, Activity activityUpdate) {
 		Activity activity = activityRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
@@ -335,6 +336,7 @@ public class ActivityService {
 	 * createActivityFromMap to parse the request, then applies to the existing
 	 * entity.
 	 */
+	@Transactional
 	public ActivityResponse updateActivityFromMap(UUID id, Map<String, Object> request) {
 		Activity activityUpdate = createActivityFromMap(request);
 		return updateActivity(id, activityUpdate);

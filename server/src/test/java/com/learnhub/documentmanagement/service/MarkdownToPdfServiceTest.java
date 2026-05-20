@@ -196,6 +196,31 @@ class MarkdownToPdfServiceTest {
 		assertThat(fallbackService.lastRenderedHtml).doesNotContain("🚫");
 	}
 
+	/**
+	 * Verifies that a NullPointerException originating from iText's font-encoding
+	 * package triggers the character-dropping retry even when the NPE message does
+	 * NOT contain "cmap" — the pattern produced by Java 17+ enhanced NPE messages
+	 * (e.g. "…because \"this.toUnicode\" is null").
+	 */
+	@Test
+	void renderHtmlToPdfRetriesByDroppingProblematicCharacterOnItextFontNpe() {
+		// Build an NPE whose top stack frame looks like it came from iText's font code.
+		NullPointerException itextNpe = new NullPointerException(
+				"Cannot invoke \"java.util.Map.get(Object)\" because \"this.toUnicode\" is null");
+		itextNpe.setStackTrace(new StackTraceElement[]{
+				new StackTraceElement("com.itextpdf.io.font.cmap.CMapToUnicode", "lookup", "CMapToUnicode.java", 42),
+				new StackTraceElement("com.itextpdf.io.font.PdfType0Font", "encodeGlyphs", "PdfType0Font.java", 99),});
+
+		FallbackMarkdownToPdfServiceWithCustomException fallbackService =
+				new FallbackMarkdownToPdfServiceWithCustomException(itextNpe);
+
+		byte[] result = fallbackService.renderHtmlToPdf("<p>Hello 🚫 world</p>", true, "Retry Test");
+
+		assertThat(result).isEqualTo(FallbackMarkdownToPdfService.FAKE_PDF_BYTES);
+		assertThat(fallbackService.attempts).isEqualTo(2);
+		assertThat(fallbackService.lastRenderedHtml).doesNotContain("🚫");
+	}
+
 	private static final class FallbackMarkdownToPdfService extends MarkdownToPdfService {
 
 		private static final byte[] FAKE_PDF_BYTES = "pdf".getBytes(StandardCharsets.UTF_8);
@@ -216,6 +241,36 @@ class MarkdownToPdfServiceTest {
 				throw new NullPointerException("Cannot invoke \"java.util.Map.size()\" because \"cmap\" is null");
 			}
 			outputStream.writeBytes(FAKE_PDF_BYTES);
+		}
+
+		@Override
+		public byte[] applyDocumentTitle(byte[] pdfBytes, String documentTitle) {
+			return pdfBytes;
+		}
+	}
+
+	/** Same as {@link FallbackMarkdownToPdfService} but throws a caller-supplied exception. */
+	private static final class FallbackMarkdownToPdfServiceWithCustomException extends MarkdownToPdfService {
+
+		private final RuntimeException exceptionToThrow;
+
+		int attempts;
+		String lastRenderedHtml;
+
+		private FallbackMarkdownToPdfServiceWithCustomException(RuntimeException exceptionToThrow) {
+			super(createHtmlService());
+			this.exceptionToThrow = exceptionToThrow;
+		}
+
+		@Override
+		void convertHtmlDocumentToPdfBytes(String html, ByteArrayOutputStream outputStream,
+				com.itextpdf.html2pdf.ConverterProperties converterProperties) {
+			attempts++;
+			lastRenderedHtml = html;
+			if (html.contains("🚫")) {
+				throw exceptionToThrow;
+			}
+			outputStream.writeBytes(FallbackMarkdownToPdfService.FAKE_PDF_BYTES);
 		}
 
 		@Override
