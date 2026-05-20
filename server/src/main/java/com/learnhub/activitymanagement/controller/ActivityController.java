@@ -34,8 +34,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import javax.imageio.ImageIO;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -113,23 +119,37 @@ public class ActivityController {
 				request.offset());
 		boolean includeSourcePdf = isAdmin(authentication);
 		UUID userId = CurrentUser.getUserId(authentication);
-		boolean includeTafelbildImage = Boolean.TRUE.equals(request.includeTafelbildImage());
 		return ResponseEntity.ok(activityService.getActivitiesPage(request.name(), request.ageMin(), request.ageMax(),
 				request.durationMin(), request.durationMax(), request.format(), request.bloomLevel(),
 				request.mentalLoad(), request.physicalEnergy(), request.resourcesNeeded(), request.topics(),
-				request.limit(), request.offset(), includeSourcePdf, userId, includeTafelbildImage));
+				request.limit(), request.offset(), includeSourcePdf, userId));
 	}
 
 	@GetMapping("/{id}")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get activity by ID", description = "Get a single activity by its ID")
-	public ResponseEntity<ActivityResponse> getActivity(@PathVariable UUID id,
-			@RequestParam(required = false, defaultValue = "false") boolean includeTafelbildImage,
-			Authentication authentication) {
+	public ResponseEntity<ActivityResponse> getActivity(@PathVariable UUID id, Authentication authentication) {
 		logger.info("GET /api/activities/{} - Get activity by ID called", id);
 		ActivityResponse activity = activityService.getActivityById(id, isAdmin(authentication), false,
-				includeTafelbildImage, CurrentUser.getUserId(authentication));
+				CurrentUser.getUserId(authentication));
 		return ResponseEntity.ok(activity);
+	}
+
+	@GetMapping("/{id}/thumbnail")
+	@PreAuthorize("permitAll()")
+	@Operation(summary = "Get activity thumbnail", description = "Get the tafelbild thumbnail image for an activity, scaled to 400px wide")
+	public ResponseEntity<byte[]> getThumbnail(@PathVariable UUID id) throws IOException {
+		logger.info("GET /api/activities/{}/thumbnail - Get thumbnail called", id);
+		ActivityService.ThumbnailData data = activityService.getThumbnailData(id);
+		if (data == null) {
+			return ResponseEntity.notFound().build();
+		}
+		byte[] thumbnailBytes = scaleThumbnail(data.bytes(), data.mimeType(), 400);
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.parseMediaType(data.mimeType()));
+		headers.set(HttpHeaders.CACHE_CONTROL, "public, max-age=86400");
+		headers.setContentLength(thumbnailBytes.length);
+		return ResponseEntity.ok().headers(headers).body(thumbnailBytes);
 	}
 
 	@GetMapping("/{id}/markdowns")
@@ -547,6 +567,24 @@ public class ActivityController {
 			throw new IllegalArgumentException("documentId is required");
 		}
 		return documentId;
+	}
+
+	private byte[] scaleThumbnail(byte[] imageBytes, String mimeType, int maxWidth) throws IOException {
+		BufferedImage original = ImageIO.read(new ByteArrayInputStream(imageBytes));
+		if (original == null || original.getWidth() <= maxWidth) {
+			return imageBytes;
+		}
+		int targetWidth = maxWidth;
+		int targetHeight = (int) Math.round(original.getHeight() * (double) maxWidth / original.getWidth());
+		BufferedImage scaled = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+		Graphics2D g2d = scaled.createGraphics();
+		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+		g2d.drawImage(original, 0, 0, targetWidth, targetHeight, null);
+		g2d.dispose();
+		String format = mimeType != null && (mimeType.contains("jpeg") || mimeType.contains("jpg")) ? "jpeg" : "png";
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		ImageIO.write(scaled, format, baos);
+		return baos.toByteArray();
 	}
 
 	/**

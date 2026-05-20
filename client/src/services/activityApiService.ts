@@ -68,14 +68,8 @@ export const ActivityApi = {
   /**
    * Get activity by ID
    */
-  async getActivity(
-    id: string,
-    options: { includeTafelbildImage?: boolean } = {},
-  ) {
-    const url = options.includeTafelbildImage
-      ? `/api/activities/${id}?includeTafelbildImage=true`
-      : `/api/activities/${id}`;
-    return ApiRequestMixin.request<Activity>(url);
+  async getActivity(id: string) {
+    return ApiRequestMixin.request<Activity>(`/api/activities/${id}`);
   },
 
   /**
@@ -90,11 +84,8 @@ export const ActivityApi = {
   /**
    * Get multiple activities by IDs
    */
-  async getActivitiesByIds(
-    ids: string[],
-    options: { includeTafelbildImage?: boolean } = {},
-  ) {
-    const promises = ids.map((id) => this.getActivity(id, options));
+  async getActivitiesByIds(ids: string[]) {
+    const promises = ids.map((id) => this.getActivity(id));
     const results = await Promise.all(promises);
     return results;
   },

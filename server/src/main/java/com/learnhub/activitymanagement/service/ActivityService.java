@@ -7,6 +7,7 @@ import com.learnhub.activitymanagement.dto.response.MarkdownResponse;
 import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.*;
+import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
 import com.learnhub.activitymanagement.repository.ActivityQueryResult;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
@@ -16,6 +17,9 @@ import com.learnhub.exception.ResourceNotFoundException;
 import com.learnhub.service.SanitizationService;
 import com.learnhub.usermanagement.entity.UserFavourites;
 import com.learnhub.usermanagement.repository.UserFavouritesRepository;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -57,7 +61,13 @@ public class ActivityService {
 	private SanitizationService sanitizationService;
 
 	@Autowired
+	private ActivityMarkdownRepository activityMarkdownRepository;
+
+	@Autowired
 	private UserFavouritesRepository userFavouritesRepository;
+
+	public record ThumbnailData(String mimeType, byte[] bytes) {
+	}
 
 	public long countActivitiesWithFilters(String name, Integer ageMin, Integer ageMax, Integer durationMin,
 			Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
@@ -71,13 +81,17 @@ public class ActivityService {
 	public ActivitiesListResponse getActivitiesPage(String name, Integer ageMin, Integer ageMax, Integer durationMin,
 			Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
-			boolean includeSourcePdf, UUID userId, boolean includeTafelbildImage) {
+			boolean includeSourcePdf, UUID userId) {
 		ActivityQueryResult page = activityRepository.findPublishedActivitiesWithFilters(name, ageMin, ageMax,
 				durationMin, durationMax, formats, bloomLevels, toSingleValueList(mentalLoad),
 				toSingleValueList(physicalEnergy), resourcesNeeded, topics, limit, offset);
 		Set<UUID> favouritedActivityIds = findFavouritedActivityIds(userId, page.activities());
+		List<UUID> activityIds = page.activities().stream().map(Activity::getId).collect(Collectors.toList());
+		Set<UUID> tafelbildActivityIds = activityIds.isEmpty()
+				? Set.of()
+				: activityMarkdownRepository.findActivityIdsWithTafelbild(activityIds);
 		List<ActivityResponse> activities = page.activities().stream()
-				.map(activity -> mapToSummaryResponse(activity, includeTafelbildImage, favouritedActivityIds))
+				.map(activity -> mapToSummaryResponse(activity, tafelbildActivityIds, favouritedActivityIds))
 				.collect(Collectors.toList());
 		return new ActivitiesListResponse(page.total(), activities, defaultLimit(limit), defaultOffset(offset));
 	}
@@ -98,25 +112,22 @@ public class ActivityService {
 				mentalLoad, physicalEnergy, resourcesNeeded, topics, limit, offset, includeSourcePdf, null);
 	}
 
-	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
-			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
-			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
-			boolean includeSourcePdf, UUID userId) {
-		return getActivitiesWithFilters(name, ageMin, ageMax, durationMin, durationMax, formats, bloomLevels,
-				mentalLoad, physicalEnergy, resourcesNeeded, topics, limit, offset, includeSourcePdf, userId, false);
-	}
 
 	@Transactional(readOnly = true)
 	public List<ActivityResponse> getActivitiesWithFilters(String name, Integer ageMin, Integer ageMax,
 			Integer durationMin, Integer durationMax, List<String> formats, List<String> bloomLevels, String mentalLoad,
 			String physicalEnergy, List<String> resourcesNeeded, List<String> topics, Integer limit, Integer offset,
-			boolean includeSourcePdf, UUID userId, boolean includeTafelbildImage) {
+			boolean includeSourcePdf, UUID userId) {
 		ActivityQueryResult page = activityRepository.findPublishedActivitiesWithFilters(name, ageMin, ageMax,
 				durationMin, durationMax, formats, bloomLevels, toSingleValueList(mentalLoad),
 				toSingleValueList(physicalEnergy), resourcesNeeded, topics, limit, offset);
 		Set<UUID> favouritedActivityIds = findFavouritedActivityIds(userId, page.activities());
+		List<UUID> activityIds = page.activities().stream().map(Activity::getId).collect(Collectors.toList());
+		Set<UUID> tafelbildActivityIds = activityIds.isEmpty()
+				? Set.of()
+				: activityMarkdownRepository.findActivityIdsWithTafelbild(activityIds);
 		return page.activities().stream()
-				.map(activity -> mapToSummaryResponse(activity, includeTafelbildImage, favouritedActivityIds))
+				.map(activity -> mapToSummaryResponse(activity, tafelbildActivityIds, favouritedActivityIds))
 				.collect(Collectors.toList());
 	}
 
@@ -136,15 +147,18 @@ public class ActivityService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<ActivityResponse> getActivitiesByIdList(List<UUID> ids, boolean includeTafelbildImage, UUID userId) {
+	public List<ActivityResponse> getActivitiesByIdList(List<UUID> ids, UUID userId) {
 		if (ids == null || ids.isEmpty())
 			return List.of();
 		List<Activity> activities = activityRepository.findAllById(ids).stream()
 				.filter(a -> a.getStatus() == ActivityStatus.PUBLISHED).collect(Collectors.toList());
 		Map<UUID, Activity> activityMap = activities.stream().collect(Collectors.toMap(Activity::getId, a -> a));
 		Set<UUID> favouritedIds = findFavouritedActivityIds(userId, activities);
+		Set<UUID> tafelbildActivityIds = ids.isEmpty()
+				? Set.of()
+				: activityMarkdownRepository.findActivityIdsWithTafelbild(ids);
 		return ids.stream().map(activityMap::get).filter(Objects::nonNull)
-				.map(a -> mapToSummaryResponse(a, includeTafelbildImage, favouritedIds)).collect(Collectors.toList());
+				.map(a -> mapToSummaryResponse(a, tafelbildActivityIds, favouritedIds)).collect(Collectors.toList());
 	}
 
 	public Set<UUID> findActivityIdsByNameFilter(List<UUID> activityIds, String name) {
@@ -196,23 +210,16 @@ public class ActivityService {
 
 	@Transactional(readOnly = true)
 	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf, boolean includeMarkdownContent) {
-		return getActivityById(id, includeSourcePdf, includeMarkdownContent, false);
+		return getActivityById(id, includeSourcePdf, includeMarkdownContent, null);
 	}
 
 	@Transactional(readOnly = true)
 	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf, boolean includeMarkdownContent,
-			boolean includeTafelbildImage) {
-		return getActivityById(id, includeSourcePdf, includeMarkdownContent, includeTafelbildImage, null);
-	}
-
-	@Transactional(readOnly = true)
-	public ActivityResponse getActivityById(UUID id, boolean includeSourcePdf, boolean includeMarkdownContent,
-			boolean includeTafelbildImage, UUID userId) {
+			UUID userId) {
 		logger.debug("Fetching activity by id={}", id);
 		Activity activity = activityRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
-		ActivityResponse response = mapToResponse(activity, includeSourcePdf, includeMarkdownContent,
-				includeTafelbildImage);
+		ActivityResponse response = mapToResponse(activity, includeSourcePdf, includeMarkdownContent);
 		if (userId != null) {
 			response.setFavourited(isActivityFavourited(userId, activity.getId()));
 		}
@@ -238,6 +245,29 @@ public class ActivityService {
 					Matcher matcher = TAFELBILD_IMAGE_PATTERN.matcher(m.getContent());
 					return matcher.find() ? matcher.group(1).replaceAll("[\\r\\n]", "") : null;
 				}).orElse(null);
+	}
+
+	private boolean hasTafelbildImage(Activity activity) {
+		return activity.getMarkdowns().stream()
+				.anyMatch(m -> m.getType() == MarkdownType.TAFELBILD
+						&& m.getContent() != null
+						&& m.getContent().contains("data:image/"));
+	}
+
+	@Transactional(readOnly = true)
+	public ThumbnailData getThumbnailData(UUID id) {
+		Activity activity = activityRepository.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
+		String dataUri = extractTafelbildImage(activity);
+		if (dataUri == null)
+			return null;
+		int semicolonIdx = dataUri.indexOf(';');
+		int commaIdx = dataUri.indexOf(',');
+		if (semicolonIdx == -1 || commaIdx == -1)
+			return null;
+		String mimeType = dataUri.substring(5, semicolonIdx); // skip "data:"
+		byte[] bytes = Base64.getDecoder().decode(dataUri.substring(commaIdx + 1));
+		return new ThumbnailData(mimeType, bytes);
 	}
 
 	public ActivityResponse createActivity(Activity activity) {
@@ -490,17 +520,13 @@ public class ActivityService {
 		return mapToResponse(activity, includeSourcePdf, includeMarkdownContent);
 	}
 
+
 	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf) {
-		return mapToResponse(activity, includeSourcePdf, false, false);
+		return mapToResponse(activity, includeSourcePdf, false);
 	}
 
 	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf,
 			boolean includeMarkdownContent) {
-		return mapToResponse(activity, includeSourcePdf, includeMarkdownContent, false);
-	}
-
-	private ActivityResponse mapToResponse(Activity activity, boolean includeSourcePdf, boolean includeMarkdownContent,
-			boolean includeTafelbildImage) {
 		ActivityResponse response = new ActivityResponse();
 		response.setId(activity.getId());
 		response.setName(activity.getName());
@@ -528,8 +554,8 @@ public class ActivityService {
 		response.setDocuments(docResponses);
 
 		response.setMarkdowns(mapLatestMarkdowns(activity, includeMarkdownContent));
-		if (includeTafelbildImage) {
-			response.setTafelbildImage(extractTafelbildImage(activity));
+		if (hasTafelbildImage(activity)) {
+			response.setThumbnailUrl("/api/activities/" + activity.getId() + "/thumbnail");
 		}
 		response.setStatus(
 				activity.getStatus() != null ? activity.getStatus().name() : ActivityStatus.PUBLISHED.name());
@@ -538,7 +564,7 @@ public class ActivityService {
 		return response;
 	}
 
-	private ActivityResponse mapToSummaryResponse(Activity activity, boolean includeTafelbildImage,
+	private ActivityResponse mapToSummaryResponse(Activity activity, Set<UUID> tafelbildActivityIds,
 			Set<UUID> favouritedActivityIds) {
 		ActivityResponse response = new ActivityResponse();
 		response.setId(activity.getId());
@@ -558,8 +584,8 @@ public class ActivityService {
 		response.setCleanupTimeMinutes(activity.getCleanupTimeMinutes());
 		response.setResourcesNeeded(activity.getResourcesNeeded());
 		response.setTopics(activity.getTopics());
-		if (includeTafelbildImage) {
-			response.setTafelbildImage(extractTafelbildImage(activity));
+		if (tafelbildActivityIds.contains(activity.getId())) {
+			response.setThumbnailUrl("/api/activities/" + activity.getId() + "/thumbnail");
 		}
 		response.setStatus(
 				activity.getStatus() != null ? activity.getStatus().name() : ActivityStatus.PUBLISHED.name());

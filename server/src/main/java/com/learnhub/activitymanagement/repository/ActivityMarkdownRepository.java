@@ -2,11 +2,15 @@ package com.learnhub.activitymanagement.repository;
 
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.MarkdownType;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -18,4 +22,7 @@ public interface ActivityMarkdownRepository extends JpaRepository<ActivityMarkdo
 	List<ActivityMarkdown> findByActivityId(UUID activityId);
 
 	List<ActivityMarkdown> findByActivityIdAndType(UUID activityId, MarkdownType type);
+
+	@Query("SELECT DISTINCT am.activity.id FROM ActivityMarkdown am WHERE am.activity.id IN :ids AND am.type = com.learnhub.activitymanagement.entity.enums.MarkdownType.TAFELBILD")
+	Set<UUID> findActivityIdsWithTafelbild(@Param("ids") Collection<UUID> ids);
 }

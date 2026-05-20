@@ -17,6 +17,7 @@ import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import com.learnhub.activitymanagement.entity.enums.DocumentType;
 import com.learnhub.activitymanagement.entity.enums.MarkdownType;
+import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
 import com.learnhub.activitymanagement.repository.ActivityQueryResult;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
@@ -45,6 +46,7 @@ class ActivityServiceTest {
 	private ActivityService activityService;
 	private ActivityExtractionService extractionService;
 	private ActivityRepository activityRepository;
+	private ActivityMarkdownRepository activityMarkdownRepository;
 	private PDFDocumentRepository pdfDocumentRepository;
 	private PDFService pdfService;
 	private LLMService llmService;
@@ -59,7 +61,9 @@ class ActivityServiceTest {
 		pdfService = mock(PDFService.class);
 		llmService = mock(LLMService.class);
 		userFavouritesRepository = mock(UserFavouritesRepository.class);
+		activityMarkdownRepository = mock(ActivityMarkdownRepository.class);
 
+		ReflectionTestUtils.setField(activityService, "activityMarkdownRepository", activityMarkdownRepository);
 		ReflectionTestUtils.setField(activityService, "activityRepository", activityRepository);
 		ReflectionTestUtils.setField(activityService, "pdfDocumentRepository", pdfDocumentRepository);
 		ReflectionTestUtils.setField(activityService, "pdfService", pdfService);
@@ -322,7 +326,7 @@ class ActivityServiceTest {
 		when(userFavouritesRepository.existsByUserIdAndFavouriteTypeAndActivityId(userId, "activity", activity.getId()))
 				.thenReturn(true);
 
-		ActivityResponse response = activityService.getActivityById(activity.getId(), false, false, false, userId);
+		ActivityResponse response = activityService.getActivityById(activity.getId(), false, false, userId);
 
 		assertThat(response.isFavourited()).isTrue();
 	}

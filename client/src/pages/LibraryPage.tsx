@@ -204,7 +204,6 @@ export const LibraryPage: React.FC = () => {
         filters.physicalEnergy.length > 0 ? filters.physicalEnergy : undefined,
       limit: itemsPerPage,
       offset: (currentPage - 1) * itemsPerPage,
-      includeTafelbildImage: true,
     });
   }, [appliedFilters, currentPage, itemsPerPage]);
 

@@ -180,7 +180,7 @@ public class HistoryController {
 					.filter(Objects::nonNull).distinct().collect(Collectors.toList());
 
 			Map<UUID, ActivityResponse> activityMap = activityService
-					.getActivitiesByIdList(pageActivityIds, true, userId).stream()
+					.getActivitiesByIdList(pageActivityIds, userId).stream()
 					.collect(Collectors.toMap(ActivityResponse::getId, a -> a, (left, right) -> left));
 
 			List<ActivityFavouriteDetailResponse> result = pagedFavourites.stream().map(fav -> {

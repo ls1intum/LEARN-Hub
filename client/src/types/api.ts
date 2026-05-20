@@ -135,7 +135,6 @@ export interface SearchCriteria {
   priorityCategories?: string[];
   limit?: number;
   offset?: number;
-  includeTafelbildImage?: boolean;
 }
 
 // Activity favorites response — server returns full activity details with pagination

@@ -50,10 +50,10 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
       onClick={onClick}
     >
       {/* Hero image */}
-      {activity.tafelbildImage && (
+      {activity.thumbnailUrl && (
         <div className="w-full h-36 bg-muted overflow-hidden shrink-0">
           <img
-            src={activity.tafelbildImage}
+            src={activity.thumbnailUrl}
             alt=""
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           />

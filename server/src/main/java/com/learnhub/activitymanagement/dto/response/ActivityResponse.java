@@ -45,7 +45,7 @@ public class ActivityResponse {
 
 	private List<MarkdownResponse> markdowns = new ArrayList<>();
 
-	private String tafelbildImage;
+	private String thumbnailUrl;
 
 	private String type = "activity";
 
