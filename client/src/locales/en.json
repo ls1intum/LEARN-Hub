@@ -769,5 +769,11 @@
     "typeTafelbild": "Tafelbild",
     "tabTafelbild": "Tafelbild",
     "tabArtikulationsschema": "Artikulationsschema"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you're looking for doesn't exist or has been moved.",
+    "goBack": "Go back",
+    "goHome": "Library"
   }
 }

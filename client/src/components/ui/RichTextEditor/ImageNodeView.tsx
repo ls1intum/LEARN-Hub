@@ -43,7 +43,9 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
       // Extract src from it
       const srcMatch = /!\[[^\]]*\]\((data:[^)]+)\)/.exec(newBlock);
       const annotationMatch =
-        /<!--\s*learnhub-image:id=([^;]*?);\s*prompt=([\s\S]*?)\s*-->/.exec(newBlock);
+        /<!--\s*learnhub-image:id=([^;]*?);\s*prompt=([\s\S]*?)\s*-->/.exec(
+          newBlock,
+        );
       if (srcMatch) {
         updateAttributes({
           src: srcMatch[1],
@@ -70,7 +72,9 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
 
       {/* Toolbar row */}
       <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/40 border-t text-xs">
-        <span className="text-muted-foreground truncate flex-1">{lhId || alt}</span>
+        <span className="text-muted-foreground truncate flex-1">
+          {lhId || alt}
+        </span>
         {canRegenerate && (
           <Button
             size="sm"

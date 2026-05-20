@@ -21,7 +21,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { FileText, Loader2, Eye, Edit3, RefreshCw, Code2, PenLine } from "lucide-react";
+import {
+  FileText,
+  Loader2,
+  Eye,
+  Edit3,
+  RefreshCw,
+  Code2,
+  PenLine,
+} from "lucide-react";
 import { logger } from "@/services/logger";
 import { useTranslation } from "react-i18next";
 import { RichTextEditor } from "@/components/ui/RichTextEditor";

@@ -24,7 +24,6 @@ export const ROUTES = {
   LIBRARY: "/library",
   USERS: "/users",
   RESULTS: "/results",
-  ACTIVITY_DETAILS: "/activity-details",
   // Legacy routes for backward compatibility
   LEGACY_DASHBOARD: "/dashboard",
   LEGACY_FORM: "/recommendation-form",

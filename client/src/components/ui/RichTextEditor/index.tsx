@@ -14,7 +14,10 @@ import { Toolbar } from "./Toolbar";
 import { UnifiedImage } from "./extensions/UnifiedImage";
 import { HtmlBlock } from "./extensions/HtmlBlock";
 import { RichTextEditorContext } from "./context";
-import { markdownToTiptapHtml, tiptapHtmlToMarkdown } from "@/utils/markdownTiptap";
+import {
+  markdownToTiptapHtml,
+  tiptapHtmlToMarkdown,
+} from "@/utils/markdownTiptap";
 import type { RegenerateImageParams } from "@/components/ui/MarkdownEditorWithPreview";
 
 interface RichTextEditorProps {

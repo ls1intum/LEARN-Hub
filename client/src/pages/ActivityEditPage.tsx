@@ -98,7 +98,7 @@ export const ActivityEditPage: React.FC = () => {
   const navigationState = location.state as ActivityNavigationState | null;
   const backTo = getActivityBackTarget(navigationState?.backTo);
   const detailPath =
-    navigationState?.detailPath ?? (id ? `/activity-details/${id}` : undefined);
+    navigationState?.detailPath ?? (id ? `/library/${id}` : undefined);
   const detailNavigationState: ActivityNavigationState = {
     backTo,
     restoreScrollY: navigationState?.restoreScrollY,
@@ -407,7 +407,7 @@ export const ActivityEditPage: React.FC = () => {
 
       await apiService.updateActivity(id, updatePayload);
 
-      navigate(detailPath ?? `/activity-details/${id}`, {
+      navigate(detailPath ?? `/library/${id}`, {
         state: detailNavigationState,
       });
     } catch (error) {

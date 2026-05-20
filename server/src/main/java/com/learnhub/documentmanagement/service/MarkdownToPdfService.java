@@ -43,25 +43,19 @@ public class MarkdownToPdfService {
 	private static final int MAX_CMAP_RETRY_CHARACTERS = 256;
 	// Fonts bundled in src/main/resources/fonts/ — single source of truth for all
 	// environments (local dev, Docker). Loaded from classpath at startup.
-	private static final List<String> CLASSPATH_FONT_RESOURCES = List.of(
-			"/fonts/ComicSansMS.ttf",
-			"/fonts/ComicSansMSBold.ttf",
-			"/fonts/NotoEmoji-Regular.ttf");
+	private static final List<String> CLASSPATH_FONT_RESOURCES = List.of("/fonts/ComicSansMS.ttf",
+			"/fonts/ComicSansMSBold.ttf", "/fonts/NotoEmoji-Regular.ttf");
 
 	// OS-installed fonts tried as additional fallbacks (e.g. DejaVu from Alpine's
 	// ttf-dejavu package for arrows/dingbats). Missing paths are silently skipped.
 	private static final List<String> WORKSHEET_FONT_PATHS = List.of(
 			"/System/Library/Fonts/Supplemental/Comic Sans MS.ttf",
-			"/System/Library/Fonts/Supplemental/Comic Sans MS Bold.ttf",
-			"/Library/Fonts/Comic Sans MS.ttf",
-			"/Library/Fonts/Comic Sans MS Bold.ttf",
-			"C:/Windows/Fonts/comic.ttf",
-			"C:/Windows/Fonts/comicbd.ttf");
+			"/System/Library/Fonts/Supplemental/Comic Sans MS Bold.ttf", "/Library/Fonts/Comic Sans MS.ttf",
+			"/Library/Fonts/Comic Sans MS Bold.ttf", "C:/Windows/Fonts/comic.ttf", "C:/Windows/Fonts/comicbd.ttf");
 
 	private static final List<String> SYMBOL_FONT_PATHS = List.of(
 			// DejaVu Sans – arrows, checkmarks, dingbats, mathematical symbols
-			"/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf",
-			"/usr/share/fonts/ttf-dejavu/DejaVuSans.ttf",
+			"/usr/share/fonts/truetype/ttf-dejavu/DejaVuSans.ttf", "/usr/share/fonts/ttf-dejavu/DejaVuSans.ttf",
 			"/usr/share/fonts/TTF/DejaVuSans.ttf",
 			// macOS – Arial Unicode MS as broad fallback
 			"/Library/Fonts/Arial Unicode MS.ttf",

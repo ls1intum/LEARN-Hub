@@ -31,10 +31,8 @@ public class DraftSseService {
 	}
 
 	public void sendDraftUpdate(UUID activityId, ActivityStatus status, String generationError) {
-		Map<String, Object> payload = Map.of(
-				"id", activityId.toString(),
-				"status", status.name(),
-				"generationError", generationError != null ? generationError : "");
+		Map<String, Object> payload = Map.of("id", activityId.toString(), "status", status.name(), "generationError",
+				generationError != null ? generationError : "");
 		List<SseEmitter> dead = new ArrayList<>();
 		for (SseEmitter emitter : emitters) {
 			try {
@@ -44,7 +42,7 @@ public class DraftSseService {
 			}
 		}
 		emitters.removeAll(dead);
-		logger.debug("Sent draft-update SSE for activity {} (status={}), notified {} client(s)",
-				activityId, status, emitters.size() - dead.size());
+		logger.debug("Sent draft-update SSE for activity {} (status={}), notified {} client(s)", activityId, status,
+				emitters.size() - dead.size());
 	}
 }

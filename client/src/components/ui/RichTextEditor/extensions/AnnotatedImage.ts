@@ -38,7 +38,9 @@ export const AnnotatedImage = Node.create({
             src: el.getAttribute("src") ?? "",
             alt: el.getAttribute("alt") ?? "",
             lhId: el.getAttribute("data-lh-id") ?? "",
-            lhPrompt: decodeURIComponent(el.getAttribute("data-lh-prompt") ?? ""),
+            lhPrompt: decodeURIComponent(
+              el.getAttribute("data-lh-prompt") ?? "",
+            ),
           };
         },
       },

@@ -55,15 +55,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
   const detailNavigationState = location.state as DetailNavigationState | null;
 
   const activePath = useMemo(() => {
-    // For legacy /activity-details route, use backTo state to determine active tab
-    if (
-      location.pathname.startsWith("/activity-details/") &&
-      detailNavigationState?.backTo
-    ) {
-      return detailNavigationState.backTo;
-    }
     return location.pathname;
-  }, [detailNavigationState?.backTo, location.pathname]);
+  }, [location.pathname]);
 
   const currentTab = useMemo(() => getCurrentTab(activePath), [activePath]);
 

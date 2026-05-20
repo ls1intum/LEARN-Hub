@@ -24,6 +24,7 @@ import { AccountDashboardPage } from "@/pages/AccountDashboardPage";
 import { ImpressumPage } from "@/pages/ImpressumPage";
 import { AITestingPage } from "@/pages/AITestingPage";
 import { LandingPage } from "@/pages/LandingPage";
+import { NotFoundPage } from "@/pages/NotFoundPage";
 
 // Protected route + sidebar layout combined
 const ProtectedLayout: React.FC<{
@@ -91,15 +92,6 @@ function App() {
                         />
                         <Route
                           path="/library/:id"
-                          element={
-                            <MainLayout>
-                              <ActivityDetails />
-                            </MainLayout>
-                          }
-                        />
-                        {/* Legacy route kept for backward compatibility */}
-                        <Route
-                          path="/activity-details/:id"
                           element={
                             <MainLayout>
                               <ActivityDetails />
@@ -200,6 +192,14 @@ function App() {
                             <ProtectedLayout requiredRole="ADMIN">
                               <AITestingPage />
                             </ProtectedLayout>
+                          }
+                        />
+                        <Route
+                          path="*"
+                          element={
+                            <MainLayout>
+                              <NotFoundPage />
+                            </MainLayout>
                           }
                         />
                       </Routes>

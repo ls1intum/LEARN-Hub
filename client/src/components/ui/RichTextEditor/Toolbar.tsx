@@ -120,7 +120,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
         lhId: "",
         lhPrompt: "",
       };
-      editor.chain().focus().insertContent({ type: "unifiedImage", attrs }).run();
+      editor
+        .chain()
+        .focus()
+        .insertContent({ type: "unifiedImage", attrs })
+        .run();
     };
     reader.readAsDataURL(file);
 
@@ -263,7 +267,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({ editor }) => {
       <Divider />
 
       {/* Insert */}
-      <ToolbarButton onClick={insertTable} title={t("richTextEditor.insertTable")}>
+      <ToolbarButton
+        onClick={insertTable}
+        title={t("richTextEditor.insertTable")}
+      >
         <Table className="h-3.5 w-3.5" />
       </ToolbarButton>
       <ToolbarButton

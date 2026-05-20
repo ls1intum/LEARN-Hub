@@ -211,8 +211,8 @@ class MarkdownToPdfServiceTest {
 				new StackTraceElement("com.itextpdf.io.font.cmap.CMapToUnicode", "lookup", "CMapToUnicode.java", 42),
 				new StackTraceElement("com.itextpdf.io.font.PdfType0Font", "encodeGlyphs", "PdfType0Font.java", 99),});
 
-		FallbackMarkdownToPdfServiceWithCustomException fallbackService =
-				new FallbackMarkdownToPdfServiceWithCustomException(itextNpe);
+		FallbackMarkdownToPdfServiceWithCustomException fallbackService = new FallbackMarkdownToPdfServiceWithCustomException(
+				itextNpe);
 
 		byte[] result = fallbackService.renderHtmlToPdf("<p>Hello 🚫 world</p>", true, "Retry Test");
 
@@ -249,7 +249,10 @@ class MarkdownToPdfServiceTest {
 		}
 	}
 
-	/** Same as {@link FallbackMarkdownToPdfService} but throws a caller-supplied exception. */
+	/**
+	 * Same as {@link FallbackMarkdownToPdfService} but throws a caller-supplied
+	 * exception.
+	 */
 	private static final class FallbackMarkdownToPdfServiceWithCustomException extends MarkdownToPdfService {
 
 		private final RuntimeException exceptionToThrow;
