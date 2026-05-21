@@ -15,12 +15,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -81,7 +83,8 @@ public class MarkdownController {
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_PDF);
-			headers.setContentDispositionFormData("inline", downloadName);
+			headers.setContentDisposition(
+					ContentDisposition.inline().filename(downloadName, StandardCharsets.UTF_8).build());
 			headers.setContentLength(pdfBytes.length);
 
 			return ResponseEntity.ok().headers(headers).body(pdfBytes);
@@ -127,7 +130,8 @@ public class MarkdownController {
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType
 					.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
-			headers.setContentDispositionFormData("attachment", downloadName);
+			headers.setContentDisposition(
+					ContentDisposition.attachment().filename(downloadName, StandardCharsets.UTF_8).build());
 			headers.setContentLength(docxBytes.length);
 
 			return ResponseEntity.ok().headers(headers).body(docxBytes);
@@ -164,7 +168,8 @@ public class MarkdownController {
 
 			HttpHeaders headers = new HttpHeaders();
 			headers.setContentType(MediaType.APPLICATION_PDF);
-			headers.setContentDispositionFormData("inline", sanitizeFilename(documentTitle) + ".pdf");
+			headers.setContentDisposition(ContentDisposition.inline()
+					.filename(sanitizeFilename(documentTitle) + ".pdf", StandardCharsets.UTF_8).build());
 			headers.setContentLength(pdfBytes.length);
 
 			return ResponseEntity.ok().headers(headers).body(pdfBytes);

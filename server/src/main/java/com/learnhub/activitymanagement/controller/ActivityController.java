@@ -43,6 +43,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,6 +63,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -614,7 +616,8 @@ public class ActivityController {
 		String downloadName = sanitizeDownloadFilename(name != null ? name : "activity") + extension;
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(mediaType);
-		headers.setContentDispositionFormData(disposition, downloadName);
+		headers.setContentDisposition(
+				ContentDisposition.builder(disposition).filename(downloadName, StandardCharsets.UTF_8).build());
 		headers.setContentLength(content.length);
 		return ResponseEntity.ok().headers(headers).body(content);
 	}
