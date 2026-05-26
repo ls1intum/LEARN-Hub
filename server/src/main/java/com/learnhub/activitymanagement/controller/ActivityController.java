@@ -44,6 +44,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -150,18 +152,37 @@ public class ActivityController {
 	@GetMapping("/{id}/thumbnail")
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Get activity thumbnail", description = "Get the tafelbild thumbnail image for an activity, scaled to 400px wide")
-	public ResponseEntity<byte[]> getThumbnail(@PathVariable UUID id) throws IOException {
+	public ResponseEntity<byte[]> getThumbnail(@PathVariable UUID id,
+			@RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) String ifNoneMatch) throws IOException {
 		logger.info("GET /api/activities/{}/thumbnail - Get thumbnail called", id);
 		ActivityService.ThumbnailData data = activityService.getThumbnailData(id);
 		if (data == null) {
 			return ResponseEntity.notFound().build();
 		}
 		byte[] thumbnailBytes = scaleThumbnail(data.bytes(), data.mimeType(), 400);
+		String etag = "\"" + sha256Hex(thumbnailBytes) + "\"";
+		if (etag.equals(ifNoneMatch)) {
+			return ResponseEntity.status(304).build();
+		}
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.parseMediaType(data.mimeType()));
-		headers.set(HttpHeaders.CACHE_CONTROL, "public, max-age=86400");
+		headers.set(HttpHeaders.CACHE_CONTROL, "no-cache");
+		headers.set(HttpHeaders.ETAG, etag);
 		headers.setContentLength(thumbnailBytes.length);
 		return ResponseEntity.ok().headers(headers).body(thumbnailBytes);
+	}
+
+	private static String sha256Hex(byte[] bytes) {
+		try {
+			byte[] hash = MessageDigest.getInstance("SHA-256").digest(bytes);
+			StringBuilder sb = new StringBuilder(hash.length * 2);
+			for (byte b : hash) {
+				sb.append(String.format("%02x", b));
+			}
+			return sb.toString();
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException(e);
+		}
 	}
 
 	@GetMapping("/{id}/markdowns")

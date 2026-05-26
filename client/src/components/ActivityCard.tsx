@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Clock, Users, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   onRemove,
 }) => {
   const translateEnum = useTranslateEnum();
+  const [imgLoaded, setImgLoaded] = useState(false);
   const bloomKey = activity.bloomLevel?.toLowerCase() ?? "";
   const bloomIndex = BLOOM_ORDER.indexOf(bloomKey);
   const bloomColor = BLOOM_COLORS[bloomKey] ?? "bg-primary";
@@ -55,7 +56,8 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
           <img
             src={activity.thumbnailUrl}
             alt=""
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            className={`h-full w-full object-cover transition-[transform,opacity] duration-300 group-hover:scale-[1.02] ${imgLoaded ? "opacity-100" : "opacity-0"}`}
+            onLoad={() => setImgLoaded(true)}
           />
         </div>
       )}
