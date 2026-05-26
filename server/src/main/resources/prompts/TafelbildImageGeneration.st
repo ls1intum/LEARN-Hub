@@ -1,22 +1,36 @@
-You create a Tafelbild (classroom blackboard/whiteboard visualization) for a teaching lesson.
+Create a richly detailed, hand-drawn style educational poster (Tafelbild) for a teaching lesson -- like a colorful classroom learning poster drawn with markers on paper.
 
-A Tafelbild is a structured visual displayed on the blackboard or whiteboard during a lesson. It serves as a visual anchor that helps learners follow the lesson flow and understand the key concepts at a glance.
+VISUAL STYLE:
+- Hand-drawn / sketch-like illustration style with visible pen and marker strokes (depending on age)
+- Vibrant colors: use 4-6 distinct colors to separate sections and highlight key ideas
+- Dense, information-rich layout with multiple visual zones filling the entire image -- no large empty areas
+- Fine-grained details throughout: thin lines, small precise illustrations, tight spacing -- avoid oversized chunky blocks
+- Mix of illustrated diagrams, labeled drawings, icons, arrows, callout boxes, and handwritten-style text
+- Each major concept gets its own colored section or box with a small icon or illustration inside
 
-Design the image according to these requirements:
-- Create a structured representation of the activity, not a loose collage
-- Include the date visibly near the top
-- Show the lesson topic prominently as a clear, underlined title or header
-- Include a short "Merksatz" or age-appropriate summary sentence that children can understand easily
-- Add simple supporting images or illustrations that visualize important parts of the lesson content
-- Visualize the core concepts, key terms, and connections from the lesson in a spatial, intuitive layout (use boxes, arrows, circles, mind-map structures, or diagrams - NOT a table)
-- Highlight the most important terms and ideas that learners should take away
-- Use a clean whiteboard aesthetic with an always white background and clearly legible text
-- All text must be in German
-- The layout must be readable from the back of a classroom: large enough fonts, clear hierarchy, good contrast
-- Keep it educational, professional, and appropriate for classroom use
-- Do NOT simply reproduce the Artikulationsschema table — instead extract and synthesize the essential content into a visual spatial representation
+LAYOUT & STRUCTURE:
+- Divide the image into 4-6 clearly labeled sections (numbered or with colored headers)
+- Large, bold topic title at the top
+- Each section contains BOTH a short explanation in natural German AND a small illustration or diagram that visualizes the concept -- not just text
+- Include at least one detailed central illustration (e.g., a labeled diagram of the main topic object, a process flowchart, or a cycle diagram)
+- Add a "Merksatz" or key-takeaway box in a visually distinct color
+- Use arrows, connecting lines, and visual hierarchy to show relationships between concepts
+- Cover all core content from the lesson -- the poster should feel complete and detailed, not sparse
 
-The Tafelbild should help students build a mental model of the lesson content. Focus on the "Informieren" and "Verarbeiten" phases of the lesson where the core subject matter is taught.
+CONTENT & AGE APPROPRIATENESS:
+- All text in German
+- Adapt language complexity and illustration style to the target age group from the Artikulationsschema:
+  - Ages 6-9: very simple words, large friendly illustrations, few terms, playful style
+  - Ages 10-12: clear explanations, moderate detail, relatable everyday examples
+  - Ages 13-16: precise terminology, more abstract concepts allowed, structured diagrams
+  - Ages 17+: technical depth, compact notation, sophisticated layout
+- Factually accurate content extracted from the lesson schema
+- Show key terms prominently with visual emphasis (underline, bold, or color)
+- Include concrete, relatable examples or analogies drawn as small vignettes
+- Do NOT reproduce the Artikulationsschema table -- synthesize and visualize its core content
+- Cover all essential concepts so the poster serves as a complete visual summary of the lesson
+
+The result should look like a vibrant, hand-crafted learning poster that a skilled teacher might create with colored markers -- packed with fine visual details, small precise drawings, and clearly structured content that makes the topic immediately understandable at a glance.
 
 Use the following Artikulationsschema as your content source:
 
