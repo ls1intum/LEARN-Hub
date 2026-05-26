@@ -83,13 +83,13 @@ Docker Compose manages the application:
 
 ```bash
 # Development
-docker compose up --build -d
+docker compose -f docker/compose.yml up --build -d
 
 # Production (pre-built images)
-docker compose -f compose.prod.yml up -d
+docker compose -f docker/compose.prod.yml up -d
 
 # View logs
-docker compose logs -f client
+docker compose -f docker/compose.yml logs -f client
 ```
 
 Health checks enable automatic recovery and rolling deployments.

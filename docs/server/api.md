@@ -11,13 +11,15 @@ RESTful API providing activity recommendations with transparent scoring, lesson 
 
 ### Dual Authentication System
 
-**Admin Access**: Email/password authentication with JWT tokens for full system access (activity creation, user management, PDF upload).
+**Admin Access**: Email/password authentication for full system access (activity creation, user management, PDF upload).
 
 **Teacher Access**: Email verification codes (6-digit, 10-minute expiry, 3-attempt limit) OR password authentication for activity discovery, lesson planning, and favourites management.
 
+Both roles use **Spring Security session cookies** (`LEARNHUBSESSION`). On login the server creates a server-side session and sets an `HttpOnly` cookie; the client attaches `X-XSRF-TOKEN` on mutating requests.
+
 ### Core Endpoints
 
-**Authentication**: `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/verify-code`, `POST /api/auth/request-verification-code`, `POST /api/auth/refresh`, `GET /api/auth/me`, `PUT /api/auth/me`
+**Authentication**: `GET /api/auth/csrf`, `POST /api/auth/login`, `POST /api/auth/logout`, `POST /api/auth/register-teacher`, `POST /api/auth/verify`, `POST /api/auth/verification-code`, `GET /api/auth/me`, `PUT /api/auth/me`
 
 ## API Architecture
 
@@ -50,6 +52,7 @@ Resources organised by domain:
 - `/api/auth/` - Authentication and user management
 - `/api/history/` - User history and favourites
 - `/api/documents/` - PDF upload and retrieval
+- `/api/markdowns/` - Markdown rendering and DOCX/PDF export
 - `/api/meta/` - System metadata and configuration
 
 ### Recommendation Endpoints
@@ -98,6 +101,15 @@ Resources organised by domain:
 **PDF Document Operations**:
 - `GET /api/documents/{id}` - Retrieve raw PDF
 - `GET /api/documents/{id}/info` - Get document metadata
+
+## Markdown Endpoints
+
+Generated documents (Artikulationsschema, Deckblatt, Hintergrundwissen, Übung, Lösungsblatt, Tafelbild) are stored as markdown entries and served via `/api/markdowns/`:
+
+- `GET /api/markdowns/capabilities` - Returns `{ "docxAvailable": true/false }` based on server configuration
+- `GET /api/markdowns/{id}/pdf` - Render a stored markdown as a PDF download
+- `GET /api/markdowns/{id}/docx` - Convert a stored markdown to DOCX (requires Adobe PDF Services or LibreOffice)
+- `POST /api/markdowns/preview/pdf` - Render ad-hoc markdown text as a PDF (admin only)
 
 ## System Information
 

@@ -54,19 +54,20 @@ Automated break calculation using rule-based logic:
 
 ## System Integration
 
-The engine resides in `app/core/` as a standalone package:
+The engine is implemented in Java within the `activitymanagement` package:
 
-| Module | Responsibility |
-|--------|----------------|
-| `app/core/engine.py` | Main recommendation algorithm orchestration |
-| `app/core/scoring.py` | Individual category scoring functions |
-| `app/core/constants.py` | Configurable scoring parameters and thresholds |
-| `app/core/models.py` | Data models for search criteria and results |
+| Class | Responsibility |
+|-------|----------------|
+| `RecommendationService` | Main orchestration — translates API criteria, invokes hard filters and scoring |
+| `ScoringEngineService` | Individual category scoring functions |
+| `activitymanagement/entity/enums/` | Enum types for format, Bloom level, topics, resources |
+
+Source paths under `server/src/main/java/com/learnhub/activitymanagement/service/`.
 
 ### Engine Interface
 
-- **Input**: `SearchCriteria`, `List[ActivityModel]`, configuration parameters
-- **Output**: Ranked recommendations with detailed score breakdowns per category
+- **Input**: `RecommendationRequest` DTO (targetAge, format, bloomLevels, targetDuration, preferredTopics, priorityCategories)
+- **Output**: Ranked list of `RecommendationResponse` with per-category score breakdowns
 
 ## Performance Characteristics
 

@@ -65,7 +65,7 @@ Spring Security stores authentication server-side and the browser sends an `Http
 ### Strategy
 
 - **Client Defaults**: `src/constants/fieldValues.ts` provides instant form rendering
-- **Server Authority**: `server/app/core/models.py` enum values are authoritative
+- **Server Authority**: `server/src/main/java/com/learnhub/activitymanagement/entity/enums/` enum classes are authoritative
 - **Manual Sync**: Client and server values must be kept in sync during development
 - **Fallback**: API endpoint `/api/meta/field-values` available for API-driven clients
 

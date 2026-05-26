@@ -16,7 +16,7 @@ The system implements a three-tier containerised web application architecture fo
 
 **Client Subsystem**: A React single-page application provides an interactive user interface for teachers and administrators. The client implements role-based access control, supports both light and dark themes, and uses Spring Security session cookies with CSRF protection for authentication.
 
-**Server Subsystem**: A Spring Boot REST API server orchestrates the core application logic through specialised internal systems. The Recommendation System encapsulates the algorithmic intelligence. The User System manages identity through user, history, and favourites services. The Document System oversees content ingestion via PDF processing and LLM-assisted metadata extraction using Spring AI.
+**Server Subsystem**: A Spring Boot REST API server orchestrates the core application logic through specialised internal systems. The Recommendation System encapsulates the algorithmic intelligence. The User System manages identity through user, history, and favourites services. The Document System oversees content ingestion via PDF processing, LLM-assisted metadata extraction and document generation, and optional PDF-to-DOCX conversion via Adobe PDF Services.
 
 **Data Layer**: PostgreSQL serves as the primary data store, managing activities, user accounts, search history, and favourites. The database schema supports complex relationships between activities, topics, and user preferences whilst maintaining referential integrity.
 
@@ -82,14 +82,78 @@ cp example.env .env
 ```
 
 Key configuration variables:
-- `LLM_API_KEY` - API key for automated content processing
+- `LLM_BASE_URL` - Base URL of the OpenAI-compatible chat API (e.g. an Ollama or GPU cluster endpoint)
+- `LLM_API_KEY` - API key for the text LLM
+- `LLM_MODEL_NAME` - Chat model name
+- `LLM_MODEL_VISUAL` - Optional vision-capable model for exercise generation with image input
+- `LLM_IMAGE_AZURE_ENDPOINT` / `LLM_IMAGE_AZURE_API_KEY` / `LLM_IMAGE_AZURE_DEPLOYMENT_NAME` - Optional Azure OpenAI image model for generating exercise illustrations
+- `ADOBE_PDF_SERVICES_CLIENT_ID` / `ADOBE_PDF_SERVICES_CLIENT_SECRET` - Optional Adobe PDF Services credentials for PDF-to-DOCX conversion
 - `SESSION_TIMEOUT` - Optional override for server-side session lifetime
 - `SESSION_COOKIE_MAX_AGE` - Optional override for persistent login cookie lifetime
 - `CLIENT_ALLOWED_ORIGINS` - Optional override for cross-origin client URLs
 - `POSTGRES_DB_URI` - PostgreSQL JDBC connection string
-- `EMAIL_*` - Email service configuration for teacher verification
+- `PDF_PATH` - Host path for PDF file storage
+- `DOCX_CACHE_PATH` - Optional host path for caching converted DOCX files
+- `EMAIL_*` / `SMTP_*` - SMTP service configuration for teacher verification emails
 
 See `example.env` for a complete list of configurable variables.
+
+## External Services
+
+LEARN-Hub integrates with the following external services. All integrations are optional except where noted.
+
+### Text LLM — Required for activity content generation
+
+The server uses a **text chat model** (via Spring AI's OpenAI client) for:
+- Extracting structured activity metadata from uploaded PDFs
+- Generating Artikulationsschema, Deckblatt, Hintergrundwissen, Übung, and Lösungsblatt markdown documents
+
+Configure any OpenAI-compatible endpoint (Ollama, GPU cluster, cloud API):
+
+```
+LLM_BASE_URL=https://gpu.aet.cit.tum.de/ollama/v1
+LLM_API_KEY=<key>
+LLM_MODEL_NAME=qwen3:30b-a3b
+```
+
+Optionally, a **vision-capable model** can be configured separately for exercise generation with PDF page images as input:
+
+```
+LLM_MODEL_VISUAL=<vision-model-name>
+```
+
+### Azure OpenAI Image Model — Optional
+
+When configured, the server calls Azure OpenAI's image generation API to replace `[[IMAGE_PLACEHOLDER: ...]]` markers in generated exercise and Tafelbild documents with actual images. Without this, placeholders are left in the markdown as-is.
+
+```
+LLM_IMAGE_AZURE_ENDPOINT=https://<resource>.openai.azure.com/
+LLM_IMAGE_AZURE_API_KEY=<key>
+LLM_IMAGE_AZURE_DEPLOYMENT_NAME=gpt-image-1
+```
+
+### Adobe PDF Services — Optional
+
+When configured, the server converts uploaded PDFs to DOCX via the [Adobe PDF Services REST API](https://developer.adobe.com/document-services/apis/pdf-services/) (ExportPDF operation). This enables higher-fidelity source document preservation in the editor. Without credentials the server starts normally, but DOCX export endpoints return an error.
+
+```
+ADOBE_PDF_SERVICES_CLIENT_ID=<client-id>
+ADOBE_PDF_SERVICES_CLIENT_SECRET=<client-secret>
+```
+
+Converted DOCX files are cached to avoid redundant API calls; the cache location defaults to `/app/data/docx-cache` and can be overridden with `DOCX_CACHE_PATH`.
+
+### SMTP Server — Required for teacher registration
+
+Email delivery (teacher verification codes and credentials) uses an SMTP server with STARTTLS on port 587:
+
+```
+SMTP_SERVER=postout.lrz.de
+SMTP_PORT=587
+EMAIL_USERNAME=<username>
+EMAIL_PASSWORD=<password>
+EMAIL_ADDRESS=<from-address>
+```
 
 ## Documentation
 
@@ -120,7 +184,7 @@ See `example.env` for a complete list of configurable variables.
 - **Spring Data JPA** with Hibernate ORM
 - **Flyway** for database migrations
 - **PostgreSQL 17+** for relational data persistence
-- **Spring AI** with Ollama for LLM integration
+- **Spring AI** with OpenAI-compatible API for LLM integration
 - **Spring Security** with server-side session authentication
 - Maven for dependency management
 

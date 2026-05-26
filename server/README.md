@@ -8,7 +8,7 @@ Spring Boot REST API server for educational activity recommendations.
 - Spring Data JPA with Hibernate ORM
 - PostgreSQL 17+ for data persistence
 - Flyway for database migrations
-- Spring AI with Ollama for LLM integration
+- Spring AI with OpenAI-compatible API for LLM integration
 - Spring Security with server-side session authentication
 - Maven for dependency management
 
@@ -122,16 +122,25 @@ Key environment variables (see `example.env` for full list):
 | Variable | Description |
 |----------|-------------|
 | `POSTGRES_DB_URI` | PostgreSQL JDBC connection string |
+| `LLM_BASE_URL` | OpenAI-compatible chat API base URL |
+| `LLM_API_KEY` | API key for the chat API |
+| `LLM_MODEL_NAME` | Chat model name |
+| `LLM_MODEL_VISUAL` | Optional vision model for exercise generation with PDF images |
+| `LLM_IMAGE_AZURE_ENDPOINT` | Optional Azure OpenAI endpoint for image generation |
+| `LLM_IMAGE_AZURE_API_KEY` | Optional Azure OpenAI API key |
+| `LLM_IMAGE_AZURE_DEPLOYMENT_NAME` | Optional Azure OpenAI image deployment name |
+| `ADOBE_PDF_SERVICES_CLIENT_ID` | Optional Adobe PDF Services client ID for DOCX export |
+| `ADOBE_PDF_SERVICES_CLIENT_SECRET` | Optional Adobe PDF Services client secret |
+| `DOCX_CACHE_PATH` | Optional path for caching converted DOCX files |
 | `SESSION_TIMEOUT` | Optional override for server-side session timeout |
 | `SESSION_COOKIE_MAX_AGE` | Optional override for persistent session cookie lifetime |
 | `SESSION_COOKIE_SECURE` | Optional override to force secure cookies |
 | `CLIENT_ALLOWED_ORIGINS` | Optional override for credentialed cross-origin requests |
-| `LLM_BASE_URL` | Ollama API base URL |
-| `LLM_API_KEY` | Ollama API key |
-| `LLM_MODEL_NAME` | LLM model name |
 | `EMAIL_ADDRESS` | SMTP from address |
 | `EMAIL_USERNAME` | SMTP username |
 | `EMAIL_PASSWORD` | SMTP password |
+| `SMTP_SERVER` | SMTP host (default: postout.lrz.de) |
+| `SMTP_PORT` | SMTP port (default: 587) |
 | `PDF_PATH` | Path for PDF file storage |
 | `DB_SEED_ENABLED` | Enable database seeding on startup |
 

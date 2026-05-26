@@ -46,12 +46,19 @@ cp example.env .env
 
 You must update:
 - `EMAIL_ADDRESS` - the from address on login emails
-    - any address you have setup in your TUM account
-    - default to tum_id@mytum.de
-- `EMAIL_USERNAME` - your 7-character tum id (xx99abc)
-- `EMAIL_PASSWORD` - your TUM password
-- `PDF_PATH` - where pdfs will be stored on your machine
-- `LLM_API_KEY` - LLM-assisted activity creation, chair's infra
+- `EMAIL_USERNAME` - SMTP username
+- `EMAIL_PASSWORD` - SMTP password
+- `SMTP_SERVER` - SMTP host (default: `postout.lrz.de`)
+- `PDF_PATH` - where PDFs will be stored on your machine
+- `LLM_BASE_URL` - base URL of the OpenAI-compatible chat API
+- `LLM_API_KEY` - API key for LLM-assisted activity creation
+- `LLM_MODEL_NAME` - chat model to use
+
+Optional variables:
+- `LLM_MODEL_VISUAL` - vision model for exercise generation with PDF page images
+- `LLM_IMAGE_AZURE_ENDPOINT` / `LLM_IMAGE_AZURE_API_KEY` / `LLM_IMAGE_AZURE_DEPLOYMENT_NAME` - Azure OpenAI image model for exercise illustrations
+- `ADOBE_PDF_SERVICES_CLIENT_ID` / `ADOBE_PDF_SERVICES_CLIENT_SECRET` - Adobe PDF Services for PDF-to-DOCX conversion
+- `DOCX_CACHE_PATH` - cache directory for converted DOCX files
 - `SESSION_TIMEOUT` - optional server-side session timeout override
 - `SESSION_COOKIE_MAX_AGE` - optional persistent session cookie lifetime override
 
