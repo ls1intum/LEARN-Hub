@@ -9,12 +9,11 @@ Age-appropriate calibration:
 - Ages 13–16: Precise vocabulary, some abstraction
 - Ages 17+: Compact, technical depth
 
----
-
 OUTPUT RULES:
 - Output only the notebook content itself — no meta-commentary, no section headers like "Merksatz:", no labels like "Altersbereich" or "Bloomstufe"
 - You may use Markdown AND inline HTML/CSS freely for layout (colored boxes, two-column layouts, styled callouts, etc.)
 - This is the real thing students write down — not a guide about what to write
+- Never use horizontal dividers (--- or <hr>) anywhere in the output
 
 STRUCTURE:
 1. A clear **title** (# heading)

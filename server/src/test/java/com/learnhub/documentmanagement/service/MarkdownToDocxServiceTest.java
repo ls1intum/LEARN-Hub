@@ -48,7 +48,7 @@ class MarkdownToDocxServiceTest {
 	@Test
 	void renderMergedDocxConvertsEachSectionThenMerges() {
 		byte[] result = service.renderMergedDocx(List.of("# A", "# B"), List.of(false, true), List.of(false, false),
-				"Test");
+				List.of(false, false), "Test");
 
 		assertThat(result).isNotNull();
 		assertThat(stubPdfService.pdfCallCount).isEqualTo(2);
@@ -57,9 +57,8 @@ class MarkdownToDocxServiceTest {
 
 	@Test
 	void renderMergedDocxRejectsMismatchedLists() {
-		assertThatThrownBy(
-				() -> service.renderMergedDocx(List.of("# A", "# B"), List.of(false), List.of(false, false), "Test"))
-				.isInstanceOf(IllegalArgumentException.class);
+		assertThatThrownBy(() -> service.renderMergedDocx(List.of("# A", "# B"), List.of(false), List.of(false, false),
+				List.of(false, false), "Test")).isInstanceOf(IllegalArgumentException.class);
 	}
 
 	@Test

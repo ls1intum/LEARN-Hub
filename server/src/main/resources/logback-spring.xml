@@ -23,6 +23,9 @@
     <logger name="org.docx4j.convert.in.xhtml" level="ERROR"/>
     <logger name="com.openhtmltopdf" level="ERROR"/>
     <logger name="org.apache.pdfbox.pdmodel.font.FileSystemFontProvider" level="ERROR"/>
+    <!-- iText7 logs internally at ERROR for malformed PDFs (xref rebuild) — our code already
+         falls back to PDFBox and logs WARN, so suppress the internal iText noise -->
+    <logger name="com.itextpdf" level="OFF"/>
 
     <!-- Services: WARN by default, DEBUG when verbose=true -->
     <!-- Framework internals: WARN by default, DEBUG when verbose=true -->

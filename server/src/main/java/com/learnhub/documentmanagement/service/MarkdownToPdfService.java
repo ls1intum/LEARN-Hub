@@ -108,7 +108,13 @@ public class MarkdownToPdfService {
 	 * page).
 	 */
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName, boolean exerciseSheet) {
-		String html = markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName, exerciseSheet);
+		return renderMarkdownToPdf(markdown, landscape, activityName, exerciseSheet, false);
+	}
+
+	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName, boolean exerciseSheet,
+			boolean isTafelbild) {
+		String html = markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName, exerciseSheet,
+				isTafelbild);
 		IEventHandler eventHandler = exerciseSheet ? new ExerciseSheetEventHandler() : null;
 		return renderHtmlDocumentToPdf(html, activityName, eventHandler);
 	}

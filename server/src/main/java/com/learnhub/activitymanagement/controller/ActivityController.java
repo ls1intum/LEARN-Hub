@@ -337,7 +337,10 @@ public class ActivityController {
 					+ request.getCustomPrompt().trim();
 		}
 		String contextText = request.getExerciseContext() != null ? request.getExerciseContext() : "";
-		String imageMarkdown = llmService.generateImageMarkdown(request.getImageId(), finalDescription, contextText);
+		boolean isTafelbild = "tafelbild".equalsIgnoreCase(request.getMarkdownType());
+		String imageMarkdown = isTafelbild
+				? llmService.generateTafelbildImageMarkdown(request.getImageId(), finalDescription, contextText)
+				: llmService.generateImageMarkdown(request.getImageId(), finalDescription, contextText);
 		return ResponseEntity.ok(Map.of("imageMarkdown", imageMarkdown));
 	}
 
@@ -533,7 +536,8 @@ public class ActivityController {
 		List<String> markdowns = new ArrayList<>();
 		List<Boolean> landscapes = new ArrayList<>();
 		List<Boolean> exerciseSheets = new ArrayList<>();
-		buildOrderedDocxParts(activity, markdowns, landscapes, exerciseSheets);
+		List<Boolean> isTafelbilds = new ArrayList<>();
+		buildOrderedDocxParts(activity, markdowns, landscapes, exerciseSheets, isTafelbilds);
 
 		if (markdowns.isEmpty()) {
 			throw new ResourceNotFoundException("No markdown content available for this activity");
@@ -545,7 +549,8 @@ public class ActivityController {
 		String activityName = activity.getName() != null ? activity.getName() : "";
 		try {
 			byte[] docxBytes = docxCacheService.getOrGenerateMerged(activityId, markdownTimestamps,
-					() -> markdownToDocxService.renderMergedDocx(markdowns, landscapes, exerciseSheets, activityName));
+					() -> markdownToDocxService.renderMergedDocx(markdowns, landscapes, exerciseSheets, isTafelbilds,
+							activityName));
 
 			MediaType docxMediaType = MediaType
 					.parseMediaType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
@@ -574,8 +579,9 @@ public class ActivityController {
 			for (MarkdownResponse md : activity.getMarkdowns()) {
 				if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
 					boolean exerciseSheet = "uebung".equals(md.getType());
+					boolean isTafelbild = "tafelbild".equals(md.getType());
 					parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape(), activityName,
-							exerciseSheet));
+							exerciseSheet, isTafelbild));
 				}
 			}
 		}
@@ -587,7 +593,7 @@ public class ActivityController {
 	 * Deckblatt, Artikulationsschema, Hintergrundwissen.
 	 */
 	private void buildOrderedDocxParts(ActivityResponse activity, List<String> markdowns, List<Boolean> landscapes,
-			List<Boolean> exerciseSheets) {
+			List<Boolean> exerciseSheets, List<Boolean> isTafelbilds) {
 
 		if (activity.getMarkdowns() == null) {
 			return;
@@ -598,6 +604,7 @@ public class ActivityController {
 					markdowns.add(md.getContent());
 					landscapes.add(md.isLandscape());
 					exerciseSheets.add("uebung".equals(md.getType()));
+					isTafelbilds.add("tafelbild".equals(md.getType()));
 				}
 			}
 		}

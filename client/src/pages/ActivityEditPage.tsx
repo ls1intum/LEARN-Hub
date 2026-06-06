@@ -187,6 +187,19 @@ export const ActivityEditPage: React.FC = () => {
     [uebungMarkdown, uebungLoesungMarkdown],
   );
 
+  const handleRegenerateImageForTafelbild = useCallback(
+    async (params: RegenerateImageParams) => {
+      return apiService.regenerateImage({
+        imageId: params.imageId,
+        description: params.description,
+        customPrompt: params.customPrompt,
+        exerciseContext: artikulationsschemaMarkdown,
+        markdownType: "tafelbild",
+      });
+    },
+    [artikulationsschemaMarkdown],
+  );
+
   /** Whether the currently active markdown tab already has content */
   const activeTabHasContent =
     (activeMarkdownTab === "deckblatt" && !!deckblattMarkdown) ||
@@ -350,6 +363,18 @@ export const ActivityEditPage: React.FC = () => {
         markdown,
         "portrait",
         savedMetadata?.name || activity?.name || "",
+        true,
+      ),
+    [activity?.name, savedMetadata?.name],
+  );
+
+  const renderPreviewTafelbild = useCallback(
+    (markdown: string) =>
+      apiService.previewMarkdownPdf(
+        markdown,
+        "portrait",
+        savedMetadata?.name || activity?.name || "",
+        false,
         true,
       ),
     [activity?.name, savedMetadata?.name],
@@ -772,8 +797,8 @@ export const ActivityEditPage: React.FC = () => {
                 <MarkdownEditorWithPreview
                   value={tafelbildMarkdown}
                   onChange={setTafelbildMarkdown}
-                  renderPreviewFn={renderPreviewPortrait}
-                  onRegenerateImage={handleRegenerateImage}
+                  renderPreviewFn={renderPreviewTafelbild}
+                  onRegenerateImage={handleRegenerateImageForTafelbild}
                 />
               )}
               {activeMarkdownTab === "uebung" && (

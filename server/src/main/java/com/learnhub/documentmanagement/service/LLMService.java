@@ -272,18 +272,11 @@ public class LLMService {
 			String altText = StringUtils.hasText(placeholder.id()) ? placeholder.id() : GENERATED_IMAGE_ALT_TEXT;
 			String comment = buildImageComment(placeholder.id(), placeholder.description());
 			Image image = response.getResult().getOutput();
-			boolean isThema = placeholder.id() != null && placeholder.id().startsWith("thema");
 			if (StringUtils.hasText(image.getB64Json())) {
-				String imgMarkdown = "![" + altText + "](data:image/png;base64," + image.getB64Json() + ")";
-				return isThema
-						? comment + "\n<div class=\"thema-image\">\n\n" + imgMarkdown + "\n\n</div>"
-						: comment + "\n" + imgMarkdown;
+				return comment + "\n![" + altText + "](data:image/png;base64," + image.getB64Json() + ")";
 			}
 			if (StringUtils.hasText(image.getUrl())) {
-				String imgMarkdown = toMarkdownImageFromUrl(image.getUrl(), altText);
-				return isThema
-						? comment + "\n<div class=\"thema-image\">\n\n" + imgMarkdown + "\n\n</div>"
-						: comment + "\n" + imgMarkdown;
+				return comment + "\n" + toMarkdownImageFromUrl(image.getUrl(), altText);
 			}
 			throw new IllegalStateException("Image model returned neither base64 nor URL");
 		} catch (Exception e) {
@@ -499,6 +492,29 @@ public class LLMService {
 
 		ImageResponse response = exerciseImageModel
 				.call(new ImagePrompt(buildExerciseImagePrompt(description, contextText)));
+		if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
+			throw new IllegalStateException("Image model returned an empty response");
+		}
+
+		String altText = StringUtils.hasText(id) ? id : GENERATED_IMAGE_ALT_TEXT;
+		String comment = buildImageComment(id, description);
+		Image image = response.getResult().getOutput();
+		if (StringUtils.hasText(image.getB64Json())) {
+			return comment + "\n![" + altText + "](data:image/png;base64," + image.getB64Json() + ")";
+		}
+		if (StringUtils.hasText(image.getUrl())) {
+			return comment + "\n" + toMarkdownImageFromUrl(image.getUrl(), altText);
+		}
+		throw new IllegalStateException("Image model response contained neither base64 image data nor a URL");
+	}
+
+	public String generateTafelbildImageMarkdown(String id, String description, String contextText) {
+		if (exerciseImageModel == null) {
+			throw new IllegalStateException("Exercise image model is not configured");
+		}
+
+		ImageResponse response = exerciseImageModel
+				.call(new ImagePrompt(buildTafelbildImagePrompt(description, contextText)));
 		if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
 			throw new IllegalStateException("Image model returned an empty response");
 		}

@@ -8,4 +8,5 @@ public class RegenerateImageRequest {
 	private String description;
 	private String customPrompt;
 	private String exerciseContext;
+	private String markdownType;
 }

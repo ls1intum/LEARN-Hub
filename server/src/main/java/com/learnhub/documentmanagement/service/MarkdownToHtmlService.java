@@ -44,6 +44,8 @@ public class MarkdownToHtmlService {
 			Pattern.CASE_INSENSITIVE);
 	private static final Pattern CLASS_ATTRIBUTE_PATTERN = Pattern.compile("\\bclass\\s*=\\s*([\"'])(.*?)\\1",
 			Pattern.CASE_INSENSITIVE);
+	private static final Pattern PARAGRAPH_IMG_PATTERN = Pattern.compile("<p>\\s*<img((?:\\s+[^>]*)?)(/?)>\\s*</p>",
+			Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
 	private final Parser parser;
 	private final HtmlRenderer renderer;
@@ -118,10 +120,19 @@ public class MarkdownToHtmlService {
 	 *            student Name / Datum fill-in fields at the top
 	 */
 	public String renderMarkdownToHtml(String markdown, boolean landscape, String activityName, boolean exerciseSheet) {
+		return renderMarkdownToHtml(markdown, landscape, activityName, exerciseSheet, false);
+	}
+
+	public String renderMarkdownToHtml(String markdown, boolean landscape, String activityName, boolean exerciseSheet,
+			boolean isTafelbild) {
 		String normalizedMarkdown = normalizeMarkdown(markdown);
 		String body = renderDecoratedMarkdownBody(normalizedMarkdown);
-		return wrapPdfHtmlDocument(body, landscape, activityName, detectDocumentBodyClass(normalizedMarkdown, body),
-				exerciseSheet);
+		if (isTafelbild) {
+			body = PARAGRAPH_IMG_PATTERN.matcher(body).replaceAll(
+					"<div style=\"width:100%;margin:10pt 0;page-break-inside:avoid\"><img$1 style=\"display:block;width:100%;height:auto;max-height:none\"$2></div>");
+		}
+		String bodyClass = isTafelbild ? "tafelbild-render" : detectDocumentBodyClass(normalizedMarkdown, body);
+		return wrapPdfHtmlDocument(body, landscape, activityName, bodyClass, exerciseSheet);
 	}
 
 	/**
@@ -178,11 +189,11 @@ public class MarkdownToHtmlService {
 		} else {
 			pageMargins = landscape ? "55pt 30pt 50pt 30pt" : "55pt 35pt 55pt 35pt";
 		}
+		String normalizedBodyClass = bodyClass == null ? "" : bodyClass.trim();
+		String downloadDate = LocalDateTime.now().format(DATE_FORMATTER);
 		String css = (landscape ? pdfCssTemplate : pdfCssPortraitTemplate).replace("{{page_margins}}", pageMargins)
 				+ "\n\n" + commonCssTemplate;
 		String name = activityName != null ? activityName : "";
-		String downloadDate = LocalDateTime.now().format(DATE_FORMATTER);
-		String normalizedBodyClass = bodyClass == null ? "" : bodyClass.trim();
 		String bodyClassAttribute = normalizedBodyClass.isEmpty() ? "" : " class=\"" + normalizedBodyClass + "\"";
 		return htmlTemplate.replace("{{styles}}", css).replace("{{body}}", body).replace("{{activityName}}", name)
 				.replace("{{logoDataUri}}", logoDataUri).replace("{{downloadDate}}", downloadDate)

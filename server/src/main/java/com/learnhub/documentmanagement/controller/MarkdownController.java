@@ -75,8 +75,9 @@ public class MarkdownController {
 			String activityName = markdown.getActivity() != null ? markdown.getActivity().getName() : "";
 			String documentTitle = buildDocumentTitle(activityName, markdown.getType().getValue());
 			boolean exerciseSheet = markdown.getType() == MarkdownType.UEBUNG;
+			boolean isTafelbild = markdown.getType() == MarkdownType.TAFELBILD;
 			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape(), activityName,
-					exerciseSheet);
+					exerciseSheet, isTafelbild);
 			pdfBytes = markdownToPdfService.applyDocumentTitle(pdfBytes, documentTitle);
 
 			String downloadName = sanitizeFilename(documentTitle) + ".pdf";
@@ -160,7 +161,7 @@ public class MarkdownController {
 			boolean landscape = orientation == null || !"portrait".equalsIgnoreCase(orientation);
 			String activityName = request.getActivityName();
 			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown, landscape,
-					activityName != null ? activityName : "", request.isExerciseSheet());
+					activityName != null ? activityName : "", request.isExerciseSheet(), request.isTafelbild());
 			String documentTitle = (activityName == null || activityName.isBlank())
 					? "Markdown Preview"
 					: activityName.trim() + " Preview";

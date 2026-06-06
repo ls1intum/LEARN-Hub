@@ -479,7 +479,7 @@ public class PDFService {
 				if (md.getType() == type && md.getContent() != null && !md.getContent().trim().isEmpty()) {
 					try {
 						parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape(),
-								activityName));
+								activityName, false, md.getType() == MarkdownType.TAFELBILD));
 					} catch (Exception e) {
 						logger.warn("Failed to render markdown PDF for activity {}, type {}: {}", activity.getId(),
 								typeName, e.getMessage());

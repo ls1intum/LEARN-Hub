@@ -168,17 +168,3 @@ li {
     margin: 10pt auto;
     page-break-inside: avoid;
 }
-
-.thema-image {
-    width: 100%;
-    margin: 14pt 0;
-    page-break-inside: avoid;
-}
-
-.thema-image img {
-    width: 100%;
-    max-width: 100%;
-    height: auto;
-    object-fit: cover;
-    margin: 0 auto;
-}

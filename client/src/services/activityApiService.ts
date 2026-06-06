@@ -280,6 +280,7 @@ export const ActivityApi = {
     description: string;
     customPrompt?: string;
     exerciseContext?: string;
+    markdownType?: string;
   }): Promise<string> {
     const data = await ApiRequestMixin.request<{ imageMarkdown: string }>(
       "/api/activities/regenerate-image",
@@ -293,6 +294,7 @@ export const ActivityApi = {
           exerciseContext: sanitizeRegenerateImageContext(
             params.exerciseContext,
           ),
+          markdownType: params.markdownType ?? "",
         }),
       },
     );
@@ -361,6 +363,7 @@ export const ActivityApi = {
     orientation?: "portrait" | "landscape",
     activityName?: string,
     exerciseSheet?: boolean,
+    tafelbild?: boolean,
   ) {
     const response = await authService.makeAuthenticatedRequest(
       "/api/markdowns/preview-pdf",
@@ -372,6 +375,7 @@ export const ActivityApi = {
           orientation,
           activityName,
           exerciseSheet,
+          tafelbild,
         }),
       },
     );
