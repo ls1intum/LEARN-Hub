@@ -12,6 +12,7 @@ import com.learnhub.activitymanagement.repository.ActivityQueryResult;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
+import com.learnhub.documentmanagement.service.DocxCacheService;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.exception.ResourceNotFoundException;
 import com.learnhub.service.SanitizationService;
@@ -53,6 +54,9 @@ public class ActivityService {
 
 	@Autowired
 	private PDFService pdfService;
+
+	@Autowired
+	private DocxCacheService docxCacheService;
 
 	@Autowired
 	private ActivityExtractionService extractionService;
@@ -371,7 +375,10 @@ public class ActivityService {
 
 	public void deleteActivity(UUID id) {
 		logger.debug("Deleting activity with id={}", id);
-		userFavouritesRepository.deleteByActivityId(id);
+		activityRepository.findByIdWithDocuments(id)
+				.ifPresent(activity -> pdfService.deleteDocumentFiles(activity.getDocuments()));
+		List<UUID> markdownIds = activityRepository.findMarkdownIdsByActivityId(id);
+		docxCacheService.evictForActivity(id, markdownIds);
 		activityRepository.deleteById(id);
 	}
 

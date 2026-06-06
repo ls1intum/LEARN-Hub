@@ -5,6 +5,7 @@ import com.learnhub.activitymanagement.entity.enums.ActivityFormat;
 import com.learnhub.activitymanagement.entity.enums.ActivityStatus;
 import com.learnhub.activitymanagement.entity.enums.BloomLevel;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -35,4 +36,10 @@ public interface ActivityRepository
 			@Param("ageMax") Integer ageMax);
 
 	List<Activity> findByStatusInOrderByCreatedAtDesc(List<ActivityStatus> statuses);
+
+	@Query("SELECT a FROM Activity a LEFT JOIN FETCH a.documents WHERE a.id = :id")
+	Optional<Activity> findByIdWithDocuments(@Param("id") UUID id);
+
+	@Query("SELECT m.id FROM Activity a JOIN a.markdowns m WHERE a.id = :id")
+	List<UUID> findMarkdownIdsByActivityId(@Param("id") UUID id);
 }

@@ -90,6 +90,23 @@ public class DocxCacheService {
 		Files.createDirectories(Paths.get(cachePath));
 	}
 
+	public void evictForActivity(UUID activityId, List<UUID> markdownIds) {
+		deleteIfExists(resolve("activity_" + activityId + ".docx"));
+		for (UUID markdownId : markdownIds) {
+			deleteIfExists(resolve(markdownId + ".docx"));
+		}
+	}
+
+	private void deleteIfExists(Path path) {
+		try {
+			if (Files.deleteIfExists(path)) {
+				logger.debug("Deleted DOCX cache file: {}", path);
+			}
+		} catch (IOException e) {
+			logger.warn("Failed to delete DOCX cache file {}: {}", path, e.getMessage());
+		}
+	}
+
 	private Path resolve(String filename) {
 		return Paths.get(cachePath, filename);
 	}

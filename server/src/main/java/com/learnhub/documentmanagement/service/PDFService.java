@@ -269,6 +269,20 @@ public class PDFService {
 		return sanitized;
 	}
 
+	public void deleteDocumentFiles(List<PDFDocument> documents) {
+		for (PDFDocument document : documents) {
+			try {
+				if (Files.deleteIfExists(Paths.get(document.getFilePath()))) {
+					logger.info("Deleted PDF file: {}", document.getFilePath());
+				} else {
+					logger.warn("PDF file not found for deletion: {}", document.getFilePath());
+				}
+			} catch (IOException e) {
+				logger.error("Failed to delete PDF file {}: {}", document.getFilePath(), e.getMessage());
+			}
+		}
+	}
+
 	// Visible for testing
 	ConcurrentHashMap<UUID, CachedPdf> getPdfCache() {
 		return pdfCache;

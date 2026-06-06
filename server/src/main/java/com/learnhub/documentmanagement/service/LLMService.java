@@ -272,11 +272,18 @@ public class LLMService {
 			String altText = StringUtils.hasText(placeholder.id()) ? placeholder.id() : GENERATED_IMAGE_ALT_TEXT;
 			String comment = buildImageComment(placeholder.id(), placeholder.description());
 			Image image = response.getResult().getOutput();
+			boolean isThema = placeholder.id() != null && placeholder.id().startsWith("thema");
 			if (StringUtils.hasText(image.getB64Json())) {
-				return comment + "\n![" + altText + "](data:image/png;base64," + image.getB64Json() + ")";
+				String imgMarkdown = "![" + altText + "](data:image/png;base64," + image.getB64Json() + ")";
+				return isThema
+						? comment + "\n<div class=\"thema-image\">\n\n" + imgMarkdown + "\n\n</div>"
+						: comment + "\n" + imgMarkdown;
 			}
 			if (StringUtils.hasText(image.getUrl())) {
-				return comment + "\n" + toMarkdownImageFromUrl(image.getUrl(), altText);
+				String imgMarkdown = toMarkdownImageFromUrl(image.getUrl(), altText);
+				return isThema
+						? comment + "\n<div class=\"thema-image\">\n\n" + imgMarkdown + "\n\n</div>"
+						: comment + "\n" + imgMarkdown;
 			}
 			throw new IllegalStateException("Image model returned neither base64 nor URL");
 		} catch (Exception e) {

@@ -30,12 +30,12 @@ Use exactly this on its own line:
 [[IMAGE_PLACEHOLDER:id=eindeutige-bild-id: detailed image description]]
 
 Image descriptions must be complete generation prompts. Always include an explicit art style that matches the age group:
-- Ages 6–9: "friendly hand-drawn cartoon style, bold outlines, bright colors, simple shapes"
-- Ages 10–12: "colorful semi-realistic illustration, clear and engaging, warm tones"
-- Ages 13–16: "clean detailed illustration or diagram, precise and informative"
-- Ages 17+: "realistic technical illustration, photo-realistic, or precise diagram"
+- Ages 6–9: "colorful semi-realistic illustration, warm and engaging, clear shapes, bright colors"
+- Ages 10–12: "polished semi-realistic illustration, detailed and clear, warm tones"
+- Ages 13–16: "realistic detailed illustration or high-quality photograph, precise and informative"
+- Ages 17+: "photorealistic, high-quality photograph, or precise technical diagram"
 
-For thematic images (anchor visuals at the end), you may instead specify "photorealistic" or "high-quality photograph" if a real-world image would be more impactful than an illustration.
+For thematic images (anchor visuals at the end): always use "photorealistic, high-quality photograph" style regardless of age — a real-world image anchors the topic more powerfully than an illustration.
 
 Also specify: mood, colors, composition, key objects with explicit positions (left/right/center/foreground/background).
 
