@@ -476,7 +476,7 @@ public class ActivityService {
 			tafelbildMd.setActivity(activity);
 			tafelbildMd.setType(MarkdownType.TAFELBILD);
 			tafelbildMd.setContent(data.get("tafelbildMarkdown").toString());
-			tafelbildMd.setLandscape(true);
+			tafelbildMd.setLandscape(false);
 			tafelbildMd.setCreatedAt(LocalDateTime.now());
 			activity.getMarkdowns().add(tafelbildMd);
 		}
@@ -738,7 +738,7 @@ public class ActivityService {
 			return;
 
 		Map<String, Boolean> landscapes = Map.of("deckblatt", false, "artikulationsschema", true, "hintergrundwissen",
-				false, "tafelbild", true, "uebung", false, "uebung_loesung", false);
+				false, "tafelbild", false, "uebung", false, "uebung_loesung", false);
 
 		for (Map.Entry<String, String> entry : markdownsByType.entrySet()) {
 			if (entry.getValue() == null)

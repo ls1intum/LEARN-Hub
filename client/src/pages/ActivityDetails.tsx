@@ -20,8 +20,17 @@ import {
   Download,
   Trash2,
   Loader2,
+  Send,
+  MoreVertical,
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
@@ -134,6 +143,7 @@ export const ActivityDetails: React.FC = () => {
   const deleteApi = useApi();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [docxLoadingId, setDocxLoadingId] = useState<string | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const docxWaitingQuotes = t("activityDetails.docxWaitingQuotes", {
     returnObjects: true,
@@ -278,6 +288,21 @@ export const ActivityDetails: React.FC = () => {
     navigate("/recommendations");
   };
 
+  const handlePublishDraft = async () => {
+    if (!activity?.id) return;
+    setIsPublishing(true);
+    try {
+      await apiService.publishActivity(activity.id);
+      navigate("/drafts", { replace: true });
+    } catch (err) {
+      alert(
+        err instanceof Error ? err.message : "Fehler beim Veröffentlichen.",
+      );
+    } finally {
+      setIsPublishing(false);
+    }
+  };
+
   const handleDeleteActivity = async () => {
     if (!activity?.id) return;
 
@@ -411,50 +436,92 @@ export const ActivityDetails: React.FC = () => {
 
       {/* Hero header */}
       <div className="rounded-xl bg-primary/5 border border-primary/10 px-5 py-5 space-y-4">
-        {/* Title + actions row */}
-        <div className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {activity.name}
-          </h1>
-          <div className="flex items-center gap-2 shrink-0">
-            <FavouriteButton
-              activityId={activity.id}
-              size="sm"
-              initialIsFavourited={activity.isFavourited ?? false}
-            />
-            {isAdmin && (
-              <>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setDeleteDialogOpen(true)}
-                  className="h-8 w-8 cursor-pointer text-muted-foreground hover:text-destructive"
-                  title={t("activityDetails.delete")}
-                  aria-label={t("activityDetails.delete")}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    navigate(`${location.pathname}/edit`, {
-                      state: {
-                        backTo,
-                        restoreScrollY,
-                        detailPath: location.pathname,
-                      } satisfies ActivityNavigationState,
-                    })
-                  }
-                  className="h-8 gap-1.5"
-                >
-                  <Edit3 className="h-3.5 w-3.5" />
-                  {t("activityDetails.edit")}
-                </Button>
-              </>
-            )}
+        {/* Title + actions */}
+        <div className="space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              {activity.name}
+            </h1>
+            <div className="flex items-center gap-2 shrink-0">
+              <FavouriteButton
+                activityId={activity.id}
+                size="sm"
+                initialIsFavourited={activity.isFavourited ?? false}
+              />
+              {isAdmin && (
+                <>
+                  {source === "drafts" && activity.status === "DRAFT" && (
+                    <Button
+                      size="sm"
+                      className="hidden sm:flex h-8 gap-1.5"
+                      onClick={() => void handlePublishDraft()}
+                      disabled={isPublishing}
+                    >
+                      {isPublishing ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Send className="h-3.5 w-3.5" />
+                      )}
+                      Veröffentlichen
+                    </Button>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-muted-foreground"
+                        aria-label="Weitere Aktionen"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() =>
+                          navigate(`${location.pathname}/edit`, {
+                            state: {
+                              backTo,
+                              restoreScrollY,
+                              detailPath: location.pathname,
+                            } satisfies ActivityNavigationState,
+                          })
+                        }
+                      >
+                        <Edit3 />
+                        {t("activityDetails.edit")}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={() => setDeleteDialogOpen(true)}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <Trash2 />
+                        {t("activityDetails.delete")}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              )}
+            </div>
           </div>
+
+          {/* Publish button: full width below headline on mobile */}
+          {isAdmin && source === "drafts" && activity.status === "DRAFT" && (
+            <Button
+              className="w-full sm:hidden gap-1.5"
+              onClick={() => void handlePublishDraft()}
+              disabled={isPublishing}
+            >
+              {isPublishing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+              Veröffentlichen
+            </Button>
+          )}
         </div>
 
         {/* Meta chips */}

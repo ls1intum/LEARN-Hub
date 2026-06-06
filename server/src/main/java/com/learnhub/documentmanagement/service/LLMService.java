@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.slf4j.Logger;
@@ -93,6 +94,9 @@ public class LLMService {
 	@Value("classpath:prompts/ExerciseImageGeneration.st")
 	private Resource exerciseImagePromptResource;
 
+	@Value("classpath:prompts/TafelbildGeneration.st")
+	private Resource tafelbildPromptResource;
+
 	@Value("classpath:prompts/TafelbildImageGeneration.st")
 	private Resource tafelbildImagePromptResource;
 
@@ -128,6 +132,7 @@ public class LLMService {
 
 	// Exercise sheet + matching solution sheet in one response.
 	private static final int MAX_TOKENS_UEBUNG = 16000;
+	private static final int MAX_TOKENS_TAFELBILD = 10000;
 
 	public Map<String, Object> extractActivityData(String pdfText) {
 
@@ -226,41 +231,69 @@ public class LLMService {
 	}
 
 	/**
-	 * Generate a Tafelbild image from the provided Artikulationsschema using the
-	 * image model. Returns a markdown string containing the embedded image, or null
-	 * if no image model is configured.
+	 * Generate a Tafelbild (Hefteintrag) from the provided Artikulationsschema.
+	 * Returns markdown with embedded images, combining text sections and at least
+	 * one illustrative image.
 	 *
 	 * @param artikulationsschema
 	 *            previously generated Artikulationsschema markdown
+	 * @param metadata
+	 *            activity metadata (ageMin/ageMax drive language calibration)
 	 */
-	public String generateTafelbildMarkdown(String artikulationsschema) {
-		if (exerciseImageModel == null) {
-			logger.warn("Skipping Tafelbild generation because no exercise image model is configured");
-			return null;
-		}
-
-		String normalizedSchema = stripEmbeddedImages(artikulationsschema == null ? "" : artikulationsschema.trim());
-		String promptText = new PromptTemplate(tafelbildImagePromptResource)
-				.render(Map.of("artikulationsschema", normalizedSchema));
+	public String generateTafelbildMarkdown(String artikulationsschema, Map<String, Object> metadata) {
+		String normalizedArtik = stripEmbeddedImages(artikulationsschema == null ? "" : artikulationsschema.trim());
+		String metadataSection = buildMetadataSection(metadata);
+		String promptText = new PromptTemplate(tafelbildPromptResource)
+				.render(Map.of("artikulationsschema", normalizedArtik, "metadataSection", metadataSection));
 
 		try {
-			ImageResponse response = exerciseImageModel.call(new ImagePrompt(promptText));
-			if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
-				throw new IllegalStateException("Image model returned an empty response");
-			}
-
-			Image image = response.getResult().getOutput();
-			String header = "# Tafelbild\n\n";
-			if (StringUtils.hasText(image.getB64Json())) {
-				return header + "![Tafelbild](data:image/png;base64," + image.getB64Json() + ")";
-			}
-			if (StringUtils.hasText(image.getUrl())) {
-				return header + toMarkdownImageFromUrl(image.getUrl(), "Tafelbild");
-			}
-			throw new IllegalStateException("Image model response contained neither base64 image data nor a URL");
+			String responseText = callLlm(promptText, MAX_TOKENS_TAFELBILD);
+			logger.debug("LLM Tafelbild Response: {}", responseText);
+			String markdown = extractMarkdownPayload(responseText);
+			Map<String, String> imageCache = new HashMap<>();
+			return replaceImagePlaceholders(markdown, imageCache, new HashMap<>(),
+					placeholder -> generateTafelbildImageMarkdownSafely(placeholder, normalizedArtik));
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to generate Tafelbild: " + e.getMessage(), e);
 		}
+	}
+
+	private String generateTafelbildImageMarkdownSafely(ImagePlaceholder placeholder, String artikulationsschema) {
+		if (exerciseImageModel == null) {
+			logger.warn("Skipping Tafelbild image placeholder because no image model is configured");
+			return placeholder.marker();
+		}
+		try {
+			String prompt = buildTafelbildImagePrompt(placeholder.description(), artikulationsschema);
+			ImageResponse response = exerciseImageModel.call(new ImagePrompt(prompt));
+			if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
+				throw new IllegalStateException("Image model returned an empty response");
+			}
+			String altText = StringUtils.hasText(placeholder.id()) ? placeholder.id() : GENERATED_IMAGE_ALT_TEXT;
+			String comment = buildImageComment(placeholder.id(), placeholder.description());
+			Image image = response.getResult().getOutput();
+			if (StringUtils.hasText(image.getB64Json())) {
+				return comment + "\n![" + altText + "](data:image/png;base64," + image.getB64Json() + ")";
+			}
+			if (StringUtils.hasText(image.getUrl())) {
+				return comment + "\n" + toMarkdownImageFromUrl(image.getUrl(), altText);
+			}
+			throw new IllegalStateException("Image model returned neither base64 nor URL");
+		} catch (Exception e) {
+			logger.warn("Failed to generate Tafelbild image for '{}': {}", placeholder.description(), e.getMessage());
+			return placeholder.marker();
+		}
+	}
+
+	String buildTafelbildImagePrompt(String description, String contextText) {
+		String normalizedDescription = truncateForImagePrompt(
+				stripEmbeddedImages(description == null ? "" : description.trim()), MAX_IMAGE_DESCRIPTION_CHARS,
+				"image description");
+		String normalizedContextText = truncateForImagePrompt(
+				stripEmbeddedImages(contextText == null ? "" : contextText.trim()), MAX_IMAGE_CONTEXT_CHARS,
+				"tafelbild context");
+		return new PromptTemplate(tafelbildImagePromptResource)
+				.render(Map.of("description", normalizedDescription, "contextText", normalizedContextText));
 	}
 
 	/**
@@ -412,11 +445,18 @@ public class LLMService {
 	}
 
 	String replaceImagePlaceholders(String markdown, Map<String, String> imageMarkdownCache, String pdfText) {
-		return replaceImagePlaceholders(markdown, imageMarkdownCache, new HashMap<>(), pdfText);
+		return replaceImagePlaceholders(markdown, imageMarkdownCache, new HashMap<>(),
+				placeholder -> generateImageMarkdownSafely(placeholder, pdfText));
 	}
 
 	String replaceImagePlaceholders(String markdown, Map<String, String> imageMarkdownCache,
 			Map<String, String> imageDescriptionCache, String pdfText) {
+		return replaceImagePlaceholders(markdown, imageMarkdownCache, imageDescriptionCache,
+				placeholder -> generateImageMarkdownSafely(placeholder, pdfText));
+	}
+
+	private String replaceImagePlaceholders(String markdown, Map<String, String> imageMarkdownCache,
+			Map<String, String> imageDescriptionCache, Function<ImagePlaceholder, String> imageGenerator) {
 		if (!StringUtils.hasText(markdown)) {
 			return markdown;
 		}
@@ -434,12 +474,11 @@ public class LLMService {
 					placeholder.description());
 			if (placeholder.id() != null && existingDescription != null
 					&& !existingDescription.equals(placeholder.description())) {
-				logger.info(
-						"Reusing exercise image id '{}' with a different description. Keeping the first generated image.",
+				logger.info("Reusing image id '{}' with a different description. Keeping the first generated image.",
 						placeholder.id());
 			}
 			String imageMarkdown = imageMarkdownCache.computeIfAbsent(placeholder.cacheKey(),
-					key -> generateImageMarkdownSafely(placeholder, pdfText));
+					key -> imageGenerator.apply(placeholder));
 			matcher.appendReplacement(replaced, Matcher.quoteReplacement(imageMarkdown));
 		}
 		matcher.appendTail(replaced);

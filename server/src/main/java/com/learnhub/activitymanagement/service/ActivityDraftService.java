@@ -207,7 +207,7 @@ public class ActivityDraftService {
 				if (types.contains("artikulationsschema"))
 					result.put("artikulationsschema", artik);
 				if (types.contains("tafelbild"))
-					result.put("tafelbild", llmService.generateTafelbildMarkdown(artik));
+					result.put("tafelbild", llmService.generateTafelbildMarkdown(artik, metadata));
 			}
 			if (types.contains("hintergrundwissen"))
 				result.put("hintergrundwissen", llmService.generateHintergrundwissen(pdfText, metadata));
@@ -229,7 +229,8 @@ public class ActivityDraftService {
 							markdownGenerationExecutor)
 					: CompletableFuture.completedFuture(null);
 			CompletableFuture<String> tafelbildF = types.contains("tafelbild")
-					? artikF.thenApplyAsync(llmService::generateTafelbildMarkdown, markdownGenerationExecutor)
+					? artikF.thenApplyAsync(artik -> llmService.generateTafelbildMarkdown(artik, metadata),
+							markdownGenerationExecutor)
 					: CompletableFuture.completedFuture(null);
 			CompletableFuture<String> hinterF = types.contains("hintergrundwissen")
 					? CompletableFuture.supplyAsync(() -> llmService.generateHintergrundwissen(pdfText, metadata),

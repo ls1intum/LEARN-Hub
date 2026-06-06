@@ -413,7 +413,7 @@ public class ActivityController {
 				response.setHintergrundwissenMarkdown(llmService.generateHintergrundwissen(pdfText, metadata));
 			}
 			if ((generateAll || requestedTypes.contains("tafelbild")) && artikForTafelbild != null) {
-				response.setTafelbildMarkdown(llmService.generateTafelbildMarkdown(artikForTafelbild));
+				response.setTafelbildMarkdown(llmService.generateTafelbildMarkdown(artikForTafelbild, metadata));
 			}
 			if (generateAll || requestedTypes.contains("uebung") || requestedTypes.contains("uebung_loesung")) {
 				Map<String, String> uebungResult = llmService.generateUebungAndLoesung(pdfText, metadata,
@@ -434,8 +434,8 @@ public class ActivityController {
 							: submitMarkdownGeneration(() -> llmService.generateArtikulationsschema(pdfText, metadata)))
 					: null;
 			CompletableFuture<String> tafelbildFuture = generateTafelbild && artikulationsschemaFuture != null
-					? artikulationsschemaFuture.thenApplyAsync(llmService::generateTafelbildMarkdown,
-							markdownGenerationExecutor)
+					? artikulationsschemaFuture.thenApplyAsync(
+							artik -> llmService.generateTafelbildMarkdown(artik, metadata), markdownGenerationExecutor)
 					: null;
 			CompletableFuture<String> hintergrundwissenFuture = (generateAll
 					|| requestedTypes.contains("hintergrundwissen"))

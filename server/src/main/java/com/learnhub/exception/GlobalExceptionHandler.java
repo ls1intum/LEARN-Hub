@@ -1,44 +1,54 @@
 package com.learnhub.exception;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learnhub.dto.response.ErrorResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
-/**
- * Centralized exception handler for all REST controllers. Translates common
- * exception types to appropriate HTTP responses, eliminating repetitive
- * try-catch blocks in individual controllers.
- */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+	@Autowired
+	private ObjectMapper objectMapper;
+
 	@ExceptionHandler(ResourceNotFoundException.class)
-	public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
+	public void handleResourceNotFound(ResourceNotFoundException ex, HttpServletResponse response) throws IOException {
 		logger.error("Resource not found: {}", ex.getMessage());
-		return ResponseEntity.status(404).body(ErrorResponse.of(ex.getMessage()));
+		writeError(response, HttpServletResponse.SC_NOT_FOUND, ex.getMessage());
 	}
 
 	@ExceptionHandler(IllegalArgumentException.class)
-	public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+	public void handleIllegalArgument(IllegalArgumentException ex, HttpServletResponse response) throws IOException {
 		logger.error("Invalid argument: {}", ex.getMessage());
-		return ResponseEntity.badRequest().body(ErrorResponse.of(ex.getMessage()));
+		writeError(response, HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
 	}
 
 	@ExceptionHandler(IOException.class)
-	public ResponseEntity<ErrorResponse> handleIOException(IOException ex) {
+	public void handleIOException(IOException ex, HttpServletResponse response) throws IOException {
 		logger.error("I/O error: {}", ex.getMessage());
-		return ResponseEntity.status(500).body(ErrorResponse.of("I/O error: " + ex.getMessage()));
+		writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "I/O error: " + ex.getMessage());
 	}
 
 	@ExceptionHandler(RuntimeException.class)
-	public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
-		logger.error("Unexpected error: {}", ex.getMessage());
-		return ResponseEntity.status(500).body(ErrorResponse.of(ex.getMessage()));
+	public void handleRuntimeException(RuntimeException ex, HttpServletResponse response) throws IOException {
+		logger.error("Unexpected error: {}", ex.getMessage(), ex);
+		String message = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
+		writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message);
+	}
+
+	private void writeError(HttpServletResponse response, int status, String message) throws IOException {
+		response.setStatus(status);
+		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+		response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		objectMapper.writeValue(response.getWriter(), ErrorResponse.of(message));
 	}
 }

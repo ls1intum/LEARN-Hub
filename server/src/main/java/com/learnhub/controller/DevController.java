@@ -109,7 +109,7 @@ public class DevController {
 				case "tafelbild" -> {
 					String artik = llmService.generateArtikulationsschema(pdfText, metadata);
 					response.setArtikulationsschemaMarkdown(artik);
-					response.setTafelbildMarkdown(llmService.generateTafelbildMarkdown(artik));
+					response.setTafelbildMarkdown(llmService.generateTafelbildMarkdown(artik, metadata));
 				}
 				default -> {
 					return ResponseEntity.badRequest().body(ErrorResponse.of("Unknown type: " + type

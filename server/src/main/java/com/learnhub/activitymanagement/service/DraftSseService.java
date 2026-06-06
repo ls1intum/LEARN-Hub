@@ -1,6 +1,7 @@
 package com.learnhub.activitymanagement.service;
 
 import com.learnhub.activitymanagement.entity.enums.ActivityStatus;
+import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,18 @@ public class DraftSseService {
 		emitter.onError(e -> emitters.remove(emitter));
 		logger.debug("SSE emitter created, total active: {}", emitters.size());
 		return emitter;
+	}
+
+	@PreDestroy
+	public void closeAllEmitters() {
+		for (SseEmitter emitter : emitters) {
+			try {
+				emitter.complete();
+			} catch (Exception ignored) {
+			}
+		}
+		emitters.clear();
+		logger.debug("All SSE emitters completed on shutdown");
 	}
 
 	public void sendDraftUpdate(UUID activityId, ActivityStatus status, String generationError) {

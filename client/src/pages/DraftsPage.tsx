@@ -340,8 +340,13 @@ const DraftCard: React.FC<DraftCardProps> = ({
   onDelete,
 }) => {
   const navigate = useNavigate();
+  const detailPath = `/drafts/${activity.id}`;
   const detailNavigationState: ActivityNavigationState = {
     backTo: "/drafts",
+  };
+  const editNavigationState: ActivityNavigationState = {
+    backTo: "/drafts",
+    detailPath,
   };
 
   return (
@@ -349,8 +354,11 @@ const DraftCard: React.FC<DraftCardProps> = ({
       <div className="flex-shrink-0 hidden sm:block">
         <CheckCircle2 className="h-8 w-8 text-green-500" />
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground truncate">
+      <div
+        className="flex-1 min-w-0 cursor-pointer"
+        onClick={() => navigate(detailPath, { state: detailNavigationState })}
+      >
+        <p className="text-sm font-semibold text-foreground truncate hover:underline">
           {activity.name}
         </p>
         <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
@@ -398,7 +406,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
           className="gap-1.5"
           onClick={() =>
             navigate(`/drafts/${activity.id}/edit`, {
-              state: detailNavigationState,
+              state: editNavigationState,
             })
           }
         >

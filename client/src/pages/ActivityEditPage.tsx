@@ -772,7 +772,8 @@ export const ActivityEditPage: React.FC = () => {
                 <MarkdownEditorWithPreview
                   value={tafelbildMarkdown}
                   onChange={setTafelbildMarkdown}
-                  renderPreviewFn={renderPreviewLandscape}
+                  renderPreviewFn={renderPreviewPortrait}
+                  onRegenerateImage={handleRegenerateImage}
                 />
               )}
               {activeMarkdownTab === "uebung" && (
