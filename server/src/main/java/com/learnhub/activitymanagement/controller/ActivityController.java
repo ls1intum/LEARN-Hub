@@ -60,7 +60,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -151,21 +155,23 @@ public class ActivityController {
 
 	@GetMapping("/{id}/thumbnail")
 	@PreAuthorize("permitAll()")
-	@Operation(summary = "Get activity thumbnail", description = "Get the tafelbild thumbnail image for an activity, scaled to 400px wide")
+	@Operation(summary = "Get activity thumbnail", description = "Get the tafelbild thumbnail image for an activity. Use ?width= to request a specific max width (default 800, max 1200).")
 	public ResponseEntity<byte[]> getThumbnail(@PathVariable UUID id,
+			@RequestParam(value = "width", required = false) Integer requestedWidth,
 			@RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) String ifNoneMatch) throws IOException {
 		logger.info("GET /api/activities/{}/thumbnail - Get thumbnail called", id);
 		ActivityService.ThumbnailData data = activityService.getThumbnailData(id);
 		if (data == null) {
 			return ResponseEntity.notFound().build();
 		}
-		byte[] thumbnailBytes = scaleThumbnail(data.bytes(), data.mimeType(), 400);
+		int maxWidth = (requestedWidth != null) ? Math.min(Math.max(requestedWidth, 1), 1200) : 800;
+		byte[] thumbnailBytes = scaleThumbnailAsJpeg(data.bytes(), data.mimeType(), maxWidth);
 		String etag = "\"" + sha256Hex(thumbnailBytes) + "\"";
 		if (etag.equals(ifNoneMatch)) {
 			return ResponseEntity.status(304).build();
 		}
 		HttpHeaders headers = new HttpHeaders();
-		headers.setContentType(MediaType.parseMediaType(data.mimeType()));
+		headers.setContentType(MediaType.IMAGE_JPEG);
 		headers.set(HttpHeaders.CACHE_CONTROL, "no-cache");
 		headers.set(HttpHeaders.ETAG, etag);
 		headers.setContentLength(thumbnailBytes.length);
@@ -618,21 +624,37 @@ public class ActivityController {
 		return documentId;
 	}
 
-	private byte[] scaleThumbnail(byte[] imageBytes, String mimeType, int maxWidth) throws IOException {
+	private byte[] scaleThumbnailAsJpeg(byte[] imageBytes, String mimeType, int maxWidth) throws IOException {
 		BufferedImage original = ImageIO.read(new ByteArrayInputStream(imageBytes));
-		if (original == null || original.getWidth() <= maxWidth) {
+		if (original == null) {
 			return imageBytes;
 		}
-		int targetWidth = maxWidth;
-		int targetHeight = (int) Math.round(original.getHeight() * (double) maxWidth / original.getWidth());
-		BufferedImage scaled = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
-		Graphics2D g2d = scaled.createGraphics();
-		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-		g2d.drawImage(original, 0, 0, targetWidth, targetHeight, null);
-		g2d.dispose();
-		String format = mimeType != null && (mimeType.contains("jpeg") || mimeType.contains("jpg")) ? "jpeg" : "png";
+		BufferedImage source = original;
+		if (original.getWidth() > maxWidth) {
+			int targetWidth = maxWidth;
+			int targetHeight = (int) Math.round(original.getHeight() * (double) maxWidth / original.getWidth());
+			source = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+			Graphics2D g2d = source.createGraphics();
+			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+			g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+			g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			g2d.drawImage(original, 0, 0, targetWidth, targetHeight, null);
+			g2d.dispose();
+		} else if (source.getType() != BufferedImage.TYPE_INT_RGB) {
+			BufferedImage rgb = new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_RGB);
+			Graphics2D g2d = rgb.createGraphics();
+			g2d.drawImage(source, 0, 0, null);
+			g2d.dispose();
+			source = rgb;
+		}
+		ImageWriter writer = ImageIO.getImageWritersByFormatName("jpeg").next();
+		ImageWriteParam param = writer.getDefaultWriteParam();
+		param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+		param.setCompressionQuality(0.90f);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		ImageIO.write(scaled, format, baos);
+		writer.setOutput(new MemoryCacheImageOutputStream(baos));
+		writer.write(null, new IIOImage(source, null, null), param);
+		writer.dispose();
 		return baos.toByteArray();
 	}
 
