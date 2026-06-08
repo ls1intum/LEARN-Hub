@@ -43,6 +43,7 @@ import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { openPdfInNewTab } from "@/utils/pdf";
+import { PdfFileIcon, DocxFileIcon } from "@/components/ui/FileTypeIcon";
 import {
   getActivityBackTarget,
   type ActivityNavigationState,
@@ -892,143 +893,169 @@ export const ActivityDetails: React.FC = () => {
           {hasDownloads && (
             <section className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">
-                {t("activityDetails.downloads")}
+                {t("activityDetails.documentsLabel")}
               </h2>
-              <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
-                {activity.documents?.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="flex items-center gap-3 px-4 py-3"
-                  >
-                    <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">
-                        {doc.filename}
-                      </p>
-                      {Number.isFinite(doc.fileSize) && (
-                        <p className="text-xs text-muted-foreground">
-                          {(doc.fileSize / 1024).toFixed(1)} KB
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      type="button"
-                      disabled={documentApi.isLoading}
-                      onClick={() => handleOpenDocument(doc.id, doc.filename)}
-                      className="shrink-0 inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50"
-                    >
-                      PDF
-                    </button>
+              <div className="border border-border rounded-lg overflow-hidden">
+                {/* Table header */}
+                <div className="flex items-center gap-3 px-4 py-2.5 bg-muted/30 border-b border-border">
+                  <div className="flex-1 text-sm font-medium text-muted-foreground">
+                    {t("activityDetails.downloadsTableTitle")}
                   </div>
-                ))}
-
-                {activity.markdowns
-                  ?.slice()
-                  .sort((a, b) => {
-                    const order = [
-                      "deckblatt",
-                      "artikulationsschema",
-                      "uebung",
-                      "uebung_loesung",
-                      "hintergrundwissen",
-                      "tafelbild",
-                    ];
-                    const ai = order.indexOf(a.type ?? "");
-                    const bi = order.indexOf(b.type ?? "");
-                    return (
-                      (ai === -1 ? order.length : ai) -
-                      (bi === -1 ? order.length : bi)
-                    );
-                  })
-                  .map((md) => (
+                  <div className="text-sm font-medium text-muted-foreground">
+                    {t("activityDetails.downloads")}
+                  </div>
+                </div>
+                <div className="divide-y divide-border">
+                  {activity.documents?.map((doc) => (
                     <div
-                      key={md.id}
+                      key={doc.id}
                       className="flex items-center gap-3 px-4 py-3"
                     >
-                      <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">
-                          {activity.name}
-                          {md.type
-                            ? ` — ${md.type.charAt(0).toUpperCase() + md.type.slice(1)}`
-                            : ""}
+                          {doc.filename}
                         </p>
-                        {docxLoadingId === md.id && (
-                          <p className="text-xs text-muted-foreground italic animate-pulse mt-0.5">
+                        <p className="text-xs text-muted-foreground">
+                          {t("activityDetails.sourceDocument")}
+                          {Number.isFinite(doc.fileSize) && (
+                            <> · {(doc.fileSize / 1024).toFixed(1)} KB</>
+                          )}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={documentApi.isLoading}
+                        onClick={() => handleOpenDocument(doc.id, doc.filename)}
+                        className="shrink-0 p-1 rounded hover:bg-red-50 transition-colors disabled:opacity-50 text-muted-foreground"
+                        aria-label={t("activityDetails.downloadPdf")}
+                      >
+                        <PdfFileIcon />
+                      </button>
+                    </div>
+                  ))}
+
+                  {activity.markdowns
+                    ?.slice()
+                    .sort((a, b) => {
+                      const order = [
+                        "deckblatt",
+                        "artikulationsschema",
+                        "uebung",
+                        "uebung_loesung",
+                        "hintergrundwissen",
+                        "tafelbild",
+                      ];
+                      const ai = order.indexOf(a.type ?? "");
+                      const bi = order.indexOf(b.type ?? "");
+                      return (
+                        (ai === -1 ? order.length : ai) -
+                        (bi === -1 ? order.length : bi)
+                      );
+                    })
+                    .map((md) => (
+                      <div
+                        key={md.id}
+                        className="flex items-center gap-3 px-4 py-3"
+                      >
+                        <BookOpen className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {md.type ? (
+                              <>
+                                <span className="hidden sm:inline">
+                                  {activity.name} —{" "}
+                                </span>
+                                {md.type.charAt(0).toUpperCase() +
+                                  md.type.slice(1)}
+                              </>
+                            ) : (
+                              <span className="hidden sm:inline">
+                                {activity.name}
+                              </span>
+                            )}
+                          </p>
+                          {docxLoadingId === md.id && (
+                            <p className="text-xs text-muted-foreground italic animate-pulse mt-0.5">
+                              {docxWaitingQuotes[quoteIndex]}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadMarkdownPdf(md.id)}
+                            className="p-1 rounded hover:bg-red-50 transition-colors text-muted-foreground"
+                            aria-label={t("activityDetails.downloadPdf")}
+                          >
+                            <PdfFileIcon />
+                          </button>
+                          {docxAvailable && (
+                            <button
+                              type="button"
+                              disabled={!!docxLoadingId}
+                              onClick={() =>
+                                handleDownloadMarkdownDocx(md.id, md.type)
+                              }
+                              className="p-1 rounded hover:bg-blue-50 transition-colors disabled:opacity-50 text-muted-foreground"
+                              aria-label={t("activityDetails.downloadDocx")}
+                            >
+                              {docxLoadingId === md.id ? (
+                                <Loader2 className="h-8 w-8 animate-spin" />
+                              ) : (
+                                <DocxFileIcon />
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+
+                  {activity.markdowns && activity.markdowns.length > 0 && (
+                    <div className="flex items-center gap-3 px-4 py-3 bg-muted/20">
+                      <Download className="h-4 w-4 text-muted-foreground shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">
+                          {t("activityDetails.downloadActivity")}
+                        </p>
+                        {docxLoadingId === "activity" ? (
+                          <p className="text-xs text-muted-foreground italic animate-pulse">
                             {docxWaitingQuotes[quoteIndex]}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">
+                            {t("activityDetails.combinedDocument")}
                           </p>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 shrink-0">
+                      <div className="flex items-center gap-1 shrink-0">
                         <button
                           type="button"
-                          onClick={() => handleDownloadMarkdownPdf(md.id)}
-                          className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
+                          onClick={handleOpenActivityPdf}
+                          className="p-1 rounded hover:bg-red-50 transition-colors text-muted-foreground"
+                          aria-label={t("activityDetails.downloadPdf")}
                         >
-                          PDF
+                          <PdfFileIcon />
                         </button>
                         {docxAvailable && (
                           <button
                             type="button"
                             disabled={!!docxLoadingId}
-                            onClick={() =>
-                              handleDownloadMarkdownDocx(md.id, md.type)
-                            }
-                            className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50"
+                            onClick={handleOpenActivityDocx}
+                            className="p-1 rounded hover:bg-blue-50 transition-colors disabled:opacity-50 text-muted-foreground"
+                            aria-label={t("activityDetails.downloadDocx")}
                           >
-                            {docxLoadingId === md.id ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
+                            {docxLoadingId === "activity" ? (
+                              <Loader2 className="h-8 w-8 animate-spin" />
                             ) : (
-                              "DOCX"
+                              <DocxFileIcon />
                             )}
                           </button>
                         )}
                       </div>
                     </div>
-                  ))}
-
-                {activity.markdowns && activity.markdowns.length > 0 && (
-                  <div className="flex items-center gap-3 px-4 py-3 bg-muted/20">
-                    <Download className="h-4 w-4 text-muted-foreground shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">
-                        {t("activityDetails.downloadActivity")}
-                      </p>
-                      {docxLoadingId === "activity" ? (
-                        <p className="text-xs text-muted-foreground italic animate-pulse">
-                          {docxWaitingQuotes[quoteIndex]}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">
-                          {t("activityDetails.combinedDocument")}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={handleOpenActivityPdf}
-                        className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors"
-                      >
-                        PDF
-                      </button>
-                      {docxAvailable && (
-                        <button
-                          type="button"
-                          disabled={!!docxLoadingId}
-                          onClick={handleOpenActivityDocx}
-                          className="inline-flex items-center gap-1 px-2.5 h-7 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition-colors disabled:opacity-50"
-                        >
-                          {docxLoadingId === "activity" ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : (
-                            "DOCX"
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </section>
           )}
