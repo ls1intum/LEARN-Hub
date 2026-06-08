@@ -10,7 +10,7 @@ import { useDataFetch } from "@/hooks/useDataFetch";
 import { useApi } from "@/hooks/useApi";
 import {
   Brain,
-  Activity as ActivityIcon,
+  Dumbbell,
   FileText,
   Clock,
   Users,
@@ -773,28 +773,35 @@ export const ActivityDetails: React.FC = () => {
               </div>
             </div>
           )}
-          {activity.mentalLoad && (
+          {(activity.mentalLoad || activity.physicalEnergy) && (
             <div className="border border-border rounded-lg px-4 py-3">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                {t("activityDetails.energyRequirements")} —{" "}
-                {t("activityDetails.mental")}
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                {t("activityDetails.energyRequirements")}
               </p>
-              <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                <Brain className="h-3.5 w-3.5 text-blue-500" />
-                {translateEnum("energy", activity.mentalLoad)}
-              </p>
-            </div>
-          )}
-          {activity.physicalEnergy && (
-            <div className="border border-border rounded-lg px-4 py-3">
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                {t("activityDetails.energyRequirements")} —{" "}
-                {t("activityDetails.physical")}
-              </p>
-              <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                <ActivityIcon className="h-3.5 w-3.5 text-orange-500" />
-                {translateEnum("energy", activity.physicalEnergy)}
-              </p>
+              <div className="space-y-2">
+                {activity.mentalLoad && (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                      <Brain className="h-3.5 w-3.5 text-muted-foreground" />
+                      {t("activityDetails.mental")}
+                    </p>
+                    <span className="text-xs font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-md">
+                      {translateEnum("energy", activity.mentalLoad)}
+                    </span>
+                  </div>
+                )}
+                {activity.physicalEnergy && (
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
+                      <Dumbbell className="h-3.5 w-3.5 text-muted-foreground" />
+                      {t("activityDetails.physical")}
+                    </p>
+                    <span className="text-xs font-semibold text-muted-foreground bg-muted px-2.5 py-1 rounded-md">
+                      {translateEnum("energy", activity.physicalEnergy)}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
           {activity.resourcesNeeded && activity.resourcesNeeded.length > 0 && (
