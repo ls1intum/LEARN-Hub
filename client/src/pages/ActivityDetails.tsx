@@ -2,6 +2,12 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorDisplay } from "@/components/ui/ErrorDisplay";
 import { DeleteActivityDialog } from "@/components/activities/DeleteActivityDialog";
@@ -527,10 +533,56 @@ export const ActivityDetails: React.FC = () => {
         {/* Meta chips */}
         <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
           {durationChipText && (
-            <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60">
-              <Clock className="h-3 w-3" />
-              {durationChipText}
-            </span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60 cursor-default">
+                    <Clock className="h-3 w-3" />
+                    {durationChipText}
+                    <span className="text-[10px] leading-none">*</span>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent className="text-xs">
+                  <div className="space-y-1">
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">
+                        {t("activityDetails.durationMin")}
+                      </span>
+                      <span className="font-medium">
+                        {activity.durationMinMinutes ?? "—"}{" "}
+                        {t("common.minutes")}
+                      </span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">
+                        {t("activityDetails.durationMax")}
+                      </span>
+                      <span className="font-medium">
+                        {activity.durationMaxMinutes ?? "—"}{" "}
+                        {t("common.minutes")}
+                      </span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">
+                        {t("activityDetails.prepTime")}
+                      </span>
+                      <span className="font-medium">
+                        {activity.prepTimeMinutes ?? "—"} {t("common.minutes")}
+                      </span>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <span className="text-muted-foreground">
+                        {t("activityDetails.cleanupTime")}
+                      </span>
+                      <span className="font-medium">
+                        {activity.cleanupTimeMinutes ?? "—"}{" "}
+                        {t("common.minutes")}
+                      </span>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           {ageRange && (
             <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60">
