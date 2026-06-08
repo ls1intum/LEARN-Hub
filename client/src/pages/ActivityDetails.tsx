@@ -16,9 +16,11 @@ import { useDataFetch } from "@/hooks/useDataFetch";
 import { useApi } from "@/hooks/useApi";
 import {
   Brain,
+  Check,
   Dumbbell,
   FileText,
   Clock,
+  Info,
   Users,
   Monitor,
   BookOpen,
@@ -441,21 +443,18 @@ export const ActivityDetails: React.FC = () => {
       <Breadcrumb items={breadcrumbItems} />
 
       {/* Hero header */}
-      <div
-        className={`rounded-xl border border-primary/10 overflow-hidden ${activity.thumbnailUrl ? "" : "bg-primary/5 px-5 py-5 space-y-4"}`}
-      >
-        {/* Thumbnail hero */}
-        {activity.thumbnailUrl && (
-          <div className="relative">
-            <img
-              src={`${activity.thumbnailUrl}?width=1200`}
-              alt=""
-              className="w-full h-56 sm:h-72 object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+      {activity.thumbnailUrl ? (
+        <div className="relative flex flex-col rounded-xl border border-primary/10 overflow-hidden min-h-[12rem] sm:min-h-[16rem]">
+          <img
+            src={`${activity.thumbnailUrl}?width=1200`}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-            {/* Actions pinned to top-right */}
-            <div className="absolute top-3 right-3 flex items-center gap-2">
+          {/* Actions pinned to top-right */}
+          <div className="relative flex justify-end p-3">
+            <div className="flex items-center gap-2">
               <FavouriteButton
                 activityId={activity.id}
                 size="sm"
@@ -519,204 +518,19 @@ export const ActivityDetails: React.FC = () => {
                 </>
               )}
             </div>
-
-            {/* Title + chips overlaid at bottom */}
-            <div className="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-10 space-y-3">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow">
-                {activity.name}
-              </h1>
-              <div className="flex flex-wrap gap-2 text-xs text-white/90">
-                {durationChipText && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="flex items-center gap-1 border border-white/30 rounded-full px-2.5 py-1 bg-black/30 cursor-default">
-                          <Clock className="h-3 w-3" />
-                          {durationChipText}
-                          <span className="text-[10px] leading-none">*</span>
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="text-xs">
-                        <div className="space-y-1">
-                          <div className="flex justify-between gap-4">
-                            <span className="text-muted-foreground">
-                              {t("activityDetails.durationMin")}
-                            </span>
-                            <span className="font-medium">
-                              {activity.durationMinMinutes ?? "—"}{" "}
-                              {t("common.minutes")}
-                            </span>
-                          </div>
-                          <div className="flex justify-between gap-4">
-                            <span className="text-muted-foreground">
-                              {t("activityDetails.durationMax")}
-                            </span>
-                            <span className="font-medium">
-                              {activity.durationMaxMinutes ?? "—"}{" "}
-                              {t("common.minutes")}
-                            </span>
-                          </div>
-                          <div className="flex justify-between gap-4">
-                            <span className="text-muted-foreground">
-                              {t("activityDetails.prepTime")}
-                            </span>
-                            <span className="font-medium">
-                              {activity.prepTimeMinutes ?? "—"}{" "}
-                              {t("common.minutes")}
-                            </span>
-                          </div>
-                          <div className="flex justify-between gap-4">
-                            <span className="text-muted-foreground">
-                              {t("activityDetails.cleanupTime")}
-                            </span>
-                            <span className="font-medium">
-                              {activity.cleanupTimeMinutes ?? "—"}{" "}
-                              {t("common.minutes")}
-                            </span>
-                          </div>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                {ageRange && (
-                  <span className="flex items-center gap-1 border border-white/30 rounded-full px-2.5 py-1 bg-black/30">
-                    <Users className="h-3 w-3" />
-                    {t("activityDetails.ageRange")} {ageRange}
-                  </span>
-                )}
-                {activity.format && (
-                  <span className="flex items-center gap-1 border border-white/30 rounded-full px-2.5 py-1 bg-black/30">
-                    <Monitor className="h-3 w-3" />
-                    {translateEnum("format", activity.format)}
-                  </span>
-                )}
-                {activity.source && (
-                  <span className="flex items-center gap-1 border border-white/30 rounded-full px-2.5 py-1 bg-black/30">
-                    {t("activityDetails.source")}: {activity.source}
-                  </span>
-                )}
-              </div>
-            </div>
           </div>
-        )}
 
-        {/* Mobile publish button (thumbnail variant) */}
-        {activity.thumbnailUrl &&
-          isAdmin &&
-          source === "drafts" &&
-          activity.status === "DRAFT" && (
-            <div className="px-5 pt-3 pb-1">
-              <Button
-                className="w-full sm:hidden gap-1.5"
-                onClick={() => void handlePublishDraft()}
-                disabled={isPublishing}
-              >
-                {isPublishing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-                Veröffentlichen
-              </Button>
-            </div>
-          )}
-
-        {/* No-thumbnail: title + actions + chips */}
-        {!activity.thumbnailUrl && (
-          <>
-            <div className="space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                  {activity.name}
-                </h1>
-                <div className="flex items-center gap-2 shrink-0">
-                  <FavouriteButton
-                    activityId={activity.id}
-                    size="sm"
-                    initialIsFavourited={activity.isFavourited ?? false}
-                  />
-                  {isAdmin && (
-                    <>
-                      {source === "drafts" && activity.status === "DRAFT" && (
-                        <Button
-                          size="sm"
-                          className="hidden sm:flex h-8 gap-1.5"
-                          onClick={() => void handlePublishDraft()}
-                          disabled={isPublishing}
-                        >
-                          {isPublishing ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <Send className="h-3.5 w-3.5" />
-                          )}
-                          Veröffentlichen
-                        </Button>
-                      )}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            type="button"
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8 text-muted-foreground"
-                            aria-label="Weitere Aktionen"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() =>
-                              navigate(`${location.pathname}/edit`, {
-                                state: {
-                                  backTo,
-                                  restoreScrollY,
-                                  detailPath: location.pathname,
-                                } satisfies ActivityNavigationState,
-                              })
-                            }
-                          >
-                            <Edit3 />
-                            {t("activityDetails.edit")}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => setDeleteDialogOpen(true)}
-                            className="text-destructive focus:text-destructive"
-                          >
-                            <Trash2 />
-                            {t("activityDetails.delete")}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </>
-                  )}
-                </div>
-              </div>
-              {isAdmin &&
-                source === "drafts" &&
-                activity.status === "DRAFT" && (
-                  <Button
-                    className="w-full sm:hidden gap-1.5"
-                    onClick={() => void handlePublishDraft()}
-                    disabled={isPublishing}
-                  >
-                    {isPublishing ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Send className="h-4 w-4" />
-                    )}
-                    Veröffentlichen
-                  </Button>
-                )}
-            </div>
-            <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+          {/* Title + chips at bottom */}
+          <div className="relative mt-auto px-5 pb-5 pt-8 space-y-3">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white drop-shadow">
+              {activity.name}
+            </h1>
+            <div className="flex flex-wrap gap-2 text-xs">
               {durationChipText && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60 cursor-default">
+                      <span className="flex items-center gap-1 border border-white/30 rounded-full px-2.5 py-1 bg-black/30 text-white/90 cursor-default">
                         <Clock className="h-3 w-3" />
                         {durationChipText}
                         <span className="text-[10px] leading-none">*</span>
@@ -766,26 +580,188 @@ export const ActivityDetails: React.FC = () => {
                 </TooltipProvider>
               )}
               {ageRange && (
-                <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60">
+                <span className="flex items-center gap-1 border border-white/30 rounded-full px-2.5 py-1 bg-black/30 text-white/90">
                   <Users className="h-3 w-3" />
                   {t("activityDetails.ageRange")} {ageRange}
                 </span>
               )}
               {activity.format && (
-                <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60">
+                <span className="flex items-center gap-1 border border-white/30 rounded-full px-2.5 py-1 bg-black/30 text-white/90">
                   <Monitor className="h-3 w-3" />
                   {translateEnum("format", activity.format)}
                 </span>
               )}
               {activity.source && (
-                <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60">
+                <span className="flex items-center gap-1 border border-white/30 rounded-full px-2.5 py-1 bg-black/30 text-white/90">
                   {t("activityDetails.source")}: {activity.source}
                 </span>
               )}
             </div>
-          </>
-        )}
-      </div>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-xl border border-primary/10 overflow-hidden bg-primary/5 px-5 py-5 space-y-4">
+          {/* No-thumbnail: title + actions + chips */}
+          <div className="space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+                {activity.name}
+              </h1>
+              <div className="flex items-center gap-2 shrink-0">
+                <FavouriteButton
+                  activityId={activity.id}
+                  size="sm"
+                  initialIsFavourited={activity.isFavourited ?? false}
+                />
+                {isAdmin && (
+                  <>
+                    {source === "drafts" && activity.status === "DRAFT" && (
+                      <Button
+                        size="sm"
+                        className="hidden sm:flex h-8 gap-1.5"
+                        onClick={() => void handlePublishDraft()}
+                        disabled={isPublishing}
+                      >
+                        {isPublishing ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Send className="h-3.5 w-3.5" />
+                        )}
+                        Veröffentlichen
+                      </Button>
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8 text-muted-foreground"
+                          aria-label="Weitere Aktionen"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            navigate(`${location.pathname}/edit`, {
+                              state: {
+                                backTo,
+                                restoreScrollY,
+                                detailPath: location.pathname,
+                              } satisfies ActivityNavigationState,
+                            })
+                          }
+                        >
+                          <Edit3 />
+                          {t("activityDetails.edit")}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => setDeleteDialogOpen(true)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 />
+                          {t("activityDetails.delete")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            {durationChipText && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60 cursor-default">
+                      <Clock className="h-3 w-3" />
+                      {durationChipText}
+                      <span className="text-[10px] leading-none">*</span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-xs">
+                    <div className="space-y-1">
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">
+                          {t("activityDetails.durationMin")}
+                        </span>
+                        <span className="font-medium">
+                          {activity.durationMinMinutes ?? "—"}{" "}
+                          {t("common.minutes")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">
+                          {t("activityDetails.durationMax")}
+                        </span>
+                        <span className="font-medium">
+                          {activity.durationMaxMinutes ?? "—"}{" "}
+                          {t("common.minutes")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">
+                          {t("activityDetails.prepTime")}
+                        </span>
+                        <span className="font-medium">
+                          {activity.prepTimeMinutes ?? "—"}{" "}
+                          {t("common.minutes")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">
+                          {t("activityDetails.cleanupTime")}
+                        </span>
+                        <span className="font-medium">
+                          {activity.cleanupTimeMinutes ?? "—"}{" "}
+                          {t("common.minutes")}
+                        </span>
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {ageRange && (
+              <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60">
+                <Users className="h-3 w-3" />
+                {t("activityDetails.ageRange")} {ageRange}
+              </span>
+            )}
+            {activity.format && (
+              <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60">
+                <Monitor className="h-3 w-3" />
+                {translateEnum("format", activity.format)}
+              </span>
+            )}
+            {activity.source && (
+              <span className="flex items-center gap-1 border border-border/70 rounded-full px-2.5 py-1 bg-background/60">
+                {t("activityDetails.source")}: {activity.source}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Mobile publish button */}
+      {isAdmin && source === "drafts" && activity.status === "DRAFT" && (
+        <Button
+          className="w-full sm:hidden gap-1.5"
+          onClick={() => void handlePublishDraft()}
+          disabled={isPublishing}
+        >
+          {isPublishing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Send className="h-4 w-4" />
+          )}
+          Veröffentlichen
+        </Button>
+      )}
 
       <DeleteActivityDialog
         open={deleteDialogOpen}
@@ -813,31 +789,101 @@ export const ActivityDetails: React.FC = () => {
           )}
 
           {/* Learning Level */}
-          {activity.bloomLevel && (
-            <section className="space-y-3">
-              <h2 className="text-base font-semibold text-foreground">
-                {t("activityDetails.bloomLevel")}
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {BLOOM_ORDER.map((level) => {
-                  const isActive = level === bloomKey;
-                  const isPast =
-                    bloomIndex >= 0 && BLOOM_ORDER.indexOf(level) <= bloomIndex;
-                  return (
-                    <span
-                      key={level}
-                      className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                        isActive
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : isPast
-                            ? "bg-primary/10 text-primary border-primary/20"
-                            : "bg-muted text-muted-foreground border-border"
-                      }`}
+          {activity.bloomLevel && bloomIndex >= 0 && (
+            <section className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-semibold text-foreground">
+                  {t("activityDetails.bloomLevel")}
+                </h2>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        type="button"
+                        className="sm:hidden text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label={t("activityDetails.bloomWhatDoesItMean")}
+                      >
+                        <Info className="h-4 w-4" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="bottom"
+                      className="max-w-[280px] text-xs leading-relaxed"
                     >
-                      {translateEnum("bloomLevel", level)}
-                    </span>
+                      <p className="font-semibold mb-1">
+                        {t("activityDetails.bloomWhatDoesItMean")}
+                      </p>
+                      <p>{t(`enums.bloomLevelDescription.${bloomKey}`)}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
+              {/* Mobile: badge */}
+              <span className="sm:hidden inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary">
+                <Check className="h-3.5 w-3.5 shrink-0" />
+                {t("activityDetails.bloomStage", {
+                  current: bloomIndex + 1,
+                  total: BLOOM_ORDER.length,
+                })}{" "}
+                · {translateEnum("bloomLevel", bloomKey)}
+              </span>
+
+              {/* Desktop: progress stepper */}
+              <div className="hidden sm:flex items-start">
+                {BLOOM_ORDER.map((level, i) => {
+                  const isActive = i === bloomIndex;
+                  const isPast = i < bloomIndex;
+                  const isLast = i === BLOOM_ORDER.length - 1;
+                  return (
+                    <React.Fragment key={level}>
+                      <div className="flex flex-col items-center gap-2 shrink-0">
+                        <div
+                          className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                            isActive
+                              ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
+                              : isPast
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-background border-2 border-border text-muted-foreground"
+                          }`}
+                        >
+                          {isPast && <Check className="h-3 w-3" />}
+                        </div>
+                        <span
+                          className={`text-xs font-medium text-center leading-tight ${
+                            isActive
+                              ? "text-primary"
+                              : isPast
+                                ? "text-foreground"
+                                : "text-muted-foreground"
+                          }`}
+                        >
+                          {translateEnum("bloomLevel", level)}
+                        </span>
+                      </div>
+                      {!isLast && (
+                        <div
+                          className={`flex-1 h-0.5 mt-2.5 ${i < bloomIndex ? "bg-primary" : "bg-border"}`}
+                        />
+                      )}
+                    </React.Fragment>
                   );
                 })}
+              </div>
+
+              {/* Level description — desktop only */}
+              <div className="hidden sm:flex gap-3 rounded-lg bg-accent/50 border border-accent p-4">
+                <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Info className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground mb-1">
+                    {t("activityDetails.bloomWhatDoesItMean")}
+                  </p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {t(`enums.bloomLevelDescription.${bloomKey}`)}
+                  </p>
+                </div>
               </div>
             </section>
           )}

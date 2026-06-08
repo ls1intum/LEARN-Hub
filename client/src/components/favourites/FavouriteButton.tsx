@@ -7,6 +7,7 @@ import { logger } from "@/services/logger";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { AuthRedirectState } from "@/utils/authRedirect";
+import { cn } from "@/lib/utils";
 
 interface FavouriteButtonProps {
   activityId: string;
@@ -84,7 +85,7 @@ export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
             } satisfies AuthRedirectState,
           });
         }}
-        className={`text-muted-foreground hover:text-red-500 ${className}`}
+        className={cn("text-muted-foreground hover:text-red-500", className)}
         title={t("favourites.loginRequired")}
       >
         <Heart className="h-4 w-4" />
@@ -98,7 +99,11 @@ export const FavouriteButton: React.FC<FavouriteButtonProps> = ({
       size={size}
       onClick={toggleFavourite}
       disabled={loading}
-      className={`${isFavourited ? "text-red-500 hover:text-red-600" : "text-muted-foreground hover:text-red-500"} ${className}`}
+      className={cn(
+        "text-muted-foreground hover:text-red-500",
+        className,
+        isFavourited && "text-red-500 hover:text-red-600",
+      )}
     >
       <Heart className={`h-4 w-4 ${isFavourited ? "fill-current" : ""}`} />
     </Button>

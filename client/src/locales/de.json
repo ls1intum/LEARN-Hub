@@ -408,6 +408,8 @@
     "ageRange": "Altersbereich",
     "format": "Format",
     "bloomLevel": "Blooms Taxonomiestufe",
+    "bloomStage": "Stufe {{current}} von {{total}}",
+    "bloomWhatDoesItMean": "Was bedeutet das?",
     "duration": "Dauer",
     "totalTime": "Gesamtzeit (inkl. Vor- & Nachbereitung)",
     "durationMin": "Mindestdauer",
@@ -466,6 +468,14 @@
       "analyze": "Analysieren",
       "evaluate": "Bewerten",
       "create": "Erschaffen"
+    },
+    "bloomLevelDescription": {
+      "remember": "Lernende erinnern sich an Fakten, Begriffe und grundlegende Konzepte aus dem Lerninhalt.",
+      "understand": "Lernende erklären Ideen und Konzepte mit eigenen Worten und erkennen Zusammenhänge.",
+      "apply": "Lernende setzen erlerntes Wissen ein, um Aufgaben zu lösen oder Konzepte in neuen Situationen anzuwenden.",
+      "analyze": "Lernende gehen über das einfache Verstehen hinaus und untersuchen Informationen tiefer, um Beziehungen zu erkennen und fundierte Schlussfolgerungen zu ziehen.",
+      "evaluate": "Lernende bewerten Ideen, Konzepte oder Arbeiten kritisch anhand von Kriterien und begründen ihr Urteil.",
+      "create": "Lernende kombinieren Gelerntes und entwickeln daraus etwas Neues – eigene Ideen, Produkte oder Lösungen."
     },
     "energy": {
       "low": "Niedrig",

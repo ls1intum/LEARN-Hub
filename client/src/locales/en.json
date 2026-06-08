@@ -408,6 +408,8 @@
     "ageRange": "Age Range",
     "format": "Format",
     "bloomLevel": "Bloom's Taxonomy Level",
+    "bloomStage": "Level {{current}} of {{total}}",
+    "bloomWhatDoesItMean": "What does this mean?",
     "duration": "Duration",
     "totalTime": "Total Time (including prep & cleanup)",
     "durationMin": "Min. Duration",
@@ -466,6 +468,14 @@
       "analyze": "Analyze",
       "evaluate": "Evaluate",
       "create": "Create"
+    },
+    "bloomLevelDescription": {
+      "remember": "Learners recall facts, terms, and basic concepts from the learning content.",
+      "understand": "Learners explain ideas and concepts in their own words and recognize connections.",
+      "apply": "Learners use acquired knowledge to solve tasks or apply concepts in new situations.",
+      "analyze": "Learners go beyond simple understanding and examine information more deeply to recognize relationships and draw well-founded conclusions.",
+      "evaluate": "Learners critically assess ideas, concepts, or work based on criteria and justify their judgment.",
+      "create": "Learners combine what they've learned to create something new — their own ideas, products, or solutions."
     },
     "energy": {
       "low": "Low",

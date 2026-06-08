@@ -16,15 +16,6 @@ const BLOOM_ORDER = [
   "create",
 ];
 
-const BLOOM_COLORS: Record<string, string> = {
-  remember: "bg-slate-400",
-  understand: "bg-blue-400",
-  apply: "bg-green-500",
-  analyze: "bg-yellow-400",
-  evaluate: "bg-orange-400",
-  create: "bg-purple-500",
-};
-
 interface ActivityCardProps {
   activity: Activity;
   onClick: () => void;
@@ -44,7 +35,6 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
   const [imgLoaded, setImgLoaded] = useState(false);
   const bloomKey = activity.bloomLevel?.toLowerCase() ?? "";
   const bloomIndex = BLOOM_ORDER.indexOf(bloomKey);
-  const bloomColor = BLOOM_COLORS[bloomKey] ?? "bg-primary";
   return (
     <div
       className="soft-card group flex h-full cursor-pointer flex-col gap-2.5 overflow-hidden rounded-[1.25rem] transition-all hover:-translate-y-0.5 hover:border-primary/15 hover:shadow-[0_22px_50px_-34px_rgba(15,23,42,0.45)]"
@@ -136,7 +126,7 @@ export const ActivityCard: React.FC<ActivityCardProps> = ({
               {BLOOM_ORDER.map((_, i) => (
                 <div
                   key={i}
-                  className={`w-2 h-2 rounded-full transition-colors ${i <= bloomIndex ? bloomColor : "bg-muted"}`}
+                  className={`w-2 h-2 rounded-full transition-colors ${i <= bloomIndex ? "bg-primary" : "bg-muted"}`}
                 />
               ))}
             </div>
