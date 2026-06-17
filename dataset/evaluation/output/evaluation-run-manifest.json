@@ -1,0 +1,50 @@
+[
+  {
+    "sourcePdf": "LEARN-Kit-algorithmen_und_roboter.pdf",
+    "activityId": "4931b73b-a8f0-4f9f-9f04-77e162672ea4",
+    "activityName": "Algorithmen & Roboter",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/Algorithmen-Roboter-4931b73b-a8f0-4f9f-9f04-77e162672ea4.pdf"
+  },
+  {
+    "sourcePdf": "LEARN-Kit-netzwerk.pdf",
+    "activityId": "e54f616f-98e4-43da-a1b2-f59189f9828a",
+    "activityName": "Wie funktioniert ein Netzwerk?",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/Wie-funktioniert-ein-Netzwerk-e54f616f-98e4-43da-a1b2-f59189f9828a.pdf"
+  },
+  {
+    "sourcePdf": "barefoot-howcomputerslearn.pdf",
+    "activityId": "b81d2fd0-8ec0-437b-88f2-79ccca55b4e3",
+    "activityName": "Wie Computer lernen",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/Wie-Computer-lernen-b81d2fd0-8ec0-437b-88f2-79ccca55b4e3.pdf"
+  },
+  {
+    "sourcePdf": "csunplugged-colourbynumbers.pdf",
+    "activityId": "6db37194-cde8-4f9c-aa11-9d028f319e01",
+    "activityName": "Malen nach Zahlen: Bilder mit Pixeln darstellen",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/Malen-nach-Zahlen-Bilder-mit-Pixeln-darstellen-6db37194-cde8-4f9c-aa11-9d028f319e01.pdf"
+  },
+  {
+    "sourcePdf": "codeorg-artist.pdf",
+    "activityId": "b3f2b673-2273-477d-ac37-c59e48200fbc",
+    "activityName": "Künstler: Zeichnen mit Programmierblöcken",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/K-nstler-Zeichnen-mit-Programmierbl-cken-b3f2b673-2273-477d-ac37-c59e48200fbc.pdf"
+  },
+  {
+    "sourcePdf": "learnlabs-logik.pdf",
+    "activityId": "7532e1a3-44ab-428e-bad7-e9087ec8e0bf",
+    "activityName": "Logische Gatter und Wahrheitstabellen",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/Logische-Gatter-und-Wahrheitstabellen-7532e1a3-44ab-428e-bad7-e9087ec8e0bf.pdf"
+  }
+]
