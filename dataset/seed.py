@@ -55,16 +55,27 @@ INT_FIELDS = {
 
 LIST_FIELDS = ["resourcesNeeded", "topics"]
 
-MARKDOWN_FIELDS = [
+MARKDOWN_FIELDS_REQUIRED = [
     "deckblattMarkdown",
     "artikulationsschemaMarkdown",
     "hintergrundwissenMarkdown",
 ]
 
+MARKDOWN_FIELDS_OPTIONAL = [
+    "tafelbildMarkdown",
+    "uebungMarkdown",
+    "uebungLoesungMarkdown",
+]
+
+MARKDOWN_FIELDS = MARKDOWN_FIELDS_REQUIRED + MARKDOWN_FIELDS_OPTIONAL
+
 MARKDOWN_API_TYPES = {
     "deckblatt": "deckblattMarkdown",
     "artikulationsschema": "artikulationsschemaMarkdown",
     "hintergrundwissen": "hintergrundwissenMarkdown",
+    "tafelbild": "tafelbildMarkdown",
+    "uebung": "uebungMarkdown",
+    "uebung_loesung": "uebungLoesungMarkdown",
 }
 
 
@@ -86,18 +97,28 @@ def require_requests():
         sys.exit(1)
 
 
-def auth_headers(token: str) -> dict[str, str]:
-    """Build authorization headers for admin endpoints."""
-    return {"Authorization": f"Bearer {token}"}
+def fetch_csrf_token(session: "requests.Session", base_url: str, timeout: int):
+    """Fetch a CSRF token and store it in the session cookie jar."""
+    resp = session.get(f"{base_url}/api/auth/csrf", timeout=timeout)
+    if resp.status_code != 200:
+        print(f"CSRF token fetch failed ({resp.status_code}): {resp.text}")
+        sys.exit(1)
 
 
-def fetch_activities(base_url: str, timeout: int, token: str | None = None) -> list[dict]:
+def csrf_headers(session: "requests.Session") -> dict[str, str]:
+    """Return the X-XSRF-TOKEN header from the session's cookie jar."""
+    token = session.cookies.get("XSRF-TOKEN")
+    if not token:
+        return {}
+    return {"X-XSRF-TOKEN": token}
+
+
+def fetch_activities(base_url: str, timeout: int, session: "requests.Session | None" = None) -> list[dict]:
     """Fetch all activities with their markdowns from the API."""
-    headers = auth_headers(token) if token else None
-    resp = requests.get(
+    req = session if session is not None else requests
+    resp = req.get(
         f"{base_url}/api/activities/",
         params={"limit": 1000, "offset": 0},
-        headers=headers,
         timeout=timeout,
     )
     if resp.status_code != 200:
@@ -106,12 +127,11 @@ def fetch_activities(base_url: str, timeout: int, token: str | None = None) -> l
     return resp.json().get("activities", [])
 
 
-def get_activity(base_url: str, timeout: int, activity_id: str, token: str | None = None) -> dict:
+def get_activity(base_url: str, timeout: int, activity_id: str, session: "requests.Session | None" = None) -> dict:
     """Fetch one activity by ID."""
-    headers = auth_headers(token) if token else None
-    resp = requests.get(
+    req = session if session is not None else requests
+    resp = req.get(
         f"{base_url}/api/activities/{activity_id}",
-        headers=headers,
         timeout=timeout,
     )
     if resp.status_code != 200:
@@ -132,23 +152,26 @@ def get_existing_activity_names(base_url: str, timeout: int) -> set[str]:
     return {a["name"] for a in activities if "name" in a}
 
 
-def login(base_url: str, email: str, password: str, timeout: int) -> str:
-    """Authenticate as admin and return the access token."""
-    resp = requests.post(
+def login(base_url: str, email: str, password: str, timeout: int) -> "requests.Session":
+    """Authenticate as admin and return an authenticated session."""
+    session = requests.Session()
+    fetch_csrf_token(session, base_url, timeout)
+    resp = session.post(
         f"{base_url}/api/auth/login",
         json={"email": email, "password": password},
+        headers=csrf_headers(session),
         timeout=timeout,
     )
     if resp.status_code != 200:
         print(f"Login failed ({resp.status_code}): {resp.text}")
         sys.exit(1)
 
-    token = resp.json().get("accessToken")
-    if not token:
-        print(f"Login response missing accessToken: {resp.json()}")
+    user = resp.json().get("user", resp.json())
+    if user.get("role") != "ADMIN":
+        print(f"Authenticated user is not an admin: {user.get('email', email)}")
         sys.exit(1)
 
-    return token
+    return session
 
 
 def confirm_or_exit(message: str, assume_yes: bool = False):
@@ -162,11 +185,11 @@ def confirm_or_exit(message: str, assume_yes: bool = False):
         sys.exit(1)
 
 
-def delete_activity(base_url: str, token: str, activity_id: str, timeout: int):
+def delete_activity(base_url: str, session: "requests.Session", activity_id: str, timeout: int):
     """Delete one activity by ID."""
-    resp = requests.delete(
+    resp = session.delete(
         f"{base_url}/api/activities/{activity_id}",
-        headers=auth_headers(token),
+        headers=csrf_headers(session),
         timeout=timeout,
     )
     if resp.status_code not in (200, 204):
@@ -198,24 +221,32 @@ def csv_row_to_metadata(row: dict) -> dict:
 
 
 def csv_row_to_markdowns(row: dict) -> dict | None:
-    """Extract markdown content from CSV columns. Returns None if any field is missing/empty."""
+    """Extract markdown content from CSV columns.
+
+    Returns None if any required field is missing/empty (triggering LLM fallback).
+    Optional fields (tafelbild, uebung, uebung_loesung) are included when present.
+    """
     markdowns = {}
-    for key in MARKDOWN_FIELDS:
+    for key in MARKDOWN_FIELDS_REQUIRED:
         val = row.get(key, "").strip()
         if not val:
             return None
         markdowns[key] = val
+    for key in MARKDOWN_FIELDS_OPTIONAL:
+        val = row.get(key, "").strip()
+        if val:
+            markdowns[key] = val
     return markdowns
 
 
-def upload_pdf(base_url: str, token: str, pdf_path: Path, timeout: int, generate_content: bool) -> dict:
+def upload_pdf(base_url: str, session: "requests.Session", pdf_path: Path, timeout: int, generate_metadata: bool) -> dict:
     """Upload a PDF and create a draft shell. Returns the activity response dict."""
     with open(pdf_path, "rb") as f:
-        resp = requests.post(
+        resp = session.post(
             f"{base_url}/api/activities/upload-and-create-pending",
             files={"pdf_file": (pdf_path.name, f, "application/pdf")},
-            params={"generateContent": str(generate_content).lower()},
-            headers={"Authorization": f"Bearer {token}"},
+            data={"generateMetadata": str(generate_metadata).lower()},
+            headers=csrf_headers(session),
             timeout=timeout,
         )
     if resp.status_code != 201:
@@ -224,13 +255,13 @@ def upload_pdf(base_url: str, token: str, pdf_path: Path, timeout: int, generate
 
 
 def generate_markdowns_api(
-    base_url: str, token: str, document_id: str, metadata: dict, timeout: int
+    base_url: str, session: "requests.Session", document_id: str, metadata: dict, timeout: int
 ) -> dict:
-    """Generate all three markdowns via the LLM. Returns the API response dict."""
-    resp = requests.post(
+    """Generate all markdowns via the LLM. Returns the API response dict."""
+    resp = session.post(
         f"{base_url}/api/activities/generate-markdowns",
         json={"documentId": document_id, "metadata": metadata},
-        headers={"Authorization": f"Bearer {token}"},
+        headers=csrf_headers(session),
         timeout=timeout,
     )
     if resp.status_code != 200:
@@ -239,7 +270,7 @@ def generate_markdowns_api(
 
 
 def update_activity(
-    base_url: str, token: str, activity_id: str, document_id: str, metadata: dict, markdowns: dict, timeout: int
+    base_url: str, session: "requests.Session", activity_id: str, document_id: str, metadata: dict, markdowns: dict, timeout: int
 ) -> dict:
     """Update an existing draft activity with CSV metadata and markdowns."""
     payload = {
@@ -248,11 +279,14 @@ def update_activity(
         "deckblattMarkdown": markdowns.get("deckblattMarkdown", ""),
         "artikulationsschemaMarkdown": markdowns.get("artikulationsschemaMarkdown", ""),
         "hintergrundwissenMarkdown": markdowns.get("hintergrundwissenMarkdown", ""),
+        "tafelbildMarkdown": markdowns.get("tafelbildMarkdown", ""),
+        "uebungMarkdown": markdowns.get("uebungMarkdown", ""),
+        "uebungLoesungMarkdown": markdowns.get("uebungLoesungMarkdown", ""),
     }
-    resp = requests.put(
+    resp = session.put(
         f"{base_url}/api/activities/{activity_id}",
         json=payload,
-        headers={"Authorization": f"Bearer {token}"},
+        headers=csrf_headers(session),
         timeout=timeout,
     )
     if resp.status_code != 200:
@@ -260,11 +294,11 @@ def update_activity(
     return resp.json()
 
 
-def publish_activity(base_url: str, token: str, activity_id: str, timeout: int) -> dict:
+def publish_activity(base_url: str, session: "requests.Session", activity_id: str, timeout: int) -> dict:
     """Publish a draft activity."""
-    resp = requests.put(
+    resp = session.put(
         f"{base_url}/api/activities/{activity_id}/publish",
-        headers={"Authorization": f"Bearer {token}"},
+        headers=csrf_headers(session),
         timeout=timeout,
     )
     if resp.status_code != 200:
@@ -272,11 +306,11 @@ def publish_activity(base_url: str, token: str, activity_id: str, timeout: int) 
     return resp.json()
 
 
-def wait_for_draft_status(base_url: str, token: str, activity_id: str, timeout: int, max_wait: int) -> dict:
+def wait_for_draft_status(base_url: str, session: "requests.Session", activity_id: str, timeout: int, max_wait: int) -> dict:
     """Poll until the activity reaches DRAFT or fails generation."""
     deadline = time.time() + max_wait
     while True:
-        activity = get_activity(base_url, timeout, activity_id, token)
+        activity = get_activity(base_url, timeout, activity_id, session)
         status = activity.get("status")
         generation_error = activity.get("generationError")
 
@@ -300,7 +334,7 @@ def get_source_document_id(activity: dict) -> str:
 
 def seed_activity(
     base_url: str,
-    token: str,
+    session: "requests.Session",
     row: dict,
     timeout: int,
     generate_markdown: bool = False,
@@ -311,10 +345,9 @@ def seed_activity(
     filename = row["filename"]
     pdf_path = PDF_DIR / filename
     metadata = csv_row_to_metadata(row)
-    use_background_generation = False
 
     print(f"  [1/4] Uploading {filename}...")
-    activity = upload_pdf(base_url, token, pdf_path, timeout, generate_content=use_background_generation)
+    activity = upload_pdf(base_url, session, pdf_path, timeout, generate_metadata=False)
     activity_id = activity["id"]
     document_id = get_source_document_id(activity)
 
@@ -329,23 +362,23 @@ def seed_activity(
         else:
             print(f"  [2/4] Generating markdowns via API (this may take a while)...")
         start = time.time()
-        markdowns = generate_markdowns_api(base_url, token, document_id, metadata, timeout)
+        markdowns = generate_markdowns_api(base_url, session, document_id, metadata, timeout)
         elapsed = time.time() - start
         print(f"        Done in {elapsed:.1f}s")
 
     print(f"  [3/4] Updating draft metadata and markdowns...")
-    update_activity(base_url, token, activity_id, document_id, metadata, markdowns, timeout)
+    update_activity(base_url, session, activity_id, document_id, metadata, markdowns, timeout)
 
     if target_status == "published":
         print(f"  [4/4] Publishing activity...")
-        publish_activity(base_url, token, activity_id, timeout)
+        publish_activity(base_url, session, activity_id, timeout)
         return activity_id, "PUBLISHED"
 
     print(f"  [4/4] Leaving activity in drafts")
-    activity = get_activity(base_url, timeout, activity_id, token)
+    activity = get_activity(base_url, timeout, activity_id, session)
     final_status = activity.get("status", "DRAFT")
     if final_status == "PENDING":
-        activity = wait_for_draft_status(base_url, token, activity_id, timeout, wait_timeout)
+        activity = wait_for_draft_status(base_url, session, activity_id, timeout, wait_timeout)
         final_status = activity.get("status", "DRAFT")
     return activity_id, final_status
 
@@ -406,7 +439,7 @@ def cmd_seed(args):
         rows = [r for r in rows if r["filename"] not in set(missing)]
 
     print(f"\nLogging in as {args.email} at {args.base_url}...")
-    token = login(args.base_url, args.email, args.password, args.timeout)
+    session = login(args.base_url, args.email, args.password, args.timeout)
     print("Authenticated successfully.\n")
 
     existing_names = set()
@@ -431,7 +464,7 @@ def cmd_seed(args):
         try:
             activity_id, final_status = seed_activity(
                 args.base_url,
-                token,
+                session,
                 row,
                 args.timeout,
                 args.generate_markdown,
@@ -517,7 +550,7 @@ def print_delete_plan(targets: list[dict]):
             print(f"  - {target.get('id')}")
 
 
-def delete_targets(base_url: str, token: str, timeout: int, targets: list[dict]) -> tuple[int, int]:
+def delete_targets(base_url: str, session: "requests.Session", timeout: int, targets: list[dict]) -> tuple[int, int]:
     succeeded = 0
     failed = 0
 
@@ -526,7 +559,7 @@ def delete_targets(base_url: str, token: str, timeout: int, targets: list[dict])
         label = target.get("name") or activity_id
         print(f"[{i}/{len(targets)}] Deleting {label}...")
         try:
-            delete_activity(base_url, token, activity_id, timeout)
+            delete_activity(base_url, session, activity_id, timeout)
             print("  Deleted")
             succeeded += 1
         except Exception as e:
@@ -546,7 +579,7 @@ def cmd_delete(args):
         sys.exit(1)
 
     print(f"\nLogging in as {args.email} at {args.base_url}...")
-    token = login(args.base_url, args.email, args.password, args.timeout)
+    session = login(args.base_url, args.email, args.password, args.timeout)
     print("Authenticated successfully.\n")
 
     targets = [{"id": activity_id} for activity_id in (args.id or [])]
@@ -562,7 +595,7 @@ def cmd_delete(args):
 
     if names_to_delete:
         print(f"Fetching activities from {args.base_url}...")
-        activities = fetch_activities(args.base_url, args.timeout, token)
+        activities = fetch_activities(args.base_url, args.timeout, session)
         name_matches, missing_names = find_activities_by_name(activities, names_to_delete)
         targets.extend(name_matches)
 
@@ -584,7 +617,7 @@ def cmd_delete(args):
         args.yes,
     )
 
-    succeeded, failed = delete_targets(args.base_url, token, args.timeout, targets)
+    succeeded, failed = delete_targets(args.base_url, session, args.timeout, targets)
 
     print("=" * 60)
     print(f"Delete complete: {succeeded} deleted, {failed} failed")
@@ -600,11 +633,11 @@ def cmd_delete_all(args):
         sys.exit(1)
 
     print(f"\nLogging in as {args.email} at {args.base_url}...")
-    token = login(args.base_url, args.email, args.password, args.timeout)
+    session = login(args.base_url, args.email, args.password, args.timeout)
     print("Authenticated successfully.\n")
 
     print(f"Fetching activities from {args.base_url}...")
-    activities = fetch_activities(args.base_url, args.timeout, token)
+    activities = fetch_activities(args.base_url, args.timeout, session)
     targets = unique_delete_targets(activities)
 
     if not targets:
@@ -619,7 +652,7 @@ def cmd_delete_all(args):
         args.yes,
     )
 
-    succeeded, failed = delete_targets(args.base_url, token, args.timeout, targets)
+    succeeded, failed = delete_targets(args.base_url, session, args.timeout, targets)
 
     print("=" * 60)
     print(f"Delete-all complete: {succeeded} deleted, {failed} failed")
