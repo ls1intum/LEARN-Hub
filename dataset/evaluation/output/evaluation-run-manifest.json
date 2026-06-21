@@ -46,5 +46,53 @@
     "status": "DRAFT",
     "generationError": null,
     "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/Logische-Gatter-und-Wahrheitstabellen-7532e1a3-44ab-428e-bad7-e9087ec8e0bf.pdf"
+  },
+  {
+    "sourcePdf": "LEARN-Kit-binaersystem.pdf",
+    "activityId": "c0f4e6fb-ca0a-488c-8840-6fc34b573e04",
+    "activityName": "Grundlagen des Binärsystems",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/Grundlagen-des-Bin-rsystems-c0f4e6fb-ca0a-488c-8840-6fc34b573e04.pdf"
+  },
+  {
+    "sourcePdf": "learnlabs-baeume.pdf",
+    "activityId": "02ef65f7-2d95-4aa2-8af0-a2d8d95f58c6",
+    "activityName": "Bäume und Entscheidungsbäume in der Informatik",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/B-ume-und-Entscheidungsb-ume-in-der-Informatik-02ef65f7-2d95-4aa2-8af0-a2d8d95f58c6.pdf"
+  },
+  {
+    "sourcePdf": "barefoot-worldmap.pdf",
+    "activityId": "ee6d8b6e-4abf-4106-b2ce-06ad00ac8fe2",
+    "activityName": "World Map Logic",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/World-Map-Logic-ee6d8b6e-4abf-4106-b2ce-06ad00ac8fe2.pdf"
+  },
+  {
+    "sourcePdf": "learnlabs-itsicherheit.pdf",
+    "activityId": "4f6ebe40-135c-4c4a-a05c-21ecd31d1d29",
+    "activityName": "Passwörter erraten - Spiel zur IT-Sicherheit",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/Passw-rter-erraten---Spiel-zur-IT-Sicherheit-4f6ebe40-135c-4c4a-a05c-21ecd31d1d29.pdf"
+  },
+  {
+    "sourcePdf": "barefoot-patternsunplugges.pdf",
+    "activityId": "3f8d6e8a-1d7b-4a73-bfd3-b927c4d1cf63",
+    "activityName": "Muster erkennen: Elefanten, Katzen und Autos",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/Muster-erkennen-Elefanten-Katzen-und-Autos-3f8d6e8a-1d7b-4a73-bfd3-b927c4d1cf63.pdf"
+  },
+  {
+    "sourcePdf": "csunplugged-squeezingpictures.pdf",
+    "activityId": "d5bd0d1e-cf88-4eb3-a80f-6177980a6041",
+    "activityName": "Bilder platzsparend speichern mit Run-Length-Encoding",
+    "status": "DRAFT",
+    "generationError": null,
+    "downloadedPdf": "/Users/jonathan/workspace/LEARN-Hub/dataset/evaluation/output/activity-pdfs/Bilder-platzsparend-speichern-mit-Run-Length-Encoding-d5bd0d1e-cf88-4eb3-a80f-6177980a6041.pdf"
   }
 ]
