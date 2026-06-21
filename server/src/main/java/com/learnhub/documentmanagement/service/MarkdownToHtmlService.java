@@ -46,6 +46,15 @@ public class MarkdownToHtmlService {
 			Pattern.CASE_INSENSITIVE);
 	private static final Pattern PARAGRAPH_IMG_PATTERN = Pattern.compile("<p>\\s*<img((?:\\s+[^>]*)?)(/?)>\\s*</p>",
 			Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+	// A base64 markdown image, optionally preceded by its learnhub annotation
+	// comment. When an LLM wraps such an image in an HTML block (e.g. a centering
+	// <div>), CommonMark treats the whole block as raw HTML and emits the image as
+	// literal markdown text. Forcing blank lines around it splits the image into
+	// its own block so it renders as an image. (HTML <img> tags already render
+	// inside HTML blocks, so only markdown image syntax needs this.)
+	private static final Pattern EMBEDDED_DATA_IMAGE_PATTERN = Pattern
+			.compile("(?:<!--\\s*learnhub-image[^>]*-->\\s*)?!\\[[^\\]]*\\]\\(data:[^)]+\\)", Pattern.DOTALL);
+	private static final Pattern EXCESS_BLANK_LINES_PATTERN = Pattern.compile("\\n{3,}");
 
 	private final Parser parser;
 	private final HtmlRenderer renderer;
@@ -210,7 +219,21 @@ public class MarkdownToHtmlService {
 	}
 
 	private String normalizeMarkdown(String markdown) {
-		return sanitizationService.sanitize(markdown);
+		return separateEmbeddedImages(sanitizationService.sanitize(markdown));
+	}
+
+	/**
+	 * Ensure base64 markdown images are separated from surrounding content by blank
+	 * lines, so an image wrapped in an HTML block (e.g. a centering {@code <div>})
+	 * is rendered as an image rather than literal markdown text.
+	 */
+	private String separateEmbeddedImages(String markdown) {
+		if (markdown == null || markdown.isEmpty()) {
+			return markdown;
+		}
+		String padded = EMBEDDED_DATA_IMAGE_PATTERN.matcher(markdown)
+				.replaceAll(match -> "\n\n" + match.group() + "\n\n");
+		return EXCESS_BLANK_LINES_PATTERN.matcher(padded).replaceAll("\n\n");
 	}
 
 	private String decorateHtmlBody(String htmlBody) {

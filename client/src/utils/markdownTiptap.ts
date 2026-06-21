@@ -8,6 +8,56 @@ import { gfm } from "turndown-plugin-gfm";
 const IMAGE_BLOCK_RE =
   /(?:<!--\s*learnhub-image:id=([^;]*?);\s*prompt=([\s\S]*?)\s*-->\s*)?!\[([^\]]*)\]\((data:[^;\s"'`]+;base64,[A-Za-z0-9+/]+=*)\)/g;
 
+// Matches any <img> tag (used to lift images out of surrounding HTML wrappers).
+const IMG_TAG_RE = /<img\b[^>]*>/gi;
+
+/**
+ * Wrap a raw HTML fragment in the HtmlBlock carrier div so it round-trips
+ * through TipTap. Empty fragments collapse to nothing.
+ */
+function wrapHtmlBlock(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  // The carrier div stays empty — TipTap reconstructs the block from the
+  // data-html-content attribute (matching HtmlBlock.renderHTML). Inlining the
+  // raw fragment as children would nest sibling images inside unclosed wrapper
+  // tags and break ProseMirror parsing.
+  return `<div data-html-block="true" data-html-content="${encodeURIComponent(
+    trimmed,
+  )}"></div>\n`;
+}
+
+/**
+ * Turn an HTML block token into TipTap-ready HTML.
+ *
+ * If the block contains one or more <img> tags (e.g. an AI image the LLM
+ * wrapped in a centering <div>), each image is lifted out as a bare <img> so
+ * it becomes a first-class UnifiedImage node — keeping it rendered as an image
+ * (not literal markdown) and, for AI images, re-generatable in edit mode. The
+ * surrounding wrapper fragments are preserved as their own HtmlBlock nodes so
+ * styling survives the round-trip.
+ */
+function processHtmlBlockToken(raw: string): string {
+  IMG_TAG_RE.lastIndex = 0;
+  if (!IMG_TAG_RE.test(raw)) {
+    // No image inside — keep the whole block opaque (existing behaviour).
+    return wrapHtmlBlock(raw);
+  }
+
+  IMG_TAG_RE.lastIndex = 0;
+  let out = "";
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = IMG_TAG_RE.exec(raw)) !== null) {
+    out += wrapHtmlBlock(raw.slice(lastIndex, match.index));
+    // Bare <img> reaches the UnifiedImage extension.
+    out += `${match[0]}\n`;
+    lastIndex = match.index + match[0].length;
+  }
+  out += wrapHtmlBlock(raw.slice(lastIndex));
+  return out;
+}
+
 /**
  * Convert markdown (potentially containing learnhub-image annotations) to HTML
  * suitable for loading into the TipTap editor.
@@ -43,7 +93,7 @@ export function markdownToTiptapHtml(markdown: string): string {
         // the UnifiedImage extension — skip wrapping them as HTML blocks.
         if (!raw || /^<img[\s>]/i.test(raw)) return;
         (token as { type: "html"; text: string }).text =
-          `<div data-html-block="true" data-html-content="${encodeURIComponent(raw)}">${raw}</div>\n`;
+          processHtmlBlockToken(raw);
       }
     },
   }) as string;
@@ -89,9 +139,17 @@ function buildTurndown(): TurndownService {
     },
   });
 
-  // Keep any other plain images as markdown images
+  // Keep any other plain images as markdown images.
+  // Must explicitly exclude data-lh images: turndown checks the most recently
+  // added rule first, so a bare `filter: "img"` would shadow the learnhubImage
+  // rule above and strip the annotation from every AI image.
   td.addRule("plainImage", {
-    filter: "img",
+    filter(node) {
+      return (
+        node.nodeName === "IMG" &&
+        (node as Element).getAttribute("data-lh") !== "true"
+      );
+    },
     replacement(_content, node) {
       const el = node as Element;
       const src = el.getAttribute("src") ?? "";

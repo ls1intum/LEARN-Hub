@@ -84,6 +84,19 @@ class MarkdownToHtmlServiceTest {
 	}
 
 	@Test
+	void renderMarkdownToHtmlRendersImageWrappedInHtmlDiv() {
+		String markdown = """
+				<div style="text-align:center">
+				<!-- learnhub-image:id=fig1; prompt=a cat -->
+				![Bild](data:image/png;base64,ZmFrZQ==)
+				</div>""";
+		String html = service.renderMarkdownToHtml(markdown);
+		// The image renders as an <img> rather than literal markdown text.
+		assertThat(html).contains("<img src=\"data:image/png;base64,ZmFrZQ==\"");
+		assertThat(html).doesNotContain("![Bild]");
+	}
+
+	@Test
 	void renderMarkdownToHtmlSanitizesAiTypography() {
 		String html = service.renderMarkdownToHtml("AI\u2014Mensch\u2026\u00A0\u201CSchule\u201D\u200B");
 		assertThat(html).contains("AI-Mensch... &quot;Schule&quot;");
