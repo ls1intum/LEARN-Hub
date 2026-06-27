@@ -373,12 +373,16 @@ public class ActivityService {
 		return updateActivity(id, activityUpdate);
 	}
 
+	@Transactional
 	public void deleteActivity(UUID id) {
 		logger.debug("Deleting activity with id={}", id);
 		activityRepository.findByIdWithDocuments(id)
 				.ifPresent(activity -> pdfService.deleteDocumentFiles(activity.getDocuments()));
 		List<UUID> markdownIds = activityRepository.findMarkdownIdsByActivityId(id);
 		docxCacheService.evictForActivity(id, markdownIds);
+		// Remove favourites referencing this activity first to avoid orphaned rows
+		// (and FK violations) once the activity itself is gone.
+		userFavouritesRepository.deleteByActivityId(id);
 		activityRepository.deleteById(id);
 	}
 

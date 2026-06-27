@@ -50,7 +50,9 @@ public class ActivityExtractionService {
 					: 0.0;
 
 			String extractionQuality = determineExtractionQuality(confidence);
-			String confidenceScore = String.format("%.3f", confidence);
+			// Always format with a dot decimal separator, independent of the JVM
+			// default locale (e.g. de_DE would otherwise produce "0,820").
+			String confidenceScore = String.format(Locale.ROOT, "%.3f", confidence);
 			pdfService.updatePdfExtractionResults(documentIdOrCacheKey, extractedData, confidenceScore,
 					extractionQuality);
 

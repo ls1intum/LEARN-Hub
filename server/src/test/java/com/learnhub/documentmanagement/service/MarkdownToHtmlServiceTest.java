@@ -55,10 +55,28 @@ class MarkdownToHtmlServiceTest {
 	}
 
 	@Test
-	void renderMarkdownToHtmlDoublesTafelbildImageHeightLimit() {
-		String html = service.renderMarkdownToHtml("# Tafelbild\n\n![Bild](data:image/png;base64,ZmFrZQ==)");
+	void renderMarkdownToHtmlPreservesBase64ImageAsImgTag() {
+		// A dummy embedded image must survive sanitization and render as a real
+		// <img> with its data URI intact (not stripped or escaped to text).
+		String html = service.renderMarkdownToHtml("![Diagramm](data:image/png;base64,ZmFrZQ==)");
+		assertThat(html).contains("<img").contains("src=\"data:image/png;base64,ZmFrZQ==\"")
+				.doesNotContain("![Diagramm]");
+	}
+
+	@Test
+	void renderMarkdownToHtmlTafelbildRendersImagesUnbounded() {
+		// Tafelbild mode lifts the per-image height cap so the generated board
+		// image fills the slide; the body is tagged for tafelbild-specific styling.
+		String html = service.renderMarkdownToHtml("# Tafelbild\n\n![Bild](data:image/png;base64,ZmFrZQ==)", true, "",
+				false, true);
 		assertThat(html).contains("<body class=\"tafelbild-render\">").contains("<h1>Tafelbild</h1>")
-				.contains("max-height: 86mm");
+				.contains("max-height:none");
+	}
+
+	@Test
+	void renderMarkdownToHtmlAutoDetectsTafelbildBodyClassFromHeading() {
+		String html = service.renderMarkdownToHtml("# Tafelbild\n\nInhalt");
+		assertThat(html).contains("<body class=\"tafelbild-render\">").contains("<h1>Tafelbild</h1>");
 	}
 
 	@Test

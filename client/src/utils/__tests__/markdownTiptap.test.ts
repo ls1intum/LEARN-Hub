@@ -71,6 +71,25 @@ describe("markdownToTiptapHtml — images inside HTML wrappers", () => {
   });
 });
 
+describe("markdownToTiptapHtml — image display in the edit view", () => {
+  it("renders a base64 markdown image as an <img> with its data URI src", () => {
+    const html = markdownToTiptapHtml(`![Diagramm](${DATA_URI})`);
+
+    expect(html).toMatch(/<img[^>]*src="data:image\/png;base64,ABCD="/);
+    // Not left as literal markdown text.
+    expect(html).not.toContain("![Diagramm]");
+  });
+
+  it("preserves the image data URI through a round-trip", () => {
+    const back = roundtrip(`![photo](${DATA_URI})`);
+
+    // The dummy image content survives the edit-view round-trip and stays a
+    // markdown image (not dropped or turned into literal text).
+    expect(back).toContain(DATA_URI);
+    expect(back).toMatch(/!\[[^\]]*\]\(data:image\/png;base64,/);
+  });
+});
+
 describe("rich-editor round-trip (markdown → TipTap → markdown)", () => {
   it("keeps a wrapped AI image regeneratable and preserves the wrapper", () => {
     const md = `<div style="text-align:center">\n${ANNOTATION}\n![fig1](${DATA_URI})\n</div>`;

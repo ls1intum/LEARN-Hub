@@ -196,11 +196,13 @@ class ActivityControllerTest {
 		private String hintergrundwissen;
 		private String uebung;
 		private String uebungLoesung;
+		private String tafelbild = "# Tafelbild";
 		private RuntimeException deckblattFailure;
 		private int deckblattCalls;
 		private int artikulationsschemaCalls;
 		private int hintergrundwissenCalls;
 		private int uebungCalls;
+		private int tafelbildCalls;
 
 		private StubLLMService() {
 			super(unsupportedChatClient());
@@ -231,6 +233,12 @@ class ActivityControllerTest {
 		public Map<String, String> generateUebungAndLoesung(String pdfText, Map<String, Object> metadata) {
 			uebungCalls++;
 			return Map.of("uebung", uebung, "uebung_loesung", uebungLoesung);
+		}
+
+		@Override
+		public String generateTafelbildMarkdown(String artikulationsschema, Map<String, Object> metadata) {
+			tafelbildCalls++;
+			return tafelbild;
 		}
 
 		private static ChatClient unsupportedChatClient() {

@@ -377,4 +377,51 @@ describe("ApiService", () => {
       );
     });
   });
+
+  describe("Markdown export (rendering)", () => {
+    it("returns a PDF blob from the markdown pdf endpoint", async () => {
+      vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
+        new Response(
+          new Blob(["%PDF-1.4 dummy"], { type: "application/pdf" }),
+          {
+            status: 200,
+            headers: { "Content-Type": "application/pdf" },
+          },
+        ),
+      );
+
+      const blob = await ApiService.getMarkdownPdf("md-1");
+
+      expect(blob).toBeInstanceOf(Blob);
+      expect(authService.makeAuthenticatedRequest).toHaveBeenCalledWith(
+        "/api/markdowns/md-1/pdf",
+      );
+    });
+
+    it("returns a DOCX blob from the markdown docx endpoint", async () => {
+      vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
+        new Response(
+          new Blob(["PK dummy"], { type: "application/octet-stream" }),
+          {
+            status: 200,
+          },
+        ),
+      );
+
+      const blob = await ApiService.getMarkdownDocx("md-2");
+
+      expect(blob).toBeInstanceOf(Blob);
+      expect(authService.makeAuthenticatedRequest).toHaveBeenCalledWith(
+        "/api/markdowns/md-2/docx",
+      );
+    });
+
+    it("throws when the export endpoint returns a non-OK status", async () => {
+      vi.mocked(authService.makeAuthenticatedRequest).mockResolvedValue(
+        new Response(null, { status: 503 }),
+      );
+
+      await expect(ApiService.getMarkdownDocx("md-3")).rejects.toThrow(/503/);
+    });
+  });
 });

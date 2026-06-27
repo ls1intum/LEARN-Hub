@@ -6,11 +6,14 @@ import com.learnhub.activitymanagement.entity.Activity;
 import com.learnhub.activitymanagement.entity.ActivityMarkdown;
 import com.learnhub.activitymanagement.entity.enums.MarkdownType;
 import com.learnhub.activitymanagement.repository.ActivityMarkdownRepository;
+import com.learnhub.documentmanagement.dto.request.MarkdownPreviewRequest;
+import com.learnhub.documentmanagement.service.AdobePdfToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToDocxService;
 import com.learnhub.documentmanagement.service.MarkdownToHtmlService;
 import com.learnhub.documentmanagement.service.MarkdownToPdfService;
 import com.learnhub.service.SanitizationService;
 import java.lang.reflect.Proxy;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -67,6 +70,85 @@ class MarkdownControllerTest {
 		ResponseEntity<?> response = markdownController.getMarkdownPdf(markdownId);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+	}
+
+	@Test
+	void getMarkdownPdfReturnsNotFoundWhenContentEmpty() {
+		UUID markdownId = UUID.randomUUID();
+		ActivityMarkdown markdown = new ActivityMarkdown();
+		markdown.setId(markdownId);
+		markdown.setType(MarkdownType.DECKBLATT);
+		markdown.setContent("   ");
+		ReflectionTestUtils.setField(markdownController, "markdownRepository",
+				repositoryReturning(Optional.of(markdown), markdownId));
+
+		ResponseEntity<?> response = markdownController.getMarkdownPdf(markdownId);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+	}
+
+	@Test
+	void getCapabilitiesReportsDocxUnavailableWhenAdobeNotConfigured() {
+		useDocxServiceWithAdobeConfigured(false);
+
+		ResponseEntity<Map<String, Boolean>> response = markdownController.getCapabilities();
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).containsEntry("docxAvailable", false);
+	}
+
+	@Test
+	void getMarkdownDocxReturns503WhenDocxUnavailable() {
+		useDocxServiceWithAdobeConfigured(false);
+
+		ResponseEntity<?> response = markdownController.getMarkdownDocx(UUID.randomUUID());
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+	}
+
+	@Test
+	void previewMarkdownPdfRejectsEmptyMarkdown() {
+		MarkdownPreviewRequest request = new MarkdownPreviewRequest();
+		request.setMarkdown("   ");
+
+		ResponseEntity<?> response = markdownController.previewMarkdownPdf(request);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+	}
+
+	@Test
+	void previewMarkdownPdfRendersPdfBytes() {
+		MarkdownPreviewRequest request = new MarkdownPreviewRequest();
+		request.setMarkdown("# Vorschau\n\nEin Absatz.");
+		request.setActivityName("Binary Search Game");
+
+		ResponseEntity<?> response = markdownController.previewMarkdownPdf(request);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+		assertThat(response.getBody()).isInstanceOf(byte[].class);
+		assertThat(((byte[]) response.getBody()).length).isGreaterThan(0);
+	}
+
+	private void useDocxServiceWithAdobeConfigured(boolean configured) {
+		MarkdownToHtmlService htmlService = new MarkdownToHtmlService();
+		ReflectionTestUtils.setField(htmlService, "sanitizationService", new SanitizationService());
+		MarkdownToPdfService pdfService = new MarkdownToPdfService(htmlService);
+		ReflectionTestUtils.setField(markdownController, "markdownToDocxService",
+				new MarkdownToDocxService(pdfService, new StubAdobeService(configured)));
+	}
+
+	private static final class StubAdobeService extends AdobePdfToDocxService {
+
+		private final boolean configured;
+
+		private StubAdobeService(boolean configured) {
+			this.configured = configured;
+		}
+
+		@Override
+		public boolean isConfigured() {
+			return configured;
+		}
 	}
 
 	private ActivityMarkdownRepository repositoryReturning(Optional<ActivityMarkdown> result, UUID expectedMarkdownId) {

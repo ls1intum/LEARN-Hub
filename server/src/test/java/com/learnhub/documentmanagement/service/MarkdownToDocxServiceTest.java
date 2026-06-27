@@ -124,6 +124,15 @@ class MarkdownToDocxServiceTest {
 		}
 
 		@Override
+		public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName,
+				boolean exerciseSheet, boolean isTafelbild) {
+			this.lastMarkdown = markdown;
+			this.lastLandscape = landscape;
+			pdfCallCount++;
+			return new byte[]{0x25, 0x50, 0x44, 0x46}; // %PDF
+		}
+
+		@Override
 		public byte[] renderHtmlToPdf(String htmlBody, boolean landscape, String activityName) {
 			this.lastHtml = htmlBody;
 			pdfCallCount++;

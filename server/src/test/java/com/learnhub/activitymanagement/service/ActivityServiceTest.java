@@ -22,6 +22,7 @@ import com.learnhub.activitymanagement.repository.ActivityQueryResult;
 import com.learnhub.activitymanagement.repository.ActivityRepository;
 import com.learnhub.documentmanagement.entity.PDFDocument;
 import com.learnhub.documentmanagement.repository.PDFDocumentRepository;
+import com.learnhub.documentmanagement.service.DocxCacheService;
 import com.learnhub.documentmanagement.service.LLMService;
 import com.learnhub.documentmanagement.service.PDFService;
 import com.learnhub.service.SanitizationService;
@@ -51,6 +52,7 @@ class ActivityServiceTest {
 	private PDFService pdfService;
 	private LLMService llmService;
 	private UserFavouritesRepository userFavouritesRepository;
+	private DocxCacheService docxCacheService;
 
 	@BeforeEach
 	void setUp() {
@@ -62,6 +64,7 @@ class ActivityServiceTest {
 		llmService = mock(LLMService.class);
 		userFavouritesRepository = mock(UserFavouritesRepository.class);
 		activityMarkdownRepository = mock(ActivityMarkdownRepository.class);
+		docxCacheService = mock(DocxCacheService.class);
 
 		ReflectionTestUtils.setField(activityService, "activityMarkdownRepository", activityMarkdownRepository);
 		ReflectionTestUtils.setField(activityService, "activityRepository", activityRepository);
@@ -70,6 +73,7 @@ class ActivityServiceTest {
 		ReflectionTestUtils.setField(activityService, "extractionService", extractionService);
 		ReflectionTestUtils.setField(activityService, "sanitizationService", new SanitizationService());
 		ReflectionTestUtils.setField(activityService, "userFavouritesRepository", userFavouritesRepository);
+		ReflectionTestUtils.setField(activityService, "docxCacheService", docxCacheService);
 		ReflectionTestUtils.setField(extractionService, "pdfService", pdfService);
 		ReflectionTestUtils.setField(extractionService, "llmService", llmService);
 	}
