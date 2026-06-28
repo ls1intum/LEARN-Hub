@@ -18,7 +18,13 @@ import org.springframework.test.context.TestPropertySource;
 		// the H2 schema-export errors happened to be non-fatal).
 		"spring.jpa.hibernate.ddl-auto=none", "spring.flyway.enabled=false",
 		// Never run the admin seeder during the context-load smoke test.
-		"app.db-seed.enabled=false"})
+		"app.db-seed.enabled=false",
+		// Spring AI's OpenAI and Azure-OpenAI auto-configurations refuse to
+		// instantiate their client beans without an API key, and LLMService requires
+		// a non-null ChatClient — so the context can't load on CI (no keys in the
+		// environment). Provide dummy keys: the beans are built but never called
+		// during a context-load smoke test (no network happens at construction).
+		"spring.ai.openai.api-key=test-key", "spring.ai.azure.openai.api-key=test-key"})
 class LearnHubApplicationTests {
 
 	@Test
