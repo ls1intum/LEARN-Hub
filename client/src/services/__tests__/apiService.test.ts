@@ -392,7 +392,10 @@ describe("ApiService", () => {
 
       const blob = await ApiService.getMarkdownPdf("md-1");
 
-      expect(blob).toBeInstanceOf(Blob);
+      // Assert blob shape via size/type, not `instanceof Blob`: the fetch impl
+      // returns a Blob from a different realm than the jsdom global.
+      expect(blob.size).toBeGreaterThan(0);
+      expect(blob.type).toContain("pdf");
       expect(authService.makeAuthenticatedRequest).toHaveBeenCalledWith(
         "/api/markdowns/md-1/pdf",
       );
@@ -410,7 +413,7 @@ describe("ApiService", () => {
 
       const blob = await ApiService.getMarkdownDocx("md-2");
 
-      expect(blob).toBeInstanceOf(Blob);
+      expect(blob.size).toBeGreaterThan(0);
       expect(authService.makeAuthenticatedRequest).toHaveBeenCalledWith(
         "/api/markdowns/md-2/docx",
       );
