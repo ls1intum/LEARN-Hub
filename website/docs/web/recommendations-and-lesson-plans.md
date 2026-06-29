@@ -4,50 +4,65 @@ title: Recommendations & Lesson Plans
 ---
 import useBaseUrl from '@docusaurus/useBaseUrl';
 
-# Creating Lesson Plans
+# Creating Recommendations and Lesson Plans
 
-The Recommendation Configurator helps you generate personalized lesson plans with multiple activities, automatically sequenced and timed with appropriate breaks between them.
+The **Activity Recommendations** configurator walks you through a short series of questions about your class and then returns ranked activities – or a complete, timed lesson plan – tailored to your answers. Start it from **Get Recommendations** on the landing page or **Recommendations** in the sidebar.
 
-> **Note**: You can also get single activity recommendations if needed; enable **"Allow Lesson Plans"** to access the full planning features.
+You don't need an account to get recommendations. Signing in lets you save results and keeps a search history.
 
-## Creating a Lesson Plan
+## The Guided Configurator
 
-### Configuration Steps
-
-1. **Duration** – Select how long your lesson has (in minutes)
-2. **Age Group** – Choose your target age group
-3. **Activity Format** – Select available format(s): Unplugged, Digital, Hybrid
-4. **Resources** – Check which materials/devices you have available
-5. **Bloom Levels** – Choose target cognitive levels (Remember, Understand, Apply, Analyze, Evaluate, Create)
-6. **Topics** – Select which computer science topics you want to cover
-7. **Enable Lesson Plans** – Toggle **"Allow Lesson Plans"** to create multi-activity sequences
-8. **Set Maximum Activities** – Choose how many activities to include (e.g., 2–5)
-9. **Include Breaks** – Toggle **"Include Breaks"** to add automatic rest periods between activities
-10. **Generate** – Click to create recommendations
-
-### Understanding Your Results
-
-The system generates ranked lesson plan recommendations with scores for each sequence. Each recommendation includes a **scoring breakdown** showing:
-- **Age Appropriateness** – How well activities fit your grade level
-- **Bloom Alignment** – Match to your cognitive goals
-- **Topic Relevance** – Coverage of your selected topics
-- **Duration Fit** – How well the total time matches your available period
-
-Each category is scored on a **0-100 scale** (100 = perfect match), and the total score is calculated as a weighted average based on importance.
+The configurator asks one question per screen. A **Your Answers** panel on the right tracks your progress, and you can revisit any earlier step with **Back**. Move forward with **Continue** (or simply press <kbd>Enter</kbd>). Sensible defaults are pre-filled, so you can move quickly and only change what matters to you.
 
 <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-  <img src={useBaseUrl('/img/web/recommendations.gif')} alt="Recommendations page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <img src={useBaseUrl('/img/web/recommendations-wizard.png')} alt="Recommendation configurator – first question" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
   <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-    Complete lesson plan workflow from form to results
+    The guided configurator, with the "Your Answers" progress panel
   </p>
 </div>
 
-Once generated, your lesson plan shows:
-- Complete activity sequence with timing
-- Automatic breaks highlighted between activities
-- Total duration including all activities and breaks
-- Progressive build through Bloom's cognitive levels
+The questions are grouped into four themes:
 
-## Download for Offline Use
+| Step | Question | What it controls |
+|------|----------|------------------|
+| **About your students** | How old are your students? | Target age – activities are scoped to developmentally appropriate age bands |
+| **About your session** | How much time do you have? | Target duration of the lesson in minutes |
+| **About your space** | What format suits your room? | Unplugged, Digital, and/or Hybrid activities |
+| **About your space** | What's in your classroom? | Available resources (computers, tablets, handouts, blocks, electronics, stationery) |
+| **About learning** | What thinking skills do you want to build? | Target Bloom's levels (Remember → Create) |
+| **About learning** | Which CT concepts are you teaching? | Preferred topics (Decomposition, Patterns, Abstraction, Algorithms) |
+| **Finishing up** | Any extras for your plan? | Lesson-plan options (see below) |
 
-Click **Download as PDF** to save your lesson plan for offline use in the classroom. The PDF includes all activities, timing, breaks and materials lists.
+Most questions are optional – leaving a question unanswered simply means "no preference" and keeps your results broad.
+
+## Single Activities or a Full Lesson Plan
+
+The final **Finishing up** step decides what kind of result you get:
+
+- Leave **Allow Lesson Plans** off to receive ranked **individual activities**.
+- Turn **Allow Lesson Plans** on to generate a **multi-activity lesson plan**. You can then set the **maximum number of activities** and toggle **Include Breaks** to add automatic rest periods between activities.
+
+<div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+  <img src={useBaseUrl('/img/web/recommendations-lessonplan.png')} alt="Finishing up step with lesson plan options" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
+    The "Finishing up" step: enable lesson plans, set the activity count, and include breaks
+  </p>
+</div>
+
+When you're ready, click **Get Recommendations** on the last step.
+
+## Understanding Your Results
+
+LEARN-Hub ranks results and shows a **scoring breakdown** for each one, so you can see *why* it was recommended rather than relying on a black box. Each category is scored on a **0–100 scale** (100 = perfect match) and combined into a weighted total:
+
+- **Age Appropriateness** – how well activities fit the age you chose
+- **Bloom Alignment** – match to your selected cognitive goals
+- **Topic Relevance** – coverage of your selected CS topics
+- **Duration Fit** – how well the total time matches your available period
+
+For a lesson plan, the result also shows the complete activity sequence with timing, any automatic breaks highlighted between activities, and the total duration including breaks.
+
+## Save and Download
+
+- **Save** a result by clicking its **heart icon** (requires login) – see [Favorites & History](./favorites-and-history.md).
+- **Download as PDF** to take the lesson plan or activity into the classroom offline. The PDF includes the activities, timing, breaks, and materials lists.

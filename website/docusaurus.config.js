@@ -78,15 +78,9 @@ const config = {
         items: [
           {
             type: 'docSidebar',
-            sidebarId: 'appSidebar',
-            position: 'left',
-            label: 'App',
-          },
-          {
-            type: 'docSidebar',
             sidebarId: 'webSidebar',
             position: 'left',
-            label: 'Web',
+            label: 'Documentation',
           },
           {
             href: 'https://github.com/ls1intum/LEARN-Hub',
@@ -102,11 +96,7 @@ const config = {
             title: 'Documentation',
             items: [
               {
-                label: 'App',
-                to: '/docs/app/intro',
-              },
-              {
-                label: 'Web',
+                label: 'User Guide',
                 to: '/docs/web/intro',
               },
             ],

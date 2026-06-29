@@ -10,18 +10,7 @@ Explore the complete library of curated computer science activities. Filter by y
 
 ## Browsing the Activity Library
 
-### Available Filters
-
-- **Age Range** – Slider for target age (6-15 years)
-- **Format** – Unplugged, Digital, or Hybrid
-- **Bloom Level** – Cognitive complexity (Remember through Create)
-- **Resources Needed** – Materials and devices required
-- **Topics** – Decomposition, Patterns, Abstraction, Algorithms
-- **Mental Load** – Low, Medium, or High cognitive effort
-- **Physical Energy** – Activity level (Low, Medium, High)
-- **Duration** – Activity length in minutes
-
-Combine filters to narrow results. Start broad and refine as needed.
+Open the **Library** from the sidebar. Activities are shown as cards in a grid; use the search box to find an activity by name, the **grid/list** toggle to switch layouts, and **Show Filters** to open the filter panel.
 
 ### Activity Cards
 
@@ -29,13 +18,26 @@ Each activity card shows:
 - Title and description
 - Recommended pupil age range
 - Duration
-- Required materials
 - Topic and Bloom level
+- Format (e.g. Unplugged)
+
+### Filtering
+
+Click **Show Filters** to refine the list. Combine any of the following – start broad and narrow as needed:
+
+- **Age Range** – Slider for target age (6–15 years)
+- **Duration** – Slider for activity length in minutes
+- **Format** – Unplugged, Digital, or Hybrid
+- **Bloom Level** – Cognitive complexity (Remember through Create)
+- **Resources** – Computers, Tablets, Handouts, Blocks, Electronics, Stationery
+- **Topics** – Decomposition, Patterns, Abstraction, Algorithms
+- **Mental Load** – Low, Medium, or High cognitive effort
+- **Physical Energy** – Activity level (Low, Medium, High)
 
 <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-  <img src={useBaseUrl('/img/web/filtering.gif')} alt="Activity Library page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <img src={useBaseUrl('/img/web/library-filters.png')} alt="Activity Library with the filter panel open" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
   <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-    Browsing, searching, and filtering activities
+    The Activity Library with the filter panel expanded
   </p>
 </div>
 
@@ -59,10 +61,12 @@ Click any activity card to view detailed information.
 | **Topics Covered** | Computer science concepts addressed |
 | **Source** | Original source of the activity |
 
-### View and Save
+### Documents, View and Save
 
-- **View PDF** – Download the full activity document
-- **Add to Favorites** – Save the activity for later (requires login)
+The detail page also lists the **teaching documents** generated for the activity – such as the Cover Sheet, Lesson Plan, Background Knowledge, Exercise, and Solution sheet. Each can be downloaded as **PDF** or **DOCX** from the Documents table.
+
+- **Download documents** – Grab any teaching document in PDF or DOCX format
+- **Add to Favorites** – Click the heart icon to save the activity for later (requires login)
 
 <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
   <img src={useBaseUrl('/img/web/activity.png')} alt="Activity Details page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
