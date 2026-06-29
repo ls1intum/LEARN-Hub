@@ -47,56 +47,56 @@ class DevControllerTest {
 
 	@Test
 	void testMarkdownGeneratesUebungAndSolution() throws Exception {
-		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "uebung", null);
+		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "exercise", null);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		TestMarkdownResponse body = (TestMarkdownResponse) response.getBody();
 		assertThat(body).isNotNull();
-		assertThat(body.getUebungMarkdown()).isEqualTo("# Dummy Uebung");
-		assertThat(body.getUebungLoesungMarkdown()).isEqualTo("# Dummy Loesung");
+		assertThat(body.getExerciseMarkdown()).isEqualTo("# Dummy Uebung");
+		assertThat(body.getExerciseSolutionMarkdown()).isEqualTo("# Dummy Loesung");
 		assertThat(llmService.uebungCalls).isEqualTo(1);
 	}
 
 	@Test
 	void testMarkdownGeneratesDeckblatt() throws Exception {
-		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "deckblatt", null);
+		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "cover_sheet", null);
 
 		TestMarkdownResponse body = (TestMarkdownResponse) response.getBody();
 		assertThat(body).isNotNull();
-		assertThat(body.getDeckblattMarkdown()).isEqualTo("# Dummy Deckblatt");
+		assertThat(body.getCoverSheetMarkdown()).isEqualTo("# Dummy Deckblatt");
 	}
 
 	@Test
 	void testMarkdownGeneratesHintergrundwissen() throws Exception {
-		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "hintergrundwissen", null);
+		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "background_knowledge", null);
 
 		TestMarkdownResponse body = (TestMarkdownResponse) response.getBody();
 		assertThat(body).isNotNull();
-		assertThat(body.getHintergrundwissenMarkdown()).isEqualTo("# Dummy Hintergrundwissen");
+		assertThat(body.getBackgroundKnowledgeMarkdown()).isEqualTo("# Dummy Hintergrundwissen");
 	}
 
 	@Test
 	void testMarkdownGeneratesArtikulationsschema() throws Exception {
-		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "artikulationsschema", null);
+		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "lesson_plan", null);
 
 		TestMarkdownResponse body = (TestMarkdownResponse) response.getBody();
 		assertThat(body).isNotNull();
-		assertThat(body.getArtikulationsschemaMarkdown()).isEqualTo("# Dummy Artikulationsschema");
+		assertThat(body.getLessonPlanMarkdown()).isEqualTo("# Dummy Artikulationsschema");
 	}
 
 	@Test
 	void testMarkdownGeneratesTafelbildFromArtikulationsschema() throws Exception {
-		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "tafelbild", null);
+		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "board_image", null);
 
 		TestMarkdownResponse body = (TestMarkdownResponse) response.getBody();
 		assertThat(body).isNotNull();
-		assertThat(body.getArtikulationsschemaMarkdown()).isEqualTo("# Dummy Artikulationsschema");
-		assertThat(body.getTafelbildMarkdown()).isEqualTo("# Dummy Tafelbild");
+		assertThat(body.getLessonPlanMarkdown()).isEqualTo("# Dummy Artikulationsschema");
+		assertThat(body.getBoardImageMarkdown()).isEqualTo("# Dummy Tafelbild");
 	}
 
 	@Test
 	void testMarkdownAcceptsMetadataJson() throws Exception {
-		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "deckblatt",
+		ResponseEntity<?> response = controller.testMarkdown(pdfUpload(), "cover_sheet",
 				"{\"name\":\"Binary Bracelets\"}");
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -129,7 +129,7 @@ class DevControllerTest {
 				java.util.List<byte[]> images) {
 			uebungCalls++;
 			lastMetadata = metadata;
-			return Map.of("uebung", "# Dummy Uebung", "uebung_loesung", "# Dummy Loesung");
+			return Map.of("exercise", "# Dummy Uebung", "exercise_solution", "# Dummy Loesung");
 		}
 
 		@Override
@@ -151,7 +151,7 @@ class DevControllerTest {
 		}
 
 		@Override
-		public String generateTafelbildMarkdown(String artikulationsschema, Map<String, Object> metadata) {
+		public String generateBoardImageMarkdown(String lessonPlan, Map<String, Object> metadata) {
 			lastMetadata = metadata;
 			return "# Dummy Tafelbild";
 		}

@@ -110,7 +110,7 @@ class ActivityControllerTest {
 		pdfService.documentId = documentId;
 		pdfService.pdfText = "PDF text with enough content";
 		llmService.cover_sheet = "# Deckblatt";
-		llmService.lesson_plan = "# Artikulationsschema";
+		llmService.lessonPlan = "# Artikulationsschema";
 		llmService.background_knowledge = "# Hintergrundwissen";
 		llmService.exercise = "# Uebung";
 		llmService.uebungLoesung = "# Loesung";
@@ -192,11 +192,11 @@ class ActivityControllerTest {
 	private static final class StubLLMService extends LLMService {
 
 		private String cover_sheet;
-		private String lesson_plan;
+		private String lessonPlan;
 		private String background_knowledge;
 		private String exercise;
 		private String uebungLoesung;
-		private String tafelbild = "# Tafelbild";
+		private String board_image = "# Tafelbild";
 		private RuntimeException deckblattFailure;
 		private int deckblattCalls;
 		private int artikulationsschemaCalls;
@@ -220,7 +220,7 @@ class ActivityControllerTest {
 		@Override
 		public String generateArtikulationsschema(String pdfText, Map<String, Object> metadata) {
 			artikulationsschemaCalls++;
-			return lesson_plan;
+			return lessonPlan;
 		}
 
 		@Override
@@ -236,9 +236,9 @@ class ActivityControllerTest {
 		}
 
 		@Override
-		public String generateTafelbildMarkdown(String artikulationsschema, Map<String, Object> metadata) {
+		public String generateBoardImageMarkdown(String lessonPlan, Map<String, Object> metadata) {
 			tafelbildCalls++;
-			return tafelbild;
+			return board_image;
 		}
 
 		private static ChatClient unsupportedChatClient() {

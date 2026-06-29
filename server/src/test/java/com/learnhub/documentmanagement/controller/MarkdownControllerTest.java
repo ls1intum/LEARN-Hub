@@ -77,7 +77,7 @@ class MarkdownControllerTest {
 		UUID markdownId = UUID.randomUUID();
 		ActivityMarkdown markdown = new ActivityMarkdown();
 		markdown.setId(markdownId);
-		markdown.setType(MarkdownType.DECKBLATT);
+		markdown.setType(MarkdownType.COVER_SHEET);
 		markdown.setContent("   ");
 		ReflectionTestUtils.setField(markdownController, "markdownRepository",
 				repositoryReturning(Optional.of(markdown), markdownId));
