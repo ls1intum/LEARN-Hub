@@ -387,12 +387,20 @@
     "saving": "Wird gespeichert...",
     "pdfDocReady": "PDF-Dokument bereit",
     "noPdfAttached": "Kein PDF-Dokument angehängt",
-    "deckblatt": "Deckblatt",
-    "artikulationsschema": "Artikulationsschema",
-    "hintergrundwissen": "Hintergrundwissen",
-    "tafelbild": "Tafelbild",
-    "uebung": "Übungsblatt",
-    "uebung_loesung": "Lösungsblatt"
+    "cover_sheet": "Deckblatt",
+    "lesson_plan": "Artikulationsschema",
+    "background_knowledge": "Hintergrundwissen",
+    "board_image": "Tafelbild",
+    "exercise": "Übungsblatt",
+    "exercise_solution": "Lösungsblatt"
+  },
+  "markdownTypes": {
+    "cover_sheet": "Deckblatt",
+    "lesson_plan": "Artikulationsschema",
+    "background_knowledge": "Hintergrundwissen",
+    "board_image": "Tafelbild",
+    "exercise": "Übungsblatt",
+    "exercise_solution": "Lösungsblatt"
   },
   "activityDetails": {
     "title": "Aktivitätsdetails",
@@ -802,15 +810,15 @@
     "generateButton": "Generieren",
     "generating": "Wird generiert…",
     "resultTitle": "Ergebnis",
-    "tabUebung": "Übungsblatt",
-    "tabLoesung": "Lösungsblatt",
-    "typeUebung": "Übungsblatt + Lösungsblatt",
-    "typeDeckblatt": "Deckblatt",
-    "typeHintergrundwissen": "Hintergrundwissen",
-    "typeArtikulationsschema": "Artikulationsschema",
-    "typeTafelbild": "Tafelbild",
-    "tabTafelbild": "Tafelbild",
-    "tabArtikulationsschema": "Artikulationsschema"
+    "tabExercise": "Übungsblatt",
+    "tabSolution": "Lösungsblatt",
+    "typeExercise": "Übungsblatt + Lösungsblatt",
+    "typeCoverSheet": "Deckblatt",
+    "typeBackgroundKnowledge": "Hintergrundwissen",
+    "typeLessonPlan": "Artikulationsschema",
+    "typeBoardImage": "Tafelbild",
+    "tabBoardImage": "Tafelbild",
+    "tabLessonPlan": "Artikulationsschema"
   },
   "notFound": {
     "title": "Seite nicht gefunden",

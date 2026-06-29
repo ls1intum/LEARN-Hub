@@ -2,8 +2,8 @@ package com.learnhub.activitymanagement.entity.enums;
 
 public enum MarkdownType {
 
-	ARTIKULATIONSSCHEMA("artikulationsschema"), DECKBLATT("deckblatt"), HINTERGRUNDWISSEN(
-			"hintergrundwissen"), TAFELBILD("tafelbild"), UEBUNG("uebung"), UEBUNG_LOESUNG("uebung_loesung");
+	LESSON_PLAN("lesson_plan"), COVER_SHEET("cover_sheet"), BACKGROUND_KNOWLEDGE("background_knowledge"), BOARD_IMAGE(
+			"board_image"), EXERCISE("exercise"), EXERCISE_SOLUTION("exercise_solution");
 
 	private final String value;
 

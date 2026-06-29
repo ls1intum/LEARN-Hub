@@ -56,26 +56,26 @@ INT_FIELDS = {
 LIST_FIELDS = ["resourcesNeeded", "topics"]
 
 MARKDOWN_FIELDS_REQUIRED = [
-    "deckblattMarkdown",
-    "artikulationsschemaMarkdown",
-    "hintergrundwissenMarkdown",
+    "coverSheetMarkdown",
+    "lessonPlanMarkdown",
+    "backgroundKnowledgeMarkdown",
 ]
 
 MARKDOWN_FIELDS_OPTIONAL = [
-    "tafelbildMarkdown",
-    "uebungMarkdown",
-    "uebungLoesungMarkdown",
+    "boardImageMarkdown",
+    "exerciseMarkdown",
+    "exerciseSolutionMarkdown",
 ]
 
 MARKDOWN_FIELDS = MARKDOWN_FIELDS_REQUIRED + MARKDOWN_FIELDS_OPTIONAL
 
 MARKDOWN_API_TYPES = {
-    "deckblatt": "deckblattMarkdown",
-    "artikulationsschema": "artikulationsschemaMarkdown",
-    "hintergrundwissen": "hintergrundwissenMarkdown",
-    "tafelbild": "tafelbildMarkdown",
-    "uebung": "uebungMarkdown",
-    "uebung_loesung": "uebungLoesungMarkdown",
+    "cover_sheet": "coverSheetMarkdown",
+    "lesson_plan": "lessonPlanMarkdown",
+    "background_knowledge": "backgroundKnowledgeMarkdown",
+    "board_image": "boardImageMarkdown",
+    "exercise": "exerciseMarkdown",
+    "exercise_solution": "exerciseSolutionMarkdown",
 }
 
 
@@ -224,7 +224,7 @@ def csv_row_to_markdowns(row: dict) -> dict | None:
     """Extract markdown content from CSV columns.
 
     Returns None if any required field is missing/empty (triggering LLM fallback).
-    Optional fields (tafelbild, uebung, uebung_loesung) are included when present.
+    Optional fields (board_image, exercise, exercise_solution) are included when present.
     """
     markdowns = {}
     for key in MARKDOWN_FIELDS_REQUIRED:
@@ -276,12 +276,12 @@ def update_activity(
     payload = {
         "documentId": document_id,
         **metadata,
-        "deckblattMarkdown": markdowns.get("deckblattMarkdown", ""),
-        "artikulationsschemaMarkdown": markdowns.get("artikulationsschemaMarkdown", ""),
-        "hintergrundwissenMarkdown": markdowns.get("hintergrundwissenMarkdown", ""),
-        "tafelbildMarkdown": markdowns.get("tafelbildMarkdown", ""),
-        "uebungMarkdown": markdowns.get("uebungMarkdown", ""),
-        "uebungLoesungMarkdown": markdowns.get("uebungLoesungMarkdown", ""),
+        "coverSheetMarkdown": markdowns.get("coverSheetMarkdown", ""),
+        "lessonPlanMarkdown": markdowns.get("lessonPlanMarkdown", ""),
+        "backgroundKnowledgeMarkdown": markdowns.get("backgroundKnowledgeMarkdown", ""),
+        "boardImageMarkdown": markdowns.get("boardImageMarkdown", ""),
+        "exerciseMarkdown": markdowns.get("exerciseMarkdown", ""),
+        "exerciseSolutionMarkdown": markdowns.get("exerciseSolutionMarkdown", ""),
     }
     resp = session.put(
         f"{base_url}/api/activities/{activity_id}",
@@ -388,7 +388,7 @@ def seed_activity(
 # ---------------------------------------------------------------------------
 
 def build_markdown_lookup(activities: list[dict]) -> dict[str, dict[str, str]]:
-    """Build a lookup: activity name -> {deckblattMarkdown, ...}."""
+    """Build a lookup: activity name -> {coverSheetMarkdown, ...}."""
     lookup = {}
     for activity in activities:
         name = activity.get("name", "")

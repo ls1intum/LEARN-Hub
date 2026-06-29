@@ -46,7 +46,7 @@ class MarkdownControllerTest {
 
 		ActivityMarkdown markdown = new ActivityMarkdown();
 		markdown.setId(markdownId);
-		markdown.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+		markdown.setType(MarkdownType.LESSON_PLAN);
 		markdown.setContent("# Heading");
 		markdown.setLandscape(true);
 		markdown.setActivity(activity);
@@ -77,7 +77,7 @@ class MarkdownControllerTest {
 		UUID markdownId = UUID.randomUUID();
 		ActivityMarkdown markdown = new ActivityMarkdown();
 		markdown.setId(markdownId);
-		markdown.setType(MarkdownType.DECKBLATT);
+		markdown.setType(MarkdownType.COVER_SHEET);
 		markdown.setContent("   ");
 		ReflectionTestUtils.setField(markdownController, "markdownRepository",
 				repositoryReturning(Optional.of(markdown), markdownId));

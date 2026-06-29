@@ -79,17 +79,17 @@ public class MarkdownToDocxService {
 	 *            {@code markdowns}.
 	 */
 	public byte[] renderMergedDocx(List<String> markdowns, List<Boolean> landscapes, List<Boolean> exerciseSheets,
-			List<Boolean> isTafelbilds, String activityName) {
+			List<Boolean> areBoardImages, String activityName) {
 		if (markdowns.size() != landscapes.size() || markdowns.size() != exerciseSheets.size()
-				|| markdowns.size() != isTafelbilds.size()) {
+				|| markdowns.size() != areBoardImages.size()) {
 			throw new IllegalArgumentException(
-					"markdowns, landscapes, exerciseSheets, and isTafelbilds lists must have the same size");
+					"markdowns, landscapes, exerciseSheets, and areBoardImages lists must have the same size");
 		}
 		try {
 			List<byte[]> pdfParts = new ArrayList<>();
 			for (int i = 0; i < markdowns.size(); i++) {
 				pdfParts.add(markdownToPdfService.renderMarkdownToPdf(markdowns.get(i), landscapes.get(i), activityName,
-						exerciseSheets.get(i), isTafelbilds.get(i)));
+						exerciseSheets.get(i), areBoardImages.get(i)));
 			}
 			byte[] mergedPdf = markdownToPdfService.mergePdfs(pdfParts);
 			return adobePdfToDocxService.convertPdfToDocx(mergedPdf);

@@ -32,12 +32,12 @@ import type { ActivityNavigationState } from "@/utils/activityNavigation";
 const MAX_FILE_SIZE_BYTES = 1024 * 1024; // 1 MB
 
 const MARKDOWN_TYPES = [
-  { key: "deckblatt", label: "Deckblatt" },
-  { key: "artikulationsschema", label: "Artikulationsschema" },
-  { key: "hintergrundwissen", label: "Hintergrundwissen" },
-  { key: "tafelbild", label: "Tafelbild" },
-  { key: "uebung", label: "Übung" },
-  { key: "uebung_loesung", label: "Übungslösung" },
+  { key: "cover_sheet", label: "Deckblatt" },
+  { key: "lesson_plan", label: "Artikulationsschema" },
+  { key: "background_knowledge", label: "Hintergrundwissen" },
+  { key: "board_image", label: "Tafelbild" },
+  { key: "exercise", label: "Übung" },
+  { key: "exercise_solution", label: "Übungslösung" },
 ] as const;
 type MarkdownKey = (typeof MARKDOWN_TYPES)[number]["key"];
 const ALL_MARKDOWN_KEYS = MARKDOWN_TYPES.map((t) => t.key) as MarkdownKey[];
@@ -80,10 +80,10 @@ const UploadModal: React.FC<UploadModalProps> = ({
       const next = new Set(prev);
       if (checked) {
         next.add(key);
-        if (key === "tafelbild") next.add("artikulationsschema");
+        if (key === "board_image") next.add("lesson_plan");
       } else {
         next.delete(key);
-        if (key === "artikulationsschema") next.delete("tafelbild");
+        if (key === "lesson_plan") next.delete("board_image");
       }
       return next;
     });

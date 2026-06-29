@@ -91,11 +91,11 @@ public class ActivityService {
 				toSingleValueList(physicalEnergy), resourcesNeeded, topics, limit, offset);
 		Set<UUID> favouritedActivityIds = findFavouritedActivityIds(userId, page.activities());
 		List<UUID> activityIds = page.activities().stream().map(Activity::getId).collect(Collectors.toList());
-		Set<UUID> tafelbildActivityIds = activityIds.isEmpty()
+		Set<UUID> boardImageActivityIds = activityIds.isEmpty()
 				? Set.of()
-				: activityMarkdownRepository.findActivityIdsWithTafelbild(activityIds);
+				: activityMarkdownRepository.findActivityIdsWithBoardImage(activityIds);
 		List<ActivityResponse> activities = page.activities().stream()
-				.map(activity -> mapToSummaryResponse(activity, tafelbildActivityIds, favouritedActivityIds))
+				.map(activity -> mapToSummaryResponse(activity, boardImageActivityIds, favouritedActivityIds))
 				.collect(Collectors.toList());
 		return new ActivitiesListResponse(page.total(), activities, defaultLimit(limit), defaultOffset(offset));
 	}
@@ -126,11 +126,11 @@ public class ActivityService {
 				toSingleValueList(physicalEnergy), resourcesNeeded, topics, limit, offset);
 		Set<UUID> favouritedActivityIds = findFavouritedActivityIds(userId, page.activities());
 		List<UUID> activityIds = page.activities().stream().map(Activity::getId).collect(Collectors.toList());
-		Set<UUID> tafelbildActivityIds = activityIds.isEmpty()
+		Set<UUID> boardImageActivityIds = activityIds.isEmpty()
 				? Set.of()
-				: activityMarkdownRepository.findActivityIdsWithTafelbild(activityIds);
+				: activityMarkdownRepository.findActivityIdsWithBoardImage(activityIds);
 		return page.activities().stream()
-				.map(activity -> mapToSummaryResponse(activity, tafelbildActivityIds, favouritedActivityIds))
+				.map(activity -> mapToSummaryResponse(activity, boardImageActivityIds, favouritedActivityIds))
 				.collect(Collectors.toList());
 	}
 
@@ -157,11 +157,11 @@ public class ActivityService {
 				.filter(a -> a.getStatus() == ActivityStatus.PUBLISHED).collect(Collectors.toList());
 		Map<UUID, Activity> activityMap = activities.stream().collect(Collectors.toMap(Activity::getId, a -> a));
 		Set<UUID> favouritedIds = findFavouritedActivityIds(userId, activities);
-		Set<UUID> tafelbildActivityIds = ids.isEmpty()
+		Set<UUID> boardImageActivityIds = ids.isEmpty()
 				? Set.of()
-				: activityMarkdownRepository.findActivityIdsWithTafelbild(ids);
+				: activityMarkdownRepository.findActivityIdsWithBoardImage(ids);
 		return ids.stream().map(activityMap::get).filter(Objects::nonNull)
-				.map(a -> mapToSummaryResponse(a, tafelbildActivityIds, favouritedIds)).collect(Collectors.toList());
+				.map(a -> mapToSummaryResponse(a, boardImageActivityIds, favouritedIds)).collect(Collectors.toList());
 	}
 
 	public Set<UUID> findActivityIdsByNameFilter(List<UUID> activityIds, String name) {
@@ -240,9 +240,9 @@ public class ActivityService {
 	private static final Pattern TAFELBILD_IMAGE_PATTERN = Pattern
 			.compile("!\\[[^\\]]*\\]\\((data:image/(?:png|jpeg|jpg|gif|webp);base64,[A-Za-z0-9+/=\\r\\n]+)\\)");
 
-	private String extractTafelbildImage(Activity activity) {
+	private String extractBoardImage(Activity activity) {
 		return activity.getMarkdowns().stream()
-				.filter(m -> m.getType() == MarkdownType.TAFELBILD && m.getContent() != null).max(Comparator
+				.filter(m -> m.getType() == MarkdownType.BOARD_IMAGE && m.getContent() != null).max(Comparator
 						.comparing(ActivityMarkdown::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
 				.map(m -> {
 					Matcher matcher = TAFELBILD_IMAGE_PATTERN.matcher(m.getContent());
@@ -250,8 +250,8 @@ public class ActivityService {
 				}).orElse(null);
 	}
 
-	private boolean hasTafelbildImage(Activity activity) {
-		return activity.getMarkdowns().stream().anyMatch(m -> m.getType() == MarkdownType.TAFELBILD
+	private boolean hasBoardImage(Activity activity) {
+		return activity.getMarkdowns().stream().anyMatch(m -> m.getType() == MarkdownType.BOARD_IMAGE
 				&& m.getContent() != null && m.getContent().contains("data:image/"));
 	}
 
@@ -259,7 +259,7 @@ public class ActivityService {
 	public ThumbnailData getThumbnailData(UUID id) {
 		Activity activity = activityRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Activity not found"));
-		String dataUri = extractTafelbildImage(activity);
+		String dataUri = extractBoardImage(activity);
 		if (dataUri == null)
 			return null;
 		int semicolonIdx = dataUri.indexOf(';');
@@ -452,64 +452,64 @@ public class ActivityService {
 			}
 		}
 
-		if (data.get("artikulationsschemaMarkdown") != null) {
+		if (data.get("lessonPlanMarkdown") != null) {
 			ActivityMarkdown actMd = new ActivityMarkdown();
 			actMd.setActivity(activity);
-			actMd.setType(MarkdownType.ARTIKULATIONSSCHEMA);
-			actMd.setContent(data.get("artikulationsschemaMarkdown").toString());
+			actMd.setType(MarkdownType.LESSON_PLAN);
+			actMd.setContent(data.get("lessonPlanMarkdown").toString());
 			actMd.setLandscape(true);
 			actMd.setCreatedAt(LocalDateTime.now());
 			activity.getMarkdowns().add(actMd);
 		}
 
-		if (data.get("deckblattMarkdown") != null) {
-			ActivityMarkdown deckblattMd = new ActivityMarkdown();
-			deckblattMd.setActivity(activity);
-			deckblattMd.setType(MarkdownType.DECKBLATT);
-			deckblattMd.setContent(data.get("deckblattMarkdown").toString());
-			deckblattMd.setLandscape(false);
-			deckblattMd.setCreatedAt(LocalDateTime.now());
-			activity.getMarkdowns().add(deckblattMd);
+		if (data.get("coverSheetMarkdown") != null) {
+			ActivityMarkdown coverSheetMd = new ActivityMarkdown();
+			coverSheetMd.setActivity(activity);
+			coverSheetMd.setType(MarkdownType.COVER_SHEET);
+			coverSheetMd.setContent(data.get("coverSheetMarkdown").toString());
+			coverSheetMd.setLandscape(false);
+			coverSheetMd.setCreatedAt(LocalDateTime.now());
+			activity.getMarkdowns().add(coverSheetMd);
 		}
 
-		if (data.get("hintergrundwissenMarkdown") != null) {
-			ActivityMarkdown hintergrundwissenMd = new ActivityMarkdown();
-			hintergrundwissenMd.setActivity(activity);
-			hintergrundwissenMd.setType(MarkdownType.HINTERGRUNDWISSEN);
-			hintergrundwissenMd.setContent(data.get("hintergrundwissenMarkdown").toString());
-			hintergrundwissenMd.setLandscape(false);
-			hintergrundwissenMd.setCreatedAt(LocalDateTime.now());
-			activity.getMarkdowns().add(hintergrundwissenMd);
+		if (data.get("backgroundKnowledgeMarkdown") != null) {
+			ActivityMarkdown backgroundKnowledgeMd = new ActivityMarkdown();
+			backgroundKnowledgeMd.setActivity(activity);
+			backgroundKnowledgeMd.setType(MarkdownType.BACKGROUND_KNOWLEDGE);
+			backgroundKnowledgeMd.setContent(data.get("backgroundKnowledgeMarkdown").toString());
+			backgroundKnowledgeMd.setLandscape(false);
+			backgroundKnowledgeMd.setCreatedAt(LocalDateTime.now());
+			activity.getMarkdowns().add(backgroundKnowledgeMd);
 		}
 
-		if (data.get("tafelbildMarkdown") != null) {
-			ActivityMarkdown tafelbildMd = new ActivityMarkdown();
-			tafelbildMd.setActivity(activity);
-			tafelbildMd.setType(MarkdownType.TAFELBILD);
-			tafelbildMd.setContent(data.get("tafelbildMarkdown").toString());
-			tafelbildMd.setLandscape(false);
-			tafelbildMd.setCreatedAt(LocalDateTime.now());
-			activity.getMarkdowns().add(tafelbildMd);
+		if (data.get("boardImageMarkdown") != null) {
+			ActivityMarkdown boardImageMd = new ActivityMarkdown();
+			boardImageMd.setActivity(activity);
+			boardImageMd.setType(MarkdownType.BOARD_IMAGE);
+			boardImageMd.setContent(data.get("boardImageMarkdown").toString());
+			boardImageMd.setLandscape(false);
+			boardImageMd.setCreatedAt(LocalDateTime.now());
+			activity.getMarkdowns().add(boardImageMd);
 		}
 
-		if (data.get("uebungMarkdown") != null) {
-			ActivityMarkdown uebungMd = new ActivityMarkdown();
-			uebungMd.setActivity(activity);
-			uebungMd.setType(MarkdownType.UEBUNG);
-			uebungMd.setContent(data.get("uebungMarkdown").toString());
-			uebungMd.setLandscape(false);
-			uebungMd.setCreatedAt(LocalDateTime.now());
-			activity.getMarkdowns().add(uebungMd);
+		if (data.get("exerciseMarkdown") != null) {
+			ActivityMarkdown exerciseMd = new ActivityMarkdown();
+			exerciseMd.setActivity(activity);
+			exerciseMd.setType(MarkdownType.EXERCISE);
+			exerciseMd.setContent(data.get("exerciseMarkdown").toString());
+			exerciseMd.setLandscape(false);
+			exerciseMd.setCreatedAt(LocalDateTime.now());
+			activity.getMarkdowns().add(exerciseMd);
 		}
 
-		if (data.get("uebungLoesungMarkdown") != null) {
-			ActivityMarkdown uebungLoesungMd = new ActivityMarkdown();
-			uebungLoesungMd.setActivity(activity);
-			uebungLoesungMd.setType(MarkdownType.UEBUNG_LOESUNG);
-			uebungLoesungMd.setContent(data.get("uebungLoesungMarkdown").toString());
-			uebungLoesungMd.setLandscape(false);
-			uebungLoesungMd.setCreatedAt(LocalDateTime.now());
-			activity.getMarkdowns().add(uebungLoesungMd);
+		if (data.get("exerciseSolutionMarkdown") != null) {
+			ActivityMarkdown exerciseSolutionMd = new ActivityMarkdown();
+			exerciseSolutionMd.setActivity(activity);
+			exerciseSolutionMd.setType(MarkdownType.EXERCISE_SOLUTION);
+			exerciseSolutionMd.setContent(data.get("exerciseSolutionMarkdown").toString());
+			exerciseSolutionMd.setLandscape(false);
+			exerciseSolutionMd.setCreatedAt(LocalDateTime.now());
+			activity.getMarkdowns().add(exerciseSolutionMd);
 		}
 
 		return activity;
@@ -561,7 +561,7 @@ public class ActivityService {
 		response.setDocuments(docResponses);
 
 		response.setMarkdowns(mapLatestMarkdowns(activity, includeMarkdownContent));
-		if (hasTafelbildImage(activity)) {
+		if (hasBoardImage(activity)) {
 			response.setThumbnailUrl("/api/activities/" + activity.getId() + "/thumbnail");
 		}
 		response.setStatus(
@@ -571,7 +571,7 @@ public class ActivityService {
 		return response;
 	}
 
-	private ActivityResponse mapToSummaryResponse(Activity activity, Set<UUID> tafelbildActivityIds,
+	private ActivityResponse mapToSummaryResponse(Activity activity, Set<UUID> boardImageActivityIds,
 			Set<UUID> favouritedActivityIds) {
 		ActivityResponse response = new ActivityResponse();
 		response.setId(activity.getId());
@@ -591,7 +591,7 @@ public class ActivityService {
 		response.setCleanupTimeMinutes(activity.getCleanupTimeMinutes());
 		response.setResourcesNeeded(activity.getResourcesNeeded());
 		response.setTopics(activity.getTopics());
-		if (tafelbildActivityIds.contains(activity.getId())) {
+		if (boardImageActivityIds.contains(activity.getId())) {
 			response.setThumbnailUrl("/api/activities/" + activity.getId() + "/thumbnail");
 		}
 		response.setStatus(
@@ -748,8 +748,8 @@ public class ActivityService {
 		if (activity == null)
 			return;
 
-		Map<String, Boolean> landscapes = Map.of("deckblatt", false, "artikulationsschema", true, "hintergrundwissen",
-				false, "tafelbild", false, "uebung", false, "uebung_loesung", false);
+		Map<String, Boolean> landscapes = Map.of("cover_sheet", false, "lesson_plan", true, "background_knowledge",
+				false, "board_image", false, "exercise", false, "exercise_solution", false);
 
 		for (Map.Entry<String, String> entry : markdownsByType.entrySet()) {
 			if (entry.getValue() == null)

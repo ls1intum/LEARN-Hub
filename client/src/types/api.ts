@@ -16,12 +16,12 @@ export interface MetadataExtractionResponse {
 // Activity markdowns generation response (all three types)
 export interface ActivityMarkdownsResponse {
   documentId: string;
-  deckblattMarkdown?: string;
-  artikulationsschemaMarkdown?: string;
-  hintergrundwissenMarkdown?: string;
-  tafelbildMarkdown?: string;
-  uebungMarkdown?: string;
-  uebungLoesungMarkdown?: string;
+  coverSheetMarkdown?: string;
+  lessonPlanMarkdown?: string;
+  backgroundKnowledgeMarkdown?: string;
+  boardImageMarkdown?: string;
+  exerciseMarkdown?: string;
+  exerciseSolutionMarkdown?: string;
 }
 
 // Activity update request
@@ -41,12 +41,12 @@ export interface UpdateActivityRequest {
   mentalLoad?: string;
   physicalEnergy?: string;
   topics: string[];
-  artikulationsschemaMarkdown?: string;
-  deckblattMarkdown?: string;
-  hintergrundwissenMarkdown?: string;
-  tafelbildMarkdown?: string;
-  uebungMarkdown?: string;
-  uebungLoesungMarkdown?: string;
+  lessonPlanMarkdown?: string;
+  coverSheetMarkdown?: string;
+  backgroundKnowledgeMarkdown?: string;
+  boardImageMarkdown?: string;
+  exerciseMarkdown?: string;
+  exerciseSolutionMarkdown?: string;
 }
 
 // User creation/update request

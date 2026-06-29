@@ -225,12 +225,12 @@ export const ActivityApi = {
     formData.append("pdf_file", file);
     formData.append("generateMetadata", String(generateMetadata));
     const types = markdownTypes ?? [
-      "deckblatt",
-      "artikulationsschema",
-      "hintergrundwissen",
-      "tafelbild",
-      "uebung",
-      "uebung_loesung",
+      "cover_sheet",
+      "lesson_plan",
+      "background_knowledge",
+      "board_image",
+      "exercise",
+      "exercise_solution",
     ];
     types.forEach((t) => formData.append("markdownTypes", t));
     return ApiRequestMixin.request<Activity>(
@@ -363,7 +363,7 @@ export const ActivityApi = {
     orientation?: "portrait" | "landscape",
     activityName?: string,
     exerciseSheet?: boolean,
-    tafelbild?: boolean,
+    boardImage?: boolean,
   ) {
     const response = await authService.makeAuthenticatedRequest(
       "/api/markdowns/preview-pdf",
@@ -375,7 +375,7 @@ export const ActivityApi = {
           orientation,
           activityName,
           exerciseSheet,
-          tafelbild,
+          boardImage,
         }),
       },
     );

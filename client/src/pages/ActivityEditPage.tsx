@@ -48,29 +48,29 @@ import type { UpdateActivityRequest } from "@/types/api";
 
 type Step = "metadata" | "documents";
 type MarkdownTab =
-  | "deckblatt"
-  | "artikulationsschema"
-  | "hintergrundwissen"
-  | "tafelbild"
-  | "uebung"
-  | "uebung_loesung";
+  | "cover_sheet"
+  | "lesson_plan"
+  | "background_knowledge"
+  | "board_image"
+  | "exercise"
+  | "exercise_solution";
 
 const MARKDOWN_TAB_KEYS: MarkdownTab[] = [
-  "deckblatt",
-  "artikulationsschema",
-  "hintergrundwissen",
-  "tafelbild",
-  "uebung",
-  "uebung_loesung",
+  "cover_sheet",
+  "lesson_plan",
+  "background_knowledge",
+  "board_image",
+  "exercise",
+  "exercise_solution",
 ];
 
 const EMPTY_MARKDOWN_CONTENT: Record<MarkdownTab, string> = {
-  deckblatt: "",
-  artikulationsschema: "",
-  hintergrundwissen: "",
-  tafelbild: "",
-  uebung: "",
-  uebung_loesung: "",
+  cover_sheet: "",
+  lesson_plan: "",
+  background_knowledge: "",
+  board_image: "",
+  exercise: "",
+  exercise_solution: "",
 };
 
 const getEmptyMarkdownContent = () => ({ ...EMPTY_MARKDOWN_CONTENT });
@@ -145,20 +145,19 @@ export const ActivityEditPage: React.FC = () => {
   );
 
   // Markdown state
-  const [artikulationsschemaMarkdown, setArtikulationsschemaMarkdown] =
+  const [lessonPlanMarkdown, setLessonPlanMarkdown] = useState<string>("");
+  const [coverSheetMarkdown, setCoverSheetMarkdown] = useState<string>("");
+  const [backgroundKnowledgeMarkdown, setBackgroundKnowledgeMarkdown] =
     useState<string>("");
-  const [deckblattMarkdown, setDeckblattMarkdown] = useState<string>("");
-  const [hintergrundwissenMarkdown, setHintergrundwissenMarkdown] =
-    useState<string>("");
-  const [tafelbildMarkdown, setTafelbildMarkdown] = useState<string>("");
-  const [uebungMarkdown, setUebungMarkdown] = useState<string>("");
-  const [uebungLoesungMarkdown, setUebungLoesungMarkdown] =
+  const [boardImageMarkdown, setBoardImageMarkdown] = useState<string>("");
+  const [exerciseMarkdown, setExerciseMarkdown] = useState<string>("");
+  const [exerciseSolutionMarkdown, setExerciseSolutionMarkdown] =
     useState<string>("");
   const [initialMarkdownContent, setInitialMarkdownContent] = useState<
     Record<MarkdownTab, string>
   >(getEmptyMarkdownContent);
   const [activeMarkdownTab, setActiveMarkdownTab] =
-    useState<MarkdownTab>("deckblatt");
+    useState<MarkdownTab>("cover_sheet");
 
   // Save state
   const [isSaving, setIsSaving] = useState(false);
@@ -179,12 +178,12 @@ export const ActivityEditPage: React.FC = () => {
         imageId: params.imageId,
         description: params.description,
         customPrompt: params.customPrompt,
-        exerciseContext: [uebungMarkdown, uebungLoesungMarkdown]
+        exerciseContext: [exerciseMarkdown, exerciseSolutionMarkdown]
           .filter(Boolean)
           .join("\n\n"),
       });
     },
-    [uebungMarkdown, uebungLoesungMarkdown],
+    [exerciseMarkdown, exerciseSolutionMarkdown],
   );
 
   const handleRegenerateImageForTafelbild = useCallback(
@@ -193,34 +192,33 @@ export const ActivityEditPage: React.FC = () => {
         imageId: params.imageId,
         description: params.description,
         customPrompt: params.customPrompt,
-        exerciseContext: artikulationsschemaMarkdown,
-        markdownType: "tafelbild",
+        exerciseContext: lessonPlanMarkdown,
+        markdownType: "board_image",
       });
     },
-    [artikulationsschemaMarkdown],
+    [lessonPlanMarkdown],
   );
 
   /** Whether the currently active markdown tab already has content */
   const activeTabHasContent =
-    (activeMarkdownTab === "deckblatt" && !!deckblattMarkdown) ||
-    (activeMarkdownTab === "artikulationsschema" &&
-      !!artikulationsschemaMarkdown) ||
-    (activeMarkdownTab === "hintergrundwissen" &&
-      !!hintergrundwissenMarkdown) ||
-    (activeMarkdownTab === "tafelbild" && !!tafelbildMarkdown) ||
-    (activeMarkdownTab === "uebung" && !!uebungMarkdown) ||
-    (activeMarkdownTab === "uebung_loesung" && !!uebungLoesungMarkdown);
+    (activeMarkdownTab === "cover_sheet" && !!coverSheetMarkdown) ||
+    (activeMarkdownTab === "lesson_plan" && !!lessonPlanMarkdown) ||
+    (activeMarkdownTab === "background_knowledge" &&
+      !!backgroundKnowledgeMarkdown) ||
+    (activeMarkdownTab === "board_image" && !!boardImageMarkdown) ||
+    (activeMarkdownTab === "exercise" && !!exerciseMarkdown) ||
+    (activeMarkdownTab === "exercise_solution" && !!exerciseSolutionMarkdown);
 
   // ─── Load Activity ──────────────────────────────────────────────
 
   const applyMarkdownContent = useCallback(
     (markdownContent: Record<MarkdownTab, string>) => {
-      setDeckblattMarkdown(markdownContent.deckblatt);
-      setArtikulationsschemaMarkdown(markdownContent.artikulationsschema);
-      setHintergrundwissenMarkdown(markdownContent.hintergrundwissen);
-      setTafelbildMarkdown(markdownContent.tafelbild);
-      setUebungMarkdown(markdownContent.uebung);
-      setUebungLoesungMarkdown(markdownContent.uebung_loesung);
+      setCoverSheetMarkdown(markdownContent.cover_sheet);
+      setLessonPlanMarkdown(markdownContent.lesson_plan);
+      setBackgroundKnowledgeMarkdown(markdownContent.background_knowledge);
+      setBoardImageMarkdown(markdownContent.board_image);
+      setExerciseMarkdown(markdownContent.exercise);
+      setExerciseSolutionMarkdown(markdownContent.exercise_solution);
     },
     [],
   );
@@ -295,10 +293,11 @@ export const ActivityEditPage: React.FC = () => {
 
     setIsGenerating(true);
     setGenerateError(null);
-    // uebung and uebung_loesung are always generated together in one call
+    // exercise and exercise_solution are always generated together in one call
     const typesToRequest =
-      activeMarkdownTab === "uebung" || activeMarkdownTab === "uebung_loesung"
-        ? ["uebung", "uebung_loesung"]
+      activeMarkdownTab === "exercise" ||
+      activeMarkdownTab === "exercise_solution"
+        ? ["exercise", "exercise_solution"]
         : [activeMarkdownTab];
     try {
       const result = await apiService.generateActivityMarkdowns(
@@ -307,23 +306,23 @@ export const ActivityEditPage: React.FC = () => {
         typesToRequest,
         activity?.id,
       );
-      if (result.deckblattMarkdown) {
-        setDeckblattMarkdown(result.deckblattMarkdown);
+      if (result.coverSheetMarkdown) {
+        setCoverSheetMarkdown(result.coverSheetMarkdown);
       }
-      if (result.artikulationsschemaMarkdown) {
-        setArtikulationsschemaMarkdown(result.artikulationsschemaMarkdown);
+      if (result.lessonPlanMarkdown) {
+        setLessonPlanMarkdown(result.lessonPlanMarkdown);
       }
-      if (result.hintergrundwissenMarkdown) {
-        setHintergrundwissenMarkdown(result.hintergrundwissenMarkdown);
+      if (result.backgroundKnowledgeMarkdown) {
+        setBackgroundKnowledgeMarkdown(result.backgroundKnowledgeMarkdown);
       }
-      if (result.tafelbildMarkdown) {
-        setTafelbildMarkdown(result.tafelbildMarkdown);
+      if (result.boardImageMarkdown) {
+        setBoardImageMarkdown(result.boardImageMarkdown);
       }
-      if (result.uebungMarkdown) {
-        setUebungMarkdown(result.uebungMarkdown);
+      if (result.exerciseMarkdown) {
+        setExerciseMarkdown(result.exerciseMarkdown);
       }
-      if (result.uebungLoesungMarkdown) {
-        setUebungLoesungMarkdown(result.uebungLoesungMarkdown);
+      if (result.exerciseSolutionMarkdown) {
+        setExerciseSolutionMarkdown(result.exerciseSolutionMarkdown);
       }
     } catch (error) {
       logger.error("Markdown generation error", error, "ActivityEditPage");
@@ -406,28 +405,28 @@ export const ActivityEditPage: React.FC = () => {
         topics: savedMetadata.topics,
       };
 
-      if (deckblattMarkdown !== initialMarkdownContent.deckblatt) {
-        updatePayload.deckblattMarkdown = deckblattMarkdown;
+      if (coverSheetMarkdown !== initialMarkdownContent.cover_sheet) {
+        updatePayload.coverSheetMarkdown = coverSheetMarkdown;
+      }
+      if (lessonPlanMarkdown !== initialMarkdownContent.lesson_plan) {
+        updatePayload.lessonPlanMarkdown = lessonPlanMarkdown;
       }
       if (
-        artikulationsschemaMarkdown !==
-        initialMarkdownContent.artikulationsschema
+        backgroundKnowledgeMarkdown !==
+        initialMarkdownContent.background_knowledge
       ) {
-        updatePayload.artikulationsschemaMarkdown = artikulationsschemaMarkdown;
+        updatePayload.backgroundKnowledgeMarkdown = backgroundKnowledgeMarkdown;
+      }
+      if (boardImageMarkdown !== initialMarkdownContent.board_image) {
+        updatePayload.boardImageMarkdown = boardImageMarkdown;
+      }
+      if (exerciseMarkdown !== initialMarkdownContent.exercise) {
+        updatePayload.exerciseMarkdown = exerciseMarkdown;
       }
       if (
-        hintergrundwissenMarkdown !== initialMarkdownContent.hintergrundwissen
+        exerciseSolutionMarkdown !== initialMarkdownContent.exercise_solution
       ) {
-        updatePayload.hintergrundwissenMarkdown = hintergrundwissenMarkdown;
-      }
-      if (tafelbildMarkdown !== initialMarkdownContent.tafelbild) {
-        updatePayload.tafelbildMarkdown = tafelbildMarkdown;
-      }
-      if (uebungMarkdown !== initialMarkdownContent.uebung) {
-        updatePayload.uebungMarkdown = uebungMarkdown;
-      }
-      if (uebungLoesungMarkdown !== initialMarkdownContent.uebung_loesung) {
-        updatePayload.uebungLoesungMarkdown = uebungLoesungMarkdown;
+        updatePayload.exerciseSolutionMarkdown = exerciseSolutionMarkdown;
       }
 
       await apiService.updateActivity(id, updatePayload);
@@ -772,47 +771,47 @@ export const ActivityEditPage: React.FC = () => {
             </Card>
           ) : (
             <>
-              {activeMarkdownTab === "deckblatt" && (
+              {activeMarkdownTab === "cover_sheet" && (
                 <MarkdownEditorWithPreview
-                  value={deckblattMarkdown}
-                  onChange={setDeckblattMarkdown}
+                  value={coverSheetMarkdown}
+                  onChange={setCoverSheetMarkdown}
                   renderPreviewFn={renderPreviewPortrait}
                 />
               )}
-              {activeMarkdownTab === "artikulationsschema" && (
+              {activeMarkdownTab === "lesson_plan" && (
                 <MarkdownEditorWithPreview
-                  value={artikulationsschemaMarkdown}
-                  onChange={setArtikulationsschemaMarkdown}
+                  value={lessonPlanMarkdown}
+                  onChange={setLessonPlanMarkdown}
                   renderPreviewFn={renderPreviewLandscape}
                 />
               )}
-              {activeMarkdownTab === "hintergrundwissen" && (
+              {activeMarkdownTab === "background_knowledge" && (
                 <MarkdownEditorWithPreview
-                  value={hintergrundwissenMarkdown}
-                  onChange={setHintergrundwissenMarkdown}
+                  value={backgroundKnowledgeMarkdown}
+                  onChange={setBackgroundKnowledgeMarkdown}
                   renderPreviewFn={renderPreviewPortrait}
                 />
               )}
-              {activeMarkdownTab === "tafelbild" && (
+              {activeMarkdownTab === "board_image" && (
                 <MarkdownEditorWithPreview
-                  value={tafelbildMarkdown}
-                  onChange={setTafelbildMarkdown}
+                  value={boardImageMarkdown}
+                  onChange={setBoardImageMarkdown}
                   renderPreviewFn={renderPreviewTafelbild}
                   onRegenerateImage={handleRegenerateImageForTafelbild}
                 />
               )}
-              {activeMarkdownTab === "uebung" && (
+              {activeMarkdownTab === "exercise" && (
                 <MarkdownEditorWithPreview
-                  value={uebungMarkdown}
-                  onChange={setUebungMarkdown}
+                  value={exerciseMarkdown}
+                  onChange={setExerciseMarkdown}
                   renderPreviewFn={renderPreviewExercise}
                   onRegenerateImage={handleRegenerateImage}
                 />
               )}
-              {activeMarkdownTab === "uebung_loesung" && (
+              {activeMarkdownTab === "exercise_solution" && (
                 <MarkdownEditorWithPreview
-                  value={uebungLoesungMarkdown}
-                  onChange={setUebungLoesungMarkdown}
+                  value={exerciseSolutionMarkdown}
+                  onChange={setExerciseSolutionMarkdown}
                   renderPreviewFn={renderPreviewPortrait}
                   onRegenerateImage={handleRegenerateImage}
                 />

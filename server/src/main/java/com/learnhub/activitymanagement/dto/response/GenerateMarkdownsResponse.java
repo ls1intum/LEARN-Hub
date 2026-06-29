@@ -9,10 +9,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class GenerateMarkdownsResponse {
 	private String documentId;
-	private String deckblattMarkdown;
-	private String artikulationsschemaMarkdown;
-	private String hintergrundwissenMarkdown;
-	private String tafelbildMarkdown;
-	private String uebungMarkdown;
-	private String uebungLoesungMarkdown;
+	private String coverSheetMarkdown;
+	private String lessonPlanMarkdown;
+	private String backgroundKnowledgeMarkdown;
+	private String boardImageMarkdown;
+	private String exerciseMarkdown;
+	private String exerciseSolutionMarkdown;
 }

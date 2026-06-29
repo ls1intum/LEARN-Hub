@@ -74,10 +74,10 @@ public class MarkdownController {
 
 			String activityName = markdown.getActivity() != null ? markdown.getActivity().getName() : "";
 			String documentTitle = buildDocumentTitle(activityName, markdown.getType().getValue());
-			boolean exerciseSheet = markdown.getType() == MarkdownType.UEBUNG;
-			boolean isTafelbild = markdown.getType() == MarkdownType.TAFELBILD;
+			boolean exerciseSheet = markdown.getType() == MarkdownType.EXERCISE;
+			boolean isBoardImage = markdown.getType() == MarkdownType.BOARD_IMAGE;
 			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape(), activityName,
-					exerciseSheet, isTafelbild);
+					exerciseSheet, isBoardImage);
 			pdfBytes = markdownToPdfService.applyDocumentTitle(pdfBytes, documentTitle);
 
 			String downloadName = sanitizeFilename(documentTitle) + ".pdf";
@@ -116,7 +116,7 @@ public class MarkdownController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown content is empty"));
 			}
 
-			boolean exerciseSheet = markdown.getType() == MarkdownType.UEBUNG;
+			boolean exerciseSheet = markdown.getType() == MarkdownType.EXERCISE;
 			String activityName = markdown.getActivity() != null ? markdown.getActivity().getName() : "";
 			LocalDateTime effectiveTimestamp = markdown.getUpdatedAt() != null
 					? markdown.getUpdatedAt()
@@ -161,7 +161,7 @@ public class MarkdownController {
 			boolean landscape = orientation == null || !"portrait".equalsIgnoreCase(orientation);
 			String activityName = request.getActivityName();
 			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(markdown, landscape,
-					activityName != null ? activityName : "", request.isExerciseSheet(), request.isTafelbild());
+					activityName != null ? activityName : "", request.isExerciseSheet(), request.isBoardImage());
 			String documentTitle = (activityName == null || activityName.isBlank())
 					? "Markdown Preview"
 					: activityName.trim() + " Preview";

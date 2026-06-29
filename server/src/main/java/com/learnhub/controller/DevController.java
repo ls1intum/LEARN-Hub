@@ -71,8 +71,8 @@ public class DevController {
 	 * @param file
 	 *            the PDF file to process
 	 * @param type
-	 *            markdown type: uebung (default), deckblatt, hintergrundwissen,
-	 *            artikulationsschema
+	 *            markdown type: exercise (default), cover_sheet,
+	 *            background_knowledge, lesson_plan
 	 * @param metadataJson
 	 *            optional JSON object with activity metadata
 	 */
@@ -82,7 +82,7 @@ public class DevController {
 	@Operation(summary = "Test markdown generation (dev only)", description = "Upload a PDF and generate markdown without persisting anything. "
 			+ "Available in dev profile only.")
 	public ResponseEntity<?> testMarkdown(@RequestPart("file") MultipartFile file,
-			@RequestParam(value = "type", defaultValue = "uebung") String type,
+			@RequestParam(value = "type", defaultValue = "exercise") String type,
 			@RequestParam(value = "metadata", required = false) String metadataJson) {
 
 		logger.info("POST /api/dev/test-markdown - type={}, file={} ({} bytes)", type, file.getOriginalFilename(),
@@ -95,25 +95,24 @@ public class DevController {
 			TestMarkdownResponse response = new TestMarkdownResponse();
 
 			switch (type.toLowerCase()) {
-				case "uebung" -> {
+				case "exercise" -> {
 					List<byte[]> images = llmService.isVisionEnabled() ? renderPdfImages(pdfBytes) : null;
-					Map<String, String> result = llmService.generateUebungAndLoesung(pdfText, metadata, images);
-					response.setUebungMarkdown(result.get("uebung"));
-					response.setUebungLoesungMarkdown(result.get("uebung_loesung"));
+					Map<String, String> result = llmService.generateExerciseAndSolution(pdfText, metadata, images);
+					response.setExerciseMarkdown(result.get("exercise"));
+					response.setExerciseSolutionMarkdown(result.get("exercise_solution"));
 				}
-				case "deckblatt" -> response.setDeckblattMarkdown(llmService.generateDeckblatt(pdfText, metadata));
-				case "hintergrundwissen" ->
-					response.setHintergrundwissenMarkdown(llmService.generateHintergrundwissen(pdfText, metadata));
-				case "artikulationsschema" ->
-					response.setArtikulationsschemaMarkdown(llmService.generateArtikulationsschema(pdfText, metadata));
-				case "tafelbild" -> {
-					String artik = llmService.generateArtikulationsschema(pdfText, metadata);
-					response.setArtikulationsschemaMarkdown(artik);
-					response.setTafelbildMarkdown(llmService.generateTafelbildMarkdown(artik, metadata));
+				case "cover_sheet" -> response.setCoverSheetMarkdown(llmService.generateCoverSheet(pdfText, metadata));
+				case "background_knowledge" ->
+					response.setBackgroundKnowledgeMarkdown(llmService.generateBackgroundKnowledge(pdfText, metadata));
+				case "lesson_plan" -> response.setLessonPlanMarkdown(llmService.generateLessonPlan(pdfText, metadata));
+				case "board_image" -> {
+					String lessonPlan = llmService.generateLessonPlan(pdfText, metadata);
+					response.setLessonPlanMarkdown(lessonPlan);
+					response.setBoardImageMarkdown(llmService.generateBoardImageMarkdown(lessonPlan, metadata));
 				}
 				default -> {
 					return ResponseEntity.badRequest().body(ErrorResponse.of("Unknown type: " + type
-							+ ". Valid values: uebung, deckblatt, hintergrundwissen, artikulationsschema, tafelbild"));
+							+ ". Valid values: exercise, cover_sheet, background_knowledge, lesson_plan, board_image"));
 				}
 			}
 

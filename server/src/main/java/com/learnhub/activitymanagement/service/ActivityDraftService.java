@@ -192,71 +192,72 @@ public class ActivityDraftService {
 	private Map<String, String> generateSelectedMarkdowns(String pdfText, Map<String, Object> metadata,
 			List<byte[]> pdfPageImages, Set<String> types) {
 
-		// tafelbild requires artikulationsschema as intermediate input even if artik is
+		// board_image requires lesson_plan as intermediate input even if lessonPlan is
 		// not stored
-		boolean needArtik = types.contains("artikulationsschema") || types.contains("tafelbild");
-		boolean needUebung = types.contains("uebung") || types.contains("uebung_loesung");
+		boolean needLessonPlan = types.contains("lesson_plan") || types.contains("board_image");
+		boolean needExercise = types.contains("exercise") || types.contains("exercise_solution");
 
 		Map<String, String> result = new HashMap<>();
 		if (pdfPageImages != null) {
 			// Vision mode: sequential
-			if (types.contains("deckblatt"))
-				result.put("deckblatt", llmService.generateDeckblatt(pdfText, metadata));
-			if (needArtik) {
-				String artik = llmService.generateArtikulationsschema(pdfText, metadata);
-				if (types.contains("artikulationsschema"))
-					result.put("artikulationsschema", artik);
-				if (types.contains("tafelbild"))
-					result.put("tafelbild", llmService.generateTafelbildMarkdown(artik, metadata));
+			if (types.contains("cover_sheet"))
+				result.put("cover_sheet", llmService.generateCoverSheet(pdfText, metadata));
+			if (needLessonPlan) {
+				String lessonPlan = llmService.generateLessonPlan(pdfText, metadata);
+				if (types.contains("lesson_plan"))
+					result.put("lesson_plan", lessonPlan);
+				if (types.contains("board_image"))
+					result.put("board_image", llmService.generateBoardImageMarkdown(lessonPlan, metadata));
 			}
-			if (types.contains("hintergrundwissen"))
-				result.put("hintergrundwissen", llmService.generateHintergrundwissen(pdfText, metadata));
-			if (needUebung) {
-				Map<String, String> uebung = llmService.generateUebungAndLoesung(pdfText, metadata, pdfPageImages);
-				if (types.contains("uebung"))
-					result.put("uebung", uebung.get("uebung"));
-				if (types.contains("uebung_loesung"))
-					result.put("uebung_loesung", uebung.get("uebung_loesung"));
+			if (types.contains("background_knowledge"))
+				result.put("background_knowledge", llmService.generateBackgroundKnowledge(pdfText, metadata));
+			if (needExercise) {
+				Map<String, String> exercise = llmService.generateExerciseAndSolution(pdfText, metadata, pdfPageImages);
+				if (types.contains("exercise"))
+					result.put("exercise", exercise.get("exercise"));
+				if (types.contains("exercise_solution"))
+					result.put("exercise_solution", exercise.get("exercise_solution"));
 			}
 		} else {
-			// Text-only mode: parallel, tafelbild chains off artikulationsschema
-			CompletableFuture<String> deckblattF = types.contains("deckblatt")
-					? CompletableFuture.supplyAsync(() -> llmService.generateDeckblatt(pdfText, metadata),
+			// Text-only mode: parallel, board_image chains off lesson_plan
+			CompletableFuture<String> coverSheetF = types.contains("cover_sheet")
+					? CompletableFuture.supplyAsync(() -> llmService.generateCoverSheet(pdfText, metadata),
 							markdownGenerationExecutor)
 					: CompletableFuture.completedFuture(null);
-			CompletableFuture<String> artikF = needArtik
-					? CompletableFuture.supplyAsync(() -> llmService.generateArtikulationsschema(pdfText, metadata),
+			CompletableFuture<String> lessonPlanF = needLessonPlan
+					? CompletableFuture.supplyAsync(() -> llmService.generateLessonPlan(pdfText, metadata),
 							markdownGenerationExecutor)
 					: CompletableFuture.completedFuture(null);
-			CompletableFuture<String> tafelbildF = types.contains("tafelbild")
-					? artikF.thenApplyAsync(artik -> llmService.generateTafelbildMarkdown(artik, metadata),
+			CompletableFuture<String> boardImageF = types.contains("board_image")
+					? lessonPlanF.thenApplyAsync(
+							lessonPlan -> llmService.generateBoardImageMarkdown(lessonPlan, metadata),
 							markdownGenerationExecutor)
 					: CompletableFuture.completedFuture(null);
-			CompletableFuture<String> hinterF = types.contains("hintergrundwissen")
-					? CompletableFuture.supplyAsync(() -> llmService.generateHintergrundwissen(pdfText, metadata),
+			CompletableFuture<String> hinterF = types.contains("background_knowledge")
+					? CompletableFuture.supplyAsync(() -> llmService.generateBackgroundKnowledge(pdfText, metadata),
 							markdownGenerationExecutor)
 					: CompletableFuture.completedFuture(null);
-			CompletableFuture<Map<String, String>> uebungF = needUebung
-					? CompletableFuture.supplyAsync(() -> llmService.generateUebungAndLoesung(pdfText, metadata),
+			CompletableFuture<Map<String, String>> exerciseF = needExercise
+					? CompletableFuture.supplyAsync(() -> llmService.generateExerciseAndSolution(pdfText, metadata),
 							markdownGenerationExecutor)
 					: CompletableFuture.completedFuture(null);
 
-			CompletableFuture.allOf(deckblattF, tafelbildF, hinterF, uebungF).join();
+			CompletableFuture.allOf(coverSheetF, boardImageF, hinterF, exerciseF).join();
 
-			if (types.contains("deckblatt") && deckblattF.join() != null)
-				result.put("deckblatt", deckblattF.join());
-			if (types.contains("artikulationsschema") && artikF.join() != null)
-				result.put("artikulationsschema", artikF.join());
-			if (types.contains("tafelbild") && tafelbildF.join() != null)
-				result.put("tafelbild", tafelbildF.join());
-			if (types.contains("hintergrundwissen") && hinterF.join() != null)
-				result.put("hintergrundwissen", hinterF.join());
-			if (needUebung && uebungF.join() != null) {
-				Map<String, String> uebung = uebungF.join();
-				if (types.contains("uebung"))
-					result.put("uebung", uebung.get("uebung"));
-				if (types.contains("uebung_loesung"))
-					result.put("uebung_loesung", uebung.get("uebung_loesung"));
+			if (types.contains("cover_sheet") && coverSheetF.join() != null)
+				result.put("cover_sheet", coverSheetF.join());
+			if (types.contains("lesson_plan") && lessonPlanF.join() != null)
+				result.put("lesson_plan", lessonPlanF.join());
+			if (types.contains("board_image") && boardImageF.join() != null)
+				result.put("board_image", boardImageF.join());
+			if (types.contains("background_knowledge") && hinterF.join() != null)
+				result.put("background_knowledge", hinterF.join());
+			if (needExercise && exerciseF.join() != null) {
+				Map<String, String> exercise = exerciseF.join();
+				if (types.contains("exercise"))
+					result.put("exercise", exercise.get("exercise"));
+				if (types.contains("exercise_solution"))
+					result.put("exercise_solution", exercise.get("exercise_solution"));
 			}
 		}
 		return result;
