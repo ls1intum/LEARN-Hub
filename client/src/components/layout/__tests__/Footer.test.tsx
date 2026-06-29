@@ -21,26 +21,22 @@ describe("Footer", () => {
   });
 
   it("renders external links with correct hrefs", () => {
-    renderFooter();
+    const { container } = renderFooter();
 
-    const codeOfConductLink = screen.getByRole("link", {
-      name: /Code of Conduct/i,
-    });
-    expect(codeOfConductLink).toHaveAttribute(
-      "href",
-      "https://aet.cit.tum.de/code-of-conduct",
+    // Query by href so the assertions stay locale-independent (labels are
+    // translated; the i18n test setup renders German).
+    const codeOfConductLink = container.querySelector(
+      'a[href="https://aet.cit.tum.de/code-of-conduct"]',
     );
+    expect(codeOfConductLink).toBeInTheDocument();
     expect(codeOfConductLink).toHaveAttribute("target", "_blank");
     expect(codeOfConductLink).toHaveAttribute("rel", "noopener noreferrer");
 
-    const aetLink = screen.getByRole("link", {
-      name: /Applied Education Technologies/i,
-    });
-    expect(aetLink).toHaveAttribute("href", "https://aet.cit.tum.de/");
-
-    const edtechLink = screen.getByRole("link", {
-      name: /TUM Center for Educational Technologies/i,
-    });
-    expect(edtechLink).toHaveAttribute("href", "https://www.edtech.tum.de/");
+    expect(
+      container.querySelector('a[href="https://aet.cit.tum.de/"]'),
+    ).toBeInTheDocument();
+    expect(
+      container.querySelector('a[href="https://www.edtech.tum.de/"]'),
+    ).toBeInTheDocument();
   });
 });

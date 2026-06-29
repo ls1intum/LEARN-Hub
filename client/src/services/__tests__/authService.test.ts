@@ -32,6 +32,25 @@ describe("AuthService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetMockSession();
+
+    // The global test setup stubs localStorage as a no-op (getItem always
+    // returns null). AuthService gates getCurrentUser() behind a persisted
+    // session flag, so back localStorage with a real in-memory store here.
+    const store = new Map<string, string>();
+    vi.mocked(globalThis.localStorage.getItem).mockImplementation(
+      (key: string) => store.get(key) ?? null,
+    );
+    vi.mocked(globalThis.localStorage.setItem).mockImplementation(
+      (key: string, value: string) => {
+        store.set(key, String(value));
+      },
+    );
+    vi.mocked(globalThis.localStorage.removeItem).mockImplementation(
+      (key: string) => {
+        store.delete(key);
+      },
+    );
+
     authService = new AuthService();
   });
 
