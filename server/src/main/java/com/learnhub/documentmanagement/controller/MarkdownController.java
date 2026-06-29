@@ -74,8 +74,8 @@ public class MarkdownController {
 
 			String activityName = markdown.getActivity() != null ? markdown.getActivity().getName() : "";
 			String documentTitle = buildDocumentTitle(activityName, markdown.getType().getValue());
-			boolean exerciseSheet = markdown.getType() == MarkdownType.UEBUNG;
-			boolean isTafelbild = markdown.getType() == MarkdownType.TAFELBILD;
+			boolean exerciseSheet = markdown.getType() == MarkdownType.EXERCISE;
+			boolean isTafelbild = markdown.getType() == MarkdownType.BOARD_IMAGE;
 			byte[] pdfBytes = markdownToPdfService.renderMarkdownToPdf(content, markdown.isLandscape(), activityName,
 					exerciseSheet, isTafelbild);
 			pdfBytes = markdownToPdfService.applyDocumentTitle(pdfBytes, documentTitle);
@@ -116,7 +116,7 @@ public class MarkdownController {
 				return ResponseEntity.status(404).body(ErrorResponse.of("Markdown content is empty"));
 			}
 
-			boolean exerciseSheet = markdown.getType() == MarkdownType.UEBUNG;
+			boolean exerciseSheet = markdown.getType() == MarkdownType.EXERCISE;
 			String activityName = markdown.getActivity() != null ? markdown.getActivity().getName() : "";
 			LocalDateTime effectiveTimestamp = markdown.getUpdatedAt() != null
 					? markdown.getUpdatedAt()

@@ -113,14 +113,14 @@ class ActivityServiceTest {
 		data.put("format", "unplugged");
 		data.put("bloomLevel", "apply");
 		data.put("durationMinMinutes", 30);
-		data.put("artikulationsschemaMarkdown", "# Schema\n\nSome markdown content");
+		data.put("lessonPlanMarkdown", "# Schema\n\nSome markdown content");
 
 		Activity activity = activityService.createActivityFromMap(data);
 
 		assertThat(activity.getMarkdowns()).hasSize(1);
 		ActivityMarkdown actMd = activity.getMarkdowns().get(0);
 		assertThat(actMd.getContent()).isEqualTo("# Schema\n\nSome markdown content");
-		assertThat(actMd.getType()).isEqualTo(MarkdownType.ARTIKULATIONSSCHEMA);
+		assertThat(actMd.getType()).isEqualTo(MarkdownType.LESSON_PLAN);
 		assertThat(actMd.getActivity()).isSameAs(activity);
 	}
 
@@ -203,7 +203,7 @@ class ActivityServiceTest {
 		ActivityMarkdown actMd = new ActivityMarkdown();
 		actMd.setId(UUID.randomUUID());
 		actMd.setActivity(activity);
-		actMd.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+		actMd.setType(MarkdownType.LESSON_PLAN);
 		actMd.setContent("# Test Schema");
 		actMd.setCreatedAt(LocalDateTime.now());
 		activity.getMarkdowns().add(actMd);
@@ -213,7 +213,7 @@ class ActivityServiceTest {
 		assertThat(response.getMarkdowns()).hasSize(1);
 		MarkdownResponse mdResp = response.getMarkdowns().get(0);
 		assertThat(mdResp.getId()).isEqualTo(actMd.getId());
-		assertThat(mdResp.getType()).isEqualTo("artikulationsschema");
+		assertThat(mdResp.getType()).isEqualTo("lesson_plan");
 		assertThat(mdResp.getContent()).isNull();
 	}
 
@@ -224,7 +224,7 @@ class ActivityServiceTest {
 		ActivityMarkdown actMd = new ActivityMarkdown();
 		actMd.setId(UUID.randomUUID());
 		actMd.setActivity(activity);
-		actMd.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+		actMd.setType(MarkdownType.LESSON_PLAN);
 		actMd.setContent("# Test Schema");
 		actMd.setCreatedAt(LocalDateTime.now());
 		activity.getMarkdowns().add(actMd);
@@ -234,7 +234,7 @@ class ActivityServiceTest {
 		assertThat(response.getMarkdowns()).hasSize(1);
 		MarkdownResponse mdResp = response.getMarkdowns().get(0);
 		assertThat(mdResp.getId()).isEqualTo(actMd.getId());
-		assertThat(mdResp.getType()).isEqualTo("artikulationsschema");
+		assertThat(mdResp.getType()).isEqualTo("lesson_plan");
 		assertThat(mdResp.getContent()).isEqualTo("# Test Schema");
 	}
 
@@ -255,14 +255,14 @@ class ActivityServiceTest {
 		ActivityMarkdown olderMarkdown = new ActivityMarkdown();
 		olderMarkdown.setId(UUID.randomUUID());
 		olderMarkdown.setActivity(activity);
-		olderMarkdown.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+		olderMarkdown.setType(MarkdownType.LESSON_PLAN);
 		olderMarkdown.setContent("# Old Schema");
 		olderMarkdown.setCreatedAt(LocalDateTime.of(2026, 3, 1, 10, 0));
 
 		ActivityMarkdown newerMarkdown = new ActivityMarkdown();
 		newerMarkdown.setId(UUID.randomUUID());
 		newerMarkdown.setActivity(activity);
-		newerMarkdown.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+		newerMarkdown.setType(MarkdownType.LESSON_PLAN);
 		newerMarkdown.setContent("# New Schema");
 		newerMarkdown.setCreatedAt(LocalDateTime.of(2026, 3, 2, 10, 0));
 
@@ -343,7 +343,7 @@ class ActivityServiceTest {
 		ActivityMarkdown existingMd = new ActivityMarkdown();
 		existingMd.setId(UUID.randomUUID());
 		existingMd.setActivity(existingActivity);
-		existingMd.setType(MarkdownType.ARTIKULATIONSSCHEMA);
+		existingMd.setType(MarkdownType.LESSON_PLAN);
 		existingMd.setContent("Old content");
 		existingMd.setCreatedAt(LocalDateTime.now());
 		existingActivity.getMarkdowns().add(existingMd);
@@ -359,7 +359,7 @@ class ActivityServiceTest {
 		updateData.put("format", "unplugged");
 		updateData.put("bloomLevel", "apply");
 		updateData.put("durationMinMinutes", 30);
-		updateData.put("artikulationsschemaMarkdown", "New content");
+		updateData.put("lessonPlanMarkdown", "New content");
 
 		ActivityResponse response = activityService.updateActivityFromMap(existingActivity.getId(), updateData);
 
@@ -378,7 +378,7 @@ class ActivityServiceTest {
 		ActivityMarkdown existingMd = new ActivityMarkdown();
 		existingMd.setId(UUID.randomUUID());
 		existingMd.setActivity(existingActivity);
-		existingMd.setType(MarkdownType.DECKBLATT);
+		existingMd.setType(MarkdownType.COVER_SHEET);
 		existingMd.setContent("Legacy\u2014content");
 		existingMd.setCreatedAt(LocalDateTime.now());
 		existingActivity.getMarkdowns().add(existingMd);
@@ -418,13 +418,13 @@ class ActivityServiceTest {
 		updateData.put("format", "unplugged");
 		updateData.put("bloomLevel", "apply");
 		updateData.put("durationMinMinutes", 30);
-		updateData.put("artikulationsschemaMarkdown", "New schema");
+		updateData.put("lessonPlanMarkdown", "New schema");
 
 		ActivityResponse response = activityService.updateActivityFromMap(existingActivity.getId(), updateData);
 
 		assertThat(existingActivity.getMarkdowns()).hasSize(1);
 		assertThat(existingActivity.getMarkdowns().get(0).getContent()).isEqualTo("New schema");
-		assertThat(existingActivity.getMarkdowns().get(0).getType()).isEqualTo(MarkdownType.ARTIKULATIONSSCHEMA);
+		assertThat(existingActivity.getMarkdowns().get(0).getType()).isEqualTo(MarkdownType.LESSON_PLAN);
 		assertThat(response.getMarkdowns()).hasSize(1);
 		assertThat(response.getMarkdowns().get(0).getContent()).isNull();
 	}
@@ -498,7 +498,7 @@ class ActivityServiceTest {
 
 		ActivityMarkdown markdown = new ActivityMarkdown();
 		markdown.setActivity(activity);
-		markdown.setType(MarkdownType.DECKBLATT);
+		markdown.setType(MarkdownType.COVER_SHEET);
 		markdown.setContent("Text\u2014mit\u201CZeichen\u201D");
 		markdown.setCreatedAt(LocalDateTime.now());
 		activity.getMarkdowns().add(markdown);

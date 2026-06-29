@@ -85,8 +85,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class ActivityController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivityController.class);
-	private static final String[] MARKDOWN_TYPE_ORDER = {"deckblatt", "artikulationsschema", "hintergrundwissen",
-			"tafelbild", "uebung", "uebung_loesung"};
+	private static final String[] MARKDOWN_TYPE_ORDER = {"cover_sheet", "lesson_plan", "background_knowledge",
+			"board_image", "exercise", "exercise_solution"};
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	@Autowired
@@ -155,7 +155,7 @@ public class ActivityController {
 
 	@GetMapping("/{id}/thumbnail")
 	@PreAuthorize("permitAll()")
-	@Operation(summary = "Get activity thumbnail", description = "Get the tafelbild thumbnail image for an activity. Use ?width= to request a specific max width (default 800, max 1200).")
+	@Operation(summary = "Get activity thumbnail", description = "Get the board_image thumbnail image for an activity. Use ?width= to request a specific max width (default 800, max 1200).")
 	public ResponseEntity<byte[]> getThumbnail(@PathVariable UUID id,
 			@RequestParam(value = "width", required = false) Integer requestedWidth,
 			@RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) String ifNoneMatch) throws IOException {
@@ -214,7 +214,7 @@ public class ActivityController {
 	@PutMapping("/{id}")
 	@PreAuthorize("hasRole('ADMIN')")
 	@SecurityRequirement(name = "BearerAuth")
-	@Operation(summary = "Update activity", description = "Update an existing activity's metadata and artikulationsschema (admin only)")
+	@Operation(summary = "Update activity", description = "Update an existing activity's metadata and lesson_plan (admin only)")
 	public ResponseEntity<ActivityResponse> updateActivity(@PathVariable UUID id,
 			@RequestBody ActivityUpsertRequest request) {
 		logger.info("PUT /api/activities/{} - Update activity called", id);
@@ -282,13 +282,13 @@ public class ActivityController {
 		return buildFileDownloadResponse(lessonPlanPdf, "lesson_plan", ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
-	private static final List<String> ALL_MARKDOWN_TYPES = List.of("deckblatt", "artikulationsschema",
-			"hintergrundwissen", "tafelbild", "uebung", "uebung_loesung");
+	private static final List<String> ALL_MARKDOWN_TYPES = List.of("cover_sheet", "lesson_plan",
+			"background_knowledge", "board_image", "exercise", "exercise_solution");
 
 	@PostMapping(value = "/upload-and-create-pending", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("hasRole('ADMIN')")
 	@SecurityRequirement(name = "BearerAuth")
-	@Operation(summary = "Upload PDF and create draft activity", description = "Upload a PDF and create an admin draft. generateMetadata controls LLM metadata extraction. markdownTypes is a list of markdown documents to generate (deckblatt, artikulationsschema, hintergrundwissen, tafelbild, uebung, uebung_loesung); defaults to all. Max file size: 1 MB.")
+	@Operation(summary = "Upload PDF and create draft activity", description = "Upload a PDF and create an admin draft. generateMetadata controls LLM metadata extraction. markdownTypes is a list of markdown documents to generate (cover_sheet, lesson_plan, background_knowledge, board_image, exercise, exercise_solution); defaults to all. Max file size: 1 MB.")
 	public ResponseEntity<ActivityResponse> uploadAndCreatePending(@RequestParam("pdf_file") MultipartFile pdfFile,
 			@RequestParam(value = "generateMetadata", defaultValue = "true") boolean generateMetadata,
 			@RequestParam(value = "markdownTypes", required = false) List<String> markdownTypes) {
@@ -343,7 +343,7 @@ public class ActivityController {
 					+ request.getCustomPrompt().trim();
 		}
 		String contextText = request.getExerciseContext() != null ? request.getExerciseContext() : "";
-		boolean isTafelbild = "tafelbild".equalsIgnoreCase(request.getMarkdownType());
+		boolean isTafelbild = "board_image".equalsIgnoreCase(request.getMarkdownType());
 		String imageMarkdown = isTafelbild
 				? llmService.generateTafelbildImageMarkdown(request.getImageId(), finalDescription, contextText)
 				: llmService.generateImageMarkdown(request.getImageId(), finalDescription, contextText);
@@ -389,12 +389,12 @@ public class ActivityController {
 		boolean generateAll = types == null || types.isEmpty();
 		boolean useVision = pdfPageImages != null;
 
-		// If only tafelbild is requested and an activity with an existing
+		// If only board_image is requested and an activity with an existing
 		// Artikulationsschema is provided, reuse it instead of regenerating.
 		String existingArtik = null;
-		if (request.getActivityId() != null && !generateAll && !requestedTypes.contains("artikulationsschema")) {
+		if (request.getActivityId() != null && !generateAll && !requestedTypes.contains("lesson_plan")) {
 			existingArtik = activityService.getActivityMarkdowns(request.getActivityId()).stream()
-					.filter(m -> "artikulationsschema".equals(m.getType()) && m.getContent() != null
+					.filter(m -> "lesson_plan".equals(m.getType()) && m.getContent() != null
 							&& !m.getContent().isBlank())
 					.map(m -> m.getContent()).findFirst().orElse(null);
 		}
@@ -405,38 +405,38 @@ public class ActivityController {
 			// uses the visual model with images. Run sequentially — local models
 			// handle one image request at a time.
 			logger.info("Vision mode: generating markdowns sequentially");
-			if (generateAll || requestedTypes.contains("deckblatt")) {
-				response.setDeckblattMarkdown(llmService.generateDeckblatt(pdfText, metadata));
+			if (generateAll || requestedTypes.contains("cover_sheet")) {
+				response.setCoverSheetMarkdown(llmService.generateDeckblatt(pdfText, metadata));
 			}
 			// Tafelbild depends on Artikulationsschema — reuse existing or generate fresh
-			boolean needArtikVision = generateAll || requestedTypes.contains("artikulationsschema")
-					|| requestedTypes.contains("tafelbild");
+			boolean needArtikVision = generateAll || requestedTypes.contains("lesson_plan")
+					|| requestedTypes.contains("board_image");
 			String artikForTafelbild = existingArtikFinal;
 			if (needArtikVision && artikForTafelbild == null) {
 				artikForTafelbild = llmService.generateArtikulationsschema(pdfText, metadata);
-				if (generateAll || requestedTypes.contains("artikulationsschema")) {
-					response.setArtikulationsschemaMarkdown(artikForTafelbild);
+				if (generateAll || requestedTypes.contains("lesson_plan")) {
+					response.setLessonPlanMarkdown(artikForTafelbild);
 				}
 			}
-			if (generateAll || requestedTypes.contains("hintergrundwissen")) {
-				response.setHintergrundwissenMarkdown(llmService.generateHintergrundwissen(pdfText, metadata));
+			if (generateAll || requestedTypes.contains("background_knowledge")) {
+				response.setBackgroundKnowledgeMarkdown(llmService.generateHintergrundwissen(pdfText, metadata));
 			}
-			if ((generateAll || requestedTypes.contains("tafelbild")) && artikForTafelbild != null) {
-				response.setTafelbildMarkdown(llmService.generateTafelbildMarkdown(artikForTafelbild, metadata));
+			if ((generateAll || requestedTypes.contains("board_image")) && artikForTafelbild != null) {
+				response.setBoardImageMarkdown(llmService.generateBoardImageMarkdown(artikForTafelbild, metadata));
 			}
-			if (generateAll || requestedTypes.contains("uebung") || requestedTypes.contains("uebung_loesung")) {
+			if (generateAll || requestedTypes.contains("exercise") || requestedTypes.contains("exercise_solution")) {
 				Map<String, String> uebungResult = llmService.generateUebungAndLoesung(pdfText, metadata,
 						pdfPageImages);
-				response.setUebungMarkdown(uebungResult.get("uebung"));
-				response.setUebungLoesungMarkdown(uebungResult.get("uebung_loesung"));
+				response.setExerciseMarkdown(uebungResult.get("exercise"));
+				response.setExerciseSolutionMarkdown(uebungResult.get("exercise_solution"));
 			}
 		} else {
 			// Text-only mode: run in parallel; Tafelbild chains off Artikulationsschema
-			CompletableFuture<String> deckblattFuture = (generateAll || requestedTypes.contains("deckblatt"))
+			CompletableFuture<String> deckblattFuture = (generateAll || requestedTypes.contains("cover_sheet"))
 					? submitMarkdownGeneration(() -> llmService.generateDeckblatt(pdfText, metadata))
 					: null;
-			boolean generateTafelbild = generateAll || requestedTypes.contains("tafelbild");
-			boolean needArtik = generateAll || requestedTypes.contains("artikulationsschema") || generateTafelbild;
+			boolean generateTafelbild = generateAll || requestedTypes.contains("board_image");
+			boolean needArtik = generateAll || requestedTypes.contains("lesson_plan") || generateTafelbild;
 			CompletableFuture<String> artikulationsschemaFuture = needArtik
 					? (existingArtikFinal != null
 							? CompletableFuture.completedFuture(existingArtikFinal)
@@ -444,14 +444,14 @@ public class ActivityController {
 					: null;
 			CompletableFuture<String> tafelbildFuture = generateTafelbild && artikulationsschemaFuture != null
 					? artikulationsschemaFuture.thenApplyAsync(
-							artik -> llmService.generateTafelbildMarkdown(artik, metadata), markdownGenerationExecutor)
+							artik -> llmService.generateBoardImageMarkdown(artik, metadata), markdownGenerationExecutor)
 					: null;
 			CompletableFuture<String> hintergrundwissenFuture = (generateAll
-					|| requestedTypes.contains("hintergrundwissen"))
+					|| requestedTypes.contains("background_knowledge"))
 							? submitMarkdownGeneration(() -> llmService.generateHintergrundwissen(pdfText, metadata))
 							: null;
-			boolean generateUebung = generateAll || requestedTypes.contains("uebung")
-					|| requestedTypes.contains("uebung_loesung");
+			boolean generateUebung = generateAll || requestedTypes.contains("exercise")
+					|| requestedTypes.contains("exercise_solution");
 			CompletableFuture<Map<String, String>> uebungFuture = generateUebung
 					? submitMarkdownGeneration(() -> llmService.generateUebungAndLoesung(pdfText, metadata))
 					: null;
@@ -467,24 +467,24 @@ public class ActivityController {
 			}
 
 			if (deckblattFuture != null) {
-				response.setDeckblattMarkdown(deckblattFuture.join());
+				response.setCoverSheetMarkdown(deckblattFuture.join());
 			}
 			// Only return a regenerated Artikulationsschema — never echo back the existing
 			// one
 			if (artikulationsschemaFuture != null && existingArtikFinal == null
-					&& (generateAll || requestedTypes.contains("artikulationsschema"))) {
-				response.setArtikulationsschemaMarkdown(artikulationsschemaFuture.join());
+					&& (generateAll || requestedTypes.contains("lesson_plan"))) {
+				response.setLessonPlanMarkdown(artikulationsschemaFuture.join());
 			}
 			if (hintergrundwissenFuture != null) {
-				response.setHintergrundwissenMarkdown(hintergrundwissenFuture.join());
+				response.setBackgroundKnowledgeMarkdown(hintergrundwissenFuture.join());
 			}
 			if (tafelbildFuture != null) {
-				response.setTafelbildMarkdown(tafelbildFuture.join());
+				response.setBoardImageMarkdown(tafelbildFuture.join());
 			}
 			if (uebungFuture != null) {
 				Map<String, String> uebungResult = uebungFuture.join();
-				response.setUebungMarkdown(uebungResult.get("uebung"));
-				response.setUebungLoesungMarkdown(uebungResult.get("uebung_loesung"));
+				response.setExerciseMarkdown(uebungResult.get("exercise"));
+				response.setExerciseSolutionMarkdown(uebungResult.get("exercise_solution"));
 			}
 		}
 
@@ -584,8 +584,8 @@ public class ActivityController {
 		for (String type : MARKDOWN_TYPE_ORDER) {
 			for (MarkdownResponse md : activity.getMarkdowns()) {
 				if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
-					boolean exerciseSheet = "uebung".equals(md.getType());
-					boolean isTafelbild = "tafelbild".equals(md.getType());
+					boolean exerciseSheet = "exercise".equals(md.getType());
+					boolean isTafelbild = "board_image".equals(md.getType());
 					parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape(), activityName,
 							exerciseSheet, isTafelbild));
 				}
@@ -609,8 +609,8 @@ public class ActivityController {
 				if (type.equals(md.getType()) && md.getContent() != null && !md.getContent().trim().isEmpty()) {
 					markdowns.add(md.getContent());
 					landscapes.add(md.isLandscape());
-					exerciseSheets.add("uebung".equals(md.getType()));
-					isTafelbilds.add("tafelbild".equals(md.getType()));
+					exerciseSheets.add("exercise".equals(md.getType()));
+					isTafelbilds.add("board_image".equals(md.getType()));
 				}
 			}
 		}

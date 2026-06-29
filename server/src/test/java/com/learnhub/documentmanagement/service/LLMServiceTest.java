@@ -21,20 +21,20 @@ class LLMServiceTest {
 		CountingImageModel imageModel = new CountingImageModel("ZmFrZS1pbWFnZQ==");
 		LLMService service = testService(imageModel);
 
-		Map<String, String> replaced = service.replaceExerciseImagePlaceholders(Map.of("uebung", """
+		Map<String, String> replaced = service.replaceExerciseImagePlaceholders(Map.of("exercise", """
 				# Uebung
 
 				[[IMAGE_PLACEHOLDER: bunte Pixelgrafik mit drei Quadraten]]
-				""", "uebung_loesung", """
+				""", "exercise_solution", """
 				# Loesung
 
 				[[IMAGE_PLACEHOLDER: bunte Pixelgrafik mit drei Quadraten]]
 				"""), "PDF Kontext");
 
 		assertThat(imageModel.calls).isEqualTo(1);
-		assertThat(replaced.get("uebung")).contains("data:image/png;base64,ZmFrZS1pbWFnZQ==")
+		assertThat(replaced.get("exercise")).contains("data:image/png;base64,ZmFrZS1pbWFnZQ==")
 				.doesNotContain("IMAGE_PLACEHOLDER");
-		assertThat(replaced.get("uebung_loesung")).contains("data:image/png;base64,ZmFrZS1pbWFnZQ==")
+		assertThat(replaced.get("exercise_solution")).contains("data:image/png;base64,ZmFrZS1pbWFnZQ==")
 				.doesNotContain("IMAGE_PLACEHOLDER");
 	}
 
@@ -43,17 +43,17 @@ class LLMServiceTest {
 		CountingImageModel imageModel = new CountingImageModel("ZmFrZS1pbWFnZQ==");
 		LLMService service = testService(imageModel);
 
-		Map<String, String> replaced = service.replaceExerciseImagePlaceholders(Map.of("uebung", """
+		Map<String, String> replaced = service.replaceExerciseImagePlaceholders(Map.of("exercise", """
 				[[IMAGE_PLACEHOLDER:id=labyrinth-1: Ein 4x4-Labyrinth mit Start unten links und Ziel oben rechts.]]
-				""", "uebung_loesung",
+				""", "exercise_solution",
 				"""
 						[[IMAGE_PLACEHOLDER:id=labyrinth-1: Das gleiche Labyrinth aus der Aufgabe mit anderem Beschreibungstext.]]
 						"""),
 				"PDF Kontext");
 
 		assertThat(imageModel.calls).isEqualTo(1);
-		assertThat(replaced.get("uebung")).contains("data:image/png;base64,ZmFrZS1pbWFnZQ==");
-		assertThat(replaced.get("uebung_loesung")).contains("data:image/png;base64,ZmFrZS1pbWFnZQ==");
+		assertThat(replaced.get("exercise")).contains("data:image/png;base64,ZmFrZS1pbWFnZQ==");
+		assertThat(replaced.get("exercise_solution")).contains("data:image/png;base64,ZmFrZS1pbWFnZQ==");
 	}
 
 	@Test
@@ -139,8 +139,8 @@ class LLMServiceTest {
 	void buildExerciseImageContextUsesGeneratedExerciseAndSolutionText() {
 		LLMService service = testService();
 
-		String context = service.buildExerciseImageContext(Map.of("uebung", "# Übungsblatt\n\nAufgabe 1 mit Bild.",
-				"uebung_loesung", "# Lösungsblatt\n\nLösung zu Aufgabe 1."));
+		String context = service.buildExerciseImageContext(Map.of("exercise", "# Übungsblatt\n\nAufgabe 1 mit Bild.",
+				"exercise_solution", "# Lösungsblatt\n\nLösung zu Aufgabe 1."));
 
 		assertThat(context).contains("Generiertes Übungsblatt:").contains("Aufgabe 1 mit Bild.")
 				.contains("Generiertes Lösungsblatt:").contains("Lösung zu Aufgabe 1.");

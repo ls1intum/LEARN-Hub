@@ -23,52 +23,52 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Breadcrumb } from "@/components/ui/Breadcrumb";
 
 type MarkdownType =
-  | "uebung"
-  | "deckblatt"
-  | "hintergrundwissen"
-  | "artikulationsschema"
-  | "tafelbild";
+  | "exercise"
+  | "cover_sheet"
+  | "background_knowledge"
+  | "lesson_plan"
+  | "board_image";
 
 interface TestMarkdownResponse {
-  uebungMarkdown?: string;
-  uebungLoesungMarkdown?: string;
-  deckblattMarkdown?: string;
-  artikulationsschemaMarkdown?: string;
-  hintergrundwissenMarkdown?: string;
-  tafelbildMarkdown?: string;
+  exerciseMarkdown?: string;
+  exerciseSolutionMarkdown?: string;
+  coverSheetMarkdown?: string;
+  lessonPlanMarkdown?: string;
+  backgroundKnowledgeMarkdown?: string;
+  boardImageMarkdown?: string;
 }
 
 type ResultTab = "primary" | "secondary" | "artik";
 
 const MARKDOWN_TYPES: MarkdownType[] = [
-  "uebung",
-  "deckblatt",
-  "hintergrundwissen",
-  "artikulationsschema",
-  "tafelbild",
+  "exercise",
+  "cover_sheet",
+  "background_knowledge",
+  "lesson_plan",
+  "board_image",
 ];
 
 const TYPE_LABEL_KEYS: Record<MarkdownType, string> = {
-  uebung: "aiTesting.typeUebung",
-  deckblatt: "aiTesting.typeDeckblatt",
-  hintergrundwissen: "aiTesting.typeHintergrundwissen",
-  artikulationsschema: "aiTesting.typeArtikulationsschema",
-  tafelbild: "aiTesting.typeTafelbild",
+  exercise: "aiTesting.typeUebung",
+  cover_sheet: "aiTesting.typeDeckblatt",
+  background_knowledge: "aiTesting.typeHintergrundwissen",
+  lesson_plan: "aiTesting.typeArtikulationsschema",
+  board_image: "aiTesting.typeTafelbild",
 };
 
 const ORIENTATION: Record<MarkdownType, "portrait" | "landscape"> = {
-  uebung: "portrait",
-  deckblatt: "portrait",
-  hintergrundwissen: "portrait",
-  artikulationsschema: "landscape",
-  tafelbild: "landscape",
+  exercise: "portrait",
+  cover_sheet: "portrait",
+  background_knowledge: "portrait",
+  lesson_plan: "landscape",
+  board_image: "landscape",
 };
 
 export const AITestingPage: React.FC = () => {
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [selectedType, setSelectedType] = useState<MarkdownType>("uebung");
+  const [selectedType, setSelectedType] = useState<MarkdownType>("exercise");
   const [metadataJson, setMetadataJson] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,20 +119,20 @@ export const AITestingPage: React.FC = () => {
   };
 
   const primaryMarkdown = result
-    ? (result.uebungMarkdown ??
-      result.deckblattMarkdown ??
-      result.hintergrundwissenMarkdown ??
-      result.artikulationsschemaMarkdown ??
-      result.tafelbildMarkdown ??
+    ? (result.exerciseMarkdown ??
+      result.coverSheetMarkdown ??
+      result.backgroundKnowledgeMarkdown ??
+      result.lessonPlanMarkdown ??
+      result.boardImageMarkdown ??
       "")
     : "";
 
-  const secondaryMarkdown = result?.uebungLoesungMarkdown ?? "";
-  const tafelbildArtikMarkdown = result?.artikulationsschemaMarkdown ?? "";
-  // For tafelbild type: primary = tafelbild image, artik tab = source artikulationsschema
-  const isTafelbildType = selectedType === "tafelbild";
-  const primaryTafelbildMarkdown = isTafelbildType
-    ? (result?.tafelbildMarkdown ?? "")
+  const secondaryMarkdown = result?.exerciseSolutionMarkdown ?? "";
+  const tafelbildArtikMarkdown = result?.lessonPlanMarkdown ?? "";
+  // For board_image type: primary = board_image image, artik tab = source lesson_plan
+  const isTafelbildType = selectedType === "board_image";
+  const primaryBoardImageMarkdown = isTafelbildType
+    ? (result?.boardImageMarkdown ?? "")
     : primaryMarkdown;
   const hasSecondary = !!secondaryMarkdown;
   const hasArtikTab = isTafelbildType && !!tafelbildArtikMarkdown;
@@ -143,7 +143,7 @@ export const AITestingPage: React.FC = () => {
         markdown,
         ORIENTATION[selectedType],
         selectedFile?.name,
-        selectedType === "uebung",
+        selectedType === "exercise",
       ),
     [selectedType, selectedFile],
   );
@@ -328,9 +328,9 @@ export const AITestingPage: React.FC = () => {
             )}
           </CardHeader>
           <CardContent>
-            {activeResultTab === "primary" && primaryTafelbildMarkdown && (
+            {activeResultTab === "primary" && primaryBoardImageMarkdown && (
               <MarkdownEditorWithPreview
-                value={primaryTafelbildMarkdown}
+                value={primaryBoardImageMarkdown}
                 onChange={() => {}}
                 renderPreviewFn={makePrimaryPreviewFn}
               />

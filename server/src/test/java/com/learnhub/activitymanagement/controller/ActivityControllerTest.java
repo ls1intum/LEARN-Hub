@@ -88,15 +88,15 @@ class ActivityControllerTest {
 	@Test
 	void toMapIncludesExerciseAndSolutionMarkdownFields() {
 		ActivityUpsertRequest request = new ActivityUpsertRequest();
-		request.setUebungMarkdown("# Uebung");
-		request.setUebungLoesungMarkdown("# Loesung");
+		request.setExerciseMarkdown("# Uebung");
+		request.setExerciseSolutionMarkdown("# Loesung");
 
 		@SuppressWarnings("unchecked")
 		Map<String, Object> mapped = (Map<String, Object>) ReflectionTestUtils.invokeMethod(activityController, "toMap",
 				request);
 
-		assertThat(mapped).containsEntry("uebungMarkdown", "# Uebung");
-		assertThat(mapped).containsEntry("uebungLoesungMarkdown", "# Loesung");
+		assertThat(mapped).containsEntry("exerciseMarkdown", "# Uebung");
+		assertThat(mapped).containsEntry("exerciseSolutionMarkdown", "# Loesung");
 	}
 
 	@Test
@@ -109,10 +109,10 @@ class ActivityControllerTest {
 
 		pdfService.documentId = documentId;
 		pdfService.pdfText = "PDF text with enough content";
-		llmService.deckblatt = "# Deckblatt";
-		llmService.artikulationsschema = "# Artikulationsschema";
-		llmService.hintergrundwissen = "# Hintergrundwissen";
-		llmService.uebung = "# Uebung";
+		llmService.cover_sheet = "# Deckblatt";
+		llmService.lesson_plan = "# Artikulationsschema";
+		llmService.background_knowledge = "# Hintergrundwissen";
+		llmService.exercise = "# Uebung";
 		llmService.uebungLoesung = "# Loesung";
 
 		ResponseEntity<GenerateMarkdownsResponse> response = activityController.generateActivityMarkdowns(request);
@@ -120,11 +120,11 @@ class ActivityControllerTest {
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull();
 		assertThat(response.getBody().getDocumentId()).isEqualTo(documentId.toString());
-		assertThat(response.getBody().getDeckblattMarkdown()).isEqualTo("# Deckblatt");
-		assertThat(response.getBody().getArtikulationsschemaMarkdown()).isEqualTo("# Artikulationsschema");
-		assertThat(response.getBody().getHintergrundwissenMarkdown()).isEqualTo("# Hintergrundwissen");
-		assertThat(response.getBody().getUebungMarkdown()).isEqualTo("# Uebung");
-		assertThat(response.getBody().getUebungLoesungMarkdown()).isEqualTo("# Loesung");
+		assertThat(response.getBody().getCoverSheetMarkdown()).isEqualTo("# Deckblatt");
+		assertThat(response.getBody().getLessonPlanMarkdown()).isEqualTo("# Artikulationsschema");
+		assertThat(response.getBody().getBackgroundKnowledgeMarkdown()).isEqualTo("# Hintergrundwissen");
+		assertThat(response.getBody().getExerciseMarkdown()).isEqualTo("# Uebung");
+		assertThat(response.getBody().getExerciseSolutionMarkdown()).isEqualTo("# Loesung");
 		assertThat(llmService.deckblattCalls).isEqualTo(1);
 		assertThat(llmService.artikulationsschemaCalls).isEqualTo(1);
 		assertThat(llmService.hintergrundwissenCalls).isEqualTo(1);
@@ -138,23 +138,23 @@ class ActivityControllerTest {
 		GenerateMarkdownsRequest request = new GenerateMarkdownsRequest();
 		request.setDocumentId(documentId);
 		request.setMetadata(metadata);
-		request.setTypes(List.of("deckblatt", "uebung_loesung"));
+		request.setTypes(List.of("cover_sheet", "exercise_solution"));
 
 		pdfService.documentId = documentId;
 		pdfService.pdfText = "PDF text with enough content";
-		llmService.deckblatt = "# Deckblatt";
-		llmService.uebung = "# Uebung";
+		llmService.cover_sheet = "# Deckblatt";
+		llmService.exercise = "# Uebung";
 		llmService.uebungLoesung = "# Loesung";
 
 		ResponseEntity<GenerateMarkdownsResponse> response = activityController.generateActivityMarkdowns(request);
 
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
 		assertThat(response.getBody()).isNotNull();
-		assertThat(response.getBody().getDeckblattMarkdown()).isEqualTo("# Deckblatt");
-		assertThat(response.getBody().getArtikulationsschemaMarkdown()).isNull();
-		assertThat(response.getBody().getHintergrundwissenMarkdown()).isNull();
-		assertThat(response.getBody().getUebungMarkdown()).isEqualTo("# Uebung");
-		assertThat(response.getBody().getUebungLoesungMarkdown()).isEqualTo("# Loesung");
+		assertThat(response.getBody().getCoverSheetMarkdown()).isEqualTo("# Deckblatt");
+		assertThat(response.getBody().getLessonPlanMarkdown()).isNull();
+		assertThat(response.getBody().getBackgroundKnowledgeMarkdown()).isNull();
+		assertThat(response.getBody().getExerciseMarkdown()).isEqualTo("# Uebung");
+		assertThat(response.getBody().getExerciseSolutionMarkdown()).isEqualTo("# Loesung");
 		assertThat(llmService.deckblattCalls).isEqualTo(1);
 		assertThat(llmService.artikulationsschemaCalls).isZero();
 		assertThat(llmService.hintergrundwissenCalls).isZero();
@@ -167,7 +167,7 @@ class ActivityControllerTest {
 		GenerateMarkdownsRequest request = new GenerateMarkdownsRequest();
 		request.setDocumentId(documentId);
 		request.setMetadata(Map.of("name", "Binary Bracelets"));
-		request.setTypes(List.of("deckblatt"));
+		request.setTypes(List.of("cover_sheet"));
 
 		pdfService.documentId = documentId;
 		pdfService.pdfText = "PDF text with enough content";
@@ -191,10 +191,10 @@ class ActivityControllerTest {
 
 	private static final class StubLLMService extends LLMService {
 
-		private String deckblatt;
-		private String artikulationsschema;
-		private String hintergrundwissen;
-		private String uebung;
+		private String cover_sheet;
+		private String lesson_plan;
+		private String background_knowledge;
+		private String exercise;
 		private String uebungLoesung;
 		private String tafelbild = "# Tafelbild";
 		private RuntimeException deckblattFailure;
@@ -214,25 +214,25 @@ class ActivityControllerTest {
 			if (deckblattFailure != null) {
 				throw deckblattFailure;
 			}
-			return deckblatt;
+			return cover_sheet;
 		}
 
 		@Override
 		public String generateArtikulationsschema(String pdfText, Map<String, Object> metadata) {
 			artikulationsschemaCalls++;
-			return artikulationsschema;
+			return lesson_plan;
 		}
 
 		@Override
 		public String generateHintergrundwissen(String pdfText, Map<String, Object> metadata) {
 			hintergrundwissenCalls++;
-			return hintergrundwissen;
+			return background_knowledge;
 		}
 
 		@Override
 		public Map<String, String> generateUebungAndLoesung(String pdfText, Map<String, Object> metadata) {
 			uebungCalls++;
-			return Map.of("uebung", uebung, "uebung_loesung", uebungLoesung);
+			return Map.of("exercise", exercise, "exercise_solution", uebungLoesung);
 		}
 
 		@Override

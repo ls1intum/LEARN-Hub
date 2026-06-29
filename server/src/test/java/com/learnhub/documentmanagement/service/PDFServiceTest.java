@@ -339,7 +339,7 @@ class PDFServiceTest {
 		UUID activityId = UUID.randomUUID();
 
 		ActivityMarkdown md = new ActivityMarkdown();
-		md.setType(MarkdownType.DECKBLATT);
+		md.setType(MarkdownType.COVER_SHEET);
 		md.setContent("# Deckblatt\nSome content");
 		md.setLandscape(false);
 
@@ -391,7 +391,7 @@ class PDFServiceTest {
 		activityMap.put("id", UUID.randomUUID().toString());
 		activityMap.put("name", "Test Activity");
 		activityMap.put("markdowns",
-				List.of(Map.of("type", "deckblatt", "content", "# Deckblatt\nContent", "landscape", false)));
+				List.of(Map.of("type", "cover_sheet", "content", "# Deckblatt\nContent", "landscape", false)));
 
 		// No DB activity needed – markdowns are in the request map itself
 		when(activityRepository.findById(any())).thenReturn(Optional.empty());

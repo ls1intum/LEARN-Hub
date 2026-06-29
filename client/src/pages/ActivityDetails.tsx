@@ -939,12 +939,12 @@ export const ActivityDetails: React.FC = () => {
                     ?.slice()
                     .sort((a, b) => {
                       const order = [
-                        "deckblatt",
-                        "artikulationsschema",
-                        "uebung",
-                        "uebung_loesung",
-                        "hintergrundwissen",
-                        "tafelbild",
+                        "cover_sheet",
+                        "lesson_plan",
+                        "exercise",
+                        "exercise_solution",
+                        "background_knowledge",
+                        "board_image",
                       ];
                       const ai = order.indexOf(a.type ?? "");
                       const bi = order.indexOf(b.type ?? "");
@@ -966,8 +966,11 @@ export const ActivityDetails: React.FC = () => {
                                 <span className="hidden sm:inline">
                                   {activity.name} —{" "}
                                 </span>
-                                {md.type.charAt(0).toUpperCase() +
-                                  md.type.slice(1)}
+                                {t(`markdownTypes.${md.type}`, {
+                                  defaultValue:
+                                    md.type.charAt(0).toUpperCase() +
+                                    md.type.slice(1),
+                                })}
                               </>
                             ) : (
                               <span className="hidden sm:inline">

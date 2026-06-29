@@ -50,7 +50,7 @@ public class PDFService {
 	private static final int MAX_CACHE_SIZE = 100;
 	private static final long CACHE_TTL_MINUTES = 60;
 	private static final String LESSON_PLAN_COVER_TEMPLATE_PATH = "templates/markdown/lesson-plan-cover.html";
-	private static final String[] MARKDOWN_TYPE_ORDER = {"deckblatt", "artikulationsschema", "hintergrundwissen"};
+	private static final String[] MARKDOWN_TYPE_ORDER = {"cover_sheet", "lesson_plan", "background_knowledge"};
 
 	@Autowired
 	private PDFDocumentRepository pdfDocumentRepository;
@@ -459,8 +459,8 @@ public class PDFService {
 	}
 
 	/**
-	 * Render PDFs for each markdown section (deckblatt, artikulationsschema,
-	 * hintergrundwissen) of the given activity in their stored order.
+	 * Render PDFs for each markdown section (cover_sheet, lesson_plan,
+	 * background_knowledge) of the given activity in their stored order.
 	 */
 	private List<byte[]> generatePdfsFromMarkdowns(Activity activity) {
 		List<byte[]> parts = new ArrayList<>();
@@ -479,7 +479,7 @@ public class PDFService {
 				if (md.getType() == type && md.getContent() != null && !md.getContent().trim().isEmpty()) {
 					try {
 						parts.add(markdownToPdfService.renderMarkdownToPdf(md.getContent(), md.isLandscape(),
-								activityName, false, md.getType() == MarkdownType.TAFELBILD));
+								activityName, false, md.getType() == MarkdownType.BOARD_IMAGE));
 					} catch (Exception e) {
 						logger.warn("Failed to render markdown PDF for activity {}, type {}: {}", activity.getId(),
 								typeName, e.getMessage());

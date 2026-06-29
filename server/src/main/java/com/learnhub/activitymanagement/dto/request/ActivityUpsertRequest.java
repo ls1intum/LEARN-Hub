@@ -22,10 +22,10 @@ public class ActivityUpsertRequest {
 	private List<String> resourcesNeeded;
 	private List<String> topics;
 	private UUID documentId;
-	private String artikulationsschemaMarkdown;
-	private String deckblattMarkdown;
-	private String hintergrundwissenMarkdown;
-	private String tafelbildMarkdown;
-	private String uebungMarkdown;
-	private String uebungLoesungMarkdown;
+	private String lessonPlanMarkdown;
+	private String coverSheetMarkdown;
+	private String backgroundKnowledgeMarkdown;
+	private String boardImageMarkdown;
+	private String exerciseMarkdown;
+	private String exerciseSolutionMarkdown;
 }

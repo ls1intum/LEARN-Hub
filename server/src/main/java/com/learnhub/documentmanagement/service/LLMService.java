@@ -51,7 +51,7 @@ public class LLMService {
 	private static final Duration IMAGE_FETCH_TIMEOUT = Duration.ofSeconds(30);
 	private static final HttpClient IMAGE_FETCH_CLIENT = HttpClient.newBuilder()
 			.followRedirects(HttpClient.Redirect.NORMAL).build();
-	private static final List<String> EXERCISE_IMAGE_REPLACEMENT_ORDER = List.of("uebung", "uebung_loesung");
+	private static final List<String> EXERCISE_IMAGE_REPLACEMENT_ORDER = List.of("exercise", "exercise_solution");
 	// Strips embedded base64 image data (and their learnhub HTML comments) from
 	// markdown
 	// to prevent sending megabytes of image data to text/image LLMs as context.
@@ -235,13 +235,13 @@ public class LLMService {
 	 * Returns markdown with embedded images, combining text sections and at least
 	 * one illustrative image.
 	 *
-	 * @param artikulationsschema
+	 * @param lessonPlan
 	 *            previously generated Artikulationsschema markdown
 	 * @param metadata
 	 *            activity metadata (ageMin/ageMax drive language calibration)
 	 */
-	public String generateTafelbildMarkdown(String artikulationsschema, Map<String, Object> metadata) {
-		String normalizedArtik = stripEmbeddedImages(artikulationsschema == null ? "" : artikulationsschema.trim());
+	public String generateBoardImageMarkdown(String lessonPlan, Map<String, Object> metadata) {
+		String normalizedArtik = stripEmbeddedImages(lessonPlan == null ? "" : lessonPlan.trim());
 		String metadataSection = buildMetadataSection(metadata);
 		String promptText = new PromptTemplate(tafelbildPromptResource)
 				.render(Map.of("artikulationsschema", normalizedArtik, "metadataSection", metadataSection));
@@ -258,13 +258,13 @@ public class LLMService {
 		}
 	}
 
-	private String generateTafelbildImageMarkdownSafely(ImagePlaceholder placeholder, String artikulationsschema) {
+	private String generateTafelbildImageMarkdownSafely(ImagePlaceholder placeholder, String lessonPlan) {
 		if (exerciseImageModel == null) {
 			logger.warn("Skipping Tafelbild image placeholder because no image model is configured");
 			return placeholder.marker();
 		}
 		try {
-			String prompt = buildTafelbildImagePrompt(placeholder.description(), artikulationsschema);
+			String prompt = buildTafelbildImagePrompt(placeholder.description(), lessonPlan);
 			ImageResponse response = exerciseImageModel.call(new ImagePrompt(prompt));
 			if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
 				throw new IllegalStateException("Image model returned an empty response");
@@ -291,7 +291,7 @@ public class LLMService {
 				"image description");
 		String normalizedContextText = truncateForImagePrompt(
 				stripEmbeddedImages(contextText == null ? "" : contextText.trim()), MAX_IMAGE_CONTEXT_CHARS,
-				"tafelbild context");
+				"board_image context");
 		return new PromptTemplate(tafelbildImagePromptResource)
 				.render(Map.of("description", normalizedDescription, "contextText", normalizedContextText));
 	}
@@ -304,7 +304,7 @@ public class LLMService {
 	 *            extracted text from the PDF
 	 * @param metadata
 	 *            user-adjusted activity metadata (ageMin/ageMax drive difficulty)
-	 * @return map with keys "uebung" and "uebung_loesung", each containing markdown
+	 * @return map with keys "exercise" and "exercise_solution", each containing markdown
 	 */
 	public Map<String, String> generateUebungAndLoesung(String pdfText, Map<String, Object> metadata) {
 		return generateUebungAndLoesung(pdfText, metadata, null);
@@ -390,8 +390,8 @@ public class LLMService {
 		}
 
 		Map<String, String> result = new LinkedHashMap<>();
-		result.put("uebung", uebungMatcher.group(1).trim());
-		result.put("uebung_loesung", loesungMatcher.group(1).trim());
+		result.put("exercise", uebungMatcher.group(1).trim());
+		result.put("exercise_solution", loesungMatcher.group(1).trim());
 		return result;
 	}
 
@@ -425,8 +425,8 @@ public class LLMService {
 		if (generatedMarkdowns == null || generatedMarkdowns.isEmpty()) {
 			return "";
 		}
-		String exerciseMarkdown = generatedMarkdowns.getOrDefault("uebung", "").trim();
-		String solutionMarkdown = generatedMarkdowns.getOrDefault("uebung_loesung", "").trim();
+		String exerciseMarkdown = generatedMarkdowns.getOrDefault("exercise", "").trim();
+		String solutionMarkdown = generatedMarkdowns.getOrDefault("exercise_solution", "").trim();
 		if (!StringUtils.hasText(exerciseMarkdown) && !StringUtils.hasText(solutionMarkdown)) {
 			return "";
 		}

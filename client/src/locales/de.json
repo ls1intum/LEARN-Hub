@@ -387,12 +387,20 @@
     "saving": "Wird gespeichert...",
     "pdfDocReady": "PDF-Dokument bereit",
     "noPdfAttached": "Kein PDF-Dokument angehängt",
-    "deckblatt": "Deckblatt",
-    "artikulationsschema": "Artikulationsschema",
-    "hintergrundwissen": "Hintergrundwissen",
-    "tafelbild": "Tafelbild",
-    "uebung": "Übungsblatt",
-    "uebung_loesung": "Lösungsblatt"
+    "cover_sheet": "Deckblatt",
+    "lesson_plan": "Artikulationsschema",
+    "background_knowledge": "Hintergrundwissen",
+    "board_image": "Tafelbild",
+    "exercise": "Übungsblatt",
+    "exercise_solution": "Lösungsblatt"
+  },
+  "markdownTypes": {
+    "cover_sheet": "Deckblatt",
+    "lesson_plan": "Artikulationsschema",
+    "background_knowledge": "Hintergrundwissen",
+    "board_image": "Tafelbild",
+    "exercise": "Übungsblatt",
+    "exercise_solution": "Lösungsblatt"
   },
   "activityDetails": {
     "title": "Aktivitätsdetails",

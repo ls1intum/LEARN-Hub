@@ -23,6 +23,6 @@ public interface ActivityMarkdownRepository extends JpaRepository<ActivityMarkdo
 
 	List<ActivityMarkdown> findByActivityIdAndType(UUID activityId, MarkdownType type);
 
-	@Query("SELECT DISTINCT am.activity.id FROM ActivityMarkdown am WHERE am.activity.id IN :ids AND am.type = com.learnhub.activitymanagement.entity.enums.MarkdownType.TAFELBILD")
+	@Query("SELECT DISTINCT am.activity.id FROM ActivityMarkdown am WHERE am.activity.id IN :ids AND am.type = com.learnhub.activitymanagement.entity.enums.MarkdownType.BOARD_IMAGE")
 	Set<UUID> findActivityIdsWithTafelbild(@Param("ids") Collection<UUID> ids);
 }

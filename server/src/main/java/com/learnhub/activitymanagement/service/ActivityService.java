@@ -242,7 +242,7 @@ public class ActivityService {
 
 	private String extractTafelbildImage(Activity activity) {
 		return activity.getMarkdowns().stream()
-				.filter(m -> m.getType() == MarkdownType.TAFELBILD && m.getContent() != null).max(Comparator
+				.filter(m -> m.getType() == MarkdownType.BOARD_IMAGE && m.getContent() != null).max(Comparator
 						.comparing(ActivityMarkdown::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
 				.map(m -> {
 					Matcher matcher = TAFELBILD_IMAGE_PATTERN.matcher(m.getContent());
@@ -251,7 +251,7 @@ public class ActivityService {
 	}
 
 	private boolean hasTafelbildImage(Activity activity) {
-		return activity.getMarkdowns().stream().anyMatch(m -> m.getType() == MarkdownType.TAFELBILD
+		return activity.getMarkdowns().stream().anyMatch(m -> m.getType() == MarkdownType.BOARD_IMAGE
 				&& m.getContent() != null && m.getContent().contains("data:image/"));
 	}
 
@@ -452,61 +452,61 @@ public class ActivityService {
 			}
 		}
 
-		if (data.get("artikulationsschemaMarkdown") != null) {
+		if (data.get("lessonPlanMarkdown") != null) {
 			ActivityMarkdown actMd = new ActivityMarkdown();
 			actMd.setActivity(activity);
-			actMd.setType(MarkdownType.ARTIKULATIONSSCHEMA);
-			actMd.setContent(data.get("artikulationsschemaMarkdown").toString());
+			actMd.setType(MarkdownType.LESSON_PLAN);
+			actMd.setContent(data.get("lessonPlanMarkdown").toString());
 			actMd.setLandscape(true);
 			actMd.setCreatedAt(LocalDateTime.now());
 			activity.getMarkdowns().add(actMd);
 		}
 
-		if (data.get("deckblattMarkdown") != null) {
+		if (data.get("coverSheetMarkdown") != null) {
 			ActivityMarkdown deckblattMd = new ActivityMarkdown();
 			deckblattMd.setActivity(activity);
-			deckblattMd.setType(MarkdownType.DECKBLATT);
-			deckblattMd.setContent(data.get("deckblattMarkdown").toString());
+			deckblattMd.setType(MarkdownType.COVER_SHEET);
+			deckblattMd.setContent(data.get("coverSheetMarkdown").toString());
 			deckblattMd.setLandscape(false);
 			deckblattMd.setCreatedAt(LocalDateTime.now());
 			activity.getMarkdowns().add(deckblattMd);
 		}
 
-		if (data.get("hintergrundwissenMarkdown") != null) {
+		if (data.get("backgroundKnowledgeMarkdown") != null) {
 			ActivityMarkdown hintergrundwissenMd = new ActivityMarkdown();
 			hintergrundwissenMd.setActivity(activity);
-			hintergrundwissenMd.setType(MarkdownType.HINTERGRUNDWISSEN);
-			hintergrundwissenMd.setContent(data.get("hintergrundwissenMarkdown").toString());
+			hintergrundwissenMd.setType(MarkdownType.BACKGROUND_KNOWLEDGE);
+			hintergrundwissenMd.setContent(data.get("backgroundKnowledgeMarkdown").toString());
 			hintergrundwissenMd.setLandscape(false);
 			hintergrundwissenMd.setCreatedAt(LocalDateTime.now());
 			activity.getMarkdowns().add(hintergrundwissenMd);
 		}
 
-		if (data.get("tafelbildMarkdown") != null) {
+		if (data.get("boardImageMarkdown") != null) {
 			ActivityMarkdown tafelbildMd = new ActivityMarkdown();
 			tafelbildMd.setActivity(activity);
-			tafelbildMd.setType(MarkdownType.TAFELBILD);
-			tafelbildMd.setContent(data.get("tafelbildMarkdown").toString());
+			tafelbildMd.setType(MarkdownType.BOARD_IMAGE);
+			tafelbildMd.setContent(data.get("boardImageMarkdown").toString());
 			tafelbildMd.setLandscape(false);
 			tafelbildMd.setCreatedAt(LocalDateTime.now());
 			activity.getMarkdowns().add(tafelbildMd);
 		}
 
-		if (data.get("uebungMarkdown") != null) {
+		if (data.get("exerciseMarkdown") != null) {
 			ActivityMarkdown uebungMd = new ActivityMarkdown();
 			uebungMd.setActivity(activity);
-			uebungMd.setType(MarkdownType.UEBUNG);
-			uebungMd.setContent(data.get("uebungMarkdown").toString());
+			uebungMd.setType(MarkdownType.EXERCISE);
+			uebungMd.setContent(data.get("exerciseMarkdown").toString());
 			uebungMd.setLandscape(false);
 			uebungMd.setCreatedAt(LocalDateTime.now());
 			activity.getMarkdowns().add(uebungMd);
 		}
 
-		if (data.get("uebungLoesungMarkdown") != null) {
+		if (data.get("exerciseSolutionMarkdown") != null) {
 			ActivityMarkdown uebungLoesungMd = new ActivityMarkdown();
 			uebungLoesungMd.setActivity(activity);
-			uebungLoesungMd.setType(MarkdownType.UEBUNG_LOESUNG);
-			uebungLoesungMd.setContent(data.get("uebungLoesungMarkdown").toString());
+			uebungLoesungMd.setType(MarkdownType.EXERCISE_SOLUTION);
+			uebungLoesungMd.setContent(data.get("exerciseSolutionMarkdown").toString());
 			uebungLoesungMd.setLandscape(false);
 			uebungLoesungMd.setCreatedAt(LocalDateTime.now());
 			activity.getMarkdowns().add(uebungLoesungMd);
@@ -748,8 +748,8 @@ public class ActivityService {
 		if (activity == null)
 			return;
 
-		Map<String, Boolean> landscapes = Map.of("deckblatt", false, "artikulationsschema", true, "hintergrundwissen",
-				false, "tafelbild", false, "uebung", false, "uebung_loesung", false);
+		Map<String, Boolean> landscapes = Map.of("cover_sheet", false, "lesson_plan", true, "background_knowledge",
+				false, "board_image", false, "exercise", false, "exercise_solution", false);
 
 		for (Map.Entry<String, String> entry : markdownsByType.entrySet()) {
 			if (entry.getValue() == null)

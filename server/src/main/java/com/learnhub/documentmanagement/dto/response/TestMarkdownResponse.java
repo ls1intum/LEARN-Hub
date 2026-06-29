@@ -12,10 +12,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TestMarkdownResponse {
-	private String uebungMarkdown;
-	private String uebungLoesungMarkdown;
-	private String deckblattMarkdown;
-	private String artikulationsschemaMarkdown;
-	private String hintergrundwissenMarkdown;
-	private String tafelbildMarkdown;
+	private String exerciseMarkdown;
+	private String exerciseSolutionMarkdown;
+	private String coverSheetMarkdown;
+	private String lessonPlanMarkdown;
+	private String backgroundKnowledgeMarkdown;
+	private String boardImageMarkdown;
 }

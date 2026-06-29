@@ -49,12 +49,12 @@ EVALUATION_PDFS = [
 ]
 
 MARKDOWN_TYPES = [
-    "deckblatt",
-    "artikulationsschema",
-    "hintergrundwissen",
-    "tafelbild",
-    "uebung",
-    "uebung_loesung",
+    "cover_sheet",
+    "lesson_plan",
+    "background_knowledge",
+    "board_image",
+    "exercise",
+    "exercise_solution",
 ]
 
 
