@@ -282,8 +282,8 @@ public class ActivityController {
 		return buildFileDownloadResponse(lessonPlanPdf, "lesson_plan", ".pdf", MediaType.APPLICATION_PDF, "inline");
 	}
 
-	private static final List<String> ALL_MARKDOWN_TYPES = List.of("cover_sheet", "lesson_plan",
-			"background_knowledge", "board_image", "exercise", "exercise_solution");
+	private static final List<String> ALL_MARKDOWN_TYPES = List.of("cover_sheet", "lesson_plan", "background_knowledge",
+			"board_image", "exercise", "exercise_solution");
 
 	@PostMapping(value = "/upload-and-create-pending", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	@PreAuthorize("hasRole('ADMIN')")
@@ -393,9 +393,8 @@ public class ActivityController {
 		// Artikulationsschema is provided, reuse it instead of regenerating.
 		String existingArtik = null;
 		if (request.getActivityId() != null && !generateAll && !requestedTypes.contains("lesson_plan")) {
-			existingArtik = activityService.getActivityMarkdowns(request.getActivityId()).stream()
-					.filter(m -> "lesson_plan".equals(m.getType()) && m.getContent() != null
-							&& !m.getContent().isBlank())
+			existingArtik = activityService.getActivityMarkdowns(request.getActivityId()).stream().filter(
+					m -> "lesson_plan".equals(m.getType()) && m.getContent() != null && !m.getContent().isBlank())
 					.map(m -> m.getContent()).findFirst().orElse(null);
 		}
 		final String existingArtikFinal = existingArtik;

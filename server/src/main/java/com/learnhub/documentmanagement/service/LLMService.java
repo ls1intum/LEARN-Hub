@@ -304,7 +304,8 @@ public class LLMService {
 	 *            extracted text from the PDF
 	 * @param metadata
 	 *            user-adjusted activity metadata (ageMin/ageMax drive difficulty)
-	 * @return map with keys "exercise" and "exercise_solution", each containing markdown
+	 * @return map with keys "exercise" and "exercise_solution", each containing
+	 *         markdown
 	 */
 	public Map<String, String> generateUebungAndLoesung(String pdfText, Map<String, Object> metadata) {
 		return generateUebungAndLoesung(pdfText, metadata, null);

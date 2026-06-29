@@ -71,8 +71,8 @@ public class DevController {
 	 * @param file
 	 *            the PDF file to process
 	 * @param type
-	 *            markdown type: exercise (default), cover_sheet, background_knowledge,
-	 *            lesson_plan
+	 *            markdown type: exercise (default), cover_sheet,
+	 *            background_knowledge, lesson_plan
 	 * @param metadataJson
 	 *            optional JSON object with activity metadata
 	 */

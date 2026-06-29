@@ -145,8 +145,7 @@ export const ActivityEditPage: React.FC = () => {
   );
 
   // Markdown state
-  const [lessonPlanMarkdown, setLessonPlanMarkdown] =
-    useState<string>("");
+  const [lessonPlanMarkdown, setLessonPlanMarkdown] = useState<string>("");
   const [coverSheetMarkdown, setCoverSheetMarkdown] = useState<string>("");
   const [backgroundKnowledgeMarkdown, setBackgroundKnowledgeMarkdown] =
     useState<string>("");
@@ -203,8 +202,7 @@ export const ActivityEditPage: React.FC = () => {
   /** Whether the currently active markdown tab already has content */
   const activeTabHasContent =
     (activeMarkdownTab === "cover_sheet" && !!coverSheetMarkdown) ||
-    (activeMarkdownTab === "lesson_plan" &&
-      !!lessonPlanMarkdown) ||
+    (activeMarkdownTab === "lesson_plan" && !!lessonPlanMarkdown) ||
     (activeMarkdownTab === "background_knowledge" &&
       !!backgroundKnowledgeMarkdown) ||
     (activeMarkdownTab === "board_image" && !!boardImageMarkdown) ||
@@ -297,7 +295,8 @@ export const ActivityEditPage: React.FC = () => {
     setGenerateError(null);
     // exercise and exercise_solution are always generated together in one call
     const typesToRequest =
-      activeMarkdownTab === "exercise" || activeMarkdownTab === "exercise_solution"
+      activeMarkdownTab === "exercise" ||
+      activeMarkdownTab === "exercise_solution"
         ? ["exercise", "exercise_solution"]
         : [activeMarkdownTab];
     try {
@@ -409,14 +408,12 @@ export const ActivityEditPage: React.FC = () => {
       if (coverSheetMarkdown !== initialMarkdownContent.cover_sheet) {
         updatePayload.coverSheetMarkdown = coverSheetMarkdown;
       }
-      if (
-        lessonPlanMarkdown !==
-        initialMarkdownContent.lesson_plan
-      ) {
+      if (lessonPlanMarkdown !== initialMarkdownContent.lesson_plan) {
         updatePayload.lessonPlanMarkdown = lessonPlanMarkdown;
       }
       if (
-        backgroundKnowledgeMarkdown !== initialMarkdownContent.background_knowledge
+        backgroundKnowledgeMarkdown !==
+        initialMarkdownContent.background_knowledge
       ) {
         updatePayload.backgroundKnowledgeMarkdown = backgroundKnowledgeMarkdown;
       }
@@ -426,7 +423,9 @@ export const ActivityEditPage: React.FC = () => {
       if (exerciseMarkdown !== initialMarkdownContent.exercise) {
         updatePayload.exerciseMarkdown = exerciseMarkdown;
       }
-      if (exerciseSolutionMarkdown !== initialMarkdownContent.exercise_solution) {
+      if (
+        exerciseSolutionMarkdown !== initialMarkdownContent.exercise_solution
+      ) {
         updatePayload.exerciseSolutionMarkdown = exerciseSolutionMarkdown;
       }
 
