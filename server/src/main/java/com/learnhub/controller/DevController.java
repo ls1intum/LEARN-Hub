@@ -97,19 +97,18 @@ public class DevController {
 			switch (type.toLowerCase()) {
 				case "exercise" -> {
 					List<byte[]> images = llmService.isVisionEnabled() ? renderPdfImages(pdfBytes) : null;
-					Map<String, String> result = llmService.generateUebungAndLoesung(pdfText, metadata, images);
+					Map<String, String> result = llmService.generateExerciseAndSolution(pdfText, metadata, images);
 					response.setExerciseMarkdown(result.get("exercise"));
 					response.setExerciseSolutionMarkdown(result.get("exercise_solution"));
 				}
-				case "cover_sheet" -> response.setCoverSheetMarkdown(llmService.generateDeckblatt(pdfText, metadata));
+				case "cover_sheet" -> response.setCoverSheetMarkdown(llmService.generateCoverSheet(pdfText, metadata));
 				case "background_knowledge" ->
-					response.setBackgroundKnowledgeMarkdown(llmService.generateHintergrundwissen(pdfText, metadata));
-				case "lesson_plan" ->
-					response.setLessonPlanMarkdown(llmService.generateArtikulationsschema(pdfText, metadata));
+					response.setBackgroundKnowledgeMarkdown(llmService.generateBackgroundKnowledge(pdfText, metadata));
+				case "lesson_plan" -> response.setLessonPlanMarkdown(llmService.generateLessonPlan(pdfText, metadata));
 				case "board_image" -> {
-					String artik = llmService.generateArtikulationsschema(pdfText, metadata);
-					response.setLessonPlanMarkdown(artik);
-					response.setBoardImageMarkdown(llmService.generateBoardImageMarkdown(artik, metadata));
+					String lessonPlan = llmService.generateLessonPlan(pdfText, metadata);
+					response.setLessonPlanMarkdown(lessonPlan);
+					response.setBoardImageMarkdown(llmService.generateBoardImageMarkdown(lessonPlan, metadata));
 				}
 				default -> {
 					return ResponseEntity.badRequest().body(ErrorResponse.of("Unknown type: " + type

@@ -125,7 +125,7 @@ class DevControllerTest {
 		}
 
 		@Override
-		public Map<String, String> generateUebungAndLoesung(String pdfText, Map<String, Object> metadata,
+		public Map<String, String> generateExerciseAndSolution(String pdfText, Map<String, Object> metadata,
 				java.util.List<byte[]> images) {
 			uebungCalls++;
 			lastMetadata = metadata;
@@ -133,19 +133,19 @@ class DevControllerTest {
 		}
 
 		@Override
-		public String generateDeckblatt(String pdfText, Map<String, Object> metadata) {
+		public String generateCoverSheet(String pdfText, Map<String, Object> metadata) {
 			lastMetadata = metadata;
 			return "# Dummy Deckblatt";
 		}
 
 		@Override
-		public String generateHintergrundwissen(String pdfText, Map<String, Object> metadata) {
+		public String generateBackgroundKnowledge(String pdfText, Map<String, Object> metadata) {
 			lastMetadata = metadata;
 			return "# Dummy Hintergrundwissen";
 		}
 
 		@Override
-		public String generateArtikulationsschema(String pdfText, Map<String, Object> metadata) {
+		public String generateLessonPlan(String pdfText, Map<String, Object> metadata) {
 			lastMetadata = metadata;
 			return "# Dummy Artikulationsschema";
 		}

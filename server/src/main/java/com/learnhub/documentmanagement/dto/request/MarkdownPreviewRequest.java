@@ -8,5 +8,5 @@ public class MarkdownPreviewRequest {
 	private String orientation;
 	private String activityName;
 	private boolean exerciseSheet;
-	private boolean tafelbild;
+	private boolean boardImage;
 }

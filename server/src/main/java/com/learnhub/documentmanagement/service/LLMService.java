@@ -122,17 +122,17 @@ public class LLMService {
 	private static final int MAX_TOKENS_EXTRACTION = 4000;
 
 	// Exactly 6 AVIVA+ rows with concrete per-cell content.
-	private static final int MAX_TOKENS_ARTIKULATIONSSCHEMA = 10000;
+	private static final int MAX_TOKENS_LESSON_PLAN = 10000;
 
 	// Structured cover-page markdown (4 sections, numbered list, bullet lists).
-	private static final int MAX_TOKENS_DECKBLATT = 8000;
+	private static final int MAX_TOKENS_COVER_SHEET = 8000;
 
 	// Three free-text sections of teacher background knowledge.
-	private static final int MAX_TOKENS_HINTERGRUNDWISSEN = 10000;
+	private static final int MAX_TOKENS_BACKGROUND_KNOWLEDGE = 10000;
 
 	// Exercise sheet + matching solution sheet in one response.
-	private static final int MAX_TOKENS_UEBUNG = 16000;
-	private static final int MAX_TOKENS_TAFELBILD = 10000;
+	private static final int MAX_TOKENS_EXERCISE = 16000;
+	private static final int MAX_TOKENS_BOARD_IMAGE = 10000;
 
 	public Map<String, Object> extractActivityData(String pdfText) {
 
@@ -165,13 +165,13 @@ public class LLMService {
 	 * @param metadata
 	 *            user-adjusted activity metadata to inform the schema
 	 */
-	public String generateArtikulationsschema(String pdfText, Map<String, Object> metadata) {
+	public String generateLessonPlan(String pdfText, Map<String, Object> metadata) {
 		String metadataSection = buildMetadataSection(metadata);
 		String promptText = new PromptTemplate(artikulationsschemaPromptResource)
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
 
 		try {
-			String responseText = callLlm(promptText, MAX_TOKENS_ARTIKULATIONSSCHEMA);
+			String responseText = callLlm(promptText, MAX_TOKENS_LESSON_PLAN);
 
 			logger.debug("LLM Artikulationsschema Response: {}", responseText);
 
@@ -189,13 +189,13 @@ public class LLMService {
 	 * @param metadata
 	 *            user-adjusted activity metadata to inform the generation
 	 */
-	public String generateDeckblatt(String pdfText, Map<String, Object> metadata) {
+	public String generateCoverSheet(String pdfText, Map<String, Object> metadata) {
 		String metadataSection = buildMetadataSection(metadata);
 		String promptText = new PromptTemplate(deckblattPromptResource)
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
 
 		try {
-			String responseText = callLlm(promptText, MAX_TOKENS_DECKBLATT);
+			String responseText = callLlm(promptText, MAX_TOKENS_COVER_SHEET);
 
 			logger.debug("LLM Deckblatt Response: {}", responseText);
 
@@ -214,13 +214,13 @@ public class LLMService {
 	 * @param metadata
 	 *            user-adjusted activity metadata to inform the generation
 	 */
-	public String generateHintergrundwissen(String pdfText, Map<String, Object> metadata) {
+	public String generateBackgroundKnowledge(String pdfText, Map<String, Object> metadata) {
 		String metadataSection = buildMetadataSection(metadata);
 		String promptText = new PromptTemplate(hintergrundwissenPromptResource)
 				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
 
 		try {
-			String responseText = callLlm(promptText, MAX_TOKENS_HINTERGRUNDWISSEN);
+			String responseText = callLlm(promptText, MAX_TOKENS_BACKGROUND_KNOWLEDGE);
 
 			logger.debug("LLM Hintergrundwissen Response: {}", responseText);
 
@@ -241,30 +241,30 @@ public class LLMService {
 	 *            activity metadata (ageMin/ageMax drive language calibration)
 	 */
 	public String generateBoardImageMarkdown(String lessonPlan, Map<String, Object> metadata) {
-		String normalizedArtik = stripEmbeddedImages(lessonPlan == null ? "" : lessonPlan.trim());
+		String normalizedLessonPlan = stripEmbeddedImages(lessonPlan == null ? "" : lessonPlan.trim());
 		String metadataSection = buildMetadataSection(metadata);
 		String promptText = new PromptTemplate(tafelbildPromptResource)
-				.render(Map.of("artikulationsschema", normalizedArtik, "metadataSection", metadataSection));
+				.render(Map.of("artikulationsschema", normalizedLessonPlan, "metadataSection", metadataSection));
 
 		try {
-			String responseText = callLlm(promptText, MAX_TOKENS_TAFELBILD);
+			String responseText = callLlm(promptText, MAX_TOKENS_BOARD_IMAGE);
 			logger.debug("LLM Tafelbild Response: {}", responseText);
 			String markdown = extractMarkdownPayload(responseText);
 			Map<String, String> imageCache = new HashMap<>();
 			return replaceImagePlaceholders(markdown, imageCache, new HashMap<>(),
-					placeholder -> generateTafelbildImageMarkdownSafely(placeholder, normalizedArtik));
+					placeholder -> generateBoardImageIllustrationMarkdownSafely(placeholder, normalizedLessonPlan));
 		} catch (Exception e) {
 			throw new RuntimeException("Failed to generate Tafelbild: " + e.getMessage(), e);
 		}
 	}
 
-	private String generateTafelbildImageMarkdownSafely(ImagePlaceholder placeholder, String lessonPlan) {
+	private String generateBoardImageIllustrationMarkdownSafely(ImagePlaceholder placeholder, String lessonPlan) {
 		if (exerciseImageModel == null) {
 			logger.warn("Skipping Tafelbild image placeholder because no image model is configured");
 			return placeholder.marker();
 		}
 		try {
-			String prompt = buildTafelbildImagePrompt(placeholder.description(), lessonPlan);
+			String prompt = buildBoardImageIllustrationPrompt(placeholder.description(), lessonPlan);
 			ImageResponse response = exerciseImageModel.call(new ImagePrompt(prompt));
 			if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
 				throw new IllegalStateException("Image model returned an empty response");
@@ -285,7 +285,7 @@ public class LLMService {
 		}
 	}
 
-	String buildTafelbildImagePrompt(String description, String contextText) {
+	String buildBoardImageIllustrationPrompt(String description, String contextText) {
 		String normalizedDescription = truncateForImagePrompt(
 				stripEmbeddedImages(description == null ? "" : description.trim()), MAX_IMAGE_DESCRIPTION_CHARS,
 				"image description");
@@ -307,11 +307,11 @@ public class LLMService {
 	 * @return map with keys "exercise" and "exercise_solution", each containing
 	 *         markdown
 	 */
-	public Map<String, String> generateUebungAndLoesung(String pdfText, Map<String, Object> metadata) {
-		return generateUebungAndLoesung(pdfText, metadata, null);
+	public Map<String, String> generateExerciseAndSolution(String pdfText, Map<String, Object> metadata) {
+		return generateExerciseAndSolution(pdfText, metadata, null);
 	}
 
-	public Map<String, String> generateUebungAndLoesung(String pdfText, Map<String, Object> metadata,
+	public Map<String, String> generateExerciseAndSolution(String pdfText, Map<String, Object> metadata,
 			List<byte[]> pdfPageImages) {
 		String metadataSection = buildMetadataSection(metadata);
 
@@ -325,7 +325,7 @@ public class LLMService {
 				.render(Map.of("metadataSection", metadataSection, "pdfText", textForPrompt));
 
 		boolean useVisual = isVisionEnabled();
-		int maxTokens = useVisual ? visualMaxTokens : MAX_TOKENS_UEBUNG;
+		int maxTokens = useVisual ? visualMaxTokens : MAX_TOKENS_EXERCISE;
 
 		try {
 			String responseText = useVisual
@@ -334,7 +334,7 @@ public class LLMService {
 
 			logger.debug("LLM Uebung Response: {}", responseText);
 
-			Map<String, String> generatedMarkdowns = extractUebungPayload(responseText);
+			Map<String, String> generatedMarkdowns = extractExercisePayload(responseText);
 			String imageContext = buildExerciseImageContext(generatedMarkdowns);
 			return replaceExerciseImagePlaceholders(generatedMarkdowns, imageContext);
 		} catch (Exception e) {
@@ -377,22 +377,22 @@ public class LLMService {
 	private static final Pattern LOESUNG_PATTERN = Pattern
 			.compile("===LOESUNG_START===\\s*(.*?)\\s*(?:===LOESUNG_END===\\s*)?$", Pattern.DOTALL);
 
-	private Map<String, String> extractUebungPayload(String rawResponse) {
+	private Map<String, String> extractExercisePayload(String rawResponse) {
 		if (rawResponse == null || rawResponse.trim().isEmpty()) {
 			throw new IllegalStateException("LLM returned an empty response");
 		}
 
-		Matcher uebungMatcher = UEBUNG_PATTERN.matcher(rawResponse);
-		Matcher loesungMatcher = LOESUNG_PATTERN.matcher(rawResponse);
+		Matcher exerciseMatcher = UEBUNG_PATTERN.matcher(rawResponse);
+		Matcher solutionMatcher = LOESUNG_PATTERN.matcher(rawResponse);
 
-		if (!uebungMatcher.find() || !loesungMatcher.find()) {
+		if (!exerciseMatcher.find() || !solutionMatcher.find()) {
 			throw new IllegalStateException(
 					"LLM response missing required delimiters ===UEBUNG_START=== / ===LOESUNG_START===");
 		}
 
 		Map<String, String> result = new LinkedHashMap<>();
-		result.put("exercise", uebungMatcher.group(1).trim());
-		result.put("exercise_solution", loesungMatcher.group(1).trim());
+		result.put("exercise", exerciseMatcher.group(1).trim());
+		result.put("exercise_solution", solutionMatcher.group(1).trim());
 		return result;
 	}
 
@@ -509,13 +509,13 @@ public class LLMService {
 		throw new IllegalStateException("Image model response contained neither base64 image data nor a URL");
 	}
 
-	public String generateTafelbildImageMarkdown(String id, String description, String contextText) {
+	public String generateBoardImageIllustrationMarkdown(String id, String description, String contextText) {
 		if (exerciseImageModel == null) {
 			throw new IllegalStateException("Exercise image model is not configured");
 		}
 
 		ImageResponse response = exerciseImageModel
-				.call(new ImagePrompt(buildTafelbildImagePrompt(description, contextText)));
+				.call(new ImagePrompt(buildBoardImageIllustrationPrompt(description, contextText)));
 		if (response == null || response.getResult() == null || response.getResult().getOutput() == null) {
 			throw new IllegalStateException("Image model returned an empty response");
 		}

@@ -133,14 +133,14 @@ public class MarkdownToHtmlService {
 	}
 
 	public String renderMarkdownToHtml(String markdown, boolean landscape, String activityName, boolean exerciseSheet,
-			boolean isTafelbild) {
+			boolean isBoardImage) {
 		String normalizedMarkdown = normalizeMarkdown(markdown);
 		String body = renderDecoratedMarkdownBody(normalizedMarkdown);
-		if (isTafelbild) {
+		if (isBoardImage) {
 			body = PARAGRAPH_IMG_PATTERN.matcher(body).replaceAll(
 					"<div style=\"width:100%;margin:10pt 0;page-break-inside:avoid\"><img$1 style=\"display:block;width:100%;height:auto;max-height:none\"$2></div>");
 		}
-		String bodyClass = isTafelbild ? "tafelbild-render" : detectDocumentBodyClass(normalizedMarkdown, body);
+		String bodyClass = isBoardImage ? "tafelbild-render" : detectDocumentBodyClass(normalizedMarkdown, body);
 		return wrapPdfHtmlDocument(body, landscape, activityName, bodyClass, exerciseSheet);
 	}
 

@@ -112,9 +112,9 @@ public class MarkdownToPdfService {
 	}
 
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName, boolean exerciseSheet,
-			boolean isTafelbild) {
+			boolean isBoardImage) {
 		String html = markdownToHtmlService.renderMarkdownToHtml(markdown, landscape, activityName, exerciseSheet,
-				isTafelbild);
+				isBoardImage);
 		IEventHandler eventHandler = exerciseSheet ? new ExerciseSheetEventHandler() : null;
 		return renderHtmlDocumentToPdf(html, activityName, eventHandler);
 	}

@@ -363,7 +363,7 @@ export const ActivityApi = {
     orientation?: "portrait" | "landscape",
     activityName?: string,
     exerciseSheet?: boolean,
-    board_image?: boolean,
+    boardImage?: boolean,
   ) {
     const response = await authService.makeAuthenticatedRequest(
       "/api/markdowns/preview-pdf",
@@ -375,7 +375,7 @@ export const ActivityApi = {
           orientation,
           activityName,
           exerciseSheet,
-          board_image,
+          boardImage,
         }),
       },
     );

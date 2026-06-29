@@ -209,7 +209,7 @@ class ActivityControllerTest {
 		}
 
 		@Override
-		public String generateDeckblatt(String pdfText, Map<String, Object> metadata) {
+		public String generateCoverSheet(String pdfText, Map<String, Object> metadata) {
 			deckblattCalls++;
 			if (deckblattFailure != null) {
 				throw deckblattFailure;
@@ -218,19 +218,19 @@ class ActivityControllerTest {
 		}
 
 		@Override
-		public String generateArtikulationsschema(String pdfText, Map<String, Object> metadata) {
+		public String generateLessonPlan(String pdfText, Map<String, Object> metadata) {
 			artikulationsschemaCalls++;
 			return lessonPlan;
 		}
 
 		@Override
-		public String generateHintergrundwissen(String pdfText, Map<String, Object> metadata) {
+		public String generateBackgroundKnowledge(String pdfText, Map<String, Object> metadata) {
 			hintergrundwissenCalls++;
 			return background_knowledge;
 		}
 
 		@Override
-		public Map<String, String> generateUebungAndLoesung(String pdfText, Map<String, Object> metadata) {
+		public Map<String, String> generateExerciseAndSolution(String pdfText, Map<String, Object> metadata) {
 			uebungCalls++;
 			return Map.of("exercise", exercise, "exercise_solution", uebungLoesung);
 		}

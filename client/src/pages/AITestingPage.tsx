@@ -49,11 +49,11 @@ const MARKDOWN_TYPES: MarkdownType[] = [
 ];
 
 const TYPE_LABEL_KEYS: Record<MarkdownType, string> = {
-  exercise: "aiTesting.typeUebung",
-  cover_sheet: "aiTesting.typeDeckblatt",
-  background_knowledge: "aiTesting.typeHintergrundwissen",
-  lesson_plan: "aiTesting.typeArtikulationsschema",
-  board_image: "aiTesting.typeTafelbild",
+  exercise: "aiTesting.typeExercise",
+  cover_sheet: "aiTesting.typeCoverSheet",
+  background_knowledge: "aiTesting.typeBackgroundKnowledge",
+  lesson_plan: "aiTesting.typeLessonPlan",
+  board_image: "aiTesting.typeBoardImage",
 };
 
 const ORIENTATION: Record<MarkdownType, "portrait" | "landscape"> = {
@@ -299,8 +299,8 @@ export const AITestingPage: React.FC = () => {
                   onClick={() => setActiveResultTab("primary")}
                 >
                   {isTafelbildType
-                    ? t("aiTesting.tabTafelbild")
-                    : t("aiTesting.tabUebung")}
+                    ? t("aiTesting.tabBoardImage")
+                    : t("aiTesting.tabExercise")}
                 </Button>
                 {hasSecondary && (
                   <Button
@@ -310,7 +310,7 @@ export const AITestingPage: React.FC = () => {
                     size="sm"
                     onClick={() => setActiveResultTab("secondary")}
                   >
-                    {t("aiTesting.tabLoesung")}
+                    {t("aiTesting.tabSolution")}
                   </Button>
                 )}
                 {hasArtikTab && (
@@ -321,7 +321,7 @@ export const AITestingPage: React.FC = () => {
                     size="sm"
                     onClick={() => setActiveResultTab("artik")}
                   >
-                    {t("aiTesting.tabArtikulationsschema")}
+                    {t("aiTesting.tabLessonPlan")}
                   </Button>
                 )}
               </div>
