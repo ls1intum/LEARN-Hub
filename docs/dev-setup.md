@@ -2,6 +2,24 @@
 
 This guide provides a streamlined setup for running the LEARN-Hub server locally with a Docker-based PostgreSQL database.
 
+## The Development Flow at a Glance
+
+LEARN-Hub has three moving parts that you run locally:
+
+| Part | Tech | Runs at | Started by |
+|------|------|---------|------------|
+| **Client** | React + Vite | http://localhost:3001 | `npm run dev` (hot reload) |
+| **Server** | Spring Boot (Java 21) | http://localhost:5001 | `make dev` |
+| **Database** | PostgreSQL 17 | localhost:5432 | Docker Compose |
+
+The typical loop is:
+
+1. **Once:** install prerequisites, copy `example.env` → `.env`, start PostgreSQL in Docker, run migrations, (optionally) seed demo data.
+2. **Every day:** `make dev` from the repo root to run client + server together. The Vite client hot-reloads on save; restart the server to pick up Java changes.
+3. **Before committing:** `make format` and `make test`.
+
+If you prefer to run everything in containers instead of locally, jump to [Docker-based Development](#docker-based-development).
+
 ## Prerequisites
 
 Ensure you have the following tools installed:
@@ -44,23 +62,24 @@ Create a `.env` file in the project root based on `example.env`:
 cp example.env .env
 ```
 
-You must update:
-- `EMAIL_ADDRESS` - the from address on login emails
-- `EMAIL_USERNAME` - SMTP username
-- `EMAIL_PASSWORD` - SMTP password
-- `SMTP_SERVER` - SMTP host (default: `postout.lrz.de`)
-- `PDF_PATH` - where PDFs will be stored on your machine
-- `LLM_BASE_URL` - base URL of the OpenAI-compatible chat API
-- `LLM_API_KEY` - API key for LLM-assisted activity creation
-- `LLM_MODEL_NAME` - chat model to use
+`example.env` already ships with working defaults for local development – ports (`SERVER_PORT=5001`, `CLIENT_PORT=3001`), the PostgreSQL connection, and a TUM-hosted LLM endpoint. The minimum you should set before the first run:
 
-Optional variables:
+- `PDF_PATH` - an existing folder on your machine where uploaded PDFs are stored
+- `LLM_API_KEY` - API key for the OpenAI-compatible chat endpoint (needed for activity creation; leave the default `LLM_BASE_URL` / `LLM_MODEL_NAME` unless you use your own model)
+- `INITIAL_ADMIN_EMAIL` / `INITIAL_ADMIN_PASSWORD` - a known admin login created by the seeder (see [Database Seeding](#3-database-seeding-optional-but-recommended))
+
+Required only if you need teacher email verification / credential emails:
+- `EMAIL_ADDRESS` - the from address on login emails
+- `EMAIL_USERNAME` / `EMAIL_PASSWORD` - SMTP credentials
+- `SMTP_SERVER` / `SMTP_PORT` - SMTP host and port (default: `postout.lrz.de:587`)
+
+Optional variables (add to `.env` manually – not all are listed in `example.env`):
 - `LLM_MODEL_VISUAL` - vision model for exercise generation with PDF page images
 - `LLM_IMAGE_AZURE_ENDPOINT` / `LLM_IMAGE_AZURE_API_KEY` / `LLM_IMAGE_AZURE_DEPLOYMENT_NAME` - Azure OpenAI image model for exercise illustrations
 - `ADOBE_PDF_SERVICES_CLIENT_ID` / `ADOBE_PDF_SERVICES_CLIENT_SECRET` - Adobe PDF Services for PDF-to-DOCX conversion
 - `DOCX_CACHE_PATH` - cache directory for converted DOCX files
-- `SESSION_TIMEOUT` - optional server-side session timeout override
-- `SESSION_COOKIE_MAX_AGE` - optional persistent session cookie lifetime override
+- `SESSION_TIMEOUT` / `SESSION_COOKIE_MAX_AGE` - session and persistent-cookie lifetime overrides
+- `VERBOSE_LOGGING` - set `true` for more detailed server logs
 
 ## Setup
 
@@ -99,8 +118,17 @@ DB_SEED_ENABLED=true
 ```
 
 Then start the server (next step). The seeder will:
-- Create 5 demo activities (or load the full dataset if `dataset/` is present)
-- Create an admin user with auto-generated credentials (check logs)
+- Load the full dataset if `dataset/dataset.csv` and `dataset/pdfs/` are present, otherwise fall back to a handful of demo activities
+- Create an initial **admin** user so you can log in immediately
+
+**Set a known admin login** so you don't have to dig through the logs. Add these to your `.env` before the first start:
+
+```properties
+INITIAL_ADMIN_EMAIL=admin@learnhub.com
+INITIAL_ADMIN_PASSWORD=choose-a-strong-password
+```
+
+If you leave them blank, the seeder generates a random admin password and prints it to the server logs on first startup. Either way, log in via the **Password Login** tab at [http://localhost:3001/login](http://localhost:3001/login).
 
 ### 4. Run
 
@@ -139,7 +167,9 @@ Once the server is running, verify the setup:
    - Should show the Swagger UI with all available endpoints
 
 3. **Client UI**: Visit [http://localhost:3001](http://localhost:3001)
-   - Should display the LEARN-Hub web interface
+   - Should display the LEARN-Hub landing page
+   - Browse as a guest, or sign in at [/login](http://localhost:3001/login) with your `INITIAL_ADMIN_EMAIL` / `INITIAL_ADMIN_PASSWORD` (Password Login tab) to reach the admin features (user management, drafts)
+   - Use the controls in the top-right to switch language (English / German) and theme (light / dark)
 
 ## Stopping Services
 
