@@ -402,6 +402,37 @@
     "exercise": "Übungsblatt",
     "exercise_solution": "Lösungsblatt"
   },
+  "drafts": {
+    "title": "Entwürfe",
+    "description": "PDF hochladen, generieren und veröffentlichen",
+    "new": "Neu",
+    "inProgress": "In Bearbeitung",
+    "failed": "Fehlgeschlagen",
+    "loadError": "Fehler beim Laden der Entwürfe.",
+    "publishError": "Fehler beim Veröffentlichen.",
+    "deleteError": "Fehler beim Löschen.",
+    "publish": "Veröffentlichen",
+    "emptyStatePrefix": "Noch keine Entwürfe. Klicke auf ",
+    "emptyStateSuffix": ", um eine PDF hochzuladen.",
+    "pendingCard": {
+      "generating": "Wird generiert…",
+      "generationError": "Fehler bei der Generierung: {{error}}"
+    },
+    "uploadModal": {
+      "title": "PDF hochladen",
+      "onlyPdf": "Nur PDF-Dateien werden akzeptiert.",
+      "fileTooLarge": "Die Datei ist zu groß ({{size}} KB). Maximal erlaubt: 1 MB.",
+      "uploadError": "Fehler beim Hochladen.",
+      "dropzoneText": "PDF hier ablegen oder",
+      "dropzoneSelect": "auswählen",
+      "maxSize": "Maximal 1 MB",
+      "aiGeneration": "KI-Generierung",
+      "extractMetadata": "Metadaten extrahieren",
+      "markdownsLabel": "Markdowns",
+      "uploading": "Hochladen…",
+      "upload": "Hochladen"
+    }
+  },
   "activityDetails": {
     "title": "Aktivitätsdetails",
     "description": "Detaillierte Informationen zu dieser Lernaktivität.",

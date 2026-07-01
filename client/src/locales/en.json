@@ -402,6 +402,37 @@
     "exercise": "Exercise",
     "exercise_solution": "Exercise Solution"
   },
+  "drafts": {
+    "title": "Drafts",
+    "description": "Upload, generate and publish PDFs",
+    "new": "New",
+    "inProgress": "In Progress",
+    "failed": "Failed",
+    "loadError": "Error loading drafts.",
+    "publishError": "Error publishing.",
+    "deleteError": "Error deleting.",
+    "publish": "Publish",
+    "emptyStatePrefix": "No drafts yet. Click ",
+    "emptyStateSuffix": " to upload a PDF.",
+    "pendingCard": {
+      "generating": "Generating…",
+      "generationError": "Generation error: {{error}}"
+    },
+    "uploadModal": {
+      "title": "Upload PDF",
+      "onlyPdf": "Only PDF files are accepted.",
+      "fileTooLarge": "The file is too large ({{size}} KB). Maximum allowed: 1 MB.",
+      "uploadError": "Error uploading file.",
+      "dropzoneText": "Drop PDF here or",
+      "dropzoneSelect": "select",
+      "maxSize": "Maximum 1 MB",
+      "aiGeneration": "AI Generation",
+      "extractMetadata": "Extract metadata",
+      "markdownsLabel": "Markdowns",
+      "uploading": "Uploading…",
+      "upload": "Upload"
+    }
+  },
   "activityDetails": {
     "title": "Activity Details",
     "description": "Detailed information about this educational activity.",

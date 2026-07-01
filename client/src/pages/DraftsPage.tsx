@@ -26,21 +26,22 @@ import {
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { apiService } from "@/services/apiService";
+import { useTranslateEnum } from "@/hooks/useTranslateEnum";
 import type { Activity } from "@/types/activity";
 import type { ActivityNavigationState } from "@/utils/activityNavigation";
 
 const MAX_FILE_SIZE_BYTES = 1024 * 1024; // 1 MB
 
-const MARKDOWN_TYPES = [
-  { key: "cover_sheet", label: "Deckblatt" },
-  { key: "lesson_plan", label: "Artikulationsschema" },
-  { key: "background_knowledge", label: "Hintergrundwissen" },
-  { key: "board_image", label: "Tafelbild" },
-  { key: "exercise", label: "Übung" },
-  { key: "exercise_solution", label: "Übungslösung" },
+const MARKDOWN_KEYS = [
+  "cover_sheet",
+  "lesson_plan",
+  "background_knowledge",
+  "board_image",
+  "exercise",
+  "exercise_solution",
 ] as const;
-type MarkdownKey = (typeof MARKDOWN_TYPES)[number]["key"];
-const ALL_MARKDOWN_KEYS = MARKDOWN_TYPES.map((t) => t.key) as MarkdownKey[];
+type MarkdownKey = (typeof MARKDOWN_KEYS)[number];
+const ALL_MARKDOWN_KEYS = [...MARKDOWN_KEYS];
 
 // ─── Upload Modal ──────────────────────────────────────────────────────────
 
@@ -55,6 +56,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
   onClose,
   onCreated,
 }) => {
+  const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -97,9 +99,11 @@ const UploadModal: React.FC<UploadModalProps> = ({
 
   const validateFile = (f: File): string | null => {
     if (!f.name.toLowerCase().endsWith(".pdf"))
-      return "Nur PDF-Dateien werden akzeptiert.";
+      return t("drafts.uploadModal.onlyPdf");
     if (f.size > MAX_FILE_SIZE_BYTES)
-      return `Die Datei ist zu groß (${(f.size / 1024).toFixed(0)} KB). Maximal erlaubt: 1 MB.`;
+      return t("drafts.uploadModal.fileTooLarge", {
+        size: (f.size / 1024).toFixed(0),
+      });
     return null;
   };
 
@@ -135,7 +139,8 @@ const UploadModal: React.FC<UploadModalProps> = ({
       onCreated(activity);
       onClose();
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Fehler beim Hochladen.";
+      const msg =
+        err instanceof Error ? err.message : t("drafts.uploadModal.uploadError");
       setUploadError(msg);
       setUploading(false);
     }
@@ -145,7 +150,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
     <Dialog open={open} onOpenChange={(o) => !o && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>PDF hochladen</DialogTitle>
+          <DialogTitle>{t("drafts.uploadModal.title")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 pt-2">
@@ -177,11 +182,13 @@ const UploadModal: React.FC<UploadModalProps> = ({
             ) : (
               <div className="text-center">
                 <p className="text-sm text-muted-foreground">
-                  PDF hier ablegen oder{" "}
-                  <span className="text-primary font-medium">auswählen</span>
+                  {t("drafts.uploadModal.dropzoneText")}{" "}
+                  <span className="text-primary font-medium">
+                    {t("drafts.uploadModal.dropzoneSelect")}
+                  </span>
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Maximal 1 MB
+                  {t("drafts.uploadModal.maxSize")}
                 </p>
               </div>
             )}
@@ -214,7 +221,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
           {/* LLM generation options */}
           <div className="rounded-md border border-border p-3 space-y-3">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-              KI-Generierung
+              {t("drafts.uploadModal.aiGeneration")}
             </p>
             <label className="flex items-center gap-2 cursor-pointer select-none">
               <Checkbox
@@ -222,13 +229,15 @@ const UploadModal: React.FC<UploadModalProps> = ({
                 onCheckedChange={(v) => setGenerateMetadata(v === true)}
                 disabled={uploading}
               />
-              <span className="text-sm">Metadaten extrahieren</span>
+              <span className="text-sm">
+                {t("drafts.uploadModal.extractMetadata")}
+              </span>
             </label>
             <div className="space-y-1.5 pl-1">
               <p className="text-xs text-muted-foreground font-medium">
-                Markdowns
+                {t("drafts.uploadModal.markdownsLabel")}
               </p>
-              {MARKDOWN_TYPES.map(({ key, label }) => (
+              {MARKDOWN_KEYS.map((key) => (
                 <label
                   key={key}
                   className="flex items-center gap-2 cursor-pointer select-none"
@@ -238,7 +247,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
                     onCheckedChange={(v) => toggleMarkdownType(key, v === true)}
                     disabled={uploading}
                   />
-                  <span className="text-sm">{label}</span>
+                  <span className="text-sm">{t(`markdownTypes.${key}`)}</span>
                 </label>
               ))}
             </div>
@@ -250,18 +259,18 @@ const UploadModal: React.FC<UploadModalProps> = ({
               onClick={handleClose}
               disabled={uploading}
             >
-              Abbrechen
+              {t("common.cancel")}
             </Button>
             <Button onClick={handleSubmit} disabled={!file || uploading}>
               {uploading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Hochladen…
+                  {t("drafts.uploadModal.uploading")}
                 </>
               ) : (
                 <>
                   <Upload className="h-4 w-4 mr-2" />
-                  Hochladen
+                  {t("drafts.uploadModal.upload")}
                 </>
               )}
             </Button>
@@ -280,6 +289,7 @@ interface PendingCardProps {
 }
 
 const PendingCard: React.FC<PendingCardProps> = ({ activity, onDelete }) => {
+  const { t } = useTranslation();
   const hasError = !!activity.generationError;
 
   return (
@@ -303,11 +313,13 @@ const PendingCard: React.FC<PendingCardProps> = ({ activity, onDelete }) => {
         </p>
         {hasError ? (
           <p className="text-xs text-destructive mt-1 leading-relaxed">
-            Fehler bei der Generierung: {activity.generationError}
+            {t("drafts.pendingCard.generationError", {
+              error: activity.generationError,
+            })}
           </p>
         ) : (
           <p className="text-xs text-muted-foreground mt-0.5">
-            Wird generiert…
+            {t("drafts.pendingCard.generating")}
           </p>
         )}
       </div>
@@ -316,7 +328,7 @@ const PendingCard: React.FC<PendingCardProps> = ({ activity, onDelete }) => {
         size="icon"
         className="flex-shrink-0 h-8 w-8 text-muted-foreground hover:text-destructive"
         onClick={() => onDelete(activity.id)}
-        title="Löschen"
+        title={t("common.delete")}
       >
         <Trash2 className="h-4 w-4" />
       </Button>
@@ -339,6 +351,8 @@ const DraftCard: React.FC<DraftCardProps> = ({
   publishing,
   onDelete,
 }) => {
+  const { t } = useTranslation();
+  const translateEnum = useTranslateEnum();
   const navigate = useNavigate();
   const detailPath = `/drafts/${activity.id}`;
   const detailNavigationState: ActivityNavigationState = {
@@ -364,7 +378,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
         <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
           {activity.format && (
             <span className="text-xs text-muted-foreground capitalize">
-              {activity.format}
+              {translateEnum("format", activity.format)}
             </span>
           )}
           {activity.durationMinMinutes != null && (
@@ -374,12 +388,12 @@ const DraftCard: React.FC<DraftCardProps> = ({
               {activity.durationMaxMinutes != null &&
                 activity.durationMaxMinutes !== activity.durationMinMinutes &&
                 `–${activity.durationMaxMinutes}`}{" "}
-              Min.
+              {t("activityCard.minutes")}
             </span>
           )}
           {activity.ageMin != null && (
             <span className="text-xs text-muted-foreground">
-              {activity.ageMin}–{activity.ageMax} Jahre
+              {activity.ageMin}–{activity.ageMax} {t("activityCard.years")}
             </span>
           )}
         </div>
@@ -396,7 +410,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
           size="icon"
           className="h-8 w-8 text-muted-foreground hover:text-destructive"
           onClick={() => onDelete(activity.id)}
-          title="Löschen"
+          title={t("common.delete")}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -411,7 +425,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
           }
         >
           <Edit3 className="h-3.5 w-3.5" />
-          Bearbeiten
+          {t("common.edit")}
         </Button>
         <Button
           size="sm"
@@ -424,7 +438,7 @@ const DraftCard: React.FC<DraftCardProps> = ({
           ) : (
             <Send className="h-3.5 w-3.5" />
           )}
-          Veröffentlichen
+          {t("drafts.publish")}
         </Button>
       </div>
     </div>
@@ -461,12 +475,12 @@ export const DraftsPage: React.FC = () => {
       setError(null);
     } catch (err: unknown) {
       setError(
-        err instanceof Error ? err.message : "Fehler beim Laden der Entwürfe.",
+        err instanceof Error ? err.message : t("drafts.loadError"),
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Initial load
   useEffect(() => {
@@ -516,9 +530,7 @@ export const DraftsPage: React.FC = () => {
       await apiService.publishActivity(id);
       setActivities((prev) => prev.filter((a) => a.id !== id));
     } catch (err: unknown) {
-      alert(
-        err instanceof Error ? err.message : "Fehler beim Veröffentlichen.",
-      );
+      alert(err instanceof Error ? err.message : t("drafts.publishError"));
     } finally {
       setPublishingId(null);
     }
@@ -535,7 +547,7 @@ export const DraftsPage: React.FC = () => {
       setActivityToDelete(null);
     } catch (err: unknown) {
       setDeleteError(
-        err instanceof Error ? err.message : "Fehler beim Löschen.",
+        err instanceof Error ? err.message : t("drafts.deleteError"),
       );
     } finally {
       setIsDeleting(false);
@@ -547,12 +559,12 @@ export const DraftsPage: React.FC = () => {
       <div>
         <Breadcrumb items={[{ label: t("nav.drafts") }]} className="mb-3" />
         <PageHeader
-          title="Entwürfe"
-          description="PDF hochladen, generieren und veröffentlichen"
+          title={t("drafts.title")}
+          description={t("drafts.description")}
         >
           <Button onClick={() => setUploadOpen(true)} className="gap-2">
             <Plus className="h-4 w-4" />
-            Neu
+            {t("drafts.new")}
           </Button>
         </PageHeader>
       </div>
@@ -578,7 +590,7 @@ export const DraftsPage: React.FC = () => {
       {loading && (
         <div className="flex items-center justify-center py-16 text-muted-foreground">
           <Loader2 className="h-6 w-6 animate-spin mr-2" />
-          Laden…
+          {t("common.loading")}
         </div>
       )}
 
@@ -597,7 +609,7 @@ export const DraftsPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-muted-foreground" />
                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  In Bearbeitung ({pending.length})
+                  {t("drafts.inProgress")} ({pending.length})
                 </h2>
               </div>
               <div className="space-y-2">
@@ -623,7 +635,7 @@ export const DraftsPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <TriangleAlert className="h-4 w-4 text-destructive" />
                 <h2 className="text-sm font-semibold text-destructive uppercase tracking-wide">
-                  Fehlgeschlagen ({errored.length})
+                  {t("drafts.failed")} ({errored.length})
                 </h2>
               </div>
               <div className="space-y-2">
@@ -649,7 +661,7 @@ export const DraftsPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                  Entwürfe ({drafts.length})
+                  {t("drafts.title")} ({drafts.length})
                 </h2>
               </div>
               <div className="space-y-2">
@@ -678,8 +690,9 @@ export const DraftsPage: React.FC = () => {
               <div className="text-center py-20 space-y-4">
                 <FileUp className="h-12 w-12 text-muted-foreground mx-auto" />
                 <p className="text-muted-foreground text-sm">
-                  Noch keine Entwürfe. Klicke auf <strong>Neu</strong>, um eine
-                  PDF hochzuladen.
+                  {t("drafts.emptyStatePrefix")}
+                  <strong>{t("drafts.new")}</strong>
+                  {t("drafts.emptyStateSuffix")}
                 </p>
               </div>
             )}
