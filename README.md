@@ -35,12 +35,8 @@ The architecture addresses several key quality attributes:
 
 The `docs/figures/` directory contains UML diagrams documenting the system architecture:
 
-- **Subsystem Decomposition** ([`docs/figures/final-lucid-subsystem.svg`](docs/figures/final-lucid-subsystem.svg)): The internal systems of the server subsystem (User System, Activity System, Document System) and their connections to the client and external services
 - **Deployment Diagram** ([`docs/figures/final-lucid-deployment.svg`](docs/figures/final-lucid-deployment.svg)): Container topology, volumes, and external service dependencies
-- **Analysis Object Model** ([`docs/figures/final-lucid-aom.svg`](docs/figures/final-lucid-aom.svg)): Domain entities and their relationships
 - **Data Model** ([`docs/figures/final-lucid-data-model.svg`](docs/figures/final-lucid-data-model.svg)): Persisted entities (Activity, Document, Markdown) and their enumerations (`ActivityStatus`, `MarkdownType`, `DocumentType`)
-
-![Subsystem Decomposition](docs/figures/final-lucid-subsystem.svg)
 
 ## Quick Start
 
