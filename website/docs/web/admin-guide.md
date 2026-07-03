@@ -25,15 +25,17 @@ Manage teachers, admins, and the activity library.
 
 ## Activity Management
 
-**Upload Activity**: Navigate to the **Library** page, click **Add Activity**, and select a PDF. The system extracts structured metadata (title, description, age range, duration, format, materials, topics, Bloom level, cognitive/physical load) and concurrently generates teaching documents: Artikulationsschema, Deckblatt, Hintergrundwissen, Übung, and Lösungsblatt.
+New activities are created and prepared on the **Drafts** page (in the admin sidebar). The lifecycle is **Upload → Review → Publish**.
 
-**Review & Correct**: Check the extracted metadata and adjust any errors before confirming. Once confirmed, the system finalises document generation in the background. The activity can be published from the draft view once you are satisfied.
+**Upload Activity**: On the **Drafts** page, start a new draft and select a PDF. The system extracts structured metadata (title, description, age range, duration, format, materials, topics, Bloom level, cognitive/physical load) and concurrently generates teaching documents: Cover Sheet, Lesson Plan, Background Knowledge, Exercise, and Solution sheet.
 
-**Publish**: Open the draft, review the generated documents, make any edits, and click **Publish** to make the activity visible to teachers.
+**Review & Correct**: Open the draft to check the extracted metadata and generated documents. Edit anything that needs fixing before publishing.
+
+**Publish**: When you are satisfied, publish the draft to make the activity visible to teachers in the Library and available to the recommendation engine.
 
 <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-  <img src={useBaseUrl('/img/web/upload.png')} alt="Activity Upload page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
+  <img src={useBaseUrl('/img/web/drafts.png')} alt="Drafts overview page" style={{ width: '95%', borderRadius: '12px', border: '1px solid #000'}} />
   <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.5rem' }}>
-    Activity Upload page
+    The Drafts overview, where activities are uploaded, reviewed, and published
   </p>
 </div>

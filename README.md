@@ -35,11 +35,8 @@ The architecture addresses several key quality attributes:
 
 The `docs/figures/` directory contains UML diagrams documenting the system architecture:
 
-- **Subsystem Decomposition** ([`docs/figures/final-lucid-subsystem.svg`](docs/figures/final-lucid-subsystem.svg)): Shows the internal components of the server and client subsystems
 - **Deployment Diagram** ([`docs/figures/final-lucid-deployment.svg`](docs/figures/final-lucid-deployment.svg)): Container topology, volumes, and external service dependencies
-- **Analysis Object Model** ([`docs/figures/final-lucid-aom.svg`](docs/figures/final-lucid-aom.svg)): Domain entities and their relationships
-
-![Subsystem Decomposition](docs/figures/final-lucid-subsystem.svg)
+- **Data Model** ([`docs/figures/final-lucid-data-model.svg`](docs/figures/final-lucid-data-model.svg)): Persisted entities (Activity, Document, Markdown) and their enumerations (`ActivityStatus`, `MarkdownType`, `DocumentType`)
 
 ## Quick Start
 
@@ -82,6 +79,8 @@ cp example.env .env
 ```
 
 Key configuration variables:
+- `DB_SEED_ENABLED` - Set `true` to seed the database (dataset or demo activities) and create an initial admin on first startup
+- `INITIAL_ADMIN_EMAIL` / `INITIAL_ADMIN_PASSWORD` - Credentials for the seeded admin user (random password printed to logs if left blank)
 - `LLM_BASE_URL` - Base URL of the OpenAI-compatible chat API (e.g. an Ollama or GPU cluster endpoint)
 - `LLM_API_KEY` - API key for the text LLM
 - `LLM_MODEL_NAME` - Chat model name
