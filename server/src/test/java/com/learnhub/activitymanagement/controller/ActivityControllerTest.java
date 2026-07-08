@@ -15,9 +15,6 @@ import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.AbstractExecutorService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
@@ -26,42 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class ActivityControllerTest {
-
-	private static final ExecutorService DIRECT_EXECUTOR_SERVICE = new AbstractExecutorService() {
-
-		private boolean shutdown;
-
-		@Override
-		public void shutdown() {
-			shutdown = true;
-		}
-
-		@Override
-		public List<Runnable> shutdownNow() {
-			shutdown = true;
-			return List.of();
-		}
-
-		@Override
-		public boolean isShutdown() {
-			return shutdown;
-		}
-
-		@Override
-		public boolean isTerminated() {
-			return shutdown;
-		}
-
-		@Override
-		public boolean awaitTermination(long timeout, TimeUnit unit) {
-			return true;
-		}
-
-		@Override
-		public void execute(Runnable command) {
-			command.run();
-		}
-	};
 
 	private ActivityController activityController;
 	private StubPdfService pdfService;
@@ -75,7 +36,6 @@ class ActivityControllerTest {
 
 		ReflectionTestUtils.setField(activityController, "pdfService", pdfService);
 		ReflectionTestUtils.setField(activityController, "llmService", llmService);
-		ReflectionTestUtils.setField(activityController, "markdownGenerationExecutor", DIRECT_EXECUTOR_SERVICE);
 
 		var markdownToHtmlService = new com.learnhub.documentmanagement.service.MarkdownToHtmlService();
 		ReflectionTestUtils.setField(markdownToHtmlService, "sanitizationService", new SanitizationService());

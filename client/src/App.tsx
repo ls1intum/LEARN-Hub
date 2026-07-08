@@ -22,7 +22,6 @@ import { DraftsPage } from "@/pages/DraftsPage";
 import { ActivityEditPage } from "@/pages/ActivityEditPage";
 import { AccountDashboardPage } from "@/pages/AccountDashboardPage";
 import { ImpressumPage } from "@/pages/ImpressumPage";
-import { AITestingPage } from "@/pages/AITestingPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
@@ -183,14 +182,6 @@ function App() {
                               allowedRoles={["ADMIN", "TEACHER", "GUEST"]}
                             >
                               <AccountDashboardPage />
-                            </ProtectedLayout>
-                          }
-                        />
-                        <Route
-                          path="/ai-testing"
-                          element={
-                            <ProtectedLayout requiredRole="ADMIN">
-                              <AITestingPage />
                             </ProtectedLayout>
                           }
                         />

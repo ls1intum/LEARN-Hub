@@ -91,15 +91,12 @@ Spring Boot maps environment variables to configuration properties:
 - `EMAIL_ADDRESS`, `EMAIL_USERNAME`, `EMAIL_PASSWORD`, `SMTP_SERVER`, `SMTP_PORT` - SMTP email delivery
 
 **Optional Variables**:
-- `LLM_MODEL_VISUAL` - Vision-capable model for exercise generation with PDF page images
 - `LLM_IMAGE_AZURE_ENDPOINT`, `LLM_IMAGE_AZURE_API_KEY`, `LLM_IMAGE_AZURE_DEPLOYMENT_NAME` - Azure OpenAI image model for exercise illustrations
 - `ADOBE_PDF_SERVICES_CLIENT_ID`, `ADOBE_PDF_SERVICES_CLIENT_SECRET` - Adobe PDF Services for PDF-to-DOCX conversion
 - `DOCX_CACHE_PATH` - Host path for caching converted DOCX files
 - `SESSION_TIMEOUT` - Server-side session timeout override
 - `SESSION_COOKIE_MAX_AGE` - Persistent session cookie lifetime override
 - `INITIAL_ADMIN_EMAIL`, `INITIAL_ADMIN_PASSWORD` - Bootstrap admin account
-
-The `DB_SEED_ENABLED` variable controls automatic database seeding on startup.
 
 ## Related Documentation
 

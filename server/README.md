@@ -62,18 +62,7 @@ make db-clean     # Clean database (WARNING: deletes all data)
 
 ## Database Seeding
 
-The seeder automatically loads the dataset from the repository if available:
-
-**Option 1: Full Dataset** — Requires `dataset/dataset.csv` and `dataset/pdfs/` to be present.
-
-**Option 2: Demo Data** — Falls back to 5 sample activities if dataset files are not found.
-
-To enable seeding, set in `.env`:
-```properties
-DB_SEED_ENABLED=true
-```
-
-Then start the application. The seeder will create an admin user with auto-generated credentials (printed in logs).
+Have a look at the dataset folder and the seeding script in there.
 
 ## API Endpoints
 
@@ -125,7 +114,6 @@ Key environment variables (see `example.env` for full list):
 | `LLM_BASE_URL` | OpenAI-compatible chat API base URL |
 | `LLM_API_KEY` | API key for the chat API |
 | `LLM_MODEL_NAME` | Chat model name |
-| `LLM_MODEL_VISUAL` | Optional vision model for exercise generation with PDF images |
 | `LLM_IMAGE_AZURE_ENDPOINT` | Optional Azure OpenAI endpoint for image generation |
 | `LLM_IMAGE_AZURE_API_KEY` | Optional Azure OpenAI API key |
 | `LLM_IMAGE_AZURE_DEPLOYMENT_NAME` | Optional Azure OpenAI image deployment name |
@@ -142,7 +130,6 @@ Key environment variables (see `example.env` for full list):
 | `SMTP_SERVER` | SMTP host (default: postout.lrz.de) |
 | `SMTP_PORT` | SMTP port (default: 587) |
 | `PDF_PATH` | Path for PDF file storage |
-| `DB_SEED_ENABLED` | Enable database seeding on startup |
 
 ## Testing
 

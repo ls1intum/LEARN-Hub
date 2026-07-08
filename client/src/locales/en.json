@@ -8,7 +8,6 @@
     "drafts": "Drafts",
     "users": "Users",
     "account": "Account",
-    "ai-testing": "AI Testing",
     "loginRequiredMessage": "Please create an account to access this feature."
   },
   "userHeader": {
@@ -827,29 +826,6 @@
     "step7Question": "Any extras for your plan?",
     "step7Description": "Want a structured lesson plan with multiple activities sequenced together? Enable this to generate a full teaching sequence instead of individual standalone activities.",
     "step7Sidebar": "Any extras for your plan"
-  },
-  "aiTesting": {
-    "title": "AI Testing",
-    "description": "Test LLM markdown generation without persistence. PDF text is extracted on-the-fly and discarded after the request.",
-    "configTitle": "Configuration",
-    "configDescription": "Upload a PDF and choose what to generate.",
-    "fileLabel": "PDF File",
-    "filePlaceholder": "Click to select a PDF…",
-    "typeLabel": "Markdown Type",
-    "metadataLabel": "Metadata",
-    "metadataOptional": "optional JSON",
-    "generateButton": "Generate",
-    "generating": "Generating…",
-    "resultTitle": "Result",
-    "tabExercise": "Übungsblatt",
-    "tabSolution": "Lösungsblatt",
-    "typeExercise": "Übungsblatt + Lösungsblatt",
-    "typeCoverSheet": "Deckblatt",
-    "typeBackgroundKnowledge": "Hintergrundwissen",
-    "typeLessonPlan": "Artikulationsschema",
-    "typeBoardImage": "Tafelbild",
-    "tabBoardImage": "Tafelbild",
-    "tabLessonPlan": "Artikulationsschema"
   },
   "notFound": {
     "title": "Page not found",

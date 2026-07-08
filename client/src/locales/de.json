@@ -8,7 +8,6 @@
     "drafts": "Entwürfe",
     "users": "Benutzer",
     "account": "Konto",
-    "ai-testing": "KI-Testen",
     "loginRequiredMessage": "Bitte erstelle ein Konto, um auf diese Funktion zugreifen zu können."
   },
   "userHeader": {
@@ -827,29 +826,6 @@
     "step7Question": "Noch Extras für deinen Plan?",
     "step7Description": "Möchtest du einen strukturierten Unterrichtsplan mit mehreren aufeinander aufbauenden Aktivitäten? Aktiviere diese Option, um eine vollständige Lehrsequenz statt einzelner Aktivitäten zu erstellen.",
     "step7Sidebar": "Noch Extras für deinen Plan"
-  },
-  "aiTesting": {
-    "title": "KI-Testen",
-    "description": "LLM-Markdown-Generierung ohne Persistenz testen. PDF-Text wird on-the-fly extrahiert und nach der Anfrage verworfen.",
-    "configTitle": "Konfiguration",
-    "configDescription": "PDF hochladen und Typ auswählen.",
-    "fileLabel": "PDF-Datei",
-    "filePlaceholder": "PDF auswählen…",
-    "typeLabel": "Markdown-Typ",
-    "metadataLabel": "Metadaten",
-    "metadataOptional": "optionales JSON",
-    "generateButton": "Generieren",
-    "generating": "Wird generiert…",
-    "resultTitle": "Ergebnis",
-    "tabExercise": "Übungsblatt",
-    "tabSolution": "Lösungsblatt",
-    "typeExercise": "Übungsblatt + Lösungsblatt",
-    "typeCoverSheet": "Deckblatt",
-    "typeBackgroundKnowledge": "Hintergrundwissen",
-    "typeLessonPlan": "Artikulationsschema",
-    "typeBoardImage": "Tafelbild",
-    "tabBoardImage": "Tafelbild",
-    "tabLessonPlan": "Artikulationsschema"
   },
   "notFound": {
     "title": "Seite nicht gefunden",

@@ -25,16 +25,13 @@ import org.springframework.ai.image.Image;
 import org.springframework.ai.image.ImageModel;
 import org.springframework.ai.image.ImagePrompt;
 import org.springframework.ai.image.ImageResponse;
-import org.springframework.ai.model.Media;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import org.springframework.util.MimeTypeUtils;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -65,12 +62,6 @@ public class LLMService {
 			.compile("data:[^,\\s)\"']+;base64,[A-Za-z0-9+/=\\r\\n]+", Pattern.CASE_INSENSITIVE);
 	private static final int MAX_IMAGE_DESCRIPTION_CHARS = 4000;
 	private static final int MAX_IMAGE_CONTEXT_CHARS = 16000;
-
-	@Value("${llm.visual.model:}")
-	private String visualModelName;
-
-	@Value("${llm.visual.max-tokens:8000}")
-	private int visualMaxTokens;
 
 	private final ChatClient chatClient;
 	private final ImageModel exerciseImageModel;
@@ -308,29 +299,12 @@ public class LLMService {
 	 *         markdown
 	 */
 	public Map<String, String> generateExerciseAndSolution(String pdfText, Map<String, Object> metadata) {
-		return generateExerciseAndSolution(pdfText, metadata, null);
-	}
-
-	public Map<String, String> generateExerciseAndSolution(String pdfText, Map<String, Object> metadata,
-			List<byte[]> pdfPageImages) {
 		String metadataSection = buildMetadataSection(metadata);
-
-		// When images are provided, omit the extracted PDF text from the prompt — the
-		// images already contain the teaching material. Sending both wastes context
-		// tokens and can overflow the model's context window, truncating the output.
-		boolean hasImages = pdfPageImages != null && !pdfPageImages.isEmpty();
-		String textForPrompt = hasImages ? "" : pdfText;
-
 		String promptText = new PromptTemplate(uebungPromptResource)
-				.render(Map.of("metadataSection", metadataSection, "pdfText", textForPrompt));
-
-		boolean useVisual = isVisionEnabled();
-		int maxTokens = useVisual ? visualMaxTokens : MAX_TOKENS_EXERCISE;
+				.render(Map.of("metadataSection", metadataSection, "pdfText", pdfText));
 
 		try {
-			String responseText = useVisual
-					? callVisualLlm(promptText, pdfPageImages, maxTokens)
-					: callLlm(promptText, maxTokens);
+			String responseText = callLlm(promptText, MAX_TOKENS_EXERCISE);
 
 			logger.debug("LLM Uebung Response: {}", responseText);
 
@@ -342,31 +316,9 @@ public class LLMService {
 		}
 	}
 
-	public boolean isVisionEnabled() {
-		return visualModelName != null && !visualModelName.isBlank();
-	}
-
 	/** Standard LLM call — text only, uses the default model. */
 	private String callLlm(String promptText, int maxTokens) {
 		OpenAiChatOptions options = OpenAiChatOptions.builder().maxTokens(maxTokens).build();
-		return chatClient.prompt().user(promptText).options(options).call().content();
-	}
-
-	/**
-	 * Visual LLM call — overrides the model and optionally attaches PDF page
-	 * images.
-	 */
-	private String callVisualLlm(String promptText, List<byte[]> pdfPageImages, int maxTokens) {
-		OpenAiChatOptions options = OpenAiChatOptions.builder().model(visualModelName).maxTokens(maxTokens).build();
-		if (pdfPageImages != null && !pdfPageImages.isEmpty()) {
-			logger.info("Sending {} PDF page images to visual model '{}'", pdfPageImages.size(), visualModelName);
-			Media[] mediaArray = new Media[pdfPageImages.size()];
-			for (int i = 0; i < pdfPageImages.size(); i++) {
-				mediaArray[i] = new Media(MimeTypeUtils.IMAGE_JPEG, new ByteArrayResource(pdfPageImages.get(i)));
-			}
-			return chatClient.prompt().user(u -> u.text(promptText).media(mediaArray)).options(options).call()
-					.content();
-		}
 		return chatClient.prompt().user(promptText).options(options).call().content();
 	}
 

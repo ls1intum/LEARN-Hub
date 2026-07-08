@@ -4,7 +4,6 @@ import {
   Users,
   History,
   Heart,
-  FlaskConical,
   FilePenLine,
   type LucideIcon,
 } from "lucide-react";
@@ -65,14 +64,6 @@ export const NAVIGATION_TABS: NavigationTab[] = [
     path: "/users",
     icon: Users,
     roles: ["ADMIN"],
-  },
-  {
-    id: "ai-testing",
-    label: "AI Testing",
-    path: "/ai-testing",
-    icon: FlaskConical,
-    roles: ["ADMIN"],
-    devOnly: true,
   },
 ];
 

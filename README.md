@@ -84,7 +84,6 @@ Key configuration variables:
 - `LLM_BASE_URL` - Base URL of the OpenAI-compatible chat API (e.g. an Ollama or GPU cluster endpoint)
 - `LLM_API_KEY` - API key for the text LLM
 - `LLM_MODEL_NAME` - Chat model name
-- `LLM_MODEL_VISUAL` - Optional vision-capable model for exercise generation with image input
 - `LLM_IMAGE_AZURE_ENDPOINT` / `LLM_IMAGE_AZURE_API_KEY` / `LLM_IMAGE_AZURE_DEPLOYMENT_NAME` - Optional Azure OpenAI image model for generating exercise illustrations
 - `ADOBE_PDF_SERVICES_CLIENT_ID` / `ADOBE_PDF_SERVICES_CLIENT_SECRET` - Optional Adobe PDF Services credentials for PDF-to-DOCX conversion
 - `SESSION_TIMEOUT` - Optional override for server-side session lifetime
@@ -113,12 +112,6 @@ Configure any OpenAI-compatible endpoint (Ollama, GPU cluster, cloud API):
 LLM_BASE_URL=https://gpu.aet.cit.tum.de/ollama/v1
 LLM_API_KEY=<key>
 LLM_MODEL_NAME=qwen3:30b-a3b
-```
-
-Optionally, a **vision-capable model** can be configured separately for exercise generation with PDF page images as input:
-
-```
-LLM_MODEL_VISUAL=<vision-model-name>
 ```
 
 ### Azure OpenAI Image Model — Optional
