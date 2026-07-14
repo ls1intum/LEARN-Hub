@@ -34,8 +34,20 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(IOException.class)
 	public void handleIOException(IOException ex, HttpServletResponse response) throws IOException {
+		// Client disconnected mid-stream (common with SSE): the response is already
+		// committed via getOutputStream(), so we can't — and shouldn't — write an error
+		// body. Attempting to would throw IllegalStateException and flood the logs.
+		if (isClientAbort(ex) || response.isCommitted()) {
+			logger.debug("Client disconnected mid-response: {}", ex.getMessage());
+			return;
+		}
 		logger.error("I/O error: {}", ex.getMessage());
 		writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "I/O error: " + ex.getMessage());
+	}
+
+	private boolean isClientAbort(IOException ex) {
+		String message = ex.getMessage();
+		return message != null && (message.contains("Broken pipe") || message.contains("Connection reset"));
 	}
 
 	@ExceptionHandler(RuntimeException.class)

@@ -140,7 +140,9 @@ const UploadModal: React.FC<UploadModalProps> = ({
       onClose();
     } catch (err: unknown) {
       const msg =
-        err instanceof Error ? err.message : t("drafts.uploadModal.uploadError");
+        err instanceof Error
+          ? err.message
+          : t("drafts.uploadModal.uploadError");
       setUploadError(msg);
       setUploading(false);
     }
@@ -474,9 +476,7 @@ export const DraftsPage: React.FC = () => {
       setActivities(data);
       setError(null);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : t("drafts.loadError"),
-      );
+      setError(err instanceof Error ? err.message : t("drafts.loadError"));
     } finally {
       setLoading(false);
     }

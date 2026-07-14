@@ -385,13 +385,7 @@
     "retryGeneration": "Retry Generation",
     "saving": "Saving...",
     "pdfDocReady": "PDF Document Ready",
-    "noPdfAttached": "No PDF document attached",
-    "cover_sheet": "Deckblatt",
-    "lesson_plan": "Artikulationsschema",
-    "background_knowledge": "Hintergrundwissen",
-    "board_image": "Tafelbild",
-    "exercise": "Exercise",
-    "exercise_solution": "Exercise Solution"
+    "noPdfAttached": "No PDF document attached"
   },
   "markdownTypes": {
     "cover_sheet": "Cover Sheet",

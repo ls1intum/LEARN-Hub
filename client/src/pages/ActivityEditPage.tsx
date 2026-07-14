@@ -696,7 +696,7 @@ export const ActivityEditPage: React.FC = () => {
                   <SelectContent>
                     {MARKDOWN_TAB_KEYS.map((key) => (
                       <SelectItem key={key} value={key}>
-                        {t(`upload.${key}`)}
+                        {t(`markdownTypes.${key}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -724,10 +724,10 @@ export const ActivityEditPage: React.FC = () => {
                       )}
                       {activeTabHasContent
                         ? t("upload.regenerate", {
-                            doc: t(`upload.${activeMarkdownTab}`),
+                            doc: t(`markdownTypes.${activeMarkdownTab}`),
                           })
                         : t("upload.generate", {
-                            doc: t(`upload.${activeMarkdownTab}`),
+                            doc: t(`markdownTypes.${activeMarkdownTab}`),
                           })}
                     </>
                   )}
@@ -742,7 +742,7 @@ export const ActivityEditPage: React.FC = () => {
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
                 <p className="text-lg font-medium">
                   {t("upload.generatingDoc", {
-                    doc: t(`upload.${activeMarkdownTab}`),
+                    doc: t(`markdownTypes.${activeMarkdownTab}`),
                   })}
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
