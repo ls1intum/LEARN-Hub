@@ -465,6 +465,8 @@
     "combinedDocument": "Combined document",
     "loading": "Loading activity details...",
     "goBack": "Go Back",
+    "activityNotFound": "Activity not found",
+    "activityNotFoundDescription": "This activity doesn't exist, has been removed, or isn't available yet.",
     "docxConverting": "Converting to Word...",
     "docxLoginRequired": "Please create an account to download Word documents.",
     "pdfWaitingQuotes": [

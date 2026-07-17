@@ -137,8 +137,12 @@ public class ActivityController {
 	@Operation(summary = "Get activity by ID", description = "Get a single activity by its ID")
 	public ResponseEntity<ActivityResponse> getActivity(@PathVariable UUID id, Authentication authentication) {
 		logger.info("GET /api/activities/{} - Get activity by ID called", id);
-		ActivityResponse activity = activityService.getActivityById(id, isAdmin(authentication), false,
+		boolean isAdmin = isAdmin(authentication);
+		ActivityResponse activity = activityService.getActivityById(id, isAdmin, false,
 				CurrentUser.getUserId(authentication));
+		if (!isAdmin && !"PUBLISHED".equals(activity.getStatus())) {
+			throw new ResourceNotFoundException("Activity not found");
+		}
 		return ResponseEntity.ok(activity);
 	}
 

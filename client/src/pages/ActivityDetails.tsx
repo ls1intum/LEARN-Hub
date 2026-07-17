@@ -30,6 +30,7 @@ import {
   Loader2,
   Send,
   MoreVertical,
+  FileQuestion,
 } from "lucide-react";
 import { FavouriteButton } from "@/components/favourites/FavouriteButton";
 import {
@@ -366,13 +367,36 @@ export const ActivityDetails: React.FC = () => {
   }
 
   if (error || !activity) {
+    // A missing, deleted, or (for non-admins) unpublished activity comes back as
+    // a 404 with the message "Activity not found". Show a clean not-found page
+    // rather than a destructive alert with a pointless retry button.
+    const isNotFound = !error || /not\s*found|404/i.test(error);
+
+    if (isNotFound) {
+      return (
+        <div className="w-full">
+          <div className="flex flex-col items-center text-center py-16 gap-3">
+            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+              <FileQuestion className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h1 className="text-xl font-semibold text-foreground">
+              {t("activityDetails.activityNotFound")}
+            </h1>
+            <p className="text-sm text-muted-foreground max-w-md">
+              {t("activityDetails.activityNotFoundDescription")}
+            </p>
+            <Button onClick={handleBack} className="mt-2">
+              {t("activityDetails.goBack")}
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="w-full">
         <div className="text-center py-12">
-          <ErrorDisplay
-            error={error || "Activity not found"}
-            onRetry={refetch}
-          />
+          <ErrorDisplay error={error} onRetry={refetch} />
           <div className="mt-4">
             <Button onClick={handleBack}>{t("activityDetails.goBack")}</Button>
           </div>
