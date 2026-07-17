@@ -96,8 +96,9 @@ public class MarkdownController {
 	}
 
 	@GetMapping("/{markdownId}/docx")
-	@PreAuthorize("permitAll()")
-	@Operation(summary = "Get markdown as DOCX", description = "Render a stored markdown entry as a Word document")
+	@PreAuthorize("isAuthenticated()")
+	@SecurityRequirement(name = "BearerAuth")
+	@Operation(summary = "Get markdown as DOCX", description = "Render a stored markdown entry as a Word document (authenticated users only)")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Markdown DOCX", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @Schema(type = "string", format = "binary")))})
 	public ResponseEntity<?> getMarkdownDocx(@PathVariable UUID markdownId) {

@@ -466,6 +466,7 @@
     "loading": "Loading activity details...",
     "goBack": "Go Back",
     "docxConverting": "Converting to Word...",
+    "docxLoginRequired": "Please create an account to download Word documents.",
     "pdfWaitingQuotes": [
       "Rendering your markdown...",
       "Laying out the page, very carefully...",

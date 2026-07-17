@@ -43,6 +43,7 @@ import { apiService } from "@/services/apiService";
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from "react-i18next";
 import { openPdfInNewTab } from "@/utils/pdf";
+import type { AuthRedirectState } from "@/utils/authRedirect";
 import { PdfFileIcon, DocxFileIcon } from "@/components/ui/FileTypeIcon";
 import {
   getActivityBackTarget,
@@ -244,10 +245,27 @@ export const ActivityDetails: React.FC = () => {
     window.open(`/api/markdowns/${markdownId}/pdf`, "_blank");
   };
 
+  const redirectToLoginForDocx = () => {
+    navigate("/login", {
+      state: {
+        from: {
+          pathname: location.pathname,
+          search: location.search,
+          hash: location.hash,
+        },
+        message: t("activityDetails.docxLoginRequired"),
+      } satisfies AuthRedirectState,
+    });
+  };
+
   const handleDownloadMarkdownDocx = async (
     markdownId: string,
     markdownType: string,
   ) => {
+    if (!user) {
+      redirectToLoginForDocx();
+      return;
+    }
     if (!activity?.name || docxLoadingId) return;
     setDocxLoadingId(markdownId);
     try {
@@ -269,6 +287,10 @@ export const ActivityDetails: React.FC = () => {
   };
 
   const handleOpenActivityDocx = async () => {
+    if (!user) {
+      redirectToLoginForDocx();
+      return;
+    }
     if (!activity?.id || docxLoadingId) return;
     setDocxLoadingId("activity");
     try {

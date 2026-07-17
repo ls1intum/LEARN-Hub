@@ -430,8 +430,9 @@ public class ActivityController {
 	}
 
 	@GetMapping("/{activityId}/docx")
-	@PreAuthorize("permitAll()")
-	@Operation(summary = "Download activity as combined DOCX", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single DOCX")
+	@PreAuthorize("isAuthenticated()")
+	@SecurityRequirement(name = "BearerAuth")
+	@Operation(summary = "Download activity as combined DOCX", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single DOCX (authenticated users only)")
 	@ApiResponses({
 			@ApiResponse(responseCode = "200", description = "Combined activity DOCX", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @Schema(type = "string", format = "binary")))})
 	public ResponseEntity<?> downloadActivityDocx(@PathVariable UUID activityId) {

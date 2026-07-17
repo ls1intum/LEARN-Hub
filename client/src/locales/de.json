@@ -466,6 +466,7 @@
     "loading": "Aktivitätsdetails werden geladen...",
     "goBack": "Zurück",
     "docxConverting": "Wird zu Word konvertiert...",
+    "docxLoginRequired": "Bitte erstelle ein Konto, um Word-Dokumente herunterzuladen.",
     "pdfWaitingQuotes": [
       "Dein Markdown wird gerendert...",
       "Seite wird sorgfältig aufgebaut...",
