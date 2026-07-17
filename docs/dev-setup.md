@@ -74,7 +74,7 @@ Required only if you need teacher email verification / credential emails:
 - `SMTP_SERVER` / `SMTP_PORT` - SMTP host and port (default: `postout.lrz.de:587`)
 
 Optional variables (add to `.env` manually – not all are listed in `example.env`):
-- `LLM_IMAGE_AZURE_ENDPOINT` / `LLM_IMAGE_AZURE_API_KEY` / `LLM_IMAGE_AZURE_DEPLOYMENT_NAME` - Azure OpenAI image model for exercise illustrations
+- `LLM_IMAGE_MODEL_NAME` - image model for exercise illustrations; reuses `LLM_BASE_URL`/`LLM_API_KEY` and is enabled when set
 - `ADOBE_PDF_SERVICES_CLIENT_ID` / `ADOBE_PDF_SERVICES_CLIENT_SECRET` - Adobe PDF Services for PDF-to-DOCX conversion
 - `DOCX_CACHE_PATH` - cache directory for converted DOCX files
 - `SESSION_TIMEOUT` / `SESSION_COOKIE_MAX_AGE` - session and persistent-cookie lifetime overrides

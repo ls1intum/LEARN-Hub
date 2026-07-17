@@ -84,7 +84,7 @@ Key configuration variables:
 - `LLM_BASE_URL` - Base URL of the OpenAI-compatible chat API (e.g. an Ollama or GPU cluster endpoint)
 - `LLM_API_KEY` - API key for the text LLM
 - `LLM_MODEL_NAME` - Chat model name
-- `LLM_IMAGE_AZURE_ENDPOINT` / `LLM_IMAGE_AZURE_API_KEY` / `LLM_IMAGE_AZURE_DEPLOYMENT_NAME` - Optional Azure OpenAI image model for generating exercise illustrations
+- `LLM_IMAGE_MODEL_NAME` - Optional image model for generating exercise illustrations; reuses `LLM_BASE_URL` / `LLM_API_KEY` and is enabled once this is set
 - `ADOBE_PDF_SERVICES_CLIENT_ID` / `ADOBE_PDF_SERVICES_CLIENT_SECRET` - Optional Adobe PDF Services credentials for PDF-to-DOCX conversion
 - `SESSION_TIMEOUT` - Optional override for server-side session lifetime
 - `SESSION_COOKIE_MAX_AGE` - Optional override for persistent login cookie lifetime
@@ -114,14 +114,14 @@ LLM_API_KEY=<key>
 LLM_MODEL_NAME=qwen3:30b-a3b
 ```
 
-### Azure OpenAI Image Model — Optional
+> **Note:** `LLM_BASE_URL` must point at the OpenAI-compatible API root that directly serves `/chat/completions` — i.e. it must include the `/v1` segment (e.g. `http://localhost:11434/v1`). Spring AI 2.0 appends `/chat/completions` to this value verbatim.
 
-When configured, the server calls Azure OpenAI's image generation API to replace `[[IMAGE_PLACEHOLDER: ...]]` markers in generated exercise and Tafelbild documents with actual images. Without this, placeholders are left in the markdown as-is.
+### Image Model — Optional
+
+When configured, the server calls the image generation API to replace `[[IMAGE_PLACEHOLDER: ...]]` markers in generated exercise and Tafelbild documents with actual images. Without this, placeholders are left in the markdown as-is. The image model **reuses the same `LLM_BASE_URL` and `LLM_API_KEY` as the chat model** (Spring AI 2.0 shares one OpenAI client), so the configured endpoint must support image generation. It is enabled once `LLM_IMAGE_MODEL_NAME` is set:
 
 ```
-LLM_IMAGE_AZURE_ENDPOINT=https://<resource>.openai.azure.com/
-LLM_IMAGE_AZURE_API_KEY=<key>
-LLM_IMAGE_AZURE_DEPLOYMENT_NAME=gpt-image-1
+LLM_IMAGE_MODEL_NAME=gpt-image-1
 ```
 
 ### Adobe PDF Services — Optional

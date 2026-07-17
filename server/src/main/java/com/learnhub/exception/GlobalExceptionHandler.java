@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -17,8 +16,11 @@ public class GlobalExceptionHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-	@Autowired
-	private ObjectMapper objectMapper;
+	// Spring Boot 4 defaults the web stack to Jackson 3, so the Jackson 2
+	// ObjectMapper is no longer exposed as an injectable bean. This handler only
+	// serialises a simple ErrorResponse DTO, so it owns a plain mapper — matching
+	// the pattern used across the other services here.
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@ExceptionHandler(ResourceNotFoundException.class)
 	public void handleResourceNotFound(ResourceNotFoundException ex, HttpServletResponse response) throws IOException {

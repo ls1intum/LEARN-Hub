@@ -111,12 +111,10 @@ Key environment variables (see `example.env` for full list):
 | Variable | Description |
 |----------|-------------|
 | `POSTGRES_DB_URI` | PostgreSQL JDBC connection string |
-| `LLM_BASE_URL` | OpenAI-compatible chat API base URL |
-| `LLM_API_KEY` | API key for the chat API |
+| `LLM_BASE_URL` | OpenAI-compatible API base URL (must include `/v1`); shared by chat and image |
+| `LLM_API_KEY` | API key for the OpenAI-compatible API; shared by chat and image |
 | `LLM_MODEL_NAME` | Chat model name |
-| `LLM_IMAGE_AZURE_ENDPOINT` | Optional Azure OpenAI endpoint for image generation |
-| `LLM_IMAGE_AZURE_API_KEY` | Optional Azure OpenAI API key |
-| `LLM_IMAGE_AZURE_DEPLOYMENT_NAME` | Optional Azure OpenAI image deployment name |
+| `LLM_IMAGE_MODEL_NAME` | Optional image model name; reuses `LLM_BASE_URL`/`LLM_API_KEY`, enables image generation when set |
 | `ADOBE_PDF_SERVICES_CLIENT_ID` | Optional Adobe PDF Services client ID for DOCX export |
 | `ADOBE_PDF_SERVICES_CLIENT_SECRET` | Optional Adobe PDF Services client secret |
 | `DOCX_CACHE_PATH` | Optional path for caching converted DOCX files |

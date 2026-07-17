@@ -318,8 +318,10 @@ public class LLMService {
 
 	/** Standard LLM call — text only, uses the default model. */
 	private String callLlm(String promptText, int maxTokens) {
-		OpenAiChatOptions options = OpenAiChatOptions.builder().maxTokens(maxTokens).build();
-		return chatClient.prompt().user(promptText).options(options).call().content();
+		// Spring AI 2.0's ChatClient.options(..) takes a ChatOptions.Builder, not a
+		// built ChatOptions instance.
+		return chatClient.prompt().user(promptText).options(OpenAiChatOptions.builder().maxTokens(maxTokens)).call()
+				.content();
 	}
 
 	// Accept both styles: with ===_END=== delimiters or without (content
