@@ -31,6 +31,14 @@ export const Footer: React.FC = () => {
           {t("footer.impressum")}
         </Link>
 
+        {/* Privacy internal link */}
+        <Link
+          to="/privacy"
+          className="hover:text-foreground transition-colors"
+        >
+          {t("footer.privacy")}
+        </Link>
+
         {/* External Links */}
         {EXTERNAL_LINKS.map(({ labelKey, href }) => (
           <a

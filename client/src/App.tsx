@@ -22,6 +22,7 @@ import { DraftsPage } from "@/pages/DraftsPage";
 import { ActivityEditPage } from "@/pages/ActivityEditPage";
 import { AccountDashboardPage } from "@/pages/AccountDashboardPage";
 import { ImpressumPage } from "@/pages/ImpressumPage";
+import { PrivacyPage } from "@/pages/PrivacyPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 
@@ -102,6 +103,14 @@ function App() {
                           element={
                             <MainLayout>
                               <ImpressumPage />
+                            </MainLayout>
+                          }
+                        />
+                        <Route
+                          path="/privacy"
+                          element={
+                            <MainLayout>
+                              <PrivacyPage />
                             </MainLayout>
                           }
                         />

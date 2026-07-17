@@ -272,7 +272,8 @@
     "impressum": "Impressum",
     "codeOfConduct": "Code of Conduct",
     "appliedEducationTechnologies": "Applied Education Technologies",
-    "tumCenterForEducationalTechnologies": "TUM Center for Educational Technologies"
+    "tumCenterForEducationalTechnologies": "TUM Center for Educational Technologies",
+    "privacy": "Privacy"
   },
   "landingPage": {
     "hero": {
@@ -826,5 +827,8 @@
     "description": "The page you're looking for doesn't exist or has been moved.",
     "goBack": "Go back",
     "goHome": "Library"
+  },
+  "privacy": {
+    "title": "Privacy"
   }
 }

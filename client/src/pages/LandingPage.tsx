@@ -7,7 +7,6 @@ import {
   Sparkles,
   BookOpen,
   Users,
-  GraduationCap,
   ChevronRight,
   ArrowRight,
   Brain,
@@ -613,32 +612,40 @@ const TrustSection: React.FC = () => {
           {t("landingPage.trust.eyebrow")}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-          <div className="flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
-            <div className="h-8 w-8 rounded bg-primary/20 flex items-center justify-center">
-              <GraduationCap className="h-5 w-5 text-primary" />
+          <a
+            href="https://www.tum.de/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity"
+          >
+            <div className="flex h-14 items-center justify-center rounded-lg bg-white px-4 shadow-sm ring-1 ring-border">
+              <img
+                src="/tum-logo.png"
+                alt={t("landingPage.trust.tum")}
+                className="h-6 w-auto"
+              />
             </div>
-            <div className="text-left">
-              <p className="text-xs font-bold text-foreground leading-tight">
-                TUM
-              </p>
-              <p className="text-[10px] text-muted-foreground leading-tight">
-                {t("landingPage.trust.tum")}
-              </p>
+            <p className="hidden text-left text-xs font-medium text-muted-foreground leading-tight sm:block">
+              {t("landingPage.trust.tum")}
+            </p>
+          </a>
+          <a
+            href="https://aet.cit.tum.de/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 opacity-80 hover:opacity-100 transition-opacity"
+          >
+            <div className="flex h-14 items-center justify-center rounded-lg bg-white px-4 shadow-sm ring-1 ring-border">
+              <img
+                src="/aet-logo.png"
+                alt={t("landingPage.trust.aet")}
+                className="h-10 w-auto"
+              />
             </div>
-          </div>
-          <div className="flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
-            <div className="h-8 w-8 rounded bg-primary/20 flex items-center justify-center">
-              <Brain className="h-5 w-5 text-primary" />
-            </div>
-            <div className="text-left">
-              <p className="text-xs font-bold text-foreground leading-tight">
-                AET
-              </p>
-              <p className="text-[10px] text-muted-foreground leading-tight">
-                {t("landingPage.trust.aet")}
-              </p>
-            </div>
-          </div>
+            <p className="hidden text-left text-xs font-medium text-muted-foreground leading-tight sm:block">
+              {t("landingPage.trust.aet")}
+            </p>
+          </a>
         </div>
       </div>
     </section>
