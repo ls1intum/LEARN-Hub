@@ -257,6 +257,13 @@
     "title": "Impressum",
     "regulatingAuthority": "Regulating Authority"
   },
+  "about": {
+    "title": "About us",
+    "intro": "LEARN-Hub is an application by TUM Applied Education Technologies whose goal is to distribute Open Educational Resources (OER) among Computer Science teachers.",
+    "mission": "We develop an education platform and OER repository to perform research about educational technology, supporting material and tools — among others, with AI support.",
+    "maintainers": "Maintainers",
+    "contributors": "Contributors"
+  },
   "header": {
     "about": "About",
     "toggleNav": "Toggle navigation",

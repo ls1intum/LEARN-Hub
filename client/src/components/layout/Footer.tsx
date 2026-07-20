@@ -32,10 +32,7 @@ export const Footer: React.FC = () => {
         </Link>
 
         {/* Privacy internal link */}
-        <Link
-          to="/privacy"
-          className="hover:text-foreground transition-colors"
-        >
+        <Link to="/privacy" className="hover:text-foreground transition-colors">
           {t("footer.privacy")}
         </Link>
 

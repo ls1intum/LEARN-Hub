@@ -187,7 +187,7 @@ const SharedHeader: React.FC = () => {
             {t("nav.library")}
           </Link>
           <Link
-            to="/impressum"
+            to="/about"
             className="rounded-full px-3 py-1.5 text-sm font-medium text-primary-foreground/90 transition-colors hover:bg-white/10 hover:text-primary-foreground"
           >
             {t("header.about")}
