@@ -136,9 +136,9 @@ Legal basis: Art. 6(1)(e) GDPR in conjunction with Art. 4(1) BayDSG. The AI-assi
 
 So that teaching materials can be downloaded and further edited in an editable format, LEARN-Hub offers an optional conversion of PDF documents into the Word format (DOCX). This conversion is carried out via Adobe PDF Services, a cloud service of Adobe.
 
-Which data is processed: only when you actively request an editable (DOCX) download, the relevant document file is transmitted to Adobe PDF Services for conversion and the converted file is returned. The transmitted files are the educational activity documents; no account data (name, email address, password) is transmitted for this purpose. Adobe processes the files solely to carry out the conversion and does not retain them after processing; the files are not used to train AI models. To avoid redundant transmissions, LEARN-Hub caches the converted DOCX files on the TUM infrastructure.
+Which data is processed: only when you actively request an editable (DOCX) download, the relevant document file is transmitted to Adobe PDF Services for conversion and the converted file is returned. The transmitted files are the educational activity documents; no account data (name, email address, password) is transmitted for this purpose. Adobe processes the files solely to carry out the conversion. The transmitted document and the converted DOCX are temporarily stored by Adobe to perform the conversion and are automatically deleted within 24 hours. To avoid redundant transmissions, LEARN-Hub caches the converted DOCX files on the TUM infrastructure.
 
-Please note that Adobe is a provider that may process data outside the European Union. The transmission takes place solely for the purpose of the requested conversion and only for documents that you yourself select for editable download.
+The conversion is carried out in Adobe's European (EMEA) data centres. The transmission takes place solely for the purpose of the requested conversion and only for documents that you yourself select for editable download.
 
 Legal basis: Art. 6(1)(e) GDPR in conjunction with Art. 4(1) BayDSG.
 

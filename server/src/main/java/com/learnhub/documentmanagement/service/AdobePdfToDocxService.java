@@ -29,7 +29,6 @@ public class AdobePdfToDocxService {
 	private static final Logger logger = LoggerFactory.getLogger(AdobePdfToDocxService.class);
 
 	private static final String IMS_TOKEN_URL = "https://ims-na1.adobelogin.com/ims/token/v3";
-	private static final String PDF_SERVICES_BASE_URL = "https://pdf-services.adobe.io";
 	private static final int POLL_INTERVAL_MS = 2000;
 	private static final int MAX_POLL_ATTEMPTS = 90;
 
@@ -38,6 +37,15 @@ public class AdobePdfToDocxService {
 
 	@Value("${learnhub.adobe.client-secret:}")
 	private String clientSecret;
+
+	/**
+	 * Base URL of the region-specific PDF Services endpoint. Defaults to the
+	 * European (EMEA) region ({@code ew1}) so that uploaded documents are processed
+	 * and transiently stored in EU data centres. The IMS token endpoint is not
+	 * region-specific and handles authentication only (no document content).
+	 */
+	@Value("${learnhub.adobe.base-url:https://pdf-services-ew1.adobe.io}")
+	private String pdfServicesBaseUrl;
 
 	private final RestTemplate restTemplate = new RestTemplate();
 	private final AtomicReference<CachedToken> cachedToken = new AtomicReference<>();
@@ -118,7 +126,7 @@ public class AdobePdfToDocxService {
 		HttpHeaders headers = buildAuthHeaders(accessToken);
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
-		ResponseEntity<Map> createResponse = restTemplate.postForEntity(PDF_SERVICES_BASE_URL + "/assets",
+		ResponseEntity<Map> createResponse = restTemplate.postForEntity(pdfServicesBaseUrl + "/assets",
 				new HttpEntity<>(Map.of("mediaType", "application/pdf"), headers), Map.class);
 
 		Map<String, Object> createBody = (Map<String, Object>) createResponse.getBody();
@@ -140,7 +148,7 @@ public class AdobePdfToDocxService {
 		HttpHeaders headers = buildAuthHeaders(accessToken);
 		headers.setContentType(MediaType.APPLICATION_JSON);
 
-		ResponseEntity<Void> response = restTemplate.postForEntity(PDF_SERVICES_BASE_URL + "/operation/exportpdf",
+		ResponseEntity<Void> response = restTemplate.postForEntity(pdfServicesBaseUrl + "/operation/exportpdf",
 				new HttpEntity<>(Map.of("assetID", assetId, "targetFormat", "docx"), headers), Void.class);
 
 		String location = response.getHeaders().getFirst("Location");
