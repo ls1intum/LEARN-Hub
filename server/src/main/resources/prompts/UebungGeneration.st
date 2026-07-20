@@ -7,11 +7,11 @@ IMPORTANT RULES:
    - Ages 10–12: Clear sentences, concrete examples, small challenges with scaffolding
    - Ages 13–15: More independent tasks, some abstraction, peer-level tone
    - Ages 16+: Adult tone, nuanced tasks, self-directed exploration encouraged
-3. The exercise and solution must match perfectly — every task in the exercise has a corresponding answer in the solution.
+3. The exercise and solution must match perfectly - every task in the exercise has a corresponding answer in the solution.
 4. Make both documents visually appealing using Markdown: use headers, bold key terms, numbered steps, bullet lists, tables where useful, and code blocks for any code snippets.
 4a. Where an image, diagram, icon sequence, worksheet illustration, or visual example would genuinely help understanding, insert a machine-readable plain-text placeholder exactly at that position in the content. Use this exact format on its own line: [[IMAGE_PLACEHOLDER:id=eindeutige-bild-id: detaillierte Bildbeschreibung]]. Do not vary the marker name, brackets, capitalization, `id=` prefix, or colon placement. The `id` is mandatory for every placeholder, must be short, stable, and unique per distinct visual, for example `roboter-labyrinth-1` or `pixelmuster-a`. If the same visual appears again later, especially in the solution, you must reuse the same `id` instead of inventing a new one. The description must be detailed enough to serve directly as an image-generation prompt: specify the scene, perspective, style, colors, mood if relevant, and the important objects. Explicitly state where the important objects appear in the image (for example: left, right, center, foreground, background, top, bottom). Be exact and concrete, not vague. Do not include hints, solutions, explanatory annotations, guiding arrows, highlighted correct answers, or any other pedagogical cues inside the image unless the teaching material itself explicitly requires visible labels. If text labels are needed inside the image, describe them explicitly and keep them factual rather than hinting at the answer.
 5. Do not invent subject-matter that does not fit the material. Derive all tasks from the teaching content. If the material does not include exercises, be creative and come up with some.
-6. The solution should not just list answers — it should briefly explain the reasoning where helpful for the teacher.
+6. The solution should not just list answers - it should briefly explain the reasoning where helpful for the teacher.
 7. Decide task-by-task whether visible answer space is useful. Some tasks need room to write or draw, while others do not. Only add answer areas where they genuinely improve the worksheet. Do not insert blanks or solution boxes mechanically after every task.
 8. If custom HTML blocks, styled containers, blank writing areas, visual answer zones, or layout elements would improve readability or usability, you may invent appropriate inline HTML and CSS yourself. Do not copy fixed templates. The HTML should emerge from the concrete task, age group, and layout need.
 9. The solution sheet must NOT contain student answer-space blocks. Replace them with the actual answer text, worked result, or explanation directly.
@@ -54,7 +54,7 @@ SOLUTION STRUCTURE GUIDELINES:
 - Keep the solution sheet clearly marked so teachers can distinguish it at a glance
 - Preserve any image placeholders where they help explain the solution or the expected visual context, using the exact same [[IMAGE_PLACEHOLDER:id=...: ...]] syntax
 - If the solution needs the same visual as the exercise, reuse the exact same placeholder id from the exercise so the system can reuse the already generated image instead of creating a second one
-- Do NOT use answer-space divs in the solution — write the actual answer text directly where the blank would be
+- Do NOT use answer-space divs in the solution - write the actual answer text directly where the blank would be
 
 PRE-OUTPUT QUALITY CHECK:
 - Is the difficulty level appropriate for the specified age range?

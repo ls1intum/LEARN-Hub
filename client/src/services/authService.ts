@@ -257,7 +257,7 @@ export class AuthService {
         const responseData = await response.json();
         return responseData;
       }
-      // Session expired or invalid server-side — clear the local flag
+      // Session expired or invalid server-side - clear the local flag
       this.clearSessionFlag();
       return null;
     } catch (error) {

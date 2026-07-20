@@ -109,7 +109,7 @@ public class LLMService {
 		this.exerciseImageModel = exerciseImageModel;
 	}
 
-	// Compact JSON with ~20 short fields — 800 tokens is more than sufficient.
+	// Compact JSON with ~20 short fields - 800 tokens is more than sufficient.
 	private static final int MAX_TOKENS_EXTRACTION = 4000;
 
 	// Exactly 6 AVIVA+ rows with concrete per-cell content.
@@ -152,9 +152,9 @@ public class LLMService {
 	 * schema from the teaching material. Returns markdown text.
 	 *
 	 * @param pdfText
-	 *            extracted text from the PDF
+	 *                 extracted text from the PDF
 	 * @param metadata
-	 *            user-adjusted activity metadata to inform the schema
+	 *                 user-adjusted activity metadata to inform the schema
 	 */
 	public String generateLessonPlan(String pdfText, Map<String, Object> metadata) {
 		String metadataSection = buildMetadataSection(metadata);
@@ -176,9 +176,9 @@ public class LLMService {
 	 * Generate a Deckblatt (cover page) from PDF text. Returns markdown text.
 	 *
 	 * @param pdfText
-	 *            extracted text from the PDF
+	 *                 extracted text from the PDF
 	 * @param metadata
-	 *            user-adjusted activity metadata to inform the generation
+	 *                 user-adjusted activity metadata to inform the generation
 	 */
 	public String generateCoverSheet(String pdfText, Map<String, Object> metadata) {
 		String metadataSection = buildMetadataSection(metadata);
@@ -201,9 +201,9 @@ public class LLMService {
 	 * markdown text.
 	 *
 	 * @param pdfText
-	 *            extracted text from the PDF
+	 *                 extracted text from the PDF
 	 * @param metadata
-	 *            user-adjusted activity metadata to inform the generation
+	 *                 user-adjusted activity metadata to inform the generation
 	 */
 	public String generateBackgroundKnowledge(String pdfText, Map<String, Object> metadata) {
 		String metadataSection = buildMetadataSection(metadata);
@@ -227,9 +227,10 @@ public class LLMService {
 	 * one illustrative image.
 	 *
 	 * @param lessonPlan
-	 *            previously generated Artikulationsschema markdown
+	 *                   previously generated Artikulationsschema markdown
 	 * @param metadata
-	 *            activity metadata (ageMin/ageMax drive language calibration)
+	 *                   activity metadata (ageMin/ageMax drive language
+	 *                   calibration)
 	 */
 	public String generateBoardImageMarkdown(String lessonPlan, Map<String, Object> metadata) {
 		String normalizedLessonPlan = stripEmbeddedImages(lessonPlan == null ? "" : lessonPlan.trim());
@@ -292,9 +293,10 @@ public class LLMService {
 	 * single LLM call, guaranteeing the two documents correspond exactly.
 	 *
 	 * @param pdfText
-	 *            extracted text from the PDF
+	 *                 extracted text from the PDF
 	 * @param metadata
-	 *            user-adjusted activity metadata (ageMin/ageMax drive difficulty)
+	 *                 user-adjusted activity metadata (ageMin/ageMax drive
+	 *                 difficulty)
 	 * @return map with keys "exercise" and "exercise_solution", each containing
 	 *         markdown
 	 */
@@ -316,7 +318,7 @@ public class LLMService {
 		}
 	}
 
-	/** Standard LLM call — text only, uses the default model. */
+	/** Standard LLM call - text only, uses the default model. */
 	private String callLlm(String promptText, int maxTokens) {
 		// Spring AI 2.0's ChatClient.options(..) takes a ChatOptions.Builder, not a
 		// built ChatOptions instance.

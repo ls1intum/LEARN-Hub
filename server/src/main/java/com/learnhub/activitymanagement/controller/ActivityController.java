@@ -78,8 +78,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class ActivityController {
 
 	private static final Logger logger = LoggerFactory.getLogger(ActivityController.class);
-	private static final String[] MARKDOWN_TYPE_ORDER = {"cover_sheet", "lesson_plan", "background_knowledge",
-			"board_image", "exercise", "exercise_solution"};
+	private static final String[] MARKDOWN_TYPE_ORDER = { "cover_sheet", "lesson_plan", "background_knowledge",
+			"board_image", "exercise", "exercise_solution" };
 	private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 	@Autowired
@@ -249,7 +249,7 @@ public class ActivityController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Generate lesson plan", description = "Generate a lesson plan from selected activities")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Lesson plan PDF", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary")))})
+			@ApiResponse(responseCode = "200", description = "Lesson plan PDF", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"))) })
 	public ResponseEntity<byte[]> generateLessonPlan(@RequestBody LessonPlanRequest request) throws IOException {
 		logger.info("POST /api/activities/lesson-plan - Generate lesson plan called with {} activities",
 				request.getActivities() != null ? request.getActivities().size() : 0);
@@ -388,7 +388,7 @@ public class ActivityController {
 		if (generateAll || requestedTypes.contains("cover_sheet")) {
 			response.setCoverSheetMarkdown(llmService.generateCoverSheet(pdfText, metadata));
 		}
-		// Tafelbild depends on Artikulationsschema — reuse existing or generate fresh
+		// Tafelbild depends on Artikulationsschema - reuse existing or generate fresh
 		boolean needLessonPlan = generateAll || requestedTypes.contains("lesson_plan")
 				|| requestedTypes.contains("board_image");
 		String lessonPlanForBoardImage = existingLessonPlan;
@@ -417,7 +417,7 @@ public class ActivityController {
 	@PreAuthorize("permitAll()")
 	@Operation(summary = "Download activity as combined PDF", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single PDF")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Combined activity PDF", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary")))})
+			@ApiResponse(responseCode = "200", description = "Combined activity PDF", content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"))) })
 	public ResponseEntity<byte[]> downloadActivityPdf(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/pdf - Download combined activity PDF", activityId);
 		ActivityResponse activity = activityService.getActivityById(activityId, false, true);
@@ -438,7 +438,7 @@ public class ActivityController {
 	@SecurityRequirement(name = "BearerAuth")
 	@Operation(summary = "Download activity as combined DOCX", description = "Download all markdown files (Deckblatt portrait, Artikulationsschema landscape, Hintergrundwissen portrait) as a single DOCX (authenticated users only)")
 	@ApiResponses({
-			@ApiResponse(responseCode = "200", description = "Combined activity DOCX", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @Schema(type = "string", format = "binary")))})
+			@ApiResponse(responseCode = "200", description = "Combined activity DOCX", content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document", schema = @Schema(type = "string", format = "binary"))) })
 	public ResponseEntity<?> downloadActivityDocx(@PathVariable UUID activityId) {
 		logger.info("GET /api/activities/{}/docx - Download combined activity DOCX", activityId);
 		if (!markdownToDocxService.isAvailable()) {

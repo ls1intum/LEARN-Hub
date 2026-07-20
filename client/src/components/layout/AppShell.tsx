@@ -145,7 +145,7 @@ const SharedHeader: React.FC = () => {
   return (
     <header className="app-header h-[3.75rem] shrink-0 text-primary-foreground z-50 relative">
       <div className="mx-auto flex h-full items-center gap-2 px-3 sm:px-4">
-        {/* Burger — mobile only, only when a sidebar route is active */}
+        {/* Burger - mobile only, only when a sidebar route is active */}
         {hasSidebar && (
           <button
             onClick={toggleMobile}
@@ -156,7 +156,7 @@ const SharedHeader: React.FC = () => {
           </button>
         )}
 
-        {/* Logo — always links back to landing */}
+        {/* Logo - always links back to landing */}
         <Link
           to="/"
           className="flex items-center gap-2 rounded-full px-1 py-1 transition-opacity hover:opacity-90 shrink-0"
@@ -175,7 +175,7 @@ const SharedHeader: React.FC = () => {
           </span>
         </Link>
 
-        {/* Nav links — desktop only */}
+        {/* Nav links - desktop only */}
         <nav
           className="hidden md:flex items-center gap-0.5 ml-3"
           aria-label="Global"
@@ -247,7 +247,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({
     <div className="mobile-viewport-shell flex flex-col overflow-hidden">
       <SharedHeader />
 
-      {/* Routes render here — each route controls its own scroll */}
+      {/* Routes render here - each route controls its own scroll */}
       <div className="flex-1 min-h-0">{children}</div>
 
       {/* Footer is always visible on app routes (sidebar layout).

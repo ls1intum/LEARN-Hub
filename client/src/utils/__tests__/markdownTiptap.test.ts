@@ -51,7 +51,7 @@ function roundtrip(markdown: string): string {
   return tiptapHtmlToMarkdown(html);
 }
 
-describe("markdownToTiptapHtml — images inside HTML wrappers", () => {
+describe("markdownToTiptapHtml - images inside HTML wrappers", () => {
   it("lifts an AI image out of a tightly-wrapped <div> as a regeneratable node", () => {
     const md = `<div style="text-align:center">\n${ANNOTATION}\n![fig1](${DATA_URI})\n</div>`;
     const html = markdownToTiptapHtml(md);
@@ -71,7 +71,7 @@ describe("markdownToTiptapHtml — images inside HTML wrappers", () => {
   });
 });
 
-describe("markdownToTiptapHtml — image display in the edit view", () => {
+describe("markdownToTiptapHtml - image display in the edit view", () => {
   it("renders a base64 markdown image as an <img> with its data URI src", () => {
     const html = markdownToTiptapHtml(`![Diagramm](${DATA_URI})`);
 

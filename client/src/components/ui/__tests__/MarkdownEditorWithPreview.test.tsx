@@ -44,7 +44,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe("MarkdownEditorWithPreview — image in the edit view (source mode)", () => {
+describe("MarkdownEditorWithPreview - image in the edit view (source mode)", () => {
   it("collapses the base64 payload into a short token in the textarea", async () => {
     const user = userEvent.setup();
     renderEditor();
@@ -80,7 +80,7 @@ describe("MarkdownEditorWithPreview — image in the edit view (source mode)", (
   });
 });
 
-describe("MarkdownEditorWithPreview — PDF preview", () => {
+describe("MarkdownEditorWithPreview - PDF preview", () => {
   it("renders the markdown to a PDF preview iframe (dummy blob)", async () => {
     const { renderPreviewFn } = renderEditor();
 
@@ -98,7 +98,7 @@ describe("MarkdownEditorWithPreview — PDF preview", () => {
   });
 });
 
-describe("MarkdownEditorWithPreview — image regeneration", () => {
+describe("MarkdownEditorWithPreview - image regeneration", () => {
   it("invokes onRegenerateImage when the regenerate control is used", async () => {
     const user = userEvent.setup();
     const onRegenerateImage = vi.fn(async () => `![pic](${IMAGE_DATA_URI})`);

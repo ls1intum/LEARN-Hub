@@ -25,7 +25,7 @@ Required JSON structure:
 Notes:
 - name and description must be written in German
 - source should also be in German if possible
-- Categorical values (format, bloomLevel, mentalLoad, physicalEnergy, items in resourcesNeeded and topics) must use the exact English option values listed above — do not translate them
+- Categorical values (format, bloomLevel, mentalLoad, physicalEnergy, items in resourcesNeeded and topics) must use the exact English option values listed above - do not translate them
 - For optional arrays, use [] if the information is not clear from the text
 - Choose the closest matching value from the allowed options
 - Output only the JSON object, no explanation

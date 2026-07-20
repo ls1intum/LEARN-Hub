@@ -25,7 +25,7 @@ import {
 } from "@/data/landingPageMockData";
 
 /* ─────────────────────────────────────────────
-   Browser Mockup Components — exact UI replicas
+   Browser Mockup Components - exact UI replicas
    scaled via CSS transform (scale 0.5, width 200%)
 ───────────────────────────────────────────── */
 
@@ -181,7 +181,7 @@ const MockRecommendationCard: React.FC<{ rec: MockRec }> = ({ rec }) => (
   </div>
 );
 
-/* Library page in grid/card mode — used in the hero */
+/* Library page in grid/card mode - used in the hero */
 const LibraryCardMockup: React.FC = () => (
   <div className="rounded-xl overflow-hidden border border-border shadow-2xl bg-background select-none">
     <BrowserChrome url="learn-hub.app/library" />
@@ -237,7 +237,7 @@ const LibraryCardMockup: React.FC = () => (
             </div>
           </div>
 
-          {/* Activity grid — 3 columns matching the real LibraryPage */}
+          {/* Activity grid - 3 columns matching the real LibraryPage */}
           <div className="grid grid-cols-3 gap-3">
             {LANDING_MOCK_ACTIVITIES.map((act) => (
               <MockActivityCard key={act.id} activity={act} />
@@ -249,7 +249,7 @@ const LibraryCardMockup: React.FC = () => (
   </div>
 );
 
-/* Recommendations results page — used in feature row 1 */
+/* Recommendations results page - used in feature row 1 */
 const RecommendationsMockup: React.FC = () => (
   <div className="flex flex-col h-full bg-background">
     <BrowserChrome url="learn-hub.app/recommendations" />
@@ -306,7 +306,7 @@ const RecommendationsMockup: React.FC = () => (
                 </div>
               </div>
 
-              {/* Recommendation cards — 2 columns matching real ResultsDisplay grid */}
+              {/* Recommendation cards - 2 columns matching real ResultsDisplay grid */}
               <div className="grid grid-cols-2 gap-3">
                 {LANDING_MOCK_RECOMMENDATIONS.map((rec, i) => (
                   <MockRecommendationCard key={i} rec={rec} />
@@ -320,7 +320,7 @@ const RecommendationsMockup: React.FC = () => (
   </div>
 );
 
-/* Library page with filter panel open — used in feature row 2 */
+/* Library page with filter panel open - used in feature row 2 */
 const LibraryWithFiltersMockup: React.FC = () => (
   <div className="flex flex-col h-full bg-background">
     <BrowserChrome url="learn-hub.app/library" />
@@ -343,7 +343,7 @@ const LibraryWithFiltersMockup: React.FC = () => (
             </p>
           </div>
 
-          {/* Toolbar — "2 active filters" indicator */}
+          {/* Toolbar - "2 active filters" indicator */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1 min-w-0">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
@@ -363,7 +363,7 @@ const LibraryWithFiltersMockup: React.FC = () => (
             </div>
           </div>
 
-          {/* Filter panel — open */}
+          {/* Filter panel - open */}
           <div className="border border-border rounded-lg p-4 space-y-5 bg-muted/20">
             {/* Range sliders row */}
             <div className="grid grid-cols-2 gap-5">
@@ -863,7 +863,7 @@ const CtaSection: React.FC = () => {
 
 /* ─────────────────────────────────────────────
    Landing Page
-   AppShell provides the header and footer — this component
+   AppShell provides the header and footer - this component
    is content-only, filling the middle scroll area.
 ───────────────────────────────────────────── */
 export const LandingPage: React.FC = () => (

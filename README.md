@@ -100,7 +100,7 @@ See `example.env` for a complete list of configurable variables.
 
 LEARN-Hub integrates with the following external services. All integrations are optional except where noted.
 
-### Text LLM — Required for activity content generation
+### Text LLM - Required for activity content generation
 
 The server uses a **text chat model** (via Spring AI's OpenAI client) for:
 - Extracting structured activity metadata from uploaded PDFs
@@ -114,9 +114,9 @@ LLM_API_KEY=<key>
 LLM_MODEL_NAME=qwen3:30b-a3b
 ```
 
-> **Note:** `LLM_BASE_URL` must point at the OpenAI-compatible API root that directly serves `/chat/completions` — i.e. it must include the `/v1` segment (e.g. `http://localhost:11434/v1`). Spring AI 2.0 appends `/chat/completions` to this value verbatim.
+> **Note:** `LLM_BASE_URL` must point at the OpenAI-compatible API root that directly serves `/chat/completions` - i.e. it must include the `/v1` segment (e.g. `http://localhost:11434/v1`). Spring AI 2.0 appends `/chat/completions` to this value verbatim.
 
-### Image Model — Optional
+### Image Model - Optional
 
 When configured, the server calls the image generation API to replace `[[IMAGE_PLACEHOLDER: ...]]` markers in generated exercise and Tafelbild documents with actual images. Without this, placeholders are left in the markdown as-is. The image model **reuses the same `LLM_BASE_URL` and `LLM_API_KEY` as the chat model** (Spring AI 2.0 shares one OpenAI client), so the configured endpoint must support image generation. It is enabled once `LLM_IMAGE_MODEL_NAME` is set:
 
@@ -124,7 +124,7 @@ When configured, the server calls the image generation API to replace `[[IMAGE_P
 LLM_IMAGE_MODEL_NAME=gpt-image-1
 ```
 
-### Adobe PDF Services — Optional
+### Adobe PDF Services - Optional
 
 When configured, the server converts uploaded PDFs to DOCX via the [Adobe PDF Services REST API](https://developer.adobe.com/document-services/apis/pdf-services/) (ExportPDF operation). This enables higher-fidelity source document preservation in the editor. Without credentials the server starts normally, but DOCX export endpoints return an error.
 
@@ -135,7 +135,7 @@ ADOBE_PDF_SERVICES_CLIENT_SECRET=<client-secret>
 
 Converted DOCX files are cached to avoid redundant API calls; the cache location defaults to `/app/data/docx-cache` and can be overridden with `DOCX_CACHE_PATH`.
 
-### SMTP Server — Required for teacher registration
+### SMTP Server - Required for teacher registration
 
 Email delivery (teacher verification codes and credentials) uses an SMTP server with STARTTLS on port 587:
 

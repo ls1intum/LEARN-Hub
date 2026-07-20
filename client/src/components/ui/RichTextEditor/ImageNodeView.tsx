@@ -101,7 +101,7 @@ export const ImageNodeView: React.FC<NodeViewProps> = ({
         </Button>
       </div>
 
-      {/* Regenerate panel — only for AI-generated images */}
+      {/* Regenerate panel - only for AI-generated images */}
       {panelOpen && canRegenerate && (
         <div className="flex flex-col gap-1.5 px-3 py-2 bg-muted/20 border-t">
           {lhPrompt && (

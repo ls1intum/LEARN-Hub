@@ -59,7 +59,7 @@ public class AdobePdfToDocxService {
 	@PostConstruct
 	void logConfigurationStatus() {
 		if (isConfigured()) {
-			logger.info("Adobe PDF Services configured — DOCX export is available");
+			logger.info("Adobe PDF Services configured - DOCX export is available");
 		} else {
 			logger.warn(
 					"Adobe PDF Services credentials not provided (ADOBE_PDF_SERVICES_CLIENT_ID / ADOBE_PDF_SERVICES_CLIENT_SECRET). DOCX export will be unavailable.");
@@ -79,7 +79,7 @@ public class AdobePdfToDocxService {
 	 * Convert a PDF byte array to a DOCX byte array using Adobe PDF Services.
 	 *
 	 * @param pdfBytes
-	 *            the input PDF
+	 *                 the input PDF
 	 * @return the resulting DOCX
 	 */
 	public byte[] convertPdfToDocx(byte[] pdfBytes) {
@@ -134,7 +134,7 @@ public class AdobePdfToDocxService {
 		String assetId = (String) createBody.get("assetID");
 
 		// Use URI (not String) so RestTemplate does not re-encode the presigned query
-		// parameters — re-encoding breaks the X-Amz-Credential S3 signature check.
+		// parameters - re-encoding breaks the X-Amz-Credential S3 signature check.
 		HttpHeaders uploadHeaders = new HttpHeaders();
 		uploadHeaders.setContentType(MediaType.APPLICATION_PDF);
 		restTemplate.exchange(URI.create(uploadUri), HttpMethod.PUT, new HttpEntity<>(pdfBytes, uploadHeaders),

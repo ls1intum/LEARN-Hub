@@ -18,7 +18,7 @@ const IMG_TAG_RE = /<img\b[^>]*>/gi;
 function wrapHtmlBlock(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return "";
-  // The carrier div stays empty — TipTap reconstructs the block from the
+  // The carrier div stays empty - TipTap reconstructs the block from the
   // data-html-content attribute (matching HtmlBlock.renderHTML). Inlining the
   // raw fragment as children would nest sibling images inside unclosed wrapper
   // tags and break ProseMirror parsing.
@@ -32,7 +32,7 @@ function wrapHtmlBlock(raw: string): string {
  *
  * If the block contains one or more <img> tags (e.g. an AI image the LLM
  * wrapped in a centering <div>), each image is lifted out as a bare <img> so
- * it becomes a first-class UnifiedImage node — keeping it rendered as an image
+ * it becomes a first-class UnifiedImage node - keeping it rendered as an image
  * (not literal markdown) and, for AI images, re-generatable in edit mode. The
  * surrounding wrapper fragments are preserved as their own HtmlBlock nodes so
  * styling survives the round-trip.
@@ -40,7 +40,7 @@ function wrapHtmlBlock(raw: string): string {
 function processHtmlBlockToken(raw: string): string {
   IMG_TAG_RE.lastIndex = 0;
   if (!IMG_TAG_RE.test(raw)) {
-    // No image inside — keep the whole block opaque (existing behaviour).
+    // No image inside - keep the whole block opaque (existing behaviour).
     return wrapHtmlBlock(raw);
   }
 
@@ -90,7 +90,7 @@ export function markdownToTiptapHtml(markdown: string): string {
       if (token.type === "html") {
         const raw = (token as { type: "html"; text: string }).text.trim();
         // Bare <img> elements come from the image pre-processor and must reach
-        // the UnifiedImage extension — skip wrapping them as HTML blocks.
+        // the UnifiedImage extension - skip wrapping them as HTML blocks.
         if (!raw || /^<img[\s>]/i.test(raw)) return;
         (token as { type: "html"; text: string }).text =
           processHtmlBlockToken(raw);

@@ -260,7 +260,7 @@
   "about": {
     "title": "About us",
     "intro": "LEARN-Hub is an application by TUM Applied Education Technologies whose goal is to distribute Open Educational Resources (OER) among Computer Science teachers.",
-    "mission": "We develop an education platform and OER repository to perform research about educational technology, supporting material and tools — among others, with AI support.",
+    "mission": "We develop an education platform and OER repository to perform research about educational technology, supporting material and tools - among others, with AI support.",
     "maintainers": "Maintainers",
     "contributors": "Contributors"
   },
@@ -333,7 +333,7 @@
     },
     "imageRows": {
       "recommendations": {
-        "title": "Tell us what you need — we find the right activity",
+        "title": "Tell us what you need - we find the right activity",
         "description": "Enter your learning objectives, student age group, and available time. The AI recommendation engine analyses the full activity library and ranks the best matches for your exact teaching context.",
         "cta": "Try Recommendations",
         "imageAlt": "AI recommendation results"
@@ -521,7 +521,7 @@
       "apply": "Learners use acquired knowledge to solve tasks or apply concepts in new situations.",
       "analyze": "Learners go beyond simple understanding and examine information more deeply to recognize relationships and draw well-founded conclusions.",
       "evaluate": "Learners critically assess ideas, concepts, or work based on criteria and justify their judgment.",
-      "create": "Learners combine what they've learned to create something new — their own ideas, products, or solutions."
+      "create": "Learners combine what they've learned to create something new - their own ideas, products, or solutions."
     },
     "energy": {
       "low": "Low",
@@ -802,12 +802,12 @@
     "singleActivity": "Single activity",
     "step1Category": "About your students",
     "step1Question": "How old are your students?",
-    "step1Description": "Age is our first filter — activities are scoped to age bands so concepts, language, and physical materials stay developmentally appropriate. A pattern game for 7-year-olds looks very different from one for 13-year-olds.",
+    "step1Description": "Age is our first filter - activities are scoped to age bands so concepts, language, and physical materials stay developmentally appropriate. A pattern game for 7-year-olds looks very different from one for 13-year-olds.",
     "step1Tip": "You can pick the average age of your class.",
     "step1Sidebar": "How old are your students",
     "step2Category": "About your session",
     "step2Question": "How much time do you have?",
-    "step2Description": "Duration shapes the whole plan — a 90-minute block fits a full project cycle, while 20 minutes calls for a tight, punchy warm-up. We'll match activities to your available window.",
+    "step2Description": "Duration shapes the whole plan - a 90-minute block fits a full project cycle, while 20 minutes calls for a tight, punchy warm-up. We'll match activities to your available window.",
     "step2Sidebar": "How much time do you have",
     "step3Category": "About your space",
     "step3Question": "What format suits your room?",
@@ -816,11 +816,11 @@
     "step4Category": "About your space",
     "step4Question": "What's in your classroom?",
     "step4Description": "Select the materials and equipment you have access to. We'll only recommend activities you can actually run with what you have on hand.",
-    "step4Tip": "Select all that apply — the more you include, the more options we can surface.",
+    "step4Tip": "Select all that apply - the more you include, the more options we can surface.",
     "step4Sidebar": "What's in your classroom",
     "step5Category": "About learning",
     "step5Question": "What thinking skills do you want to build?",
-    "step5Description": "Bloom's taxonomy maps the depth of thinking required. Pick the cognitive levels you're targeting — from remembering and understanding up to creating and evaluating.",
+    "step5Description": "Bloom's taxonomy maps the depth of thinking required. Pick the cognitive levels you're targeting - from remembering and understanding up to creating and evaluating.",
     "step5Sidebar": "What thinking skills to build",
     "step6Category": "About learning",
     "step6Question": "Which CT concepts are you teaching?",

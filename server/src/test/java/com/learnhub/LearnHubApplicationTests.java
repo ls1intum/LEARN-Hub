@@ -20,13 +20,13 @@ import org.springframework.test.context.TestPropertySource;
 		// Never run the admin seeder during the context-load smoke test.
 		"app.db-seed.enabled=false",
 		// Spring AI's OpenAI auto-configuration refuses to instantiate its client
-		// beans without an API key, and LLMService requires a non-null ChatClient —
+		// beans without an API key, and LLMService requires a non-null ChatClient -
 		// so the context can't load on CI (no keys in the environment). Provide a
 		// dummy key: the beans are built but never called during a context-load smoke
 		// test (no network happens at construction). This top-level key also backs the
 		// OpenAI image client. The image-specific api-key is left empty on purpose so
 		// the exercise image model stays disabled during the smoke test.
-		"spring.ai.openai.api-key=test-key"})
+		"spring.ai.openai.api-key=test-key" })
 class LearnHubApplicationTests {
 
 	@Test

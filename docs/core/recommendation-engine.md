@@ -58,7 +58,7 @@ The engine is implemented in Java within the `activitymanagement` package:
 
 | Class | Responsibility |
 |-------|----------------|
-| `RecommendationService` | Main orchestration — translates API criteria, invokes hard filters and scoring |
+| `RecommendationService` | Main orchestration - translates API criteria, invokes hard filters and scoring |
 | `ScoringEngineService` | Individual category scoring functions |
 | `activitymanagement/entity/enums/` | Enum types for format, Bloom level, topics, resources |
 

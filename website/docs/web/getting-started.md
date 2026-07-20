@@ -18,10 +18,10 @@ You can switch the interface language (English / German) and toggle light/dark m
 |---------|-------|---------|-------|
 | Browse activities | ✓ | ✓ | ✓ |
 | Create recommendations | ✓ | ✓ | ✓ |
-| Save favorites | — | ✓ | ✓ |
-| View history | — | ✓ | ✓ |
-| Manage users | — | — | ✓ |
-| Upload activities | — | — | ✓ |
+| Save favorites | - | ✓ | ✓ |
+| View history | - | ✓ | ✓ |
+| Manage users | - | - | ✓ |
+| Upload activities | - | - | ✓ |
 
 Use **Guest mode** to explore without creating an account. **Teachers** can create an account to save favorites and maintain search history.
 

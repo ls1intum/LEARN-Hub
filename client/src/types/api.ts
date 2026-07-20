@@ -137,7 +137,7 @@ export interface SearchCriteria {
   offset?: number;
 }
 
-// Activity favorites response — server returns full activity details with pagination
+// Activity favorites response - server returns full activity details with pagination
 export interface ActivityFavoritesResponse {
   favourites: Array<{
     favouriteId: string;

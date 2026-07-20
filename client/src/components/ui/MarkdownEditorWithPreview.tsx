@@ -436,7 +436,7 @@ export const MarkdownEditorWithPreview: React.FC<
 
   return (
     <>
-      {/* Image regeneration bar — only shown in source mode (rich mode has inline controls) */}
+      {/* Image regeneration bar - only shown in source mode (rich mode has inline controls) */}
       {onRegenerateImage && editorMode === "source" && (
         <ImageRegenerationBar
           value={value}

@@ -157,7 +157,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
           isMobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        {/* Drawer header — matches AppShell header style */}
+        {/* Drawer header - matches AppShell header style */}
         <div className="app-header flex h-[3.75rem] shrink-0 items-center justify-between px-4 text-primary-foreground">
           <Link
             to="/"

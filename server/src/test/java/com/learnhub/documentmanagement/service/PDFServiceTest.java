@@ -207,7 +207,7 @@ class PDFServiceTest {
 		assertThat(pdfService.getPdfContent(key1)).isEqualTo(content1);
 		assertThat(pdfService.getPdfContent(key2)).isEqualTo(content2);
 
-		// Finalize both — JPA generates distinct document IDs
+		// Finalize both - JPA generates distinct document IDs
 		UUID genId1 = UUID.randomUUID();
 		UUID genId2 = UUID.randomUUID();
 		when(pdfDocumentRepository.save(any(PDFDocument.class))).thenAnswer(inv -> {

@@ -199,7 +199,7 @@ class MarkdownToPdfServiceTest {
 	/**
 	 * Verifies that a NullPointerException originating from iText's font-encoding
 	 * package triggers the character-dropping retry even when the NPE message does
-	 * NOT contain "cmap" — the pattern produced by Java 17+ enhanced NPE messages
+	 * NOT contain "cmap" - the pattern produced by Java 17+ enhanced NPE messages
 	 * (e.g. "…because \"this.toUnicode\" is null").
 	 */
 	@Test
@@ -207,9 +207,9 @@ class MarkdownToPdfServiceTest {
 		// Build an NPE whose top stack frame looks like it came from iText's font code.
 		NullPointerException itextNpe = new NullPointerException(
 				"Cannot invoke \"java.util.Map.get(Object)\" because \"this.toUnicode\" is null");
-		itextNpe.setStackTrace(new StackTraceElement[]{
+		itextNpe.setStackTrace(new StackTraceElement[] {
 				new StackTraceElement("com.itextpdf.io.font.cmap.CMapToUnicode", "lookup", "CMapToUnicode.java", 42),
-				new StackTraceElement("com.itextpdf.io.font.PdfType0Font", "encodeGlyphs", "PdfType0Font.java", 99),});
+				new StackTraceElement("com.itextpdf.io.font.PdfType0Font", "encodeGlyphs", "PdfType0Font.java", 99), });
 
 		FallbackMarkdownToPdfServiceWithCustomException fallbackService = new FallbackMarkdownToPdfServiceWithCustomException(
 				itextNpe);

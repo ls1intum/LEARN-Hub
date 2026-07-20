@@ -39,7 +39,7 @@ export const HtmlBlock = Node.create({
     // Emit the content as a (text) child so the serialized carrier is not
     // "blank". turndown drops blank nodes before any custom rule runs, which
     // would otherwise lose the whole HTML block on a rich-mode save round-trip.
-    // On re-parse the child is ignored — parseHTML reads data-html-content.
+    // On re-parse the child is ignored - parseHTML reads data-html-content.
     return [
       "div",
       { "data-html-block": "true", ...HTMLAttributes },
@@ -51,8 +51,8 @@ export const HtmlBlock = Node.create({
     return {
       insertHtmlBlock:
         (content: string) =>
-        ({ commands }) =>
-          commands.insertContent({ type: this.name, attrs: { content } }),
+          ({ commands }) =>
+            commands.insertContent({ type: this.name, attrs: { content } }),
     };
   },
 

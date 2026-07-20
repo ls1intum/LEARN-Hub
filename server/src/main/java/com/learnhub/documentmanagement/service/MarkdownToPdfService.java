@@ -41,7 +41,7 @@ public class MarkdownToPdfService {
 	private static final Logger logger = LoggerFactory.getLogger(MarkdownToPdfService.class);
 	private static final String WORKSHEET_FONT_FAMILY = "Comic Sans MS";
 	private static final int MAX_CMAP_RETRY_CHARACTERS = 256;
-	// Fonts bundled in src/main/resources/fonts/ — single source of truth for all
+	// Fonts bundled in src/main/resources/fonts/ - single source of truth for all
 	// environments (local dev, Docker). Loaded from classpath at startup.
 	private static final List<String> CLASSPATH_FONT_RESOURCES = List.of("/fonts/ComicSansMS.ttf",
 			"/fonts/ComicSansMSBold.ttf", "/fonts/NotoEmoji-Regular.ttf");
@@ -79,9 +79,9 @@ public class MarkdownToPdfService {
 	 * Render markdown content to PDF bytes with specified orientation.
 	 *
 	 * @param markdown
-	 *            the markdown content
+	 *                  the markdown content
 	 * @param landscape
-	 *            true for landscape, false for portrait
+	 *                  true for landscape, false for portrait
 	 */
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape) {
 		return renderMarkdownToPdf(markdown, landscape, "");
@@ -92,11 +92,11 @@ public class MarkdownToPdfService {
 	 * name in header.
 	 *
 	 * @param markdown
-	 *            the markdown content
+	 *                     the markdown content
 	 * @param landscape
-	 *            true for landscape, false for portrait
+	 *                     true for landscape, false for portrait
 	 * @param activityName
-	 *            the activity name shown in the page header
+	 *                     the activity name shown in the page header
 	 */
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName) {
 		return renderMarkdownToPdf(markdown, landscape, activityName, false);

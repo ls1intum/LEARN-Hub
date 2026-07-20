@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
 
 	// Spring Boot 4 defaults the web stack to Jackson 3, so the Jackson 2
 	// ObjectMapper is no longer exposed as an injectable bean. This handler only
-	// serialises a simple ErrorResponse DTO, so it owns a plain mapper — matching
+	// serialises a simple ErrorResponse DTO, so it owns a plain mapper - matching
 	// the pattern used across the other services here.
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(IOException.class)
 	public void handleIOException(IOException ex, HttpServletResponse response) throws IOException {
 		// Client disconnected mid-stream (common with SSE): the response is already
-		// committed via getOutputStream(), so we can't — and shouldn't — write an error
+		// committed via getOutputStream(), so we can't - and shouldn't - write an error
 		// body. Attempting to would throw IllegalStateException and flood the logs.
 		if (isClientAbort(ex) || response.isCommitted()) {
 			logger.debug("Client disconnected mid-response: {}", ex.getMessage());

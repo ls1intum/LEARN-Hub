@@ -39,7 +39,7 @@ export const ApiRequestMixin = {
 
       throw new Error(
         (errorData.error as string) ||
-          `HTTP error! status: ${response?.status || "unknown"}`,
+        `HTTP error! status: ${response?.status || "unknown"}`,
       );
     }
 
@@ -52,7 +52,7 @@ export const ApiRequestMixin = {
 
 /**
  * Unified API service that re-exports all domain-specific methods.
- * Maintains backward compatibility — all existing callers continue to work.
+ * Maintains backward compatibility - all existing callers continue to work.
  */
 export class ApiService {
   // Core request handler

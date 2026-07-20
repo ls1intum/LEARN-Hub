@@ -35,8 +35,8 @@ public class SpringAIConfiguration {
 	 * LM Studio (and some other local runtimes) incorrectly send
 	 * {@code Content-Type: application/octet-stream} instead of
 	 * {@code application/json}. This OkHttp interceptor rewrites the Content-Type
-	 * at the HTTP transport level — before Spring AI's OpenAI client deserialises
-	 * the body — so parsing always succeeds regardless of what the server declares.
+	 * at the HTTP transport level - before Spring AI's OpenAI client deserialises
+	 * the body - so parsing always succeeds regardless of what the server declares.
 	 *
 	 * <p>
 	 * Spring AI 2.0 drives the OpenAI models through the official OpenAI Java SDK
@@ -66,7 +66,8 @@ public class SpringAIConfiguration {
 	 * Creates a ChatClient from the available ChatModel beans.
 	 *
 	 * @param chatModels
-	 *            list of available chat models (may be empty if none configured)
+	 *                   list of available chat models (may be empty if none
+	 *                   configured)
 	 * @return a configured ChatClient, or null if no model is available
 	 */
 	@Bean

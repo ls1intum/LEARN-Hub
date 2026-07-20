@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
  * the complete LEARN-Hub layout including running headers, footers, and page
  * numbers via iText) → DOCX ({@link AdobePdfToDocxService}).
  *
- * Adobe preserves the PDF page layout — including the header/footer regions —
+ * Adobe preserves the PDF page layout - including the header/footer regions -
  * as native DOCX header/footer sections, so no post-processing is needed.
  */
 @Service
@@ -70,13 +70,15 @@ public class MarkdownToDocxService {
 	/**
 	 * Render multiple markdown sections as a single DOCX. All sections are rendered
 	 * as PDFs, merged into one with iText, then converted in a single Adobe API
-	 * call — this avoids image-relationship corruption that occurs when merging
+	 * call - this avoids image-relationship corruption that occurs when merging
 	 * DOCX files at the XML level.
 	 *
 	 * @param exerciseSheets
-	 *            per-section flag; {@code true} activates the exercise-sheet border
-	 *            layout (outer border, Name/Datum fields). Must be the same size as
-	 *            {@code markdowns}.
+	 *                       per-section flag; {@code true} activates the
+	 *                       exercise-sheet border
+	 *                       layout (outer border, Name/Datum fields). Must be the
+	 *                       same size as
+	 *                       {@code markdowns}.
 	 */
 	public byte[] renderMergedDocx(List<String> markdowns, List<Boolean> landscapes, List<Boolean> exerciseSheets,
 			List<Boolean> areBoardImages, String activityName) {
