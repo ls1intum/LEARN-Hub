@@ -12,10 +12,6 @@ const EXTERNAL_LINKS = [
     labelKey: "footer.appliedEducationTechnologies",
     href: "https://aet.cit.tum.de/",
   },
-  {
-    labelKey: "footer.tumCenterForEducationalTechnologies",
-    href: "https://www.edtech.tum.de/",
-  },
 ] as const;
 
 export const Footer: React.FC = () => {

@@ -79,9 +79,9 @@ public class MarkdownToPdfService {
 	 * Render markdown content to PDF bytes with specified orientation.
 	 *
 	 * @param markdown
-	 *                  the markdown content
+	 *            the markdown content
 	 * @param landscape
-	 *                  true for landscape, false for portrait
+	 *            true for landscape, false for portrait
 	 */
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape) {
 		return renderMarkdownToPdf(markdown, landscape, "");
@@ -92,11 +92,11 @@ public class MarkdownToPdfService {
 	 * name in header.
 	 *
 	 * @param markdown
-	 *                     the markdown content
+	 *            the markdown content
 	 * @param landscape
-	 *                     true for landscape, false for portrait
+	 *            true for landscape, false for portrait
 	 * @param activityName
-	 *                     the activity name shown in the page header
+	 *            the activity name shown in the page header
 	 */
 	public byte[] renderMarkdownToPdf(String markdown, boolean landscape, String activityName) {
 		return renderMarkdownToPdf(markdown, landscape, activityName, false);

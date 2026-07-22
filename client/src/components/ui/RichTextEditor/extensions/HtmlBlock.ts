@@ -51,8 +51,8 @@ export const HtmlBlock = Node.create({
     return {
       insertHtmlBlock:
         (content: string) =>
-          ({ commands }) =>
-            commands.insertContent({ type: this.name, attrs: { content } }),
+        ({ commands }) =>
+          commands.insertContent({ type: this.name, attrs: { content } }),
     };
   },
 

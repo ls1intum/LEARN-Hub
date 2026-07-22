@@ -74,11 +74,9 @@ public class MarkdownToDocxService {
 	 * DOCX files at the XML level.
 	 *
 	 * @param exerciseSheets
-	 *                       per-section flag; {@code true} activates the
-	 *                       exercise-sheet border
-	 *                       layout (outer border, Name/Datum fields). Must be the
-	 *                       same size as
-	 *                       {@code markdowns}.
+	 *            per-section flag; {@code true} activates the exercise-sheet border
+	 *            layout (outer border, Name/Datum fields). Must be the same size as
+	 *            {@code markdowns}.
 	 */
 	public byte[] renderMergedDocx(List<String> markdowns, List<Boolean> landscapes, List<Boolean> exerciseSheets,
 			List<Boolean> areBoardImages, String activityName) {

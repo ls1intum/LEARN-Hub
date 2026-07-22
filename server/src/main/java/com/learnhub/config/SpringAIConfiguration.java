@@ -66,8 +66,7 @@ public class SpringAIConfiguration {
 	 * Creates a ChatClient from the available ChatModel beans.
 	 *
 	 * @param chatModels
-	 *                   list of available chat models (may be empty if none
-	 *                   configured)
+	 *            list of available chat models (may be empty if none configured)
 	 * @return a configured ChatClient, or null if no model is available
 	 */
 	@Bean

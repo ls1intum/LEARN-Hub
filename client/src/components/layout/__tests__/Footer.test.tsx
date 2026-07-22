@@ -35,8 +35,5 @@ describe("Footer", () => {
     expect(
       container.querySelector('a[href="https://aet.cit.tum.de/"]'),
     ).toBeInTheDocument();
-    expect(
-      container.querySelector('a[href="https://www.edtech.tum.de/"]'),
-    ).toBeInTheDocument();
   });
 });

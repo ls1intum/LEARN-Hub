@@ -152,9 +152,9 @@ public class LLMService {
 	 * schema from the teaching material. Returns markdown text.
 	 *
 	 * @param pdfText
-	 *                 extracted text from the PDF
+	 *            extracted text from the PDF
 	 * @param metadata
-	 *                 user-adjusted activity metadata to inform the schema
+	 *            user-adjusted activity metadata to inform the schema
 	 */
 	public String generateLessonPlan(String pdfText, Map<String, Object> metadata) {
 		String metadataSection = buildMetadataSection(metadata);
@@ -176,9 +176,9 @@ public class LLMService {
 	 * Generate a Deckblatt (cover page) from PDF text. Returns markdown text.
 	 *
 	 * @param pdfText
-	 *                 extracted text from the PDF
+	 *            extracted text from the PDF
 	 * @param metadata
-	 *                 user-adjusted activity metadata to inform the generation
+	 *            user-adjusted activity metadata to inform the generation
 	 */
 	public String generateCoverSheet(String pdfText, Map<String, Object> metadata) {
 		String metadataSection = buildMetadataSection(metadata);
@@ -201,9 +201,9 @@ public class LLMService {
 	 * markdown text.
 	 *
 	 * @param pdfText
-	 *                 extracted text from the PDF
+	 *            extracted text from the PDF
 	 * @param metadata
-	 *                 user-adjusted activity metadata to inform the generation
+	 *            user-adjusted activity metadata to inform the generation
 	 */
 	public String generateBackgroundKnowledge(String pdfText, Map<String, Object> metadata) {
 		String metadataSection = buildMetadataSection(metadata);
@@ -227,10 +227,9 @@ public class LLMService {
 	 * one illustrative image.
 	 *
 	 * @param lessonPlan
-	 *                   previously generated Artikulationsschema markdown
+	 *            previously generated Artikulationsschema markdown
 	 * @param metadata
-	 *                   activity metadata (ageMin/ageMax drive language
-	 *                   calibration)
+	 *            activity metadata (ageMin/ageMax drive language calibration)
 	 */
 	public String generateBoardImageMarkdown(String lessonPlan, Map<String, Object> metadata) {
 		String normalizedLessonPlan = stripEmbeddedImages(lessonPlan == null ? "" : lessonPlan.trim());
@@ -293,10 +292,9 @@ public class LLMService {
 	 * single LLM call, guaranteeing the two documents correspond exactly.
 	 *
 	 * @param pdfText
-	 *                 extracted text from the PDF
+	 *            extracted text from the PDF
 	 * @param metadata
-	 *                 user-adjusted activity metadata (ageMin/ageMax drive
-	 *                 difficulty)
+	 *            user-adjusted activity metadata (ageMin/ageMax drive difficulty)
 	 * @return map with keys "exercise" and "exercise_solution", each containing
 	 *         markdown
 	 */

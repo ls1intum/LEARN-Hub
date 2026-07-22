@@ -39,7 +39,7 @@ export const ApiRequestMixin = {
 
       throw new Error(
         (errorData.error as string) ||
-        `HTTP error! status: ${response?.status || "unknown"}`,
+          `HTTP error! status: ${response?.status || "unknown"}`,
       );
     }
 

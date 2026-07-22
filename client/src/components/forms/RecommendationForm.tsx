@@ -491,9 +491,9 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
                       "w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold flex-shrink-0 mt-0.5 transition-all",
                       idx < currentStep && "bg-primary text-primary-foreground",
                       idx === currentStep &&
-                      "bg-primary text-primary-foreground ring-2 ring-primary/25 ring-offset-1 ring-offset-card",
+                        "bg-primary text-primary-foreground ring-2 ring-primary/25 ring-offset-1 ring-offset-card",
                       idx > currentStep &&
-                      "bg-muted text-muted-foreground border border-border",
+                        "bg-muted text-muted-foreground border border-border",
                     )}
                   >
                     {idx < currentStep ? (
@@ -559,7 +559,7 @@ export const RecommendationForm: React.FC<RecommendationFormProps> = ({
           className={cn(
             "gap-2 min-w-[140px]",
             isLastStep &&
-            "shadow-md hover:shadow-lg transition-all duration-300",
+              "shadow-md hover:shadow-lg transition-all duration-300",
           )}
         >
           {isLoading ? (

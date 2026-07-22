@@ -26,7 +26,7 @@ import org.springframework.test.context.TestPropertySource;
 		// test (no network happens at construction). This top-level key also backs the
 		// OpenAI image client. The image-specific api-key is left empty on purpose so
 		// the exercise image model stays disabled during the smoke test.
-		"spring.ai.openai.api-key=test-key" })
+		"spring.ai.openai.api-key=test-key"})
 class LearnHubApplicationTests {
 
 	@Test

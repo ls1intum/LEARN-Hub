@@ -153,7 +153,7 @@ class MarkdownControllerTest {
 
 	private ActivityMarkdownRepository repositoryReturning(Optional<ActivityMarkdown> result, UUID expectedMarkdownId) {
 		return (ActivityMarkdownRepository) Proxy.newProxyInstance(ActivityMarkdownRepository.class.getClassLoader(),
-				new Class[] { ActivityMarkdownRepository.class }, (proxy, method, args) -> {
+				new Class[]{ActivityMarkdownRepository.class}, (proxy, method, args) -> {
 					if ("findWithActivityById".equals(method.getName())) {
 						assertThat(args).containsExactly(expectedMarkdownId);
 						return result;

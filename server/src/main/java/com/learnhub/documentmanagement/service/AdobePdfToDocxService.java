@@ -79,7 +79,7 @@ public class AdobePdfToDocxService {
 	 * Convert a PDF byte array to a DOCX byte array using Adobe PDF Services.
 	 *
 	 * @param pdfBytes
-	 *                 the input PDF
+	 *            the input PDF
 	 * @return the resulting DOCX
 	 */
 	public byte[] convertPdfToDocx(byte[] pdfBytes) {
